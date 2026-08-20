@@ -3,6 +3,9 @@
 The studio site, rebuilt off Webflow as an Astro project. Content lives in
 Sanity, hosting is Vercel.
 
+**Live:** <https://kineticstudio-com.vercel.app> — this is the rebuild, not the
+Webflow site. The real domain still points at Webflow and is untouched.
+
 ```bash
 npm run dev      # local site at http://localhost:8758
 npm run build    # production build into dist/
