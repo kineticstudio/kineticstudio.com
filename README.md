@@ -97,9 +97,15 @@ Project `kineticstudio-com`, on the personal scope
 vercel deploy --prod --scope hunter-kineticstudis-projects
 ```
 
-Deploys are still manual. To get automatic deploys on every `git push`, connect
-GitHub at [vercel.com/account/login-connections](https://vercel.com/account/login-connections),
-then run `vercel git connect`.
+The repo is connected, so **every `git push` to `main` deploys automatically**
+and every pull request gets its own preview URL. The command above is only
+needed to force a deploy without a commit.
+
+If you ever connect a second machine or a new repo and Vercel says it can't find
+it: the thing that grants repo access is the Vercel **GitHub App**
+(<https://github.com/apps/vercel/installations/new>), which is separate from
+signing in to Vercel with GitHub. Installing the App on the account that owns
+the repo is what actually matters.
 
 The `PUBLIC_SANITY_*` variables are already set for all three environments. Note
 that **content is baked in at build time** — editing text in Sanity does not
