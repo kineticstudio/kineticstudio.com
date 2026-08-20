@@ -72,16 +72,21 @@ switching to the CMS is a matter of filling in `.env` — not rewriting pages.
 ### Sanity — already set up
 
 Project `whpuamna`, dataset `production`, holding all 27 projects and their
-videos. Edit content with `npm run studio`.
+videos.
 
-The Studio is a **separate app**, not embedded in the site at `/admin`. That was
-a deliberate change: `@sanity/astro` pulls in `@sanity/sdk-react`, which ships
-unbundled JSX that Astro 7's bundler refuses to parse. Running the Studio
-standalone sidesteps that *and* keeps React out of the site build entirely — the
-published pages ship one small script and nothing else.
+**Edit content at <https://kineticstudio.sanity.studio>** (or `npm run studio`
+to run it locally on port 3333). `npm run studio:deploy` republishes the hosted
+one after a schema change.
 
-`npm run studio:deploy` publishes it to a hosted URL if you'd rather not run it
-locally every time.
+The Studio lives in `studio/` as **its own app with its own `package.json`**,
+rather than embedded in the site at `/admin`. Two reasons:
+
+1. It keeps React and ~900 packages out of the site build. The site itself
+   depends on exactly two things — `astro` and `@sanity/client`.
+2. `sanity` 6.10.x pulls in `@sanity/sdk-react`, which ships unbundled JSX that
+   Vite 8 refuses to parse — it breaks `sanity build` and `@sanity/astro` alike.
+   So `sanity` is **pinned to 6.9.2**, the last release before that dependency
+   appeared. Worth retrying the upgrade in a few months.
 
 ### Vercel — already set up
 

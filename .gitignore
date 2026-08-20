@@ -25,3 +25,6 @@ pnpm-debug.log*
 .vercel
 .env*
 !.env.example
+studio-dist/
+studio/node_modules/
+studio/dist/

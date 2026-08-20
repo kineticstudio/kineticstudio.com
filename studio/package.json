@@ -1,0 +1,19 @@
+{
+	"name": "kineticstudio-studio",
+	"private": true,
+	"type": "module",
+	"version": "0.0.1",
+	"description": "Sanity Studio for kineticstudio.com. Its own app so the site's build stays free of React. sanity is pinned to 6.9.2: 6.10.x pulls @sanity/sdk-react, which ships unbundled JSX that Vite 8 refuses to parse. Retry the upgrade once that is fixed upstream.",
+	"scripts": {
+		"dev": "sanity dev --port 3333",
+		"build": "sanity build",
+		"deploy": "sanity deploy"
+	},
+	"dependencies": {
+		"@sanity/vision": "6.9.2",
+		"react": "^19.2.8",
+		"react-dom": "^19.2.8",
+		"sanity": "6.9.2",
+		"styled-components": "^6.5.3"
+	}
+}
