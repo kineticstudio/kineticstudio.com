@@ -3,8 +3,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import SiteHeader from "../components/SiteHeader.astro";
 import Hero from "../components/Hero.astro";
 import ProjectGrid from "../components/ProjectGrid.astro";
-import { projects } from "../data/projects";
-import { site, awards } from "../data/site";
+import { getProjects, getSiteSettings } from "../lib/sanity";
+
+const [projects, { site, awards }] = await Promise.all([
+	getProjects(),
+	getSiteSettings(),
+]);
 ---
 
 <BaseLayout title={site.title} description={site.description}>
