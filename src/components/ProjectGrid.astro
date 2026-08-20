@@ -1,0 +1,118 @@
+---
+import type { Project } from "../data/projects";
+import ProjectCard from "./ProjectCard.astro";
+
+interface Props {
+	projects: Project[];
+}
+const { projects } = Astro.props;
+---
+
+<section class="projects" aria-label="Selected work">
+	<h2 class="visually-hidden">Selected work</h2>
+	<div class="projects__panel">
+		<div class="page-padding">
+			<div class="container">
+				<div class="projects__grid">
+					{projects.map((project) => <ProjectCard project={project} />)}
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<style>
+	.projects {
+		position: relative;
+		z-index: 5;
+		perspective: 1100px;
+	}
+
+	.projects__panel {
+		background: var(--white);
+		color: var(--black);
+		border-start-start-radius: var(--panel-radius);
+		border-start-end-radius: var(--panel-radius);
+		margin-top: calc(var(--panel-overlap) * -1);
+		padding-block: 7rem 6rem;
+	}
+
+	.projects__grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--grid-gap);
+	}
+
+	/* The panel starts tilted back in 3D and rises to flat as it scrolls in
+	   — the same move the Webflow build did, minus the jQuery runtime.
+	   Browsers without scroll-driven animations just get the flat panel. */
+	@supports (animation-timeline: view()) {
+		@media (prefers-reduced-motion: no-preference) {
+			.projects__panel {
+				animation: panel-rise linear both;
+				animation-timeline: view();
+				/* A fixed distance, not a percentage — the panel is thousands
+				   of pixels tall, so "entry 100%" would never be reached. */
+				animation-range: entry 0px entry 520px;
+			}
+		}
+	}
+
+	@keyframes panel-rise {
+		from {
+			transform: translateY(20rem) rotateX(11deg);
+			opacity: 0;
+		}
+		to {
+			transform: none;
+			opacity: 1;
+		}
+	}
+
+	@media (max-width: 767px) {
+		.projects__panel {
+			padding-block: 4rem 3rem;
+		}
+		.projects__grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>
+
+<script>
+	// Play a project's video only while the pointer is over its card, and
+	// only once it has scrolled into view (so 19 videos don't decode at once).
+	const cards = document.querySelectorAll<HTMLAnchorElement>(".project");
+
+	const inView = new IntersectionObserver(
+		(entries) => {
+			for (const entry of entries) {
+				const video = entry.target.querySelector("video");
+				if (!video) continue;
+				if (entry.isIntersecting) {
+					video.preload = "auto";
+					inView.unobserve(entry.target);
+				}
+			}
+		},
+		{ rootMargin: "200px" },
+	);
+
+	for (const card of cards) {
+		const video = card.querySelector("video");
+		if (!video) continue;
+
+		inView.observe(card);
+
+		card.addEventListener("mouseenter", () => {
+			video.play().catch(() => {
+				/* autoplay blocked — leave the poster frame showing */
+			});
+		});
+
+		card.addEventListener("mouseleave", () => {
+			video.pause();
+			video.currentTime = 0;
+		});
+	}
+</script>

@@ -1,0 +1,101 @@
+---
+import type { Project } from "../data/projects";
+
+interface Props {
+	project: Project;
+}
+const { project } = Astro.props;
+const { title, services, url, video } = project;
+---
+
+<a
+	class="project"
+	class:list={[{ "project--text-only": !video }]}
+	href={url}
+	target="_blank"
+	rel="noopener"
+>
+	{
+		video && (
+			<div class="project__media">
+				<video
+					class="project__video"
+					src={video}
+					muted
+					loop
+					playsinline
+					preload="metadata"
+					aria-hidden="true"
+					tabindex="-1"
+				/>
+			</div>
+		)
+	}
+	<h2 class="project__title">{title}</h2>
+	<p class="project__services">{services}</p>
+</a>
+
+<style>
+	.project {
+		display: flex;
+		flex-direction: column;
+		color: var(--black);
+		transition: transform 0.425s cubic-bezier(0, 0.299, 0, 1.001);
+	}
+
+	.project:hover {
+		transform: translateY(-6px);
+	}
+
+	.project--text-only:hover {
+		transform: none;
+	}
+
+	.project--text-only .project__title {
+		text-decoration: underline;
+		text-underline-offset: 0.3em;
+		text-decoration-thickness: 1px;
+		text-decoration-color: rgb(0 0 0 / 0.25);
+	}
+
+	.project__media {
+		position: relative;
+		aspect-ratio: 16 / 9;
+		width: 100%;
+		margin-bottom: 1rem;
+		border-radius: 1rem;
+		overflow: hidden;
+		background: var(--grey);
+		box-shadow: 0 20px 40px rgb(0 0 0 / 0.2);
+	}
+
+	.project__video {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.project__title {
+		margin: 0;
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 0.95rem;
+		letter-spacing: 0;
+		text-transform: uppercase;
+	}
+
+	.project__services {
+		margin: 0.25rem 0 0;
+		font-size: 0.825rem;
+		opacity: 0.5;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.project {
+			transition: none;
+		}
+		.project:hover {
+			transform: none;
+		}
+	}
+</style>

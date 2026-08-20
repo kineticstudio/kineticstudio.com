@@ -1,0 +1,16 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import SiteHeader from "../components/SiteHeader.astro";
+import Hero from "../components/Hero.astro";
+import ProjectGrid from "../components/ProjectGrid.astro";
+import { projects } from "../data/projects";
+import { site, awards } from "../data/site";
+---
+
+<BaseLayout title={site.title} description={site.description}>
+	<SiteHeader contactEmail={site.contactEmail} />
+	<main>
+		<Hero heading={site.heroHeading} awards={awards} />
+		<ProjectGrid projects={projects} />
+	</main>
+</BaseLayout>

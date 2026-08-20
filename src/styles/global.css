@@ -1,0 +1,109 @@
+/* ---- Fonts ------------------------------------------------------------- */
+
+@font-face {
+	font-family: "GT Walsheim";
+	src: url("/fonts/GT-Walsheim-Regular-Trial.woff2") format("woff2");
+	font-weight: 400;
+	font-display: swap;
+}
+@font-face {
+	font-family: "GT Walsheim";
+	src: url("/fonts/GT-Walsheim-Medium-Trial.woff2") format("woff2");
+	font-weight: 500;
+	font-display: swap;
+}
+@font-face {
+	font-family: "GT Walsheim";
+	src: url("/fonts/GT-Walsheim-Bold-Trial.woff2") format("woff2");
+	font-weight: 700;
+	font-display: swap;
+}
+@font-face {
+	font-family: "Monument Extended";
+	src: url("/fonts/PPMonumentExtended-Variable.ttf") format("truetype-variations");
+	font-weight: 100 900;
+	font-display: swap;
+}
+
+/* ---- Tokens ------------------------------------------------------------ */
+
+:root {
+	--black: #000;
+	--white: #fff;
+	--grey: #dbdbdb;
+	--peach: #f7a696;
+
+	--font-body: "GT Walsheim", "Helvetica Neue", Arial, sans-serif;
+	--font-display: "Monument Extended", "Arial Black", sans-serif;
+
+	--page-padding: 4em;
+	--container-max: 1400px;
+	--grid-gap: 70px;
+
+	/* The projects panel slides up over the hero by this much. */
+	--panel-overlap: 31rem;
+	--panel-radius: 60px;
+}
+
+/* ---- Base -------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	/* The tilted projects panel is intentionally wider than the window. */
+	overflow-x: hidden;
+	overflow-x: clip;
+}
+
+body {
+	margin: 0;
+	background: var(--black);
+	color: var(--white);
+	font-family: var(--font-body);
+	font-weight: 400;
+	-webkit-font-smoothing: antialiased;
+	overflow-x: hidden;
+	overflow-x: clip;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+img,
+video {
+	display: block;
+	max-width: 100%;
+}
+
+.page-padding {
+	padding-inline: var(--page-padding);
+}
+
+.container {
+	max-width: var(--container-max);
+	margin-inline: auto;
+}
+
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+	:root {
+		--page-padding: 1.5em;
+		--grid-gap: 40px;
+		--panel-overlap: 8rem;
+		--panel-radius: 28px;
+	}
+}
