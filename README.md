@@ -10,6 +10,9 @@ Webflow site. The real domain still points at Webflow and is untouched.
 npm run dev      # local site at http://localhost:8758
 npm run build    # production build into dist/
 npm run preview  # serve dist/ exactly as Vercel will
+
+npm run studio   # the Sanity content editor at http://localhost:3333
+npm run seed     # re-import src/data/*.ts into Sanity (rarely needed)
 ```
 
 ---
@@ -66,34 +69,37 @@ switching to the CMS is a matter of filling in `.env` — not rewriting pages.
 
 ## Setup, when you're ready
 
-### 1. Sanity
+### Sanity — already set up
 
-Needs a free account at [sanity.io](https://www.sanity.io).
+Project `whpuamna`, dataset `production`, holding all 27 projects and their
+videos. Edit content with `npm run studio`.
+
+The Studio is a **separate app**, not embedded in the site at `/admin`. That was
+a deliberate change: `@sanity/astro` pulls in `@sanity/sdk-react`, which ships
+unbundled JSX that Astro 7's bundler refuses to parse. Running the Studio
+standalone sidesteps that *and* keeps React out of the site build entirely — the
+published pages ship one small script and nothing else.
+
+`npm run studio:deploy` publishes it to a hosted URL if you'd rather not run it
+locally every time.
+
+### Vercel — already set up
+
+Project `kineticstudio-com`, on the personal scope
+`hunter-kineticstudis-projects` (**not** the Phave team).
 
 ```bash
-npx sanity login
-npx sanity init --create-project "Kinetic Studio" --dataset production
+vercel deploy --prod --scope hunter-kineticstudis-projects
 ```
 
-Put the project ID it prints into `.env` (copy `.env.example` first). Then create
-an editor token in **Manage → API → Tokens**, add it as
-`SANITY_API_WRITE_TOKEN`, and import the existing content:
+Deploys are still manual. To get automatic deploys on every `git push`, connect
+GitHub at [vercel.com/account/login-connections](https://vercel.com/account/login-connections),
+then run `vercel git connect`.
 
-```bash
-node --env-file=.env scripts/seed-sanity.ts
-```
-
-Restart `npm run dev` and the Studio appears at
-[localhost:8758/admin](http://localhost:8758/admin).
-
-### 2. Vercel
-
-Needs a free account at [vercel.com](https://vercel.com), and the code pushed to
-GitHub. Vercel watches the repo: every `git push` triggers a build, and every
-pull request gets its own preview URL.
-
-Add the same `PUBLIC_SANITY_*` variables in Vercel's project settings, or the
-production build won't find the content.
+The `PUBLIC_SANITY_*` variables are already set for all three environments. Note
+that **content is baked in at build time** — editing text in Sanity does not
+change the live site until a new build runs. That's the trade for shipping pure
+static files, and it's what a webhook from Sanity to Vercel would automate later.
 
 ---
 

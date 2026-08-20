@@ -6,9 +6,8 @@ import { schemaTypes } from "./sanity/schemaTypes";
 export default defineConfig({
 	name: "kineticstudio",
 	title: "Kinetic Studio",
-	projectId: import.meta.env.PUBLIC_SANITY_PROJECT_ID,
-	dataset: import.meta.env.PUBLIC_SANITY_DATASET || "production",
-	basePath: "/admin",
+	projectId: process.env.PUBLIC_SANITY_PROJECT_ID || "whpuamna",
+	dataset: process.env.PUBLIC_SANITY_DATASET || "production",
 	plugins: [
 		structureTool({
 			structure: (S) =>
