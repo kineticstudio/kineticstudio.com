@@ -55,9 +55,10 @@ src/
   data/                    content as plain TypeScript (the fallback)
   lib/sanity.ts            fetches from Sanity, falls back to data/
   styles/global.css        design tokens: colours, fonts, spacing
-sanity/schemaTypes/        what a "Project" is allowed to contain
+studio/                    the Sanity Studio — its own app, own deps
+studio/schemaTypes/        what a "Project" is allowed to contain
 scripts/seed-sanity.ts     one-time import of data/ into Sanity
-public/                    fonts, logos, and the 19 hover videos
+public/                    fonts and logos (videos live in Sanity)
 ```
 
 **Astro components** are the useful idea to grab first. `ProjectCard.astro` is
