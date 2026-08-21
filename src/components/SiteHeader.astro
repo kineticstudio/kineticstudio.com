@@ -1,4 +1,6 @@
 ---
+import Button from "./Button.astro";
+
 interface Props {
 	contactEmail: string;
 }
@@ -10,7 +12,7 @@ const { contactEmail } = Astro.props;
 		<a href="/" class="site-header__logo" aria-label="Kinetic Studio — home">
 			<img src="/images/kinetic.svg" alt="" width="110" height="20" />
 		</a>
-		<a href={`mailto:${contactEmail}`} class="site-header__contact">Contact</a>
+		<Button href={`mailto:${contactEmail}`}>Contact</Button>
 	</div>
 </div>
 
@@ -33,24 +35,5 @@ const { contactEmail } = Astro.props;
 	.site-header__logo img {
 		height: 20px;
 		width: auto;
-	}
-
-	.site-header__contact {
-		border: 1px solid rgb(255 255 255 / 0.25);
-		border-radius: 999px;
-		padding: 0.7em 1.6em;
-		font-size: 0.9rem;
-		font-weight: 500;
-		line-height: 1;
-		transition:
-			background-color 0.3s ease,
-			border-color 0.3s ease,
-			color 0.3s ease;
-	}
-
-	.site-header__contact:hover {
-		background: var(--white);
-		border-color: var(--white);
-		color: var(--black);
 	}
 </style>

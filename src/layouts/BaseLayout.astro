@@ -4,11 +4,14 @@ import "../styles/global.css";
 interface Props {
 	title?: string;
 	description?: string;
+	/** Keep internal pages (the style guide) out of search results. */
+	noindex?: boolean;
 }
 
 const {
 	title = "Kinetic Studio",
 	description = "We craft captivating, award-winning websites and digital experiences for modern brands",
+	noindex = false,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
@@ -21,6 +24,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>{title}</title>
 		<meta name="description" content={description} />
+		{noindex && <meta name="robots" content="noindex, nofollow" />}
 		<link rel="canonical" href={canonical} />
 
 		<meta property="og:type" content="website" />

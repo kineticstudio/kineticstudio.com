@@ -1,0 +1,449 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import { awards } from "../data/site";
+import { getProjects } from "../lib/sanity";
+
+const projects = await getProjects();
+const withVideo = projects.find((p) => p.video) ?? projects[0];
+const textOnly = projects.find((p) => !p.video) ?? projects[0];
+
+const colors = [
+	{ token: "--black", note: "Page background, body copy on white" },
+	{ token: "--white", note: "Projects panel, hero type" },
+	{ token: "--grey", note: "Video placeholder while loading" },
+	{ token: "--peach", note: "Accent. Currently unused on the site" },
+];
+
+const typeSpecimens = [
+	{ label: "Hero", font: "var(--font-display)", size: "clamp(1.75rem, 4.9vw, 4.5rem)", weight: 600, caps: true, sample: "Captivating websites" },
+	{ label: "Project name", font: "var(--font-display)", size: "0.95rem", weight: 600, caps: true, sample: "Wispr Flow" },
+	{ label: "Project services", font: "var(--font-body)", size: "0.825rem", weight: 400, caps: false, sample: "Web design, Webflow dev" },
+	{ label: "Award label", font: "var(--font-body)", size: "0.75rem", weight: 400, caps: false, sample: "Site of the Day — 2 Honorable Mentions" },
+];
+---
+
+<BaseLayout title="Style guide — Kinetic Studio" noindex>
+	<div class="sg">
+		<aside class="sg__panel">
+			<div class="sg__panel-head">
+				<h1>Style guide</h1>
+				<p>Drag anything. Every component below updates live.</p>
+			</div>
+			<div id="controls"></div>
+			<div class="sg__panel-foot">
+				<button type="button" id="reset" class="sg__btn">Reset</button>
+				<button type="button" id="copy" class="sg__btn sg__btn--primary">Copy CSS</button>
+			</div>
+			<pre id="output" class="sg__output" hidden></pre>
+		</aside>
+
+		<main class="sg__main">
+			<section class="sg__section">
+				<h2>Colours</h2>
+				<div class="sg__swatches">
+					{colors.map((c) => (
+						<div class="sg__swatch">
+							<div class="sg__chip" style={`background: var(${c.token})`}></div>
+							<code>{c.token}</code>
+							<span>{c.note}</span>
+						</div>
+					))}
+				</div>
+			</section>
+
+			<section class="sg__section">
+				<h2>Type</h2>
+				{typeSpecimens.map((t) => (
+					<div class="sg__type-row">
+						<div class="sg__type-meta">
+							<strong>{t.label}</strong>
+							<code>{t.size}</code>
+						</div>
+						<div
+							class="sg__type-sample"
+							style={`font-family:${t.font}; font-size:${t.size}; font-weight:${t.weight}; text-transform:${t.caps ? "uppercase" : "none"}`}
+						>{t.sample}</div>
+					</div>
+				))}
+			</section>
+
+			<section class="sg__section">
+				<h2>Button</h2>
+				<p class="sg__note">
+					One component, <code>Button.astro</code>. The header uses the same file,
+					so anything you change here is what ships.
+				</p>
+				<div class="sg__row sg__row--dark">
+					<Button href="#">Contact</Button>
+					<span class="sg__caption">outline — on dark</span>
+				</div>
+				<div class="sg__row sg__row--light">
+					<Button href="#" variant="solid">Contact</Button>
+					<span class="sg__caption">solid — on light</span>
+				</div>
+				<p class="sg__note">Hover either one to see the state change.</p>
+			</section>
+
+			<section class="sg__section">
+				<h2>Project card</h2>
+				<p class="sg__note">The real <code>ProjectCard.astro</code>, with live content from Sanity. Hover to play the video.</p>
+				<div class="sg__cards">
+					<ProjectCard project={withVideo} />
+					<ProjectCard project={textOnly} />
+				</div>
+				<p class="sg__note">Left: with video. Right: text-only, for projects with no clip.</p>
+			</section>
+
+			<section class="sg__section">
+				<h2>Awards</h2>
+				<ul class="sg__awards">
+					{awards.map((a) => (
+						<li>
+							<img src={a.logo} alt={a.logoAlt} height="34" />
+							<span>{a.label}</span>
+						</li>
+					))}
+				</ul>
+			</section>
+		</main>
+	</div>
+</BaseLayout>
+
+<style>
+	.sg {
+		display: grid;
+		grid-template-columns: 320px 1fr;
+		min-height: 100svh;
+	}
+
+	.sg__panel {
+		position: sticky;
+		top: 0;
+		height: 100svh;
+		overflow-y: auto;
+		padding: 1.75rem;
+		background: #0d0d0d;
+		border-right: 1px solid rgb(255 255 255 / 0.12);
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+	}
+
+	.sg__panel-head h1 {
+		margin: 0 0 0.4rem;
+		font-family: var(--font-display);
+		font-size: 1rem;
+		text-transform: uppercase;
+	}
+	.sg__panel-head p {
+		margin: 0;
+		font-size: 0.8rem;
+		color: rgb(255 255 255 / 0.5);
+	}
+
+	.sg__panel-foot {
+		display: flex;
+		gap: 0.5rem;
+		margin-top: auto;
+	}
+
+	.sg__btn {
+		flex: 1;
+		padding: 0.6em 1em;
+		font: inherit;
+		font-size: 0.8rem;
+		border-radius: 0.4rem;
+		border: 1px solid rgb(255 255 255 / 0.25);
+		background: transparent;
+		color: var(--white);
+		cursor: pointer;
+	}
+	.sg__btn:hover { background: rgb(255 255 255 / 0.1); }
+	.sg__btn--primary { background: var(--white); color: var(--black); border-color: var(--white); }
+	.sg__btn--primary:hover { opacity: 0.85; background: var(--white); }
+
+	.sg__output {
+		margin: 0;
+		padding: 0.75rem;
+		background: #000;
+		border-radius: 0.4rem;
+		font-size: 0.7rem;
+		line-height: 1.5;
+		white-space: pre-wrap;
+		color: #9fe6a0;
+		max-height: 30svh;
+		overflow: auto;
+	}
+
+	.sg__main { padding: 3rem 3.5rem 6rem; }
+
+	.sg__section {
+		padding-block: 2.5rem;
+		border-bottom: 1px solid rgb(255 255 255 / 0.12);
+		max-width: 1000px;
+	}
+	.sg__section > h2 {
+		margin: 0 0 1.25rem;
+		font-family: var(--font-display);
+		font-size: 0.8rem;
+		text-transform: uppercase;
+		color: rgb(255 255 255 / 0.55);
+		letter-spacing: 0.04em;
+	}
+
+	.sg__note {
+		font-size: 0.8rem;
+		color: rgb(255 255 255 / 0.5);
+		max-width: 60ch;
+	}
+	.sg__caption { font-size: 0.75rem; color: rgb(255 255 255 / 0.45); }
+
+	code {
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 0.78em;
+		color: #9fe6a0;
+	}
+
+	.sg__swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+	.sg__swatch { display: flex; flex-direction: column; gap: 0.35rem; }
+	.sg__swatch span { font-size: 0.72rem; color: rgb(255 255 255 / 0.45); }
+	.sg__chip { height: 64px; border-radius: 0.5rem; border: 1px solid rgb(255 255 255 / 0.2); }
+
+	.sg__type-row {
+		display: grid;
+		grid-template-columns: 160px 1fr;
+		gap: 1.5rem;
+		align-items: baseline;
+		padding-block: 1rem;
+		border-top: 1px solid rgb(255 255 255 / 0.08);
+	}
+	.sg__type-meta { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.75rem; }
+	.sg__type-sample { line-height: 1.1; overflow-wrap: anywhere; }
+
+	.sg__row {
+		display: flex;
+		align-items: center;
+		gap: 1.25rem;
+		padding: 1.5rem;
+		border-radius: 0.75rem;
+		margin-bottom: 0.75rem;
+	}
+	.sg__row--dark { background: #000; border: 1px solid rgb(255 255 255 / 0.12); }
+	.sg__row--light { background: var(--white); }
+	.sg__row--light .sg__caption { color: rgb(0 0 0 / 0.5); }
+
+	.sg__cards {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--grid-gap);
+		background: var(--white);
+		padding: 2rem;
+		border-radius: 0.75rem;
+	}
+
+	.sg__awards { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+	.sg__awards li { display: flex; align-items: center; gap: 0.75rem; }
+	.sg__awards span { font-size: 0.75rem; color: rgb(255 255 255 / 0.5); }
+
+	@media (max-width: 900px) {
+		.sg { grid-template-columns: 1fr; }
+		.sg__panel { position: static; height: auto; }
+		.sg__main { padding: 2rem 1.25rem 4rem; }
+		.sg__cards { grid-template-columns: 1fr; }
+	}
+</style>
+
+<script>
+	type Control = {
+		token: string;
+		label: string;
+		min?: number;
+		max?: number;
+		step?: number;
+		unit?: string;
+		type?: "range" | "color";
+	};
+
+	const CONTROLS: { group: string; items: Control[] }[] = [
+		{
+			group: "Button",
+			items: [
+				{ token: "--btn-radius", label: "Corner radius", min: 0, max: 3, step: 0.05, unit: "rem" },
+				{ token: "--btn-padding-y", label: "Padding — vertical", min: 0.2, max: 2, step: 0.05, unit: "em" },
+				{ token: "--btn-padding-x", label: "Padding — horizontal", min: 0.4, max: 4, step: 0.05, unit: "em" },
+				{ token: "--btn-font-size", label: "Font size", min: 0.6, max: 1.6, step: 0.01, unit: "rem" },
+				{ token: "--btn-border-width", label: "Border width", min: 0, max: 5, step: 1, unit: "px" },
+			],
+		},
+		{
+			group: "Layout",
+			items: [
+				{ token: "--grid-gap", label: "Project grid gap", min: 0, max: 160, step: 2, unit: "px" },
+				{ token: "--page-padding", label: "Page padding", min: 0, max: 10, step: 0.25, unit: "em" },
+				{ token: "--panel-radius", label: "Panel corner radius", min: 0, max: 140, step: 2, unit: "px" },
+			],
+		},
+		{
+			group: "Colour",
+			items: [
+				{ token: "--peach", label: "Peach", type: "color" },
+				{ token: "--grey", label: "Grey", type: "color" },
+			],
+		},
+	];
+
+	const root = document.documentElement;
+	const initial = new Map<string, string>();
+	const current = new Map<string, string>();
+
+	/**
+	 * Read the value authored on the bare `:root` rule, not the computed one.
+	 * Several layout tokens are overridden inside a mobile media query, and
+	 * computed style would hand back the mobile value on a narrow window —
+	 * so the slider would silently start from the wrong number.
+	 */
+	const readToken = (token: string) => {
+		for (const sheet of Array.from(document.styleSheets)) {
+			let rules: CSSRule[];
+			try {
+				rules = Array.from(sheet.cssRules);
+			} catch {
+				continue; // cross-origin sheet
+			}
+			for (const rule of rules) {
+				if (rule instanceof CSSStyleRule && rule.selectorText === ":root") {
+					const value = rule.style.getPropertyValue(token).trim();
+					if (value) return value;
+				}
+			}
+		}
+		return getComputedStyle(root).getPropertyValue(token).trim();
+	};
+
+	const toHex = (value: string) => {
+		if (value.startsWith("#")) return value;
+		const probe = document.createElement("div");
+		probe.style.color = value;
+		document.body.appendChild(probe);
+		const rgb = getComputedStyle(probe).color;
+		probe.remove();
+		const m = rgb.match(/\d+/g);
+		if (!m) return "#000000";
+		return "#" + m.slice(0, 3).map((n) => Number(n).toString(16).padStart(2, "0")).join("");
+	};
+
+	const container = document.getElementById("controls")!;
+	const output = document.getElementById("output") as HTMLPreElement;
+
+	for (const { group, items } of CONTROLS) {
+		const section = document.createElement("div");
+		section.className = "ctl-group";
+		section.innerHTML = `<h2>${group}</h2>`;
+
+		for (const c of items) {
+			const raw = readToken(c.token);
+			initial.set(c.token, raw);
+
+			const row = document.createElement("label");
+			row.className = "ctl";
+
+			if (c.type === "color") {
+				const hex = toHex(raw);
+				row.innerHTML = `<span>${c.label}</span><output>${hex}</output>`;
+				const input = document.createElement("input");
+				input.dataset.token = c.token;
+				input.type = "color";
+				input.value = hex;
+				input.addEventListener("input", () => {
+					root.style.setProperty(c.token, input.value);
+					current.set(c.token, input.value);
+					row.querySelector("output")!.textContent = input.value;
+				});
+				row.appendChild(input);
+			} else {
+				const num = parseFloat(raw) || 0;
+				row.innerHTML = `<span>${c.label}</span><output>${num}${c.unit}</output>`;
+				const input = document.createElement("input");
+				input.dataset.token = c.token;
+				input.type = "range";
+				input.min = String(c.min);
+				input.max = String(c.max);
+				input.step = String(c.step);
+				input.value = String(num);
+				input.addEventListener("input", () => {
+					const v = `${input.value}${c.unit}`;
+					root.style.setProperty(c.token, v);
+					current.set(c.token, v);
+					row.querySelector("output")!.textContent = v;
+				});
+				row.appendChild(input);
+			}
+			section.appendChild(row);
+		}
+		container.appendChild(section);
+	}
+
+	const byToken = new Map(CONTROLS.flatMap((g) => g.items).map((c) => [c.token, c]));
+
+	document.getElementById("reset")!.addEventListener("click", () => {
+		for (const token of initial.keys()) root.style.removeProperty(token);
+		current.clear();
+		output.hidden = true;
+		container.querySelectorAll<HTMLInputElement>("input").forEach((input) => {
+			const token = input.dataset.token!;
+			const control = byToken.get(token)!;
+			const raw = initial.get(token)!;
+			const out = input.closest(".ctl")!.querySelector("output")!;
+			if (input.type === "color") {
+				input.value = toHex(raw);
+				out.textContent = input.value;
+			} else {
+				input.value = String(parseFloat(raw) || 0);
+				out.textContent = `${input.value}${control.unit}`;
+			}
+		});
+	});
+
+	document.getElementById("copy")!.addEventListener("click", () => {
+		if (!current.size) {
+			output.hidden = false;
+			output.textContent = "/* Nothing changed yet — drag a slider first. */";
+			return;
+		}
+		const css =
+			":root {\n" +
+			[...current].map(([t, v]) => `\t${t}: ${v};`).join("\n") +
+			"\n}";
+		output.hidden = false;
+		output.textContent = css;
+		navigator.clipboard?.writeText(css).catch(() => {});
+	});
+</script>
+
+<style is:global>
+	.ctl-group h2 {
+		margin: 0 0 0.6rem;
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: rgb(255 255 255 / 0.4);
+	}
+	.ctl-group { margin-bottom: 1.5rem; }
+	.ctl {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		gap: 0.2rem 0.5rem;
+		align-items: center;
+		margin-bottom: 0.7rem;
+		font-size: 0.75rem;
+	}
+	.ctl output {
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 0.7rem;
+		color: #9fe6a0;
+	}
+	.ctl input { grid-column: 1 / -1; width: 100%; accent-color: #9fe6a0; }
+	.ctl input[type="color"] { height: 28px; padding: 0; background: none; border: 1px solid rgb(255 255 255 / 0.2); border-radius: 4px; }
+</style>

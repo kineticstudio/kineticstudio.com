@@ -1,0 +1,63 @@
+---
+interface Props {
+	href: string;
+	/** outline sits on dark backgrounds, solid on light ones. */
+	variant?: "outline" | "solid";
+	newTab?: boolean;
+}
+const { href, variant = "outline", newTab = false } = Astro.props;
+---
+
+<a
+	class:list={["button", `button--${variant}`]}
+	href={href}
+	{...newTab ? { target: "_blank", rel: "noopener" } : {}}
+>
+	<slot />
+</a>
+
+<style>
+	.button {
+		display: inline-block;
+		border-radius: var(--btn-radius);
+		padding: var(--btn-padding-y) var(--btn-padding-x);
+		font-family: var(--font-body);
+		font-size: var(--btn-font-size);
+		font-weight: 500;
+		line-height: 1;
+		border: var(--btn-border-width) solid transparent;
+		cursor: pointer;
+		transition:
+			background-color 0.3s ease,
+			border-color 0.3s ease,
+			color 0.3s ease;
+	}
+
+	.button--outline {
+		border-color: rgb(255 255 255 / 0.25);
+		color: var(--white);
+	}
+	.button--outline:hover,
+	.button--outline:focus-visible {
+		background: var(--white);
+		border-color: var(--white);
+		color: var(--black);
+	}
+
+	.button--solid {
+		background: var(--black);
+		border-color: var(--black);
+		color: var(--white);
+	}
+	.button--solid:hover,
+	.button--solid:focus-visible {
+		background: transparent;
+		color: var(--black);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.button {
+			transition: none;
+		}
+	}
+</style>

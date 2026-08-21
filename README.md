@@ -37,11 +37,21 @@ control — but it does mean three accounts instead of one.
 
 ## How this project is laid out
 
+### Seeing the components
+
+There is no visual editor for Astro — it's files. The closest thing is the
+**style guide at `/style-guide`** (http://localhost:4321/style-guide while
+`npm run dev` is running). It renders the real components — not copies — beside
+a panel of live sliders wired to the design tokens. Drag one and every component
+on the page updates at once; **Copy CSS** gives you the changed tokens to paste
+into `global.css`. It's `noindex`, so it never shows up in search.
+
 ```
 src/
   pages/index.astro        the homepage — assembles the components
+  pages/style-guide.astro  the component gallery + token playground
   layouts/BaseLayout.astro the <html> shell, meta tags, fonts
-  components/              Header, Hero, ProjectGrid, ProjectCard
+  components/              Button, Header, Hero, ProjectGrid, ProjectCard
   data/                    content as plain TypeScript (the fallback)
   lib/sanity.ts            fetches from Sanity, falls back to data/
   styles/global.css        design tokens: colours, fonts, spacing

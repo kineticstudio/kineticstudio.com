@@ -43,6 +43,13 @@
 	/* The projects panel slides up over the hero by this much. */
 	--panel-overlap: 31rem;
 	--panel-radius: 60px;
+
+	/* Button */
+	--btn-radius: 2rem;
+	--btn-padding-y: 0.7em;
+	--btn-padding-x: 1.6em;
+	--btn-font-size: 0.9rem;
+	--btn-border-width: 1px;
 }
 
 /* ---- Base -------------------------------------------------------------- */
