@@ -28,3 +28,4 @@ pnpm-debug.log*
 studio-dist/
 studio/node_modules/
 studio/dist/
+public/videos/

@@ -118,9 +118,13 @@ static files, and it's what a webhook from Sanity to Vercel would automate later
 
 - **Fonts are trial versions.** `GT-Walsheim-*-Trial.woff2` needs a real licence
   before this goes live on the public domain.
-- **Videos are MP4 only** (21 MB total), served as static files. The original
-  Webflow build also shipped WebM duplicates, which doubled the weight for no
-  practical gain — every current browser plays the MP4.
+- **Videos live in Sanity**, served from its CDN. They used to sit in
+  `public/videos`, but once Sanity became the source of truth that was 21 MB of
+  dead weight in every deploy — the build output went from 27 MB to 212 KB when
+  it came out. Upload new ones through the Studio, not the repo.
+- Because of that, the offline fallback in `src/data/` is **text-only**. If
+  Sanity is unreachable the site still builds and lists every project, just
+  without hover videos.
 - **The tilt** on the projects panel is a CSS scroll-driven animation
   (`animation-timeline: view()`), not a JavaScript library. Browsers that don't
   support it get the panel flat, which is a perfectly good fallback.
