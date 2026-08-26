@@ -1,15 +1,15 @@
 # kineticstudio.com
 
 The studio site, rebuilt off Webflow as an Astro project. Content lives in
-Sanity, hosting is Vercel.
+Sanity, hosting is Netlify.
 
-**Live:** <https://kineticstudio-com.vercel.app> — this is the rebuild, not the
+**Live:** <https://kineticstudio-com.netlify.app> — this is the rebuild, not the
 Webflow site. The real domain still points at Webflow and is untouched.
 
 ```bash
 npm run dev      # local site at http://localhost:8758
 npm run build    # production build into dist/
-npm run preview  # serve dist/ exactly as Vercel will
+npm run preview  # serve dist/ exactly as Netlify will
 
 npm run studio   # the Sanity content editor at http://localhost:3333
 npm run seed     # re-import src/data/*.ts into Sanity (rarely needed)
@@ -25,10 +25,9 @@ They sound like they overlap. They don't — each owns one job.
 | --- | --- | --- |
 | **Astro** | Turning content + components into HTML | The page builder |
 | **Sanity** | Storing the words, videos and links | The filing cabinet |
-| **Vercel** | Running the build and serving the result | The printing press + storefront |
+| **Netlify** | Running the build and serving the result | The printing press + storefront |
 
-The flow: you edit content in **Sanity** → **Vercel** notices and re-runs the
-build → **Astro** generates fresh HTML → visitors get plain static files.
+The flow: you edit content in **Sanity** → a build runs on **Netlify** → **Astro** generates fresh HTML → visitors get plain static files.
 
 Webflow bundled all three into one product. Splitting them up is what buys the
 control — but it does mean three accounts instead of one.
@@ -99,29 +98,31 @@ rather than embedded in the site at `/admin`. Two reasons:
    So `sanity` is **pinned to 6.9.2**, the last release before that dependency
    appeared. Worth retrying the upgrade in a few months.
 
-### Vercel — already set up
+### Netlify — already set up
 
-Project `kineticstudio-com`, on the personal scope
-`hunter-kineticstudis-projects` (**not** the Phave team).
+Site `kineticstudio-com`. Everything Kinetic owns lives on Netlify (60+ sites,
+including every client share and the `*.kineticstudio.com` subdomains), so this
+site sits with the rest rather than on its own island.
 
 ```bash
-vercel deploy --prod --scope hunter-kineticstudis-projects
+npm run build
+netlify deploy --prod --dir dist
 ```
 
-The repo is connected, so **every `git push` to `main` deploys automatically**
-and every pull request gets its own preview URL. The command above is only
-needed to force a deploy without a commit.
+`netlify.toml` holds the build config, and `PUBLIC_SANITY_*` are set on the site
+so a Netlify-run build finds the content.
 
-If you ever connect a second machine or a new repo and Vercel says it can't find
-it: the thing that grants repo access is the Vercel **GitHub App**
-(<https://github.com/apps/vercel/installations/new>), which is separate from
-signing in to Vercel with GitHub. Installing the App on the account that owns
-the repo is what actually matters.
+Deploys are manual: the repo is not linked, so a `git push` does **not** publish.
+To change that, link the repo under Build & deploy at
+<https://app.netlify.com/projects/kineticstudio-com/configuration/deploys>.
 
-The `PUBLIC_SANITY_*` variables are already set for all three environments. Note
-that **content is baked in at build time** — editing text in Sanity does not
+There is still a dormant Vercel project (`kineticstudio-com`) from before the
+move. Its git hook is disconnected so it cannot quietly serve a newer build than
+Netlify. Delete it whenever.
+
+Note that **content is baked in at build time** — editing text in Sanity does not
 change the live site until a new build runs. That's the trade for shipping pure
-static files, and it's what a webhook from Sanity to Vercel would automate later.
+static files, and it's what a webhook from Sanity to Netlify would automate later.
 
 ---
 
@@ -139,6 +140,6 @@ static files, and it's what a webhook from Sanity to Vercel would automate later
 - **The tilt** on the projects panel is a CSS scroll-driven animation
   (`animation-timeline: view()`), not a JavaScript library. Browsers that don't
   support it get the panel flat, which is a perfectly good fallback.
-- **Analytics were dropped** in the move off Webflow. Vercel Analytics is one
+- **Analytics were dropped** in the move off Webflow. Netlify Analytics is one
   toggle if you want it back.
 - The old Webflow mirror is still in `✨AI Fun/kineticstudio.com` for reference.

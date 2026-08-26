@@ -29,3 +29,6 @@ studio-dist/
 studio/node_modules/
 studio/dist/
 public/videos/
+
+# Local Netlify folder
+.netlify
