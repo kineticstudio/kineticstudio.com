@@ -15,6 +15,7 @@
     "seed": "node --env-file=.env scripts/seed-sanity.ts"
   },
   "dependencies": {
+    "@kineticstudio/astro-design-system": "file:../astro-design-system",
     "@sanity/client": "^7.26.2",
     "astro": "^7.2.4"
   }
