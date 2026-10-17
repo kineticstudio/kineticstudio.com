@@ -1,0 +1,122 @@
+---
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Project name. */
+  title: string;
+  /** What Kinetic did. */
+  services?: string;
+  /** Link destination. */
+  href: string;
+  /** Hover video URL. Leave empty for a text-only card. */
+  video?: string;
+}
+
+const { render = true, title, services, href, video } = Astro.props;
+---
+
+{
+  render && title && href && (
+    <a class:list={["project-card_wrap", !video && "text-only"]} href={href} target="_blank" rel="noopener">
+      {video && (
+        <div class="project-card_media">
+          <video class="project-card_video" src={video} muted loop playsinline preload="metadata" aria-hidden="true" tabindex="-1" />
+        </div>
+      )}
+      <h2 class="project-card_title">{title}</h2>
+      {services && <p class="project-card_services">{services}</p>}
+    </a>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .project-card_wrap {
+      display: flex;
+      flex-direction: column;
+      color: inherit;
+      text-decoration: none;
+      transition: transform 0.425s cubic-bezier(0, 0.299, 0, 1.001);
+      &:hover {
+        transform: translateY(-0.375rem);
+      }
+      &.text-only:hover {
+        transform: none;
+      }
+      &.text-only .project-card_title {
+        text-decoration: underline;
+        text-underline-offset: 0.3em;
+        text-decoration-thickness: 0.0625rem;
+        text-decoration-color: color-mix(in srgb, currentColor 25%, transparent);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        transition: none;
+        &:hover {
+          transform: none;
+        }
+      }
+    }
+    .project-card_media {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      margin-bottom: 1rem;
+      border-radius: 1rem;
+      overflow: hidden;
+      background: var(--grey-300);
+      box-shadow: 0 1.25rem 2.5rem rgb(0 0 0 / 0.2);
+    }
+    .project-card_video {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .project-card_title {
+      margin: 0;
+      font-family: var(--display-family);
+      font-weight: 600;
+      font-size: 0.95rem;
+      line-height: 1.3;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    .project-card_services {
+      margin: 0.35rem 0 0;
+      font-size: 0.825rem;
+      line-height: 1.5;
+      opacity: 0.5;
+    }
+  }
+</style>
+
+<script>
+  // A card's video plays only while the pointer is over it, and starts
+  // loading only once it is near the screen, so 19 videos never decode at once.
+  const near = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        const video = entry.target.querySelector("video");
+        if (video && entry.isIntersecting) {
+          video.preload = "auto";
+          near.unobserve(entry.target);
+        }
+      }
+    },
+    { rootMargin: "200px" },
+  );
+  for (const card of document.querySelectorAll<HTMLAnchorElement>(".project-card_wrap")) {
+    const video = card.querySelector("video");
+    if (!video) continue;
+    near.observe(card);
+    card.addEventListener("mouseenter", () => {
+      video.play().catch(() => {
+        /* autoplay blocked: the first frame stays */
+      });
+    });
+    card.addEventListener("mouseleave", () => {
+      video.pause();
+      video.currentTime = 0;
+    });
+  }
+</script>

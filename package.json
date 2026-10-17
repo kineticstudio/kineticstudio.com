@@ -1,22 +1,26 @@
 {
-  "name": "kineticstudio",
+  "name": "kineticstudio.com",
   "type": "module",
-  "version": "0.0.1",
-  "engines": {
-    "node": ">=22.12.0"
-  },
+  "private": true,
+  "version": "1.0.0",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "astro dev --port 8758",
+    "edit": "STUDIO_WORKSPACE=.studio/kineticstudio.com PORT=4351 node ../kinetic-site-editor/studio/dist/cli.mjs dev .",
+    "check": "astro check",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "astro preview --port 8758",
     "astro": "astro",
-    "studio": "npm --prefix studio run dev",
-    "studio:deploy": "npm --prefix studio run deploy",
-    "seed": "node --env-file=.env scripts/seed-sanity.ts"
+    "format": "prettier --write ."
   },
   "dependencies": {
-    "@kineticstudio/astro-design-system": "file:../astro-design-system",
-    "@sanity/client": "^7.26.2",
-    "astro": "^7.2.4"
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.3.8",
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "prettier-plugin-astro": "^0.14.1",
+    "wrangler": "^4.123.0"
   }
 }

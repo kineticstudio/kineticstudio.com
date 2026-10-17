@@ -32,3 +32,6 @@ public/videos/
 
 # Local Netlify folder
 .netlify
+
+# the website editor's draft workspace (npm run edit, or the Studio's Website tab)
+.studio/

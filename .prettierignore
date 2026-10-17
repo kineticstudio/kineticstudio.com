@@ -1,0 +1,6 @@
+dist
+.astro
+node_modules
+
+# The CMS has its own formatter configuration.
+studio

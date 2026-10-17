@@ -1,56 +1,35 @@
 ---
-import "../styles/global.css";
+import "@/styles/global.css";
+import BaseHead from "@/components/utility/BaseHead.astro";
+import SkipLink from "@/components/global/SkipLink.astro";
+import Nav from "@/components/global/Nav.astro";
+import type { SeoProps } from "@/types.ts";
 
-interface Props {
-	title?: string;
-	description?: string;
-	/** Keep internal pages (the style guide) out of search results. */
-	noindex?: boolean;
-}
+type Props = SeoProps & {
+  /** Theme for the whole page. `inherit` leaves the root defaults in place. */
+  theme?: "inherit" | "light" | "dark" | "brand";
+  /**
+   * Fix the nav over the page rather than letting it stick in flow, so the
+   * first section starts underneath it. Give that section
+   * `paddingTop="navoverlap"` to clear the bar.
+   */
+  overlap?: boolean;
+};
 
-const {
-	title = "Kinetic Studio",
-	description = "We craft captivating, award-winning websites and digital experiences for modern brands",
-	noindex = false,
-} = Astro.props;
-
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
+const { theme = "inherit", overlap = false, ...seo } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>{title}</title>
-		<meta name="description" content={description} />
-		{noindex && <meta name="robots" content="noindex, nofollow" />}
-		<link rel="canonical" href={canonical} />
-
-		<meta property="og:type" content="website" />
-		<meta property="og:title" content={title} />
-		<meta property="og:description" content={description} />
-		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content={title} />
-		<meta name="twitter:description" content={description} />
-
-		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-		<link
-			rel="preload"
-			href="/fonts/GT-Walsheim-Regular-Trial.woff2"
-			as="font"
-			type="font/woff2"
-			crossorigin
-		/>
-		<link
-			rel="preload"
-			href="/fonts/PPMonumentExtended-Variable.ttf"
-			as="font"
-			type="font/ttf"
-			crossorigin
-		/>
-	</head>
-	<body>
-		<slot />
-	</body>
+<html lang="en" class:list={[theme !== "inherit" && `theme-${theme}`]}>
+  <head>
+    <BaseHead {...seo} />
+    <slot name="head" />
+  </head>
+  <body>
+    <SkipLink />
+    <Nav overlap={overlap} />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+  </body>
 </html>
