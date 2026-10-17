@@ -1,7 +1,0 @@
-# Astro builds to a static dist/, so Netlify only has to serve files.
-[build]
-  command = "npm run build"
-  publish = "dist"
-
-[build.environment]
-  NODE_VERSION = "24"

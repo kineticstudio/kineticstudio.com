@@ -67,16 +67,19 @@ Two Lumos rules worth knowing before touching a component:
 
 ## Hosting
 
-`wrangler.jsonc` is ready for Cloudflare: the built `dist/` served as an
-assets-only Worker named `kineticstudio-com`. Connecting it (Workers Builds on
-this repo, then a route for the domain) is an account step only Hunter can do,
-and it is listed in the Studio's `docs/kinetic-stack.md`.
+**Cloudflare builds this repo.** Every push to `main` rebuilds and deploys
+<https://kineticstudio-com.hunter-938.workers.dev> in about a minute (Workers
+Builds, connected 2026-10-17, Worker `kineticstudio-com` on Hunter's account).
+Build command `npm run build`, deploy command `npx wrangler deploy`, build
+variable `NODE_VERSION=24`; other branches get their own preview link. So a
+push here publishes that address, though not kineticstudio.com.
 
-Until then the earlier version of this rebuild (Astro, Sanity, Netlify) is
-still at <https://kineticstudio-com.netlify.app>. That Netlify site has no git
-connection, so pushing here does not change it. `netlify.toml` is kept so a
-manual Netlify preview still works. The pre-Lumos code is tagged
-`pre-lumos-2026-10-17`.
+kineticstudio.com itself still points at Webflow. Moving it is a route on the
+Worker plus a DNS change, done only when the rest of the pages are rebuilt.
+
+The earlier version of this rebuild (Astro, Sanity, Netlify) is still at
+<https://kineticstudio-com.netlify.app>, with no git connection. The
+pre-Lumos code is tagged `pre-lumos-2026-10-17`.
 
 ## Open items
 
