@@ -1,34 +1,38 @@
 /* Design tokens */
 :root {
   /* Swatches */
-  --light-100: #ffffff;
-  --light-200: #f2f2f2;
-  --light-300: #ffffff;
-  --dark-700: #2a2a2a;
-  --dark-800: #141414;
-  --dark-900: #000000;
-  --brand-500: #f7a696;
-  --brand-text: var(--dark-900);
-  /* Kinetic's quiet grey: card grounds, rules */
-  --grey-300: #dbdbdb;
+  --light-100: #eef1ea;
+  --light-200: #e2e8dc;
+  --light-300: #f4f6f1;
+  --dark-700: #232323;
+  --dark-800: #161616;
+  --dark-900: #0d0d0d;
+  /* Kinetic lime: pills and the one bright moment per page */
+  --brand-500: #a8ff66;
+  --brand-text: #191919;
+  /* The proposal sage: quiet text on the dark ground */
+  --sage-300: #d9e2d2;
+  --grey-300: #2e2e2e;
 
   /* Typography primitives */
-  --primary-family: var(--font-gt-walsheim, "Helvetica Neue", Arial, sans-serif);
+  --primary-family: var(--font-neue-montreal, "Helvetica Neue", Arial, sans-serif);
   /* The display face: set through the display token below, never with an h1 rule */
-  --display-family: var(--font-monument, "Arial Black", sans-serif);
+  --display-family: var(--font-panell, "Arial Narrow", sans-serif);
+  /* Labels, meta and counters */
+  --mono-family: var(--font-neue-montreal-mono, ui-monospace, monospace);
   --primary-regular: 400;
   --primary-medium: 500;
   --primary-bold: 700;
 
   /* Letter spacing */
-  --letter-spacing-tight: -0.03em;
+  --letter-spacing-tight: -0.02em;
   --letter-spacing-normal: 0em;
 
   /* Line height */
-  --line-height-small: 1;
-  --line-height-medium: 1.1;
+  --line-height-small: 0.88;
+  --line-height-medium: 0.94;
   --line-height-large: 1.3;
-  --line-height-huge: 1.5;
+  --line-height-huge: 1.45;
 
   /* Borders & focus */
   --border-width: 0.0625rem;
@@ -50,6 +54,7 @@
   --radius-round: 100vw;
   /* Kinetic's buttons are pills */
   --button-radius: var(--radius-round);
+  --radius-media: 0.375rem;
 
   /* Fluid scale range */
   --viewport-min: 320;
@@ -65,86 +70,86 @@
 
   /* Typography styles */
   --display: clamp(var(--display-min) / 16 * 1rem, ((var(--display-min) - ((var(--display-max) - var(--display-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--display-max) - var(--display-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--display-max) / 16 * 1rem);
-  --display-min: 64;
-  --display-max: 112;
+  --display-min: 76;
+  --display-max: 232;
   --display-line-height: var(--line-height-small);
   --display-letter-spacing: var(--letter-spacing-tight);
-  --display-text-transform: none;
+  --display-text-transform: uppercase;
   --display-margin-top: var(--space-7);
   --display-margin-bottom: var(--space-6);
   --display-font-family: var(--display-family);
-  --display-font-weight: 600;
+  --display-font-weight: 500;
   --display-text-wrap: balance;
 
   --h1: clamp(var(--h1-min) / 16 * 1rem, ((var(--h1-min) - ((var(--h1-max) - var(--h1-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--h1-max) - var(--h1-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--h1-max) / 16 * 1rem);
-  --h1-min: 48;
-  --h1-max: 80;
+  --h1-min: 60;
+  --h1-max: 144;
   --h1-line-height: var(--line-height-small);
   --h1-letter-spacing: var(--letter-spacing-tight);
-  --h1-text-transform: none;
+  --h1-text-transform: uppercase;
   --h1-margin-top: var(--space-7);
   --h1-margin-bottom: var(--space-6);
-  --h1-font-family: var(--primary-family);
+  --h1-font-family: var(--display-family);
   --h1-font-weight: var(--primary-medium);
   --h1-text-wrap: balance;
 
   --h2: clamp(var(--h2-min) / 16 * 1rem, ((var(--h2-min) - ((var(--h2-max) - var(--h2-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--h2-max) - var(--h2-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--h2-max) / 16 * 1rem);
-  --h2-min: 40;
-  --h2-max: 64;
+  --h2-min: 48;
+  --h2-max: 104;
   --h2-line-height: var(--line-height-small);
   --h2-letter-spacing: var(--letter-spacing-tight);
-  --h2-text-transform: none;
+  --h2-text-transform: uppercase;
   --h2-margin-top: var(--space-7);
   --h2-margin-bottom: var(--space-5);
-  --h2-font-family: var(--primary-family);
+  --h2-font-family: var(--display-family);
   --h2-font-weight: var(--primary-medium);
   --h2-text-wrap: balance;
 
   --h3: clamp(var(--h3-min) / 16 * 1rem, ((var(--h3-min) - ((var(--h3-max) - var(--h3-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--h3-max) - var(--h3-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--h3-max) / 16 * 1rem);
   --h3-min: 36;
-  --h3-max: 48;
+  --h3-max: 64;
   --h3-line-height: var(--line-height-medium);
   --h3-letter-spacing: var(--letter-spacing-tight);
-  --h3-text-transform: none;
+  --h3-text-transform: uppercase;
   --h3-margin-top: var(--space-6);
   --h3-margin-bottom: var(--space-5);
-  --h3-font-family: var(--primary-family);
+  --h3-font-family: var(--display-family);
   --h3-font-weight: var(--primary-medium);
   --h3-text-wrap: balance;
 
   --h4: clamp(var(--h4-min) / 16 * 1rem, ((var(--h4-min) - ((var(--h4-max) - var(--h4-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--h4-max) - var(--h4-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--h4-max) / 16 * 1rem);
   --h4-min: 28;
-  --h4-max: 32;
+  --h4-max: 40;
   --h4-line-height: var(--line-height-medium);
   --h4-letter-spacing: var(--letter-spacing-tight);
-  --h4-text-transform: none;
+  --h4-text-transform: uppercase;
   --h4-margin-top: var(--space-6);
   --h4-margin-bottom: var(--space-4);
-  --h4-font-family: var(--primary-family);
+  --h4-font-family: var(--display-family);
   --h4-font-weight: var(--primary-medium);
   --h4-text-wrap: balance;
 
   --h5: clamp(var(--h5-min) / 16 * 1rem, ((var(--h5-min) - ((var(--h5-max) - var(--h5-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--h5-max) - var(--h5-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--h5-max) / 16 * 1rem);
   --h5-min: 22;
-  --h5-max: 24;
+  --h5-max: 28;
   --h5-line-height: var(--line-height-medium);
   --h5-letter-spacing: var(--letter-spacing-tight);
-  --h5-text-transform: none;
+  --h5-text-transform: uppercase;
   --h5-margin-top: var(--space-5);
   --h5-margin-bottom: var(--space-4);
-  --h5-font-family: var(--primary-family);
+  --h5-font-family: var(--display-family);
   --h5-font-weight: var(--primary-medium);
   --h5-text-wrap: balance;
 
   --h6: clamp(var(--h6-min) / 16 * 1rem, ((var(--h6-min) - ((var(--h6-max) - var(--h6-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--h6-max) - var(--h6-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--h6-max) / 16 * 1rem);
   --h6-min: 16;
-  --h6-max: 18;
+  --h6-max: 20;
   --h6-line-height: var(--line-height-medium);
   --h6-letter-spacing: var(--letter-spacing-tight);
-  --h6-text-transform: none;
+  --h6-text-transform: uppercase;
   --h6-margin-top: var(--space-5);
   --h6-margin-bottom: var(--space-3);
-  --h6-font-family: var(--primary-family);
+  --h6-font-family: var(--display-family);
   --h6-font-weight: var(--primary-medium);
   --h6-text-wrap: balance;
 
@@ -162,7 +167,7 @@
 
   --text-main: clamp(var(--text-main-min) / 16 * 1rem, ((var(--text-main-min) - ((var(--text-main-max) - var(--text-main-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--text-main-max) - var(--text-main-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--text-main-max) / 16 * 1rem);
   --text-main-min: 16;
-  --text-main-max: 18;
+  --text-main-max: 17;
   --text-main-line-height: var(--line-height-huge);
   --text-main-letter-spacing: var(--letter-spacing-normal);
   --text-main-text-transform: none;
@@ -604,6 +609,18 @@ h6,
   text-wrap: var(--h6-text-wrap);
   --_margin-top: var(--h6-margin-top);
   --_margin-bottom: var(--h6-margin-bottom);
+}
+
+/* Labels: mono caps for meta, counters and pills */
+.text-style-label {
+  font-family: var(--mono-family);
+  font-size: 0.75rem;
+  font-weight: var(--primary-regular);
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  --_margin-top: var(--space-3);
+  --_margin-bottom: var(--space-3);
 }
 
 /* Text trim */

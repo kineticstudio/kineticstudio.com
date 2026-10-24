@@ -1,0 +1,542 @@
+{
+  "rime": {
+    "w": 1280,
+    "h": 784,
+    "ground": "#30a459",
+    "video": true
+  },
+  "rime-voices": {
+    "w": 1280,
+    "h": 718,
+    "ground": "#d2cabd",
+    "video": true
+  },
+  "rime-circles": {
+    "w": 1280,
+    "h": 788,
+    "ground": "#dfdbcf",
+    "video": true
+  },
+  "rime-every": {
+    "w": 1280,
+    "h": 718,
+    "ground": "#d2cabd",
+    "video": true
+  },
+  "dawn": {
+    "w": 1280,
+    "h": 782,
+    "ground": "#c6b69e",
+    "video": true
+  },
+  "dawn-home": {
+    "w": 1280,
+    "h": 790,
+    "ground": "#f8d362",
+    "video": true
+  },
+  "dawn-how": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#3f6073",
+    "video": true
+  },
+  "dawn-clouds": {
+    "w": 1254,
+    "h": 800,
+    "ground": "#d0c0a7",
+    "video": true
+  },
+  "claude": {
+    "w": 1280,
+    "h": 780,
+    "ground": "#cc7057",
+    "video": true
+  },
+  "claude-home": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#bb6149",
+    "video": true
+  },
+  "claude-code": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#bb6149",
+    "video": true
+  },
+  "claude-scroll": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#bb6149",
+    "video": true
+  },
+  "cambium": {
+    "w": 1280,
+    "h": 766,
+    "ground": "#3e271f",
+    "video": true
+  },
+  "cambium-rings": {
+    "w": 1280,
+    "h": 708,
+    "ground": "#f9f3e7",
+    "video": true
+  },
+  "cambium-map": {
+    "w": 1280,
+    "h": 716,
+    "ground": "#f3efe4",
+    "video": true
+  },
+  "cambium-stipple": {
+    "w": 1264,
+    "h": 800,
+    "ground": "#4d3125",
+    "video": true
+  },
+  "cambium-wordmark": {
+    "w": 1280,
+    "h": 782,
+    "ground": "#c7c0ad",
+    "video": true
+  },
+  "counsel": {
+    "w": 1280,
+    "h": 768,
+    "ground": "#1e3b67",
+    "video": true
+  },
+  "counsel-wave": {
+    "w": 1280,
+    "h": 772,
+    "ground": "#f0f2e7",
+    "video": true
+  },
+  "counsel-mobile": {
+    "w": 528,
+    "h": 800,
+    "ground": "#1e3b66",
+    "video": true
+  },
+  "wispr-flow": {
+    "w": 1116,
+    "h": 800,
+    "ground": "#eed3fe",
+    "video": true
+  },
+  "flow-hero": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#100d18",
+    "video": true
+  },
+  "flow-notes": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#075847",
+    "video": true
+  },
+  "wispr-flow-brand": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#ffffeb",
+    "video": true
+  },
+  "venus": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#282e2e",
+    "video": true
+  },
+  "venus-site": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#232728",
+    "video": true
+  },
+  "venus-slant": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#060a0b",
+    "video": true
+  },
+  "epirus": {
+    "w": 1280,
+    "h": 788,
+    "ground": "#ebe7de",
+    "video": true
+  },
+  "epirus-site": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#63625e",
+    "video": true
+  },
+  "epirus-film": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#121214",
+    "video": true
+  },
+  "superorganism": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#332c19",
+    "video": true
+  },
+  "superorganism-site": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#332d17",
+    "video": true
+  },
+  "superorganism-how": {
+    "w": 1074,
+    "h": 800,
+    "ground": "#d6d5ba",
+    "video": true
+  },
+  "new-era": {
+    "w": 1216,
+    "h": 800,
+    "ground": "#e8d27b",
+    "video": true
+  },
+  "new-era-hats": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#3d3d3d",
+    "video": true
+  },
+  "new-era-coins": {
+    "w": 1240,
+    "h": 800,
+    "ground": "#212116",
+    "video": true
+  },
+  "heygen": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#594e70",
+    "video": true
+  },
+  "ethos": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#241cc9",
+    "video": true
+  },
+  "ethos-brand": {
+    "w": 1072,
+    "h": 800,
+    "ground": "#181e21",
+    "video": true
+  },
+  "happy-droid": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#ffffff",
+    "video": true
+  },
+  "metamag": {
+    "w": 1212,
+    "h": 720,
+    "ground": "#50514b",
+    "video": true
+  },
+  "distributional": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#383838",
+    "video": true
+  },
+  "way": {
+    "w": 1280,
+    "h": 710,
+    "ground": "#062119",
+    "video": true
+  },
+  "range": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#3a4139",
+    "video": true
+  },
+  "ingredient": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#8aa4a5",
+    "video": true
+  },
+  "roam": {
+    "w": 1280,
+    "h": 718,
+    "ground": "#ec1503",
+    "video": true
+  },
+  "para": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#ee2b6d",
+    "video": true
+  },
+  "august-health": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#4453f8",
+    "video": true
+  },
+  "superlink": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#e7e7e7",
+    "video": true
+  },
+  "konvoy": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#82c2a8",
+    "video": true
+  },
+  "reshape": {
+    "w": 1100,
+    "h": 720,
+    "ground": "#2b3335",
+    "video": true
+  },
+  "tydo": {
+    "w": 1280,
+    "h": 794,
+    "ground": "#6e50e7",
+    "video": true
+  },
+  "baseten": {
+    "w": 1066,
+    "h": 800,
+    "ground": "#009b5c",
+    "video": false
+  },
+  "lemon-squeezy": {
+    "w": 1066,
+    "h": 800,
+    "ground": "#f6c451",
+    "video": false
+  },
+  "carter": {
+    "w": 1066,
+    "h": 800,
+    "ground": "#161616",
+    "video": false
+  },
+  "redesign-health": {
+    "w": 1080,
+    "h": 720,
+    "ground": "#bafa4e",
+    "video": false
+  },
+  "cird": {
+    "w": 1280,
+    "h": 712,
+    "ground": "#75484c",
+    "video": false
+  },
+  "kinetic-studio": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#060606",
+    "video": true
+  },
+  "play-rings": {
+    "w": 1266,
+    "h": 800,
+    "ground": "#dccec7",
+    "video": true
+  },
+  "play-kinetic-lines": {
+    "w": 1280,
+    "h": 738,
+    "ground": "#111111",
+    "video": true
+  },
+  "play-fade-ease": {
+    "w": 1250,
+    "h": 800,
+    "ground": "#e1ead3",
+    "video": true
+  },
+  "play-liquid-glass": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#d67409",
+    "video": true
+  },
+  "play-plantfield": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#030b16",
+    "video": true
+  },
+  "play-smart-animate": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#0e1215",
+    "video": true
+  },
+  "play-cloud-logo": {
+    "w": 874,
+    "h": 800,
+    "ground": "#447ebe",
+    "video": true
+  },
+  "play-terrain": {
+    "w": 1280,
+    "h": 646,
+    "ground": "#120f08",
+    "video": true
+  },
+  "play-fluidstack": {
+    "w": 800,
+    "h": 800,
+    "ground": "#2d2b2c",
+    "video": true
+  },
+  "play-mademarket": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#e0edfd",
+    "video": true
+  },
+  "play-kinetic-shader": {
+    "w": 1280,
+    "h": 790,
+    "ground": "#020202",
+    "video": true
+  },
+  "play-cube": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#c0c1fa",
+    "video": true
+  },
+  "play-jiko": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#ece7fb",
+    "video": true
+  },
+  "play-cursor": {
+    "w": 1280,
+    "h": 694,
+    "ground": "#2a2b27",
+    "video": true
+  },
+  "play-goat": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#f8e6e2",
+    "video": true
+  },
+  "play-toast": {
+    "w": 1280,
+    "h": 792,
+    "ground": "#2c045d",
+    "video": true
+  },
+  "play-cloud-gen": {
+    "w": 1242,
+    "h": 800,
+    "ground": "#2f2822",
+    "video": true
+  },
+  "play-dripos": {
+    "w": 1220,
+    "h": 800,
+    "ground": "#ebe9dd",
+    "video": true
+  },
+  "play-sword": {
+    "w": 1280,
+    "h": 784,
+    "ground": "#0c1036",
+    "video": true
+  },
+  "play-stack-chroma": {
+    "w": 1254,
+    "h": 800,
+    "ground": "#dfdbcf",
+    "video": true
+  },
+  "play-shadow": {
+    "w": 1042,
+    "h": 800,
+    "ground": "#6940f6",
+    "video": true
+  },
+  "play-timer": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#011a0e",
+    "video": true
+  },
+  "exp-kinetic-lines": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#0d0d0d",
+    "video": true
+  },
+  "exp-contour-rings": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#1a1f1a",
+    "video": true
+  },
+  "exp-liquid-glass": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#e2dacd",
+    "video": true
+  },
+  "exp-lava-field": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#141414",
+    "video": true
+  },
+  "exp-terrain": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#0e0e0e",
+    "video": true
+  },
+  "exp-cloud-type": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#0c0c0c",
+    "video": true
+  },
+  "exp-stipple": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#0e0e0e",
+    "video": true
+  },
+  "exp-chrome-laurel": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#0d0d0d",
+    "video": true
+  },
+  "exp-bloom-orb": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#141414",
+    "video": true
+  },
+  "exp-ease-grid": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#0e0e0e",
+    "video": true
+  }
+}

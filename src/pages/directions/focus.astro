@@ -1,0 +1,24 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import Section from "@/components/wrapper/Section.astro";
+import WorkFocus from "@/components/section/WorkFocus.astro";
+import Statement from "@/components/content/Statement.astro";
+import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
+import ClientWall from "@/components/content/ClientWall.astro";
+import DirectionSwitch from "@/components/global/DirectionSwitch.astro";
+---
+
+<Layout title="Focus" noindex>
+  {/* Direction three, Focus: one column, only the piece at the centre is sharp */}
+  <WorkFocus />
+  <Section paddingTop="large">
+    <Statement />
+  </Section>
+  <Section paddingTop="medium">
+    <AwardsLaurels />
+  </Section>
+  <Section paddingTop="medium" paddingBottom="large">
+    <ClientWall />
+  </Section>
+  <DirectionSwitch slot="after" />
+</Layout>

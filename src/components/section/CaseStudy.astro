@@ -1,0 +1,231 @@
+---
+import MEDIA from "@/data/media.json";
+import { WORK } from "@/data/work.js";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The project, from src/data/work.js. */
+  work: (typeof WORK)[number];
+}
+
+const { render = true, work } = Astro.props;
+const media = MEDIA as Record<string, { w: number; h: number; ground: string; video: boolean }>;
+const cases = WORK.filter((w) => w.case);
+const next = cases[(cases.findIndex((w) => w.slug === work.slug) + 1) % cases.length];
+const gallery = (work.gallery ?? []).filter((id) => media[id]);
+const host = work.url ? new URL(work.url).hostname.replace(/^www\./, "") : null;
+const loop = (id: string, eager = false) => ({
+  src: eager ? `/media/${id}.mp4` : undefined,
+  "data-src": `/media/${id}.mp4`,
+  poster: `/media/${id}.jpg`,
+});
+---
+
+{
+  render && (
+    <article class="case_wrap">
+      <header class="case_head">
+        <p class="case_crumb text-style-label"><a href="/work">Work</a> / {work.industry}</p>
+        <h1 class="case_name text-style-display">{work.name}</h1>
+        <div class="case_meta">
+          <dl class="case_facts">
+            <div><dt class="text-style-label">Industry</dt><dd>{work.industry}</dd></div>
+            <div><dt class="text-style-label">What we did</dt><dd>{work.does.join(", ")}</dd></div>
+            {work.partner && <div><dt class="text-style-label">Partner</dt><dd>{work.partner.replace(/^with /, "")}</dd></div>}
+            {host && <div><dt class="text-style-label">Live</dt><dd><a href={work.url} target="_blank" rel="noopener">{host} ↗</a></dd></div>}
+          </dl>
+          <p class="case_lead text-style-h4">{work.lead}</p>
+        </div>
+      </header>
+
+      <figure class="case_hero" style={`--ratio:${media[work.cover].w}/${media[work.cover].h};--ground:${media[work.cover].ground}`}>
+        <video data-loop {...loop(work.cover, true)} muted loop playsinline aria-hidden="true" />
+      </figure>
+
+      <section class="case_story">
+        <p class="case_label text-style-label">The work</p>
+        <div class="case_body">
+          {work.body?.map((p: string) => <p class="text-style-large" data-reveal>{p}</p>)}
+        </div>
+      </section>
+
+      {gallery.length > 0 && (
+        <section class="case_gallery" aria-label="More from the project">
+          {gallery.map((id, i) => (
+            <figure class:list={["case_shot", (i % 3 === 0 || gallery.length === 1) && "is-wide"]} style={`--ratio:${media[id].w}/${media[id].h};--ground:${media[id].ground}`} data-reveal>
+              {media[id].video ? (
+                <video data-loop {...loop(id)} muted loop playsinline preload="none" aria-hidden="true" />
+              ) : (
+                <img src={`/media/${id}.jpg`} alt="" loading="lazy" />
+              )}
+            </figure>
+          ))}
+        </section>
+      )}
+
+      {next && next.slug !== work.slug && (
+        <a class="case_next" href={`/work/${next.slug}`}>
+          <span class="case_next-label text-style-label">Next case study</span>
+          <span class="case_next-name text-style-display">{next.name}</span>
+          <img class="case_next-peek" src={`/media/${next.cover}.jpg`} alt="" loading="lazy" />
+        </a>
+      )}
+    </article>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .case_wrap {
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-space-small);
+      padding: calc(var(--section-space-nav-overlap) * 0.75) var(--site-margin) 0;
+    }
+    .case_crumb {
+      margin: 0 0 var(--space-4);
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+      & a:hover {
+        color: var(--text);
+      }
+    }
+    .case_name {
+      margin: 0;
+      font-size: clamp(5rem, 17vw, 17rem);
+      line-height: 0.8;
+    }
+    .case_meta {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: var(--space-6);
+      margin-top: var(--space-7);
+      padding-top: var(--space-5);
+      border-top: var(--border-width) solid var(--grey-300);
+      @media (width < 48rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .case_facts {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-4);
+      margin: 0;
+      & dt {
+        margin-bottom: 0.35rem;
+        color: color-mix(in srgb, var(--text) 50%, transparent);
+      }
+      & dd {
+        margin: 0;
+      }
+      & a {
+        text-decoration: none;
+        color: var(--brand-500);
+      }
+    }
+    .case_lead {
+      margin: 0;
+      max-width: 22ch;
+    }
+    .case_hero,
+    .case_shot {
+      position: relative;
+      margin: 0;
+      overflow: hidden;
+      aspect-ratio: var(--ratio);
+      border-radius: var(--radius-media);
+      background: var(--ground);
+      & video,
+      & img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+    .case_hero {
+      max-height: 88svh;
+      width: 100%;
+    }
+    .case_story {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: var(--space-6);
+      padding: var(--section-space-small) 0;
+      @media (width < 48rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .case_label {
+      margin: 0.4em 0 0;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .case_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      max-width: 40ch;
+      font-size: clamp(1.25rem, 1.8vw, 1.75rem);
+      & p {
+        margin: 0;
+        font-size: inherit;
+        line-height: 1.35;
+      }
+      & p + p {
+        color: color-mix(in srgb, var(--text) 70%, transparent);
+      }
+    }
+    .case_gallery {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--site-gutter);
+      align-items: start;
+      @media (width < 48rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .case_shot.is-wide {
+      grid-column: 1 / -1;
+    }
+    .case_next {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin-top: var(--section-space-small);
+      padding: var(--section-space-small) 0;
+      overflow: hidden;
+      border-top: var(--border-width) solid var(--grey-300);
+      color: var(--text);
+    }
+    .case_next-label {
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .case_next-name {
+      position: relative;
+      z-index: 1;
+      font-size: clamp(4rem, 13vw, 13rem);
+      line-height: 0.82;
+      transition: color 0.3s ease;
+    }
+    .case_next-peek {
+      position: absolute;
+      right: 0;
+      bottom: -40%;
+      width: min(36rem, 45vw);
+      border-radius: var(--radius-media);
+      rotate: -4deg;
+      transition: bottom 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), rotate 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .case_next:hover {
+      .case_next-name {
+        color: var(--brand-500);
+      }
+      .case_next-peek {
+        bottom: -10%;
+        rotate: 0deg;
+      }
+    }
+  }
+</style>

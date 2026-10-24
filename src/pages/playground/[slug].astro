@@ -1,0 +1,14 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import ExperimentStage from "@/components/section/ExperimentStage.astro";
+import { EXPERIMENTS } from "@/data/experiments.js";
+
+export function getStaticPaths() {
+  return EXPERIMENTS.filter((e) => e.kind === "live").map((e) => ({ params: { slug: e.slug }, props: { experiment: e } }));
+}
+const { experiment } = Astro.props;
+---
+
+<Layout title={experiment.title} description={`${experiment.note} A live experiment from Kinetic Studio, with Params to play with.`} footer={false}>
+  <ExperimentStage experiment={experiment} />
+</Layout>

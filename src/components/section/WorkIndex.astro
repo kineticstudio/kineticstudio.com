@@ -1,0 +1,417 @@
+---
+import type { ComponentProps } from "astro/types";
+import Section from "@/components/wrapper/Section.astro";
+import WorkCard from "@/components/content/WorkCard.astro";
+import { WORK, INDUSTRIES, DISCIPLINES } from "@/data/work.js";
+
+type Props = Pick<ComponentProps<typeof Section>, "render" | "theme" | "paddingTop" | "paddingBottom"> & {
+  /** Heading over the grid. */
+  heading?: string;
+  /** Show the floating filter bar. */
+  filter?: boolean;
+  /** Only the first this many projects. */
+  limit?: number;
+  /** Link under a limited grid. */
+  moreHref?: string;
+};
+
+const { render = true, heading = "Work", filter = true, limit, moreHref, paddingTop = "large", ...rest } = Astro.props;
+const items = limit ? WORK.slice(0, limit) : WORK;
+const industryOf = (w: (typeof WORK)[number]) => (INDUSTRIES.includes(w.industry) ? w.industry : "Other");
+const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry === i)), ...(items.some((w) => !INDUSTRIES.includes(w.industry)) ? ["Other"] : [])];
+---
+
+{
+  render && (
+    <Section paddingTop={paddingTop} {...rest}>
+      <div class="work-index_wrap" data-work-index>
+        <div class="work-index_head">
+          <h2 class="work-index_title text-style-h1">{heading}</h2>
+          <p class="work-index_count text-style-label">
+            <span data-count>{items.length}</span> / {items.length} projects
+          </p>
+        </div>
+
+        <ul class="work-index_grid" data-view="grid">
+          {items.map((w, i) => (
+            <li class="work-index_item" data-industry={industryOf(w)} data-does={w.does.join("|")} style={`view-transition-name: work-${w.slug}; --i:${i}`}>
+              <WorkCard work={w} eager={i < 3} />
+              <a class="work-index_row" href={w.case ? `/work/${w.slug}` : w.url} target={w.case ? undefined : "_blank"} rel={w.case ? undefined : "noopener"} data-preview={`/media/${w.cover}`} tabindex="-1">
+                <span class="work-index_row-name text-style-h3">{w.name}</span>
+                <span class="work-index_row-meta text-style-label">{w.industry}</span>
+                <span class="work-index_row-meta text-style-label">{w.does.join(", ")}</span>
+                <span class="work-index_row-go text-style-label">{w.case ? "Case study" : "Visit ↗"}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        {moreHref && (
+          <a class="work-index_more" href={moreHref}>
+            <span class="text-style-h4">All the work</span>
+            <span class="text-style-label">{WORK.length} projects ↗</span>
+          </a>
+        )}
+
+        {filter && (
+          <div class="work-index_bar" role="toolbar" aria-label="Filter the work">
+            <div class="work-index_menu">
+              <button class="work-index_trigger text-style-label" type="button" aria-expanded="false" data-menu="industry">
+                Industry <b data-label="industry">All</b>
+              </button>
+              <div class="work-index_pop" data-pop="industry" hidden>
+                <button class="work-index_chip" type="button" data-set="industry" data-value="All" aria-pressed="true">All</button>
+                {industries.map((i) => (
+                  <button class="work-index_chip" type="button" data-set="industry" data-value={i} aria-pressed="false">{i}</button>
+                ))}
+              </div>
+            </div>
+            <div class="work-index_menu">
+              <button class="work-index_trigger text-style-label" type="button" aria-expanded="false" data-menu="does">
+                Discipline <b data-label="does">All</b>
+              </button>
+              <div class="work-index_pop" data-pop="does" hidden>
+                <button class="work-index_chip" type="button" data-set="does" data-value="All" aria-pressed="true">All</button>
+                {DISCIPLINES.map((d) => (
+                  <button class="work-index_chip" type="button" data-set="does" data-value={d} aria-pressed="false">{d}</button>
+                ))}
+              </div>
+            </div>
+            <div class="work-index_views">
+              <button class="work-index_view text-style-label" type="button" data-view-set="grid" aria-pressed="true">Grid</button>
+              <button class="work-index_view text-style-label" type="button" data-view-set="list" aria-pressed="false">List</button>
+            </div>
+          </div>
+        )}
+
+        <div class="work-index_preview" aria-hidden="true"><video muted loop playsinline /></div>
+      </div>
+    </Section>
+  )
+}
+
+<script>
+  import { watchLoops } from "@/scripts/site.js";
+
+  document.querySelectorAll<HTMLElement>("[data-work-index]").forEach((root) => {
+    const grid = root.querySelector<HTMLElement>(".work-index_grid")!;
+    const items = [...root.querySelectorAll<HTMLElement>(".work-index_item")];
+    const count = root.querySelector("[data-count]");
+    const state: Record<string, string> = { industry: "All", does: "All" };
+
+    const transition = (fn: () => void) => {
+      if (typeof document.startViewTransition === "function" && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(fn);
+      else fn();
+    };
+
+    const apply = () => {
+      let shown = 0;
+      for (const el of items) {
+        const ok =
+          (state.industry === "All" || el.dataset.industry === state.industry) &&
+          (state.does === "All" || (el.dataset.does ?? "").split("|").includes(state.does));
+        el.hidden = !ok;
+        if (ok) shown++;
+      }
+      if (count) count.textContent = String(shown);
+      watchLoops(root);
+    };
+
+    const closeMenus = () => {
+      root.querySelectorAll<HTMLElement>("[data-pop]").forEach((p) => (p.hidden = true));
+      root.querySelectorAll("[data-menu]").forEach((b) => b.setAttribute("aria-expanded", "false"));
+    };
+
+    root.querySelectorAll<HTMLButtonElement>("[data-menu]").forEach((b) => {
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const pop = root.querySelector<HTMLElement>(`[data-pop="${b.dataset.menu}"]`)!;
+        const open = pop.hidden;
+        closeMenus();
+        pop.hidden = !open;
+        b.setAttribute("aria-expanded", String(open));
+      });
+    });
+    document.addEventListener("click", closeMenus);
+    document.addEventListener("keydown", (e) => e.key === "Escape" && closeMenus());
+
+    root.querySelectorAll<HTMLButtonElement>("[data-set]").forEach((chip) => {
+      chip.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const key = chip.dataset.set!;
+        state[key] = chip.dataset.value!;
+        root.querySelectorAll(`[data-set="${key}"]`).forEach((c) => c.setAttribute("aria-pressed", String(c === chip)));
+        root.querySelector(`[data-label="${key}"]`)!.textContent = state[key];
+        closeMenus();
+        transition(apply);
+      });
+    });
+
+    const setView = (view: string) => {
+      transition(() => {
+        grid.dataset.view = view;
+        root.querySelectorAll("[data-view-set]").forEach((b) => b.setAttribute("aria-pressed", String((b as HTMLElement).dataset.viewSet === view)));
+        root.querySelectorAll<HTMLElement>(".work-index_row").forEach((r) => (r.tabIndex = view === "list" ? 0 : -1));
+        root.querySelectorAll<HTMLElement>(".work-card_wrap").forEach((c) => (c.tabIndex = view === "grid" ? 0 : -1));
+      });
+    };
+    root.querySelectorAll<HTMLButtonElement>("[data-view-set]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.viewSet!)));
+    window.addEventListener("ks:view-toggle", () => setView(grid.dataset.view === "grid" ? "list" : "grid"));
+
+    // List view: the hovered row's loop follows the pointer.
+    const preview = root.querySelector<HTMLElement>(".work-index_preview")!;
+    const pv = preview.querySelector("video")!;
+    let px = 0, py = 0, tx = 0, ty = 0, raf = 0;
+    const follow = () => {
+      px += (tx - px) * 0.18;
+      py += (ty - py) * 0.18;
+      preview.style.transform = `translate(${px}px, ${py}px) translate(-50%, -50%)`;
+      raf = Math.abs(tx - px) + Math.abs(ty - py) > 0.5 ? requestAnimationFrame(follow) : 0;
+    };
+    root.querySelectorAll<HTMLAnchorElement>(".work-index_row").forEach((row) => {
+      row.addEventListener("pointerenter", (e) => {
+        if (grid.dataset.view !== "list") return;
+        pv.poster = `${row.dataset.preview}.jpg`;
+        pv.src = `${row.dataset.preview}.mp4`;
+        pv.play().catch(() => {});
+        if (!preview.classList.contains("is-on")) {
+          px = tx = e.clientX;
+          py = ty = e.clientY;
+        }
+        preview.classList.add("is-on");
+      });
+      row.addEventListener("pointerleave", () => preview.classList.remove("is-on"));
+      row.addEventListener("pointermove", (e) => {
+        tx = e.clientX;
+        ty = e.clientY;
+        if (!raf) raf = requestAnimationFrame(follow);
+      });
+    });
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .work-index_wrap {
+      position: relative;
+      width: 100%;
+    }
+    .work-index_head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: var(--space-4);
+      padding-bottom: var(--space-6);
+      border-bottom: var(--border-width) solid var(--grey-300);
+      margin-bottom: var(--space-7);
+    }
+    .work-index_title {
+      margin: 0;
+    }
+    .work-index_count {
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .work-index_grid {
+      margin: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-8) var(--site-gutter);
+      &[data-view="grid"] .work-index_row {
+        display: none;
+      }
+      &[data-view="list"] {
+        display: block;
+        .work-card_wrap {
+          display: none;
+        }
+      }
+      @media (width < 62rem) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      @media (width < 40rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .work-index_item[hidden] {
+      display: none;
+    }
+    .work-index_grid[data-view="grid"] .work-index_item:nth-child(3n + 2) {
+      @media (width >= 62rem) {
+        translate: 0 var(--space-8);
+      }
+    }
+    .work-index_row {
+      display: grid;
+      grid-template-columns: 1fr 12rem 16rem 7rem;
+      align-items: baseline;
+      gap: var(--space-4);
+      padding: var(--space-3) 0;
+      border-bottom: var(--border-width) solid var(--grey-300);
+      color: color-mix(in srgb, var(--text) 75%, transparent);
+      transition: color 0.2s ease, padding 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+      &:hover {
+        color: var(--text);
+        padding-left: var(--space-3);
+      }
+      @media (width < 48rem) {
+        grid-template-columns: 1fr auto;
+        .work-index_row-meta:nth-of-type(3) {
+          display: none;
+        }
+        .work-index_row-go {
+          display: none;
+        }
+      }
+    }
+    .work-index_row-name {
+      margin: 0;
+    }
+    .work-index_row-meta,
+    .work-index_row-go {
+      color: color-mix(in srgb, var(--text) 50%, transparent);
+    }
+    .work-index_row-go {
+      text-align: right;
+    }
+    .work-index_preview {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 40;
+      width: 22rem;
+      aspect-ratio: 16 / 10;
+      border-radius: var(--radius-media);
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0;
+      scale: 0.85;
+      transition: opacity 0.25s ease, scale 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+      &.is-on {
+        opacity: 1;
+        scale: 1;
+      }
+      & video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      @media (hover: none) {
+        display: none;
+      }
+    }
+    .work-index_more {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: calc(var(--space-8) * 2);
+      padding: var(--space-5) 0;
+      border-block: var(--border-width) solid var(--grey-300);
+      color: var(--text);
+      transition: color 0.2s ease;
+      &:hover {
+        color: var(--brand-500);
+      }
+      & .text-style-h4 {
+        margin: 0;
+      }
+    }
+    .work-index_bar {
+      position: sticky;
+      bottom: var(--space-5);
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      width: max-content;
+      max-width: calc(100vw - 2rem);
+      margin: var(--space-8) auto 0;
+      padding: 0.3rem;
+      border-radius: var(--radius-round);
+      background: color-mix(in srgb, var(--dark-800) 70%, transparent);
+      border: var(--border-width) solid color-mix(in srgb, var(--text) 12%, transparent);
+      backdrop-filter: blur(1.25rem) saturate(1.4);
+      -webkit-backdrop-filter: blur(1.25rem) saturate(1.4);
+      box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.45);
+    }
+    .work-index_menu {
+      position: relative;
+    }
+    .work-index_trigger,
+    .work-index_view {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.7rem 0.95rem;
+      border-radius: var(--radius-round);
+      color: color-mix(in srgb, var(--text) 60%, transparent);
+      white-space: nowrap;
+      & b {
+        font-weight: inherit;
+        color: var(--text);
+      }
+      &:hover,
+      &[aria-expanded="true"] {
+        background: color-mix(in srgb, var(--text) 8%, transparent);
+      }
+    }
+    .work-index_views {
+      display: flex;
+      margin-left: 0.25rem;
+      padding-left: 0.25rem;
+      border-left: var(--border-width) solid color-mix(in srgb, var(--text) 12%, transparent);
+    }
+    .work-index_view[aria-pressed="true"] {
+      background: var(--brand-500);
+      color: var(--brand-text);
+    }
+    .work-index_pop {
+      position: absolute;
+      bottom: calc(100% + 0.6rem);
+      left: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      width: 20rem;
+      padding: 0.6rem;
+      border-radius: 1.25rem;
+      background: color-mix(in srgb, var(--dark-800) 88%, transparent);
+      border: var(--border-width) solid color-mix(in srgb, var(--text) 12%, transparent);
+      backdrop-filter: blur(1.25rem);
+      -webkit-backdrop-filter: blur(1.25rem);
+      &[hidden] {
+        display: none;
+      }
+    }
+    .work-index_chip {
+      padding: 0.5rem 0.75rem 0.4rem;
+      border-radius: var(--radius-round);
+      background: color-mix(in srgb, var(--text) 7%, transparent);
+      color: var(--text);
+      font-family: var(--display-family);
+      font-size: 1rem;
+      line-height: 1;
+      text-transform: uppercase;
+      &[aria-pressed="true"] {
+        background: var(--brand-500);
+        color: var(--brand-text);
+      }
+    }
+    @media (width < 40rem) {
+      .work-index_trigger,
+      .work-index_view {
+        padding: 0.65rem 0.6rem;
+      }
+      .work-index_pop {
+        width: min(20rem, calc(100vw - 2rem));
+      }
+      .work-index_menu:nth-child(2) .work-index_pop {
+        left: auto;
+        right: -6rem;
+      }
+    }
+  }
+  ::view-transition-group(*) {
+    animation-duration: 0.45s;
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+</style>

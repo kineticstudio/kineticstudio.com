@@ -1,0 +1,399 @@
+---
+import MEDIA from "@/data/media.json";
+import KineticLogo from "@/components/content/KineticLogo.astro";
+import { WORK, INDUSTRIES } from "@/data/work.js";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** How many projects in the column. */
+  limit?: number;
+}
+
+const { render = true, limit = 16 } = Astro.props;
+const media = MEDIA as Record<string, { w: number; h: number; ground: string; video: boolean }>;
+const items = WORK.slice(0, limit);
+const groupOf = (w: (typeof WORK)[number]) => (INDUSTRIES.includes(w.industry) ? w.industry : "Other");
+const groups = [...INDUSTRIES, "Other"]
+  .map((g) => ({ name: g, items: WORK.filter((w) => groupOf(w) === g) }))
+  .filter((g) => g.items.length);
+const href = (w: (typeof WORK)[number]) => (w.case ? `/work/${w.slug}` : w.url);
+---
+
+{
+  render && (
+    <section class="focus_wrap" data-focus data-mode="projects">
+      <div class="focus_switch" role="tablist" aria-label="View">
+        <button class="focus_tab text-style-label" type="button" role="tab" data-mode-set="projects" aria-selected="true">Projects</button>
+        <button class="focus_tab text-style-label" type="button" role="tab" data-mode-set="catalog" aria-selected="false">Catalog</button>
+      </div>
+
+      <div class="focus_intro">
+        <p class="focus_line text-style-label">Brand and web design</p>
+        <p class="focus_line text-style-label">For the companies building what's next</p>
+      </div>
+
+      <ol class="focus_column">
+        <li class="focus_item is-logo">
+          <KineticLogo />
+          <p class="focus_hello text-style-label">Brand and bespoke websites. Scroll for the work.</p>
+        </li>
+        {items.map((w) => (
+          <li class="focus_item" style={`--ratio:${media[w.cover].w}/${media[w.cover].h};--ground:${media[w.cover].ground}`}>
+            <a class="focus_link" href={href(w)} target={w.case ? undefined : "_blank"} rel={w.case ? undefined : "noopener"} aria-label={w.name}>
+              <img class="focus_poster" src={`/media/${w.cover}.jpg`} alt="" loading="lazy" />
+              {media[w.cover].video && <video class="focus_video" data-src={`/media/${w.cover}.mp4`} muted loop playsinline preload="none" aria-hidden="true" />}
+            </a>
+            <p class="focus_tag">
+              <span>{w.name}</span>
+              <span class="focus_tag-meta">{w.does[0]}</span>
+            </p>
+          </li>
+        ))}
+      </ol>
+
+      <div class="focus_catalog" hidden>
+        <svg class="focus_wires" aria-hidden="true" />
+        <div class="focus_tree">
+          <p class="focus_node is-root" data-node="root">Catalog <b>{WORK.length}</b></p>
+          <ul class="focus_groups">
+            {groups.map((g) => (
+              <li class="focus_group">
+                <p class="focus_node" data-node={g.name} data-parent="root">{g.name} <b>{g.items.length}</b></p>
+                <ul class="focus_leaves">
+                  {g.items.map((w) => (
+                    <li>
+                      <a class="focus_leaf" href={href(w)} data-parent={g.name} target={w.case ? undefined : "_blank"} rel={w.case ? undefined : "noopener"}>
+                        <img src={`/media/${w.cover}.jpg`} alt="" loading="lazy" />
+                        <span>{w.name}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-focus]").forEach((root) => {
+    const items = [...root.querySelectorAll<HTMLElement>(".focus_item")];
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let active: HTMLElement | null = null;
+    let raf = 0;
+
+    // Depth of field: sharp at the centre of the screen, softer with distance.
+    const frame = () => {
+      raf = 0;
+      if (root.dataset.mode !== "projects") return;
+      const mid = innerHeight / 2;
+      let best: HTMLElement | null = null, bestD = Infinity;
+      for (const el of items) {
+        const r = el.getBoundingClientRect();
+        if (r.bottom < -200 || r.top > innerHeight + 200) continue;
+        const d = Math.abs(r.top + r.height / 2 - mid) / innerHeight;
+        el.style.setProperty("--blur", reduced ? "0px" : `${Math.min(14, d * 26).toFixed(1)}px`);
+        el.style.setProperty("--fade", (1 - Math.min(0.75, d * 1.1)).toFixed(3));
+        el.style.setProperty("--scale", (1 - Math.min(0.12, d * 0.16)).toFixed(3));
+        if (d < bestD) {
+          bestD = d;
+          best = el;
+        }
+      }
+      if (best !== active) {
+        active?.classList.remove("is-active");
+        active?.querySelector("video")?.pause();
+        active = best;
+        if (active) {
+          active.classList.add("is-active");
+          const v = active.querySelector<HTMLVideoElement>("video");
+          if (v && !reduced) {
+            if (!v.src) v.src = v.dataset.src!;
+            v.play().then(() => v.classList.add("is-on")).catch(() => {});
+          }
+          window.dispatchEvent(new CustomEvent("ks:sound", { detail: "hover" }));
+        }
+      }
+    };
+    const request = () => (raf ||= requestAnimationFrame(frame));
+    addEventListener("scroll", request, { passive: true });
+    addEventListener("resize", request);
+    request();
+
+    // Catalog: wires from each node to its parent, drawn from live positions.
+    const catalog = root.querySelector<HTMLElement>(".focus_catalog")!;
+    const wires = root.querySelector<SVGSVGElement>(".focus_wires")!;
+    const drawWires = () => {
+      const box = catalog.getBoundingClientRect();
+      wires.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
+      const at = (el: Element, side: "l" | "r") => {
+        const r = el.getBoundingClientRect();
+        return [(side === "l" ? r.left : r.right) - box.left, r.top + r.height / 2 - box.top];
+      };
+      let d = "";
+      catalog.querySelectorAll<HTMLElement>("[data-parent]").forEach((el) => {
+        const parent = catalog.querySelector(`[data-node="${el.dataset.parent}"]`);
+        if (!parent) return;
+        const [x1, y1] = at(parent, "r");
+        const [x2, y2] = at(el, "l");
+        const mx = (x1 + x2) / 2;
+        d += `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2} `;
+      });
+      wires.innerHTML = `<path d="${d}" />`;
+    };
+
+    root.querySelectorAll<HTMLButtonElement>("[data-mode-set]").forEach((b) =>
+      b.addEventListener("click", () => {
+        const mode = b.dataset.modeSet!;
+        const apply = () => {
+          root.dataset.mode = mode;
+          catalog.hidden = mode !== "catalog";
+          root.querySelectorAll("[data-mode-set]").forEach((t) => t.setAttribute("aria-selected", String(t === b)));
+          if (mode === "catalog") requestAnimationFrame(drawWires);
+          else request();
+        };
+        if (typeof document.startViewTransition === "function" && !reduced) document.startViewTransition(apply);
+        else apply();
+      }),
+    );
+    addEventListener("resize", () => root.dataset.mode === "catalog" && drawWires());
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .focus_wrap {
+      position: relative;
+      padding: 0 var(--site-margin);
+    }
+    .focus_switch {
+      position: fixed;
+      top: 4.6rem;
+      left: 50%;
+      translate: -50% 0;
+      z-index: 45;
+      display: flex;
+      gap: 0.2rem;
+      padding: 0.25rem;
+      border-radius: var(--radius-round);
+      background: color-mix(in srgb, var(--dark-800) 70%, transparent);
+      border: var(--border-width) solid color-mix(in srgb, var(--text) 12%, transparent);
+      backdrop-filter: blur(1rem);
+      -webkit-backdrop-filter: blur(1rem);
+    }
+    .focus_tab {
+      padding: 0.55rem 0.85rem;
+      border-radius: var(--radius-round);
+      color: color-mix(in srgb, var(--text) 60%, transparent);
+      &[aria-selected="true"] {
+        background: var(--text);
+        color: var(--background);
+      }
+    }
+    .focus_intro {
+      position: fixed;
+      inset: auto var(--site-margin) var(--space-5);
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      @media (width < 48rem) {
+        display: none;
+      }
+    }
+    .focus_line {
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .focus_column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14vh;
+      margin: 0;
+      padding: 38vh 0 40vh;
+    }
+    .focus_wrap[data-mode="catalog"] .focus_column {
+      display: none;
+    }
+    .focus_item {
+      position: relative;
+      width: min(40rem, 78vw);
+      filter: blur(var(--blur, 0px));
+      opacity: var(--fade, 1);
+      scale: var(--scale, 1);
+      will-change: filter;
+    }
+    .focus_item.is-logo {
+      width: min(46rem, 86vw);
+      will-change: auto;
+    }
+    .focus_hello {
+      margin: var(--space-5) 0 0;
+      text-align: center;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .focus_link {
+      position: relative;
+      display: block;
+      aspect-ratio: var(--ratio);
+      overflow: hidden;
+      border-radius: var(--radius-media);
+      background: var(--ground);
+      box-shadow: 0 2rem 4rem rgb(0 0 0 / 0.4);
+    }
+    .focus_poster,
+    .focus_video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .focus_video {
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      &.is-on {
+        opacity: 1;
+      }
+    }
+    .focus_tag {
+      position: absolute;
+      right: -0.75rem;
+      bottom: 1.25rem;
+      display: flex;
+      gap: 0.4rem;
+      margin: 0;
+      padding: 0.45rem 0.75rem;
+      border-radius: var(--radius-round);
+      background: var(--light-100);
+      color: var(--brand-text);
+      font-size: 0.875rem;
+      line-height: 1;
+      opacity: 0;
+      translate: 0.5rem 0;
+      transition: opacity 0.3s ease, translate 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .focus_tag-meta {
+      color: color-mix(in srgb, var(--brand-text) 45%, transparent);
+    }
+    .focus_item.is-active .focus_tag {
+      opacity: 1;
+      translate: 0 0;
+    }
+    .focus_catalog {
+      position: relative;
+      min-height: 100svh;
+      padding: 9rem 0 var(--section-space-medium);
+      &[hidden] {
+        display: none;
+      }
+    }
+    .focus_wires {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      & path {
+        fill: none;
+        stroke: color-mix(in srgb, var(--text) 18%, transparent);
+        stroke-width: 1;
+      }
+    }
+    .focus_tree {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: clamp(3rem, 8vw, 9rem);
+    }
+    .focus_groups {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+      margin: 0;
+    }
+    .focus_group {
+      display: flex;
+      align-items: center;
+      gap: clamp(3rem, 7vw, 8rem);
+    }
+    .focus_node {
+      flex: none;
+      margin: 0;
+      padding: 0.5rem 0.8rem;
+      border-radius: 0.6rem;
+      border: var(--border-width) solid color-mix(in srgb, var(--text) 18%, transparent);
+      background: var(--background);
+      font-size: 0.875rem;
+      white-space: nowrap;
+      & b {
+        margin-left: 0.3rem;
+        font-weight: inherit;
+        color: color-mix(in srgb, var(--text) 45%, transparent);
+      }
+      &.is-root {
+        background: var(--text);
+        color: var(--background);
+        & b {
+          color: color-mix(in srgb, var(--background) 55%, transparent);
+        }
+      }
+    }
+    .focus_leaves {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0;
+    }
+    .focus_leaf {
+      position: relative;
+      display: block;
+      width: 7.5rem;
+      aspect-ratio: 16 / 10;
+      overflow: hidden;
+      border-radius: 0.4rem;
+      background: var(--dark-700);
+      & img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: scale 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+      }
+      & span {
+        position: absolute;
+        inset: auto 0.3rem 0.3rem;
+        padding: 0.25rem 0.4rem;
+        border-radius: 0.3rem;
+        background: color-mix(in srgb, var(--dark-900) 75%, transparent);
+        font-size: 0.6875rem;
+        line-height: 1;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+      &:hover {
+        & img {
+          scale: 1.08;
+        }
+        & span {
+          opacity: 1;
+        }
+      }
+    }
+    @media (width < 62rem) {
+      .focus_tree,
+      .focus_group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-4);
+      }
+      .focus_wires {
+        display: none;
+      }
+    }
+  }
+</style>

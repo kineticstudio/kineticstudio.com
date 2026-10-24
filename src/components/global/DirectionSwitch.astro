@@ -1,0 +1,64 @@
+---
+// Review only: flips between the homepage directions. Remove before launch.
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+const directions = [
+  { href: "/", label: "Portal" },
+  { href: "/directions/lines", label: "Lines" },
+  { href: "/directions/focus", label: "Focus" },
+];
+---
+
+{
+  render && (
+    <nav class="direction_wrap" aria-label="Homepage directions">
+      <span class="direction_label text-style-label">Direction</span>
+      {directions.map((d) => (
+        <a class="direction_link text-style-label" href={d.href} aria-current={path === d.href ? "page" : undefined}>{d.label}</a>
+      ))}
+    </nav>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .direction_wrap {
+      position: fixed;
+      left: var(--space-4);
+      bottom: var(--space-4);
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      gap: 0.15rem;
+      padding: 0.25rem;
+      border-radius: var(--radius-round);
+      background: color-mix(in srgb, var(--dark-800) 80%, transparent);
+      border: var(--border-width) solid color-mix(in srgb, var(--text) 12%, transparent);
+      backdrop-filter: blur(1rem);
+      -webkit-backdrop-filter: blur(1rem);
+    }
+    .direction_label {
+      padding: 0 0.6rem;
+      color: color-mix(in srgb, var(--text) 45%, transparent);
+    }
+    .direction_link {
+      padding: 0.5rem 0.7rem;
+      border-radius: var(--radius-round);
+      color: color-mix(in srgb, var(--text) 70%, transparent);
+      &[aria-current="page"] {
+        background: var(--text);
+        color: var(--background);
+      }
+    }
+    @media (width < 40rem) {
+      .direction_label {
+        display: none;
+      }
+    }
+  }
+</style>

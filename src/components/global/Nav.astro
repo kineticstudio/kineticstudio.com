@@ -1,298 +1,165 @@
 ---
-import Icon from "@/components/media/Icon.astro";
-import logo from "@/assets/logo/logo.svg";
-import Button from "@/components/Button.astro";
-import { SITE_NAME, CONTACT_EMAIL } from "@/consts.ts";
+import lockup from "@/assets/brand/lockup-ink.svg?raw";
+import { SITE_NAME } from "@/consts.ts";
 
 interface Props {
   /** Set to `false` to omit the component. */
   render?: boolean;
-  /** Fix the nav over the page. */
-  overlap?: boolean;
+  /** Hide the lockup until the page hands it over (a hero that owns the logo). */
+  logoHidden?: boolean;
 }
 
-const { render = true, overlap = false } = Astro.props;
+const { render = true, logoHidden = false } = Astro.props;
+const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+const links = [
+  { href: "/work", label: "Work" },
+  { href: "/playground", label: "Playground" },
+  { href: "/about", label: "About" },
+];
 ---
 
 {
   render && (
-    <header class:list={["nav_wrap", overlap && "overlap"]}>
-      <div class="nav_inner">
-        <a class="nav_logo" href="/" aria-label={SITE_NAME}>
-          <Icon src={logo} variant="full-width" />
-        </a>
-        <button
-          class="nav_toggle"
-          type="button"
-          aria-label="Menu"
-          aria-expanded="false"
-          aria-controls="nav-menu"
-        >
-          <span class="nav_toggle_icon" />
+    <header class:list={["nav_wrap", logoHidden && "logo-hidden"]}>
+      <a class="nav_logo" href="/" aria-label={SITE_NAME} set:html={lockup} />
+      <nav class="nav_menu" aria-label="Main">
+        <ul class="nav_links">
+          {links.map((l) => (
+            <li>
+              <a class="nav_link text-style-label" href={l.href} aria-current={path.startsWith(l.href) ? "page" : undefined}>
+                {l.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <button class="nav_sound text-style-label" type="button" aria-pressed="false" data-sound-toggle aria-label="Sound">
+          <span class="nav_sound_bars" aria-hidden="true"><i /><i /><i /><i /></span>
         </button>
-        <nav class="nav_menu" id="nav-menu" aria-label="Main">
-          <div class="nav_menu_inner">
-            <ul class="nav_links">
-              <li><Button element="link" href={`mailto:${CONTACT_EMAIL}`} emphasis="secondary">Contact</Button></li>
-            </ul>
-          </div>
-        </nav>
-      </div>
+        <a class="nav_contact" href="/contact" aria-current={path.startsWith("/contact") ? "page" : undefined}>Contact</a>
+      </nav>
     </header>
   )
 }
 
-{/* No-JS fallback */}
-<noscript>
-  <style>
-    .nav_toggle {
-      display: none;
-    }
-    .nav_menu {
-      grid-template-rows: 1fr;
-      visibility: visible;
-    }
-    .nav_menu_inner {
-      opacity: 1;
-    }
-  </style>
-</noscript>
-
-<script>
-  const nav = document.querySelector<HTMLElement>(".nav_wrap");
-  const toggle = nav?.querySelector<HTMLButtonElement>(".nav_toggle");
-
-  if (nav && toggle) {
-    const setOpen = (open: boolean) => {
-      nav.classList.toggle("open", open);
-      toggle.setAttribute("aria-expanded", String(open));
-    };
-
-    toggle.addEventListener("click", () => {
-      setOpen(toggle.getAttribute("aria-expanded") !== "true");
-    });
-
-    nav.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => setOpen(false));
-    });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && nav.classList.contains("open")) {
-        setOpen(false);
-        toggle.focus();
-      }
-    });
-
-    document.addEventListener("click", (event) => {
-      const target = event.target;
-      if (!nav.classList.contains("open") || !(target instanceof Node)) return;
-      if (!nav.contains(target)) setOpen(false);
-    });
-
-    window
-      .matchMedia("(width >= 48rem)")
-      .addEventListener("change", (event) => {
-        if (event.matches) setOpen(false);
-      });
-  }
-</script>
-
 <style is:global>
   @layer components {
     .nav_wrap {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      justify-content: center;
-      padding-inline: var(--site-margin);
-      background-color: var(--background);
-      color: var(--text);
-      border-bottom: var(--border-width) solid var(--border);
-
-      &.overlap {
-        /* Kinetic: the bar sits over the hero and scrolls away with it */
-        position: absolute;
-        inset-inline: 0;
-        background-color: transparent;
-        border-bottom: 0;
-      }
-    }
-
-    .nav_inner {
-      width: 100%;
-      max-width: var(--max-width-main);
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 50;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 0 var(--space-6);
+      gap: var(--space-4);
+      padding: var(--space-4) var(--site-margin);
+      color: var(--text);
+      pointer-events: none;
+      & > * {
+        pointer-events: auto;
+      }
     }
-
-    /* Bar height */
-    .nav_logo,
-    .nav_toggle {
-      min-height: var(--nav-height);
-    }
-
     .nav_logo {
+      display: block;
+      width: 8.5rem;
+      color: var(--text);
+      transition: opacity 0.4s ease;
+      & svg {
+        width: 100%;
+        height: auto;
+      }
+    }
+    .nav_wrap.logo-hidden .nav_logo {
+      opacity: 0;
+    }
+    .nav_menu {
       display: flex;
       align-items: center;
-      width: 9.7rem;
-      transition: opacity var(--hover-duration) var(--hover-ease);
-      @media (hover: hover) {
-        &:hover {
-          opacity: 0.6;
-        }
-      }
+      gap: var(--space-2);
+      padding: 0.3rem;
+      border-radius: var(--radius-round);
+      background: color-mix(in srgb, var(--background) 55%, transparent);
+      backdrop-filter: blur(1rem);
+      -webkit-backdrop-filter: blur(1rem);
     }
-
-    .nav_toggle {
-      --_icon-width: 1.5rem;
-      --_bar-gap: 0.5rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 2.75rem;
-      margin-right: calc((2.75rem - var(--_icon-width)) / -2);
-      color: inherit;
-      border-radius: var(--radius-small);
-      transition: opacity var(--hover-duration) var(--hover-ease);
-      @media (hover: hover) {
-        &:hover {
-          opacity: 0.6;
-        }
-      }
-    }
-
-    .nav_toggle_icon {
-      position: relative;
-      display: block;
-      width: var(--_icon-width);
-      height: calc(var(--_bar-gap) + var(--border-width));
-      &::before,
-      &::after {
-        content: "";
-        position: absolute;
-        inset-inline: 0;
-        height: var(--border-width);
-        background-color: currentcolor;
-        transition: transform var(--open-duration) var(--open-ease);
-      }
-      &::before {
-        top: 0;
-      }
-      &::after {
-        top: var(--_bar-gap);
-      }
-    }
-
-    .nav_wrap.open .nav_toggle_icon {
-      &::before {
-        transform: translateY(calc(var(--_bar-gap) / 2)) rotate(45deg);
-      }
-      &::after {
-        transform: translateY(calc(var(--_bar-gap) / -2)) rotate(-45deg);
-      }
-    }
-
-    .nav_menu {
-      position: absolute;
-      top: 100%;
-      inset-inline: 0;
-      display: grid;
-      grid-template-rows: 0fr;
-      visibility: hidden;
-      max-height: calc(100svh - var(--nav-height));
-      overflow-x: clip;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      background-color: var(--background);
-      border-bottom: var(--border-width) solid var(--border);
-      transition:
-        grid-template-rows var(--open-duration) var(--open-ease),
-        visibility var(--open-duration) var(--open-ease);
-    }
-
-    .nav_menu_inner {
-      overflow: hidden;
-      opacity: 0;
-      transition: opacity var(--open-duration) var(--open-ease);
-    }
-
-    .nav_wrap.open .nav_menu {
-      grid-template-rows: 1fr;
-      visibility: visible;
-    }
-
-    .nav_wrap.open .nav_menu_inner {
-      opacity: 1;
-      overflow-y: auto;
-    }
-
     .nav_links {
       display: flex;
-      flex-direction: column;
-      padding: var(--space-2) var(--site-margin) var(--space-4);
-      font-size: var(--text-main);
-      font-weight: var(--primary-medium);
-      & > li + li {
-        border-top: var(--border-width) solid var(--border);
-      }
+      margin: 0;
     }
-
     .nav_link {
       display: block;
-      padding-block: var(--space-3);
-      color: color-mix(in lab, currentcolor 60%, transparent);
-      text-decoration: none;
-      text-underline-offset: 0.4em;
-      text-decoration-thickness: var(--border-width);
-      transition: color var(--hover-duration) var(--hover-ease);
+      padding: 0.6rem 0.8rem;
+      border-radius: var(--radius-round);
+      color: color-mix(in srgb, var(--text) 70%, transparent);
+      transition: color var(--hover-duration) var(--hover-ease), background-color var(--hover-duration) var(--hover-ease);
+      &:hover,
       &[aria-current="page"] {
         color: var(--text);
-      }
-      @media (hover: hover) {
-        &:hover {
-          color: var(--text);
-        }
+        background: color-mix(in srgb, var(--text) 8%, transparent);
       }
     }
-
-    @media (width >= 48rem) {
-      .nav_toggle {
+    .nav_sound {
+      display: grid;
+      place-items: center;
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 50%;
+      color: color-mix(in srgb, var(--text) 70%, transparent);
+      &:hover {
+        color: var(--text);
+      }
+    }
+    .nav_sound_bars {
+      display: flex;
+      align-items: center;
+      gap: 0.125rem;
+      height: 0.75rem;
+      & i {
+        width: 0.125rem;
+        height: 25%;
+        background: currentColor;
+        border-radius: 1rem;
+        transition: height 0.3s ease;
+      }
+    }
+    .nav_sound[aria-pressed="true"] .nav_sound_bars i {
+      animation: nav-sound 0.9s ease-in-out infinite alternate;
+      &:nth-child(2) { animation-delay: -0.3s; }
+      &:nth-child(3) { animation-delay: -0.6s; }
+      &:nth-child(4) { animation-delay: -0.15s; }
+    }
+    @keyframes nav-sound {
+      from { height: 20%; }
+      to { height: 100%; }
+    }
+    .nav_contact {
+      display: block;
+      padding: 0.55rem 1.1rem 0.45rem;
+      border-radius: var(--radius-round);
+      background: var(--brand-500);
+      color: var(--brand-text);
+      font-family: var(--display-family);
+      font-size: 1.125rem;
+      line-height: 1;
+      text-transform: uppercase;
+      transition: transform var(--hover-duration) var(--hover-ease);
+      &:hover {
+        transform: scale(1.04);
+      }
+    }
+    @media (width < 40rem) {
+      .nav_logo {
+        width: 6.5rem;
+      }
+      .nav_links .nav_link {
+        padding-inline: 0.5rem;
+      }
+      .nav_sound {
         display: none;
       }
-
-      .nav_menu {
-        position: static;
-        display: block;
-        visibility: visible;
-        background-color: transparent;
-        border-bottom: 0;
-      }
-
-      .nav_menu_inner {
-        overflow: visible;
-        opacity: 1;
-      }
-
-      .nav_links {
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: center;
-        padding: 0;
-        gap: var(--space-4);
-        font-size: var(--text-small);
-        & > li + li {
-          border-top: 0;
-        }
-      }
-
-      .nav_link {
-        padding-block: 0;
-        &[aria-current="page"] {
-          text-decoration: underline;
-        }
+    }
+    @media (width < 30rem) {
+      .nav_links li:nth-child(2) {
+        display: none;
       }
     }
   }

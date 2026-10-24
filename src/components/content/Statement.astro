@@ -1,0 +1,74 @@
+---
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The sentence, word by word lit as it scrolls through. */
+  text?: string;
+  /** Small label above. */
+  eyebrow?: string;
+  /** Utility classes. */
+  class?: string;
+}
+
+const {
+  render = true,
+  text = "Kinetic Studio crafts unforgettable digital worlds, where storytelling, motion and design come together to feel alive, not assembled.",
+  eyebrow = "The studio",
+  class: className,
+} = Astro.props;
+const words = text.split(" ");
+---
+
+{
+  render && (
+    <div class:list={["statement_wrap", className]} data-statement>
+      <p class="statement_eyebrow text-style-label">{eyebrow}</p>
+      <p class="statement_text text-style-h2">
+        {words.map((w, i) => (
+          <span class="statement_word" style={`--i:${i}`}>{w} </span>
+        ))}
+      </p>
+    </div>
+  )
+}
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Native scroll; the words only follow it.
+  document.querySelectorAll<HTMLElement>("[data-statement]").forEach((root) => {
+    const words = root.querySelectorAll(".statement_word");
+    gsap.matchMedia().add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.fromTo(words, { opacity: 0.14 }, {
+        opacity: 1,
+        stagger: 0.08,
+        ease: "none",
+        scrollTrigger: { trigger: root, start: "top 80%", end: "bottom 45%", scrub: true },
+      });
+    });
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .statement_wrap {
+      display: grid;
+      grid-template-columns: 1fr 4fr;
+      gap: var(--space-6);
+      width: 100%;
+      @media (width < 48rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .statement_eyebrow {
+      margin: 0.6em 0 0;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .statement_text {
+      margin: 0;
+      max-width: 22ch;
+    }
+  }
+</style>

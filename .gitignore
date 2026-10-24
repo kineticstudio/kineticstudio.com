@@ -35,3 +35,6 @@ public/videos/
 
 # the website editor's draft workspace (npm run edit, or the Studio's Website tab)
 .studio/
+
+# experiment recordings (scripts/capture-experiments.mjs)
+scripts/.captures/

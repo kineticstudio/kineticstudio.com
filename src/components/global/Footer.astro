@@ -1,7 +1,6 @@
 ---
-import Icon from "@/components/media/Icon.astro";
-import logo from "@/assets/logo/logo.svg";
-import { SITE_NAME } from "@/consts.ts";
+import mark from "@/assets/brand/mark-ink.svg?raw";
+import { CONTACT_EMAIL } from "@/consts.ts";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -9,117 +8,126 @@ interface Props {
 }
 
 const { render = true } = Astro.props;
+const year = new Date().getFullYear();
 ---
 
 {
   render && (
     <footer class="footer_wrap">
-      <div class="footer_inner">
-        <div class="footer_top">
-          <a class="footer_logo" href="/" aria-label={SITE_NAME}>
-            <Icon src={logo} variant="full-width" />
-          </a>
-          <nav aria-label="Footer">
-            <ul class="footer_links">
-              <li>
-                <a class="footer_link" href="/">
-                  Home
-                </a>
-              </li>
-              <li>
-                <a class="footer_link" href="/example-components">
-                  Example Components
-                </a>
-              </li>
-            </ul>
-          </nav>
-        </div>
-        <div class="footer_bottom">
-          <p class="footer_copyright text-style-small">
-            &copy; <span id="year">{new Date().getFullYear()}</span>&#160;
-            {SITE_NAME}
-          </p>
-        </div>
+      <div class="footer_cta">
+        <p class="footer_eyebrow text-style-label">Have something in mind?</p>
+        <a class="footer_big text-style-display" href="/contact">
+          <span>Start a</span> <span>project</span>
+          <span class="footer_arrow" aria-hidden="true">↗</span>
+        </a>
+      </div>
+      <div class="footer_bar">
+        <span class="footer_mark" set:html={mark} aria-hidden="true" />
+        <a class="footer_link text-style-label" href={`mailto:${CONTACT_EMAIL}`} data-copy={CONTACT_EMAIL}>{CONTACT_EMAIL}</a>
+        <ul class="footer_links">
+          <li><a class="footer_link text-style-label" href="/work">Work</a></li>
+          <li><a class="footer_link text-style-label" href="/playground">Playground</a></li>
+          <li><a class="footer_link text-style-label" href="/about">About</a></li>
+        </ul>
+        <p class="footer_meta text-style-label">© {year} Kinetic Studio</p>
       </div>
     </footer>
   )
 }
 
 <script>
-  const year = document.querySelector<HTMLSpanElement>("#year");
-
-  if (year) {
-    year.textContent = new Date().getFullYear().toString();
-  }
+  // A nugget: clicking the address copies it, and says so.
+  document.querySelectorAll<HTMLAnchorElement>("[data-copy]").forEach((a) => {
+    a.addEventListener("click", async (event) => {
+      if (event.metaKey || event.ctrlKey) return;
+      try {
+        await navigator.clipboard.writeText(a.dataset.copy ?? "");
+        event.preventDefault();
+        const text = a.textContent;
+        a.textContent = "Copied to clipboard";
+        window.dispatchEvent(new CustomEvent("ks:sound", { detail: "tick" }));
+        setTimeout(() => (a.textContent = text), 1600);
+      } catch {}
+    });
+  });
 </script>
 
 <style is:global>
   @layer components {
     .footer_wrap {
-      display: flex;
-      justify-content: center;
-      padding-block: var(--section-space-small);
-      padding-inline: var(--site-margin);
-      background-color: var(--background);
+      position: relative;
+      margin-top: auto;
+      padding: var(--section-space-large) var(--site-margin) var(--space-5);
+      border-top: var(--border-width) solid var(--grey-300);
+      background: var(--background);
       color: var(--text);
-      border-top: var(--border-width) solid var(--border);
     }
-
-    .footer_inner {
-      width: 100%;
-      max-width: var(--max-width-main);
+    .footer_cta {
       display: flex;
       flex-direction: column;
-      gap: var(--space-6);
+      gap: var(--space-4);
+      padding-bottom: var(--section-space-medium);
     }
-
-    .footer_top {
+    .footer_eyebrow {
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .footer_big {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      column-gap: 0.18em;
+      color: var(--text);
+      font-size: clamp(4.5rem, 15vw, 15rem);
+      line-height: 0.82;
+      transition: color 0.3s ease;
+      &:hover {
+        color: var(--brand-500);
+      }
+    }
+    .footer_arrow {
+      font-family: var(--primary-family);
+      font-size: 0.5em;
+      line-height: 1;
+      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .footer_big:hover .footer_arrow {
+      transform: translate(0.12em, -0.12em);
+    }
+    .footer_bar {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      justify-content: space-between;
       gap: var(--space-4) var(--space-6);
+      padding-top: var(--space-5);
+      border-top: var(--border-width) solid var(--grey-300);
     }
-
-    .footer_logo {
-      display: block;
-      width: 7.5rem;
-      max-width: 100%;
-      transition: opacity var(--hover-duration) var(--hover-ease);
-      @media (hover: hover) {
-        &:hover {
-          opacity: 0.6;
-        }
+    .footer_mark {
+      width: 1.75rem;
+      color: var(--sage-300);
+      & svg {
+        width: 100%;
+        height: auto;
       }
     }
-
     .footer_links {
       display: flex;
-      flex-wrap: wrap;
-      align-items: center;
       gap: var(--space-4);
-      font-size: var(--text-small);
-      font-weight: var(--primary-medium);
+      margin: 0 0 0 auto;
     }
-
     .footer_link {
-      color: var(--text-2);
-      text-decoration: none;
-      transition: color var(--hover-duration) var(--hover-ease);
-      @media (hover: hover) {
-        &:hover {
-          color: var(--text);
-        }
+      color: color-mix(in srgb, var(--text) 70%, transparent);
+      &:hover {
+        color: var(--text);
       }
     }
-
-    .footer_bottom {
-      padding-top: var(--space-4);
-      border-top: var(--border-width) solid var(--border);
+    .footer_meta {
+      color: color-mix(in srgb, var(--text) 40%, transparent);
     }
-
-    .footer_copyright {
-      color: var(--text-2);
+    @media (width < 48rem) {
+      .footer_links {
+        margin-left: 0;
+        width: 100%;
+      }
     }
   }
 </style>

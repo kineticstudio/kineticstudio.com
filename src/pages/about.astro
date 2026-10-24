@@ -1,0 +1,17 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import Section from "@/components/wrapper/Section.astro";
+import AboutStudio from "@/components/section/AboutStudio.astro";
+import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
+import ClientWall from "@/components/content/ClientWall.astro";
+---
+
+<Layout title="About" description="Kinetic Studio is led by Hunter Thompson: award-winning creative direction, realized with flagship AI.">
+  <AboutStudio />
+  <Section paddingTop="large">
+    <AwardsLaurels heading="Thirteen years of craft" lead="Webby, Awwwards and SXSW recognition, 119 websites and more than 60 clients, from first-time founders to Anthropic and Google." />
+  </Section>
+  <Section paddingTop="medium" paddingBottom="large">
+    <ClientWall />
+  </Section>
+</Layout>

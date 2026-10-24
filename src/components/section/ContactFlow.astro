@@ -1,0 +1,340 @@
+---
+import markRaw from "@/assets/brand/mark-ink.svg?raw";
+import { CONTACT_EMAIL } from "@/consts.ts";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+const stripes = markRaw.match(/ d="([^"]+)"/)![1].split("M").filter(Boolean).map((s) => "M" + s.trim()).reverse();
+
+const steps = [
+  { key: "what", q: "What can we make together?", hint: "Pick as many as you like.", multi: true,
+    options: ["Brand", "Website", "Product", "Launch video", "Ongoing retainer", "Something else"] },
+  { key: "when", q: "When would you like to launch?", hint: "A rough idea is fine.",
+    options: ["As soon as possible", "In 1 to 3 months", "In 3 to 6 months", "Just exploring"] },
+  { key: "budget", q: "What budget are you working with?", hint: "So we can shape the right scope.",
+    options: ["Under $25k", "$25k to $50k", "$50k to $100k", "$100k and up", "Not sure yet"] },
+];
+---
+
+{
+  render && (
+    <section class="contact_wrap" data-contact>
+      <div class="contact_side">
+        <svg class="contact_mark" viewBox="397 426 1206.2 1148" aria-hidden="true">
+          {stripes.map((d, i) => <path class="contact_stripe" d={d} style={`--i:${i}`} />)}
+        </svg>
+        <p class="contact_direct text-style-label">
+          Rather write?<br /><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+        </p>
+      </div>
+
+      <form class="contact_form" novalidate>
+        <div class="contact_progress text-style-label"><span data-step-n>01</span> / 04</div>
+
+        {steps.map((s, i) => (
+          <fieldset class="contact_step" data-step={i} hidden={i !== 0}>
+            <legend class="contact_q text-style-h1">{s.q}</legend>
+            <p class="contact_hint text-style-label">{s.hint}</p>
+            <div class="contact_options">
+              {s.options.map((o, j) => (
+                <label class="contact_option">
+                  <input type={s.multi ? "checkbox" : "radio"} name={s.key} value={o} />
+                  <span><kbd>{j + 1}</kbd>{o}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ))}
+
+        <fieldset class="contact_step" data-step="3" hidden>
+          <legend class="contact_q text-style-h1">Tell us about it</legend>
+          <p class="contact_hint text-style-label">Hunter reads every one, and replies within a day.</p>
+          <div class="contact_fields">
+            <label class="contact_field"><span class="text-style-label">Name</span><input name="name" autocomplete="name" required /></label>
+            <label class="contact_field"><span class="text-style-label">Email</span><input name="email" type="email" autocomplete="email" required /></label>
+            <label class="contact_field"><span class="text-style-label">Company</span><input name="company" autocomplete="organization" /></label>
+            <label class="contact_field"><span class="text-style-label">Website</span><input name="site" type="url" placeholder="https://" /></label>
+            <label class="contact_field is-wide"><span class="text-style-label">The project</span><textarea name="message" rows="4" placeholder="What you're building, and what success looks like." /></label>
+          </div>
+        </fieldset>
+
+        <div class="contact_done" hidden>
+          <p class="contact_q text-style-h1">Thank you.</p>
+          <p class="contact_hint text-style-label">Your email app has the note ready to send. If it didn't open, write to {CONTACT_EMAIL}.</p>
+        </div>
+
+        <div class="contact_nav">
+          <button class="contact_back text-style-label" type="button" data-back hidden>← Back</button>
+          <button class="contact_next" type="submit" data-next>Continue <span aria-hidden="true">→</span></button>
+        </div>
+      </form>
+    </section>
+  )
+}
+
+<script>
+  import { CONTACT_EMAIL } from "@/consts.ts";
+
+  document.querySelectorAll<HTMLElement>("[data-contact]").forEach((root) => {
+    const form = root.querySelector("form")!;
+    const steps = [...root.querySelectorAll<HTMLFieldSetElement>("[data-step]")];
+    const stripes = root.querySelectorAll(".contact_stripe");
+    const back = root.querySelector<HTMLButtonElement>("[data-back]")!;
+    const next = root.querySelector<HTMLButtonElement>("[data-next]")!;
+    const n = root.querySelector("[data-step-n]")!;
+    const done = root.querySelector<HTMLElement>(".contact_done")!;
+    let at = 0;
+
+    const answered = (i: number) => {
+      const s = steps[i];
+      if (i < 3) return !!s.querySelector("input:checked");
+      const name = s.querySelector<HTMLInputElement>("[name=name]")!;
+      const email = s.querySelector<HTMLInputElement>("[name=email]")!;
+      return name.value.trim() !== "" && email.checkValidity() && email.value !== "";
+    };
+    const show = (i: number) => {
+      at = i;
+      steps.forEach((s, j) => (s.hidden = j !== i));
+      back.hidden = i === 0;
+      n.textContent = String(i + 1).padStart(2, "0");
+      next.firstChild!.textContent = i === steps.length - 1 ? "Send " : "Continue ";
+      stripes.forEach((p, j) => p.classList.toggle("is-lit", j <= i));
+      next.disabled = !answered(i);
+      steps[i].querySelector<HTMLElement>("input, textarea")?.focus({ preventScroll: true });
+      window.dispatchEvent(new CustomEvent("ks:sound", { detail: "tick" }));
+    };
+
+    form.addEventListener("input", () => (next.disabled = !answered(at)));
+    form.addEventListener("change", (e) => {
+      const t = e.target as HTMLInputElement;
+      // A single answer moves straight on.
+      if (t.type === "radio") setTimeout(() => show(at + 1), 260);
+    });
+    back.addEventListener("click", () => show(at - 1));
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!answered(at)) return;
+      if (at < steps.length - 1) return show(at + 1);
+      const data = new FormData(form);
+      const body = [
+        `What: ${data.getAll("what").join(", ")}`,
+        `When: ${data.get("when")}`,
+        `Budget: ${data.get("budget")}`,
+        `Company: ${data.get("company") || ""}`,
+        `Website: ${data.get("site") || ""}`,
+        "",
+        String(data.get("message") || ""),
+        "",
+        `${data.get("name")}, ${data.get("email")}`,
+      ].join("\n");
+      const subject = `New project: ${data.get("company") || data.get("name")}`;
+      location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      steps.forEach((s) => (s.hidden = true));
+      root.querySelector<HTMLElement>(".contact_nav")!.hidden = true;
+      done.hidden = false;
+      stripes.forEach((p) => p.classList.add("is-lit"));
+      window.dispatchEvent(new CustomEvent("ks:sound", { detail: "open" }));
+    });
+
+    // Number keys pick an answer on the choice steps.
+    document.addEventListener("keydown", (e) => {
+      if (at > 2 || e.metaKey || e.ctrlKey || (e.target as HTMLElement).closest("input[type=text], textarea")) return;
+      const k = Number(e.key);
+      const box = steps[at].querySelectorAll<HTMLInputElement>("input")[k - 1];
+      if (box) box.click();
+    });
+
+    show(0);
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .contact_wrap {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: var(--space-8);
+      min-height: 100svh;
+      padding: var(--section-space-nav-overlap) var(--site-margin) var(--section-space-small);
+      @media (width < 62rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .contact_side {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--space-6);
+      @media (width < 62rem) {
+        flex-direction: row;
+        align-items: flex-end;
+      }
+    }
+    .contact_mark {
+      width: min(20rem, 60%);
+      @media (width < 62rem) {
+        width: 6rem;
+      }
+    }
+    .contact_stripe {
+      fill: var(--dark-700);
+      transition: fill 0.6s ease;
+      transition-delay: calc(var(--i) * 0.03s);
+      &.is-lit {
+        fill: var(--sage-300);
+      }
+      &.is-lit:last-child {
+        fill: var(--brand-500);
+      }
+    }
+    .contact_direct {
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+      & a {
+        color: var(--text);
+        text-decoration: none;
+      }
+    }
+    .contact_form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+    .contact_progress {
+      color: var(--brand-500);
+    }
+    .contact_step {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      &[hidden] {
+        display: none;
+      }
+    }
+    .contact_q {
+      margin: 0;
+      padding: 0;
+      max-width: 14ch;
+    }
+    .contact_hint {
+      margin: var(--space-4) 0 var(--space-6);
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .contact_options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .contact_option {
+      cursor: pointer;
+      & input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      & span {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.9rem 1.2rem 0.8rem;
+        border-radius: var(--radius-round);
+        border: var(--border-width) solid color-mix(in srgb, var(--text) 20%, transparent);
+        font-family: var(--display-family);
+        font-size: clamp(1.25rem, 2vw, 1.75rem);
+        line-height: 1;
+        text-transform: uppercase;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      }
+      & kbd {
+        font-family: var(--mono-family);
+        font-size: 0.6875rem;
+        opacity: 0.45;
+      }
+      &:hover span {
+        border-color: var(--text);
+      }
+      & input:checked + span {
+        background: var(--brand-500);
+        border-color: var(--brand-500);
+        color: var(--brand-text);
+      }
+      & input:focus-visible + span {
+        outline: var(--focus-width) solid var(--text);
+        outline-offset: var(--focus-offset);
+      }
+    }
+    .contact_fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-5);
+      @media (width < 40rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .contact_field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      &.is-wide {
+        grid-column: 1 / -1;
+      }
+      & span {
+        color: color-mix(in srgb, var(--text) 55%, transparent);
+      }
+      & input,
+      & textarea {
+        width: 100%;
+        padding: 0.6rem 0;
+        border: 0;
+        border-bottom: var(--border-width) solid color-mix(in srgb, var(--text) 25%, transparent);
+        background: transparent;
+        color: var(--text);
+        font-size: 1.25rem;
+        resize: vertical;
+        &:focus {
+          outline: 0;
+          border-bottom-color: var(--brand-500);
+        }
+      }
+    }
+    .contact_nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      margin-top: auto;
+      &[hidden] {
+        display: none;
+      }
+    }
+    .contact_back {
+      color: color-mix(in srgb, var(--text) 60%, transparent);
+      &:hover {
+        color: var(--text);
+      }
+    }
+    .contact_next {
+      margin-left: auto;
+      padding: 1rem 1.6rem 0.85rem;
+      border-radius: var(--radius-round);
+      background: var(--brand-500);
+      color: var(--brand-text);
+      font-family: var(--display-family);
+      font-size: 1.5rem;
+      line-height: 1;
+      text-transform: uppercase;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      &:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+      }
+      &:not(:disabled):hover {
+        transform: scale(1.03);
+      }
+    }
+  }
+</style>

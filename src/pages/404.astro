@@ -11,18 +11,14 @@ import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
 <Layout
   title="Page not found"
   description="The page you're looking for doesn't exist."
-  overlap={true}
 >
   <Section paddingTop="navoverlap" paddingBottom="navoverlap" class="flex-grow">
     <ContentWrapper centered={true}>
-      <Heading variant="h3" tag="h1" maxWidth={17}
-        >This is the 404 page.<br></Heading
-      >
-      <Paragraph variant="large" maxWidth={36}
-        >Yes</Paragraph
-      >
+      <Heading variant="h1" tag="h1" maxWidth={12}>Lost between the lines</Heading>
+      <Paragraph variant="large" maxWidth={36}>This page doesn't exist, but the work does.</Paragraph>
       <ButtonWrapper>
         <Button element="link" href="/">Back to home</Button>
+        <Button element="link" href="/playground" emphasis="secondary">Visit the Playground</Button>
       </ButtonWrapper>
     </ContentWrapper>
   </Section>

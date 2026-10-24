@@ -1,0 +1,363 @@
+---
+import markRaw from "@/assets/brand/mark-ink.svg?raw";
+import MEDIA from "@/data/media.json";
+import { WORK } from "@/data/work.js";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The line under the mark. */
+  heading?: string;
+  /** Media ids that cycle inside the mark. */
+  reel?: string[];
+  /** How many projects float in the space behind it. */
+  count?: number;
+}
+
+const {
+  render = true,
+  heading = "Captivating websites that tell compelling stories",
+  reel = ["rime-circles", "epirus-film", "play-cube", "cambium-rings", "play-stack-chroma", "new-era-coins"],
+  count = 16,
+} = Astro.props;
+
+const markD = markRaw.match(/ d="([^"]+)"/)![1];
+const media = MEDIA as Record<string, { w: number; h: number; ground: string; video: boolean }>;
+const cards = WORK.filter((w) => media[w.cover]?.video).slice(0, count);
+
+// A spread that never blocks the centre, so the camera flies between pieces.
+let seed = 7;
+const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const placed = cards.map((w, i) => {
+  const angle = i * 2.399 + rand() * 0.6;
+  const radius = 0.26 + rand() * 0.22;
+  return {
+    w,
+    x: Math.cos(angle) * radius * 100,
+    y: Math.sin(angle) * radius * 62,
+    z: -(i + 1) * 460,
+    scale: 0.8 + rand() * 0.5,
+  };
+});
+---
+
+{
+  render && (
+    <section class="portal_wrap" data-portal>
+      <div class="portal_stage">
+        <div class="portal_field" aria-hidden="true">
+          <div class="portal_camera">
+            {placed.map((p) => (
+              <a
+                class="portal_card"
+                href={p.w.case ? `/work/${p.w.slug}` : p.w.url}
+                tabindex="-1"
+                data-z={p.z}
+                style={`--x:${p.x.toFixed(1)}vw;--y:${p.y.toFixed(1)}vh;--z:${p.z}px;--s:${p.scale.toFixed(2)};--ratio:${media[p.w.cover].w}/${media[p.w.cover].h}`}
+              >
+                <video data-src={`/media/${p.w.cover}.mp4`} poster={`/media/${p.w.cover}.jpg`} muted loop playsinline preload="none" />
+                <span class="portal_card-name">{p.w.name}</span>
+                <span class="portal_card-meta">{p.w.industry}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div class="portal_mask">
+          {reel.map((id, i) => (
+            <video
+              class:list={["portal_reel", i === 0 && "is-on"]}
+              src={i === 0 ? `/media/${id}.mp4` : undefined}
+              data-src={`/media/${id}.mp4`}
+              poster={`/media/${id}.jpg`}
+              muted
+              loop
+              playsinline
+              preload={i === 0 ? "auto" : "none"}
+              aria-hidden="true"
+            />
+          ))}
+        </div>
+
+        <svg class="portal_defs" width="0" height="0" aria-hidden="true">
+          <clipPath id="portal-clip" clipPathUnits="objectBoundingBox">
+            <path class="portal_clip-path" transform="scale(0.000829 0.000871) translate(-397 -426)" d={markD} data-d={markD} />
+          </clipPath>
+        </svg>
+
+        <div class="portal_intro">
+          <h1 class="portal_heading text-style-h4">
+            {heading.split(" ").map((w) => (
+              <span class="portal_heading-word"><span>{w}</span></span>
+            ))}
+          </h1>
+          <p class="portal_hint text-style-label">Scroll to enter</p>
+        </div>
+
+        <p class="portal_outro text-style-label">Selected work</p>
+        <div class="portal_progress" aria-hidden="true"><i /></div>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+  import { morph } from "@/scripts/mark.js";
+  gsap.registerPlugin(ScrollTrigger);
+
+  document.querySelectorAll<HTMLElement>("[data-portal]").forEach((root) => {
+    const stage = root.querySelector<HTMLElement>(".portal_stage")!;
+    const mask = root.querySelector<HTMLElement>(".portal_mask")!;
+    const camera = root.querySelector<HTMLElement>(".portal_camera")!;
+    const field = root.querySelector<HTMLElement>(".portal_field")!;
+    const clip = root.querySelector<SVGPathElement>(".portal_clip-path")!;
+    const intro = root.querySelector<HTMLElement>(".portal_intro")!;
+    const outro = root.querySelector<HTMLElement>(".portal_outro")!;
+    const bar = root.querySelector<HTMLElement>(".portal_progress i")!;
+    const cards = [...root.querySelectorAll<HTMLElement>(".portal_card")].map((el) => ({
+      el,
+      z: Number(el.dataset.z),
+      video: el.querySelector("video")!,
+      playing: false,
+    }));
+    const reels = [...root.querySelectorAll<HTMLVideoElement>(".portal_reel")];
+    const shape = morph(clip.dataset.d!);
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const nav = document.querySelector(".nav_wrap");
+
+    // The reel inside the mark: one loop after another.
+    let reelIndex = 0;
+    reels[0].play().catch(() => {});
+    const cycle = setInterval(() => {
+      if (document.hidden || mask.style.opacity === "0") return;
+      const next = (reelIndex + 1) % reels.length;
+      const v = reels[next];
+      if (!v.src) v.src = v.dataset.src!;
+      v.currentTime = 0;
+      v.play().catch(() => {});
+      reels[reelIndex].classList.remove("is-on");
+      v.classList.add("is-on");
+      const prev = reels[reelIndex];
+      setTimeout(() => prev.pause(), 900);
+      reelIndex = next;
+    }, 2600);
+
+    if (reduced) {
+      clip.setAttribute("d", shape.at(1));
+      root.classList.add("is-static");
+      return;
+    }
+
+    // Load: five vertical lines rise, then bend into the mark.
+    const build = { t: [0, 0, 0, 0, 0] };
+    clip.setAttribute("d", shape.at(build.t));
+    gsap.timeline({ delay: 0.2 })
+      .fromTo(mask, { scaleY: 0, transformOrigin: "50% 100%" }, { scaleY: 1, duration: 1.1, ease: "expo.inOut" })
+      .to(build.t, {
+        0: 1, 1: 1, 2: 1, 3: 1, 4: 1,
+        duration: 1.3,
+        ease: "expo.inOut",
+        stagger: 0.05,
+        onUpdate: () => clip.setAttribute("d", shape.at(build.t)),
+      }, 0.75)
+      .fromTo(root.querySelectorAll(".portal_heading-word > span"), { yPercent: 110 }, { yPercent: 0, duration: 1, stagger: 0.04, ease: "expo.out" }, 1.2)
+      .fromTo(root.querySelector(".portal_hint"), { opacity: 0 }, { opacity: 1, duration: 0.6 }, 1.8);
+
+    // Scroll: through the widest arc and into the space where the work floats.
+    const DEPTH = Math.abs(cards[cards.length - 1]?.z ?? 4000) + 900;
+    const state = { cam: 0 };
+    const place = () => {
+      for (const c of cards) {
+        const rel = c.z + state.cam;
+        const far = Math.min(1, Math.max(0, (rel + 3200) / 1800));
+        const near = Math.min(1, Math.max(0, (260 - rel) / 420));
+        const o = far * near;
+        c.el.style.opacity = o.toFixed(3);
+        const want = o > 0.04;
+        if (want !== c.playing) {
+          c.playing = want;
+          if (want) {
+            if (!c.video.src) c.video.src = c.video.dataset.src!;
+            c.video.play().catch(() => {});
+          } else c.video.pause();
+        }
+      }
+      camera.style.transform = `translateZ(${state.cam}px)`;
+    };
+    place();
+
+    const tl = gsap.timeline({
+      defaults: { ease: "none" },
+      scrollTrigger: {
+        trigger: root,
+        start: "top top",
+        end: () => `+=${innerHeight * 4.2}`,
+        pin: stage,
+        scrub: 0.6,
+        onUpdate: (st) => {
+          bar.style.transform = `scaleX(${st.progress})`;
+          nav?.classList.toggle("logo-hidden", st.progress < 0.02);
+        },
+      },
+    });
+    tl.to(intro, { opacity: 0, y: -40, duration: 0.06 }, 0)
+      .fromTo(mask, { scale: 1, transformOrigin: "59.1% 50%" }, { scale: 38, transformOrigin: "59.1% 50%", duration: 0.3, ease: "power2.in", immediateRender: false }, 0.02)
+      .to(mask, { opacity: 0, duration: 0.06 }, 0.27)
+      .fromTo(field, { opacity: 0 }, { opacity: 1, duration: 0.08 }, 0.24)
+      .fromTo(state, { cam: -600 }, { cam: DEPTH, duration: 0.7, onUpdate: place }, 0.26)
+      .fromTo(outro, { opacity: 0 }, { opacity: 1, duration: 0.05 }, 0.9);
+
+    addEventListener("pagehide", () => clearInterval(cycle));
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .portal_wrap {
+      position: relative;
+      background: var(--background);
+    }
+    .portal_stage {
+      position: relative;
+      height: 100svh;
+      overflow: hidden;
+    }
+    .portal_mask {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      height: min(64svh, 60vw);
+      aspect-ratio: 1206.2 / 1148;
+      margin: calc(min(64svh, 60vw) * -0.56) 0 0 calc(min(64svh, 60vw) * -0.525);
+      clip-path: url(#portal-clip);
+      background: var(--dark-700);
+      transform-origin: 59.1% 50%;
+      will-change: transform;
+    }
+    .portal_reel {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.9s ease;
+      &.is-on {
+        opacity: 1;
+      }
+    }
+    .portal_defs {
+      position: absolute;
+    }
+    .portal_field {
+      position: absolute;
+      inset: 0;
+      perspective: 900px;
+      perspective-origin: 50% 50%;
+      opacity: 0;
+    }
+    .portal_camera {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+    }
+    .portal_card {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: calc(30vw * var(--s));
+      min-width: 14rem;
+      transform: translate(-50%, -50%) translate3d(var(--x), var(--y), var(--z));
+      opacity: 0;
+      color: var(--text);
+      & video {
+        width: 100%;
+        aspect-ratio: var(--ratio);
+        border-radius: var(--radius-media);
+        object-fit: cover;
+        background: var(--dark-700);
+      }
+    }
+    .portal_card-name,
+    .portal_card-meta {
+      display: inline-block;
+      margin-top: 0.6rem;
+    }
+    .portal_card-name {
+      font-family: var(--display-family);
+      font-size: 1.5rem;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+    .portal_card-meta {
+      float: right;
+      font-family: var(--mono-family);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .portal_intro {
+      position: absolute;
+      inset: auto var(--site-margin) calc(var(--space-6) + 2.5rem);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: var(--space-4);
+    }
+    .portal_heading {
+      max-width: 18ch;
+      margin: 0;
+    }
+    .portal_heading-word {
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: top;
+      padding-right: 0.22em;
+      & > span {
+        display: inline-block;
+      }
+    }
+    .portal_hint {
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .portal_outro {
+      position: absolute;
+      left: 50%;
+      bottom: var(--space-6);
+      translate: -50% 0;
+      margin: 0;
+      opacity: 0;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .portal_progress {
+      position: absolute;
+      inset: auto 0 0;
+      height: 0.125rem;
+      & i {
+        display: block;
+        height: 100%;
+        background: var(--brand-500);
+        transform: scaleX(0);
+        transform-origin: 0 50%;
+      }
+    }
+    .portal_wrap.is-static {
+      .portal_field {
+        display: none;
+      }
+    }
+    @media (width < 48rem) {
+      .portal_intro {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .portal_card {
+        width: calc(46vw * var(--s));
+        min-width: 0;
+      }
+    }
+  }
+</style>

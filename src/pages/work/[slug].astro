@@ -1,0 +1,14 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import CaseStudy from "@/components/section/CaseStudy.astro";
+import { WORK } from "@/data/work.js";
+
+export function getStaticPaths() {
+  return WORK.filter((w) => w.case).map((w) => ({ params: { slug: w.slug }, props: { work: w } }));
+}
+const { work } = Astro.props;
+---
+
+<Layout title={work.name} description={`${work.name}: ${work.lead} ${work.does.join(", ")} by Kinetic Studio.`} image={`/media/${work.cover}.jpg`}>
+  <CaseStudy work={work} />
+</Layout>

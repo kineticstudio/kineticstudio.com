@@ -1,0 +1,441 @@
+---
+import MEDIA from "@/data/media.json";
+import { EXPERIMENTS } from "@/data/experiments.js";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+const media = MEDIA as Record<string, { w: number; h: number; ground: string; video: boolean }>;
+const items = EXPERIMENTS.map((e) => ({ ...e, m: (media[e.media] ? e.media : e.fallback) ?? "" })).filter((e) => media[e.m]);
+const live = items.filter((e) => e.kind === "live").length;
+// Three rings of the barrel, every piece once.
+const rings = [0, 1, 2].map((r) => items.filter((_, i) => i % 3 === r));
+---
+
+{
+  render && (
+    <section class="play_wrap" data-play data-view="barrel">
+      <header class="play_head">
+        <div>
+          <p class="play_eyebrow text-style-label">Experiments</p>
+          <h1 class="play_title text-style-display">Playground</h1>
+        </div>
+        <div class="play_side">
+          <p class="play_lead text-style-large">Things we make to find out what's possible. {live} are live: open one and play with its Params.</p>
+          <div class="play_views" role="tablist" aria-label="View">
+            <button class="play_view text-style-label" type="button" role="tab" data-view-set="barrel" aria-selected="true">Barrel</button>
+            <button class="play_view text-style-label" type="button" role="tab" data-view-set="grid" aria-selected="false">Grid</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="play_barrel" data-barrel aria-label="Drag to spin">
+        <div class="play_cylinder">
+          {rings.map((ring, r) => (
+            <div class="play_ring" style={`--n:${ring.length};--row:${r - 1};--dir:${r === 1 ? -1 : 1}`}>
+              {ring.map((e, i) => (
+                <a
+                  class="play_tile"
+                  href={e.kind === "live" ? `/playground/${e.slug}` : `#${e.slug}`}
+                  data-kind={e.kind}
+                  data-slug={e.slug}
+                  style={`--i:${i};--ground:${media[e.m].ground}`}
+                  draggable="false"
+                >
+                  <video data-src={`/media/${e.m}.mp4`} poster={`/media/${e.m}.jpg`} muted loop playsinline preload="none" />
+                  <span class="play_tile-name">{e.title}</span>
+                  {e.kind === "live" && <span class="play_tile-live">Params</span>}
+                </a>
+              ))}
+            </div>
+          ))}
+        </div>
+        <p class="play_hint text-style-label">Drag to spin · Click to open</p>
+      </div>
+
+      <ul class="play_grid" data-grid>
+        {items.map((e, i) => (
+          <li class="play_cell" data-reveal style={`--reveal-delay:${(i % 4) * 0.05}s`}>
+            <a class="play_card" href={e.kind === "live" ? `/playground/${e.slug}` : `#${e.slug}`} data-kind={e.kind} data-slug={e.slug}>
+              <span class="play_card-media" style={`--ratio:${media[e.m].w}/${media[e.m].h};--ground:${media[e.m].ground}`}>
+                <video data-loop data-src={`/media/${e.m}.mp4`} poster={`/media/${e.m}.jpg`} muted loop playsinline preload="none" aria-hidden="true" />
+              </span>
+              <span class="play_card-meta">
+                <span class="play_card-name text-style-h6">{e.title}</span>
+                <span class="play_card-kind text-style-label">{e.kind === "live" ? "Live · Params" : e.from}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <dialog class="play_box" data-box>
+        <video muted loop playsinline />
+        <div class="play_box-meta">
+          <p class="play_box-name text-style-h3" />
+          <p class="play_box-note text-style-label" />
+        </div>
+        <button class="play_box-close text-style-label" type="button" data-close>Close</button>
+      </dialog>
+    </section>
+  )
+}
+
+<script>
+  import { watchLoops } from "@/scripts/site.js";
+  import { EXPERIMENTS } from "@/data/experiments.js";
+
+  document.querySelectorAll<HTMLElement>("[data-play]").forEach((root) => {
+    const barrel = root.querySelector<HTMLElement>("[data-barrel]")!;
+    const cylinder = root.querySelector<HTMLElement>(".play_cylinder")!;
+    const tiles = [...root.querySelectorAll<HTMLElement>(".play_tile")];
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /* ---- the barrel: drag to spin, it keeps turning slowly on its own ---- */
+    let angle = 0, velocity = reduced ? 0 : 0.06, dragging = false, lastX = 0, moved = 0, raf = 0;
+    const visible = new Set<HTMLElement>();
+    const ringOf = (t: HTMLElement) => t.parentElement!;
+    const frame = () => {
+      raf = 0;
+      if (root.dataset.view !== "barrel" || document.hidden) return;
+      if (!dragging) {
+        velocity += ((reduced ? 0 : 0.06) - velocity) * 0.02;
+        angle += velocity;
+      }
+      cylinder.style.setProperty("--spin", `${angle}deg`);
+      // Play only what faces you.
+      for (const t of tiles) {
+        const n = Number(ringOf(t).style.getPropertyValue("--n"));
+        const i = Number(t.style.getPropertyValue("--i"));
+        const row = Number(ringOf(t).style.getPropertyValue("--row"));
+        const a = (((i * 360) / n + angle * (row === 0 ? -1 : 1)) % 360 + 360) % 360;
+        const facing = a < 50 || a > 310;
+        const v = t.querySelector("video")!;
+        if (facing && !visible.has(t)) {
+          visible.add(t);
+          if (!v.src) v.src = v.dataset.src!;
+          v.play().catch(() => {});
+        } else if (!facing && visible.has(t)) {
+          visible.delete(t);
+          v.pause();
+        }
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    const start = () => (raf ||= requestAnimationFrame(frame));
+
+    barrel.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      moved = 0;
+      lastX = e.clientX;
+      barrel.setPointerCapture(e.pointerId);
+      barrel.classList.add("is-dragging");
+    });
+    barrel.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      lastX = e.clientX;
+      moved += Math.abs(dx);
+      velocity = dx * 0.12;
+      angle += velocity;
+    });
+    const end = () => {
+      dragging = false;
+      barrel.classList.remove("is-dragging");
+    };
+    barrel.addEventListener("pointerup", end);
+    barrel.addEventListener("pointercancel", end);
+    barrel.addEventListener("click", (e) => {
+      if (moved > 6) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+    barrel.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") velocity = -3;
+      if (e.key === "ArrowRight") velocity = 3;
+    });
+    new IntersectionObserver(([en]) => (en.isIntersecting ? start() : null)).observe(barrel);
+
+    /* ---- views ---- */
+    root.querySelectorAll<HTMLButtonElement>("[data-view-set]").forEach((b) =>
+      b.addEventListener("click", () => {
+        root.dataset.view = b.dataset.viewSet!;
+        root.querySelectorAll("[data-view-set]").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+        if (root.dataset.view === "barrel") start();
+        else {
+          tiles.forEach((t) => t.querySelector("video")!.pause());
+          visible.clear();
+          watchLoops(root);
+        }
+      }),
+    );
+    window.addEventListener("ks:view-toggle", () => root.querySelector<HTMLButtonElement>(`[data-view-set="${root.dataset.view === "barrel" ? "grid" : "barrel"}"]`)?.click());
+
+    /* ---- clips open in place ---- */
+    const box = root.querySelector<HTMLDialogElement>("[data-box]")!;
+    const bv = box.querySelector("video")!;
+    const open = (slug: string) => {
+      const e = EXPERIMENTS.find((x) => x.slug === slug);
+      if (!e) return;
+      bv.poster = `/media/${e.media}.jpg`;
+      bv.src = `/media/${e.media}.mp4`;
+      bv.play().catch(() => {});
+      box.querySelector(".play_box-name")!.textContent = e.title;
+      box.querySelector(".play_box-note")!.textContent = `${e.note}  ${e.from ?? ""}`;
+      box.showModal();
+      window.dispatchEvent(new CustomEvent("ks:sound", { detail: "open" }));
+    };
+    root.addEventListener("click", (ev) => {
+      const a = (ev.target as HTMLElement).closest<HTMLAnchorElement>("[data-kind=clip]");
+      if (!a) return;
+      ev.preventDefault();
+      history.replaceState(null, "", `#${a.dataset.slug}`);
+      open(a.dataset.slug!);
+    });
+    box.querySelector("[data-close]")!.addEventListener("click", () => box.close());
+    box.addEventListener("click", (e) => e.target === box && box.close());
+    box.addEventListener("close", () => {
+      bv.pause();
+      history.replaceState(null, "", location.pathname);
+    });
+    if (location.hash) open(location.hash.slice(1));
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .play_wrap {
+      padding: var(--section-space-nav-overlap) var(--site-margin) var(--section-space-medium);
+      overflow-x: clip;
+    }
+    .play_head {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: var(--space-6);
+      align-items: end;
+      padding-bottom: var(--space-6);
+      border-bottom: var(--border-width) solid var(--grey-300);
+      @media (width < 48rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .play_eyebrow {
+      margin: 0 0 var(--space-3);
+      color: var(--brand-500);
+    }
+    .play_title {
+      margin: 0;
+      font-size: clamp(4.5rem, 13vw, 13rem);
+      line-height: 0.8;
+    }
+    .play_side {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-4);
+    }
+    .play_lead {
+      margin: 0;
+      max-width: 34ch;
+      color: color-mix(in srgb, var(--text) 70%, transparent);
+    }
+    .play_views {
+      display: flex;
+      gap: 0.2rem;
+      padding: 0.25rem;
+      border-radius: var(--radius-round);
+      border: var(--border-width) solid color-mix(in srgb, var(--text) 14%, transparent);
+    }
+    .play_view {
+      padding: 0.55rem 0.9rem;
+      border-radius: var(--radius-round);
+      color: color-mix(in srgb, var(--text) 60%, transparent);
+      &[aria-selected="true"] {
+        background: var(--brand-500);
+        color: var(--brand-text);
+      }
+    }
+
+    /* Barrel */
+    .play_barrel {
+      --tile: clamp(13rem, 22vw, 20rem);
+      position: relative;
+      height: min(46rem, 92svh);
+      margin-inline: calc(var(--site-margin) * -1);
+      perspective: 1400px;
+      perspective-origin: 50% 50%;
+      cursor: grab;
+      touch-action: pan-y;
+      user-select: none;
+      &.is-dragging {
+        cursor: grabbing;
+      }
+    }
+    .play_wrap[data-view="grid"] .play_barrel,
+    .play_wrap[data-view="barrel"] .play_grid {
+      display: none;
+    }
+    .play_cylinder {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+    }
+    .play_ring {
+      --r: calc(var(--tile) * 1.08 / (2 * tan(180deg / var(--n))));
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-style: preserve-3d;
+      transform: translateY(calc(var(--row) * var(--tile) * 0.72)) translateZ(calc(var(--r) * -1.0)) rotateY(calc(var(--spin, 0deg) * var(--dir)));
+    }
+    .play_tile {
+      position: absolute;
+      width: var(--tile);
+      aspect-ratio: 16 / 10;
+      margin: calc(var(--tile) * -0.3125) 0 0 calc(var(--tile) * -0.5);
+      transform: rotateY(calc(var(--i) * 360deg / var(--n))) translateZ(var(--r));
+      backface-visibility: hidden;
+      border-radius: var(--radius-media);
+      overflow: hidden;
+      background: var(--ground);
+      color: var(--text);
+      transition: filter 0.3s ease;
+      & video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+      }
+      &:hover {
+        filter: brightness(1.12);
+      }
+    }
+    .play_tile-name,
+    .play_tile-live {
+      position: absolute;
+      bottom: 0.5rem;
+      padding: 0.35rem 0.55rem 0.28rem;
+      border-radius: var(--radius-round);
+      font-family: var(--display-family);
+      font-size: 0.9rem;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+    .play_tile-name {
+      left: 0.5rem;
+      background: color-mix(in srgb, var(--dark-900) 70%, transparent);
+    }
+    .play_tile-live {
+      right: 0.5rem;
+      background: var(--brand-500);
+      color: var(--brand-text);
+    }
+    .play_hint {
+      position: absolute;
+      left: 50%;
+      bottom: var(--space-3);
+      translate: -50% 0;
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 45%, transparent);
+    }
+
+    /* Grid */
+    .play_grid {
+      columns: 4 16rem;
+      column-gap: var(--site-gutter);
+      margin: var(--space-7) 0 0;
+    }
+    .play_cell {
+      break-inside: avoid;
+      margin-bottom: var(--space-6);
+    }
+    .play_card {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      color: var(--text);
+    }
+    .play_card-media {
+      position: relative;
+      display: block;
+      aspect-ratio: var(--ratio);
+      overflow: hidden;
+      border-radius: var(--radius-media);
+      background: var(--ground);
+      & video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: scale 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+      }
+    }
+    .play_card:hover .play_card-media video {
+      scale: 1.04;
+    }
+    .play_card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-2);
+    }
+    .play_card-name {
+      margin: 0;
+    }
+    .play_card-kind {
+      color: color-mix(in srgb, var(--text) 50%, transparent);
+    }
+    .play_card[data-kind="live"] .play_card-kind {
+      color: var(--brand-500);
+    }
+
+    /* Clip lightbox */
+    .play_box {
+      width: min(72rem, 92vw);
+      padding: 0;
+      border: 0;
+      border-radius: 0.75rem;
+      background: var(--dark-800);
+      color: var(--text);
+      overflow: hidden;
+      &::backdrop {
+        background: rgb(0 0 0 / 0.75);
+        backdrop-filter: blur(0.75rem);
+      }
+      & video {
+        display: block;
+        width: 100%;
+        max-height: 75svh;
+        object-fit: contain;
+        background: var(--dark-900);
+      }
+    }
+    .play_box-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-4);
+      padding: var(--space-4) var(--space-5);
+      & p {
+        margin: 0;
+      }
+    }
+    .play_box-note {
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .play_box-close {
+      position: absolute;
+      top: var(--space-3);
+      right: var(--space-3);
+      padding: 0.5rem 0.8rem;
+      border-radius: var(--radius-round);
+      background: color-mix(in srgb, var(--dark-900) 70%, transparent);
+      color: var(--text);
+    }
+  }
+</style>

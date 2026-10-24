@@ -1,45 +1,26 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
-import HeroAwards from "@/components/content/HeroAwards.astro";
-import Award from "@/components/content/Award.astro";
-import WorkPanel from "@/components/section/WorkPanel.astro";
-import ProjectCard from "@/components/content/ProjectCard.astro";
+import Section from "@/components/wrapper/Section.astro";
+import HeroPortal from "@/components/section/HeroPortal.astro";
+import WorkIndex from "@/components/section/WorkIndex.astro";
+import Statement from "@/components/content/Statement.astro";
+import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
+import ClientWall from "@/components/content/ClientWall.astro";
+import DirectionSwitch from "@/components/global/DirectionSwitch.astro";
 ---
 
-<Layout theme="dark" overlap>
-  <HeroAwards heading="Captivating websites that tell compelling stories">
-    <Award label="Webflow Expert Partner" logo="/images/Webflow-svg.svg" logoAlt="Webflow logo" href="https://experts.webflow.com/profile/kinetic-studio" />
-    <Award label="1 Win — 2 Nominations" logo="/images/webby.svg" logoAlt="Webby Award logo" />
-    <Award label="Site of the Day — 2 Honorable Mentions" logo="/images/awwward.svg" logoAlt="Awwwards logo" />
-    <Award label="Interactive Innovation Award Winner" logo="/images/sxsw.svg" logoAlt="SXSW logo" />
-  </HeroAwards>
-  <WorkPanel>
-    <ProjectCard title="Superorganism" services="Web design, Webflow development" href="https://www.superorganism.com/" video="https://cdn.sanity.io/files/whpuamna/production/c0bf0721458d438e09f16210fe9ed6a8988501c3.mp4" />
-    <ProjectCard title="Wispr Flow" services="Web design, Webflow dev" href="https://wisprflow.ai/" video="https://cdn.sanity.io/files/whpuamna/production/1265b0ac23bbbb265638a714b3af492a71ab8a3d.mp4" />
-    <ProjectCard title="Venus Aerospace" services="Web design, Webflow dev" href="http://venusaero.com/" video="https://cdn.sanity.io/files/whpuamna/production/81dcfcc0753a2827523216d73f3d96c1fb0ed337.mp4" />
-    <ProjectCard title="Anthropic (claude.com)" services="Web design, Webflow dev, in partnership with DBCo" href="https://claude.com/solutions/code-modernization" video="https://cdn.sanity.io/files/whpuamna/production/204c80e69cf81a161fc94e0739c53c5b0b1c76b3.mp4" />
-    <ProjectCard title="Dawn" services="Brand, Web design, Webflow dev" href="https://joindawn.com" video="https://cdn.sanity.io/files/whpuamna/production/7d0b12e847832726068598b134476d5af48c8f2b.mp4" />
-    <ProjectCard title="Ethos" services="Brand, Web design, webflow Dev" href="https://www.ethos.network/" video="https://cdn.sanity.io/files/whpuamna/production/019a56d24486aed93b4744ecf38f0883e0527841.mp4" />
-    <ProjectCard title="Happy Droid" services="Web design, Webflow dev" href="https://www.happydroid.ai/" video="https://cdn.sanity.io/files/whpuamna/production/3cf4d52b835473621437012490b1d0e0b9f0e286.mp4" />
-    <ProjectCard title="Metamag" services="Brand, Web design, Webflow dev" href="https://metamag.us" video="https://cdn.sanity.io/files/whpuamna/production/8537d705f8dadd4e45e3726d2a1842b1d8244250.mp4" />
-    <ProjectCard title="Distributional" services="Web design, Webflow dev" href="https://distributional.com/" video="https://cdn.sanity.io/files/whpuamna/production/7f09715245c6d130e4424dae9761b7b8dab6518b.mp4" />
-    <ProjectCard title="Way" services="Web design, Webflow dev" href="http://way.co" video="https://cdn.sanity.io/files/whpuamna/production/e32d5edb4dc3862218a4847ce496bd4e93682548.mp4" />
-    <ProjectCard title="Range" services="Web design, Webflow dev" href="https://range.energy/" video="https://cdn.sanity.io/files/whpuamna/production/4f3a94385b7078f957ab898a3bfe4e3850155e1d.mp4" />
-    <ProjectCard title="IngredientAI" services="Webflow dev" href="https://www.ingredient-ai.com/" video="https://cdn.sanity.io/files/whpuamna/production/effdfe0b75f8a10f8c74f6ed16dab0d68fae8757.mp4" />
-    <ProjectCard title="Roam Robotics" services="Web design" href="https://www.roamrobotics.com/" video="https://cdn.sanity.io/files/whpuamna/production/658b4dc15cedd1fbe24aff2555ad67cba84fb5c1.mp4" />
-    <ProjectCard title="Epirus" services="Web design, Webflow dev" href="https://www.epirusinc.com/" video="https://cdn.sanity.io/files/whpuamna/production/ff12b4e35d43f7e1e4f8ba315e36b3f9e5ceac70.mp4" />
-    <ProjectCard title="Para AI" services="Brand design, Web design, Webflow dev" href="https://www.usepara.com/" video="https://cdn.sanity.io/files/whpuamna/production/b7b7e20514800e1e579b8710e3072773c5d15823.mp4" />
-    <ProjectCard title="August Health" services="Web design, Webflow dev" href="https://www.augusthealth.com/" video="https://cdn.sanity.io/files/whpuamna/production/e767630d88e3bb46c096c2c5917e3f632c18bcbc.mp4" />
-    <ProjectCard title="Superlink" services="Branding, Web design" href="https://superlink.me/" video="https://cdn.sanity.io/files/whpuamna/production/7843e9dfbace7df17b187fa41cb744ad3e9e8fe7.mp4" />
-    <ProjectCard title="KONVOY" services="Web Design, Webflow Dev" href="https://www.konvoy.vc/" video="https://cdn.sanity.io/files/whpuamna/production/b9d70bcf2bb70f6564facb4f186c03a46e46ab93.mp4" />
-    <ProjectCard title="Reshape Biotech" services="Web design, Webflow dev" href="https://reshapebiotech.com/" video="https://cdn.sanity.io/files/whpuamna/production/18fde8751524bf64abc9c68187cdf4f7d76e34df.mp4" />
-    <ProjectCard title="Baseten" services="Web Design, Webflow Dev" href="https://baseten.co/" />
-    <ProjectCard title="Lemon Squeezy" services="Webflow dev" href="https://www.lemonsqueezy.com/" />
-    <ProjectCard title="Carter + Co" services="Web Design, Webflow Dev" href="http://carterco.us" />
-    <ProjectCard title="New Era" services="Web design" href="https://www.neweracap.com/pages/9seventy" />
-    <ProjectCard title="Tydo" services="Web Design, Product Design, Webflow Dev" href="https://www.tydo.com/" />
-    <ProjectCard title="Redesign Health" services="Web Design" href="https://redesignhealth.com/" />
-    <ProjectCard title="HeyGen" services="Web design, Webflow dev" href="https://www.heygen.com/" />
-    <ProjectCard title="CIRD" services="Web Design, Webflow Dev" href="https://www.rural-design.org/" />
-  </WorkPanel>
+<Layout logoHidden>
+  {/* Direction one, Portal: the mark is a window, and the scroll goes through it */}
+  <HeroPortal />
+  <WorkIndex heading="Selected work" filter={false} limit={12} moreHref="/work" paddingTop="medium" />
+  <Section paddingTop="large">
+    <Statement />
+  </Section>
+  <Section paddingTop="medium">
+    <AwardsLaurels />
+  </Section>
+  <Section paddingTop="medium" paddingBottom="large">
+    <ClientWall />
+  </Section>
+  <DirectionSwitch slot="after" />
 </Layout>

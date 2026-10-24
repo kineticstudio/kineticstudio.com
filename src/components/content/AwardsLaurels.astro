@@ -1,0 +1,212 @@
+---
+import { AWARDS, STATS } from "@/data/work.js";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Headline beside the awards. */
+  heading?: string;
+  /** Paragraph beside the headline. */
+  lead?: string;
+  /** Show the three numbers under the awards. */
+  stats?: boolean;
+  /** Utility classes. */
+  class?: string;
+}
+
+const {
+  render = true,
+  heading = "Award-winning creative direction",
+  lead = "Kinetic is led by Hunter Thompson: a big New York agency, then founding designer at startups, and now brand and bespoke websites for the companies building what's next.",
+  stats = true,
+  class: className,
+} = Astro.props;
+---
+
+{
+  render && (
+    <div class:list={["awards_wrap", className]} data-awards>
+      <div class="awards_head">
+        <h2 class="awards_title text-style-h2" data-reveal>{heading}</h2>
+        <p class="awards_lead text-style-large" data-reveal style="--reveal-delay:0.1s">{lead}</p>
+      </div>
+      <ul class="awards_list">
+        {AWARDS.map((a, i) => (
+          <li class="awards_item" data-reveal style={`--reveal-delay:${0.1 * i}s`}>
+            <div class="awards_laurel" data-laurel-slot>
+              <img class="awards_half is-left" src="/images/awards/laurel-chrome.png" alt="" />
+              <img class="awards_logo" src={a.logo} alt={a.name} style={`width:${a.width}rem`} />
+              <img class="awards_half is-right" src="/images/awards/laurel-chrome.png" alt="" />
+            </div>
+            <p class="awards_line text-style-label">{a.line}</p>
+          </li>
+        ))}
+      </ul>
+      {stats && (
+        <ul class="awards_stats">
+          {STATS.map((s, i) => (
+            <li class="awards_stat" data-reveal style={`--reveal-delay:${0.1 * i}s`}>
+              <span class="awards_num" data-count-to={s.value}>{s.value}</span>
+              <span class="awards_label text-style-label">{s.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <canvas class="awards_canvas" aria-hidden="true" />
+    </div>
+  )
+}
+
+<script>
+  // Numbers count up the first time they come into view.
+  const counters = document.querySelectorAll<HTMLElement>("[data-count-to]");
+  const io = new IntersectionObserver((entries) => {
+    for (const { target, isIntersecting } of entries) {
+      if (!isIntersecting) continue;
+      io.unobserve(target);
+      const el = target as HTMLElement;
+      const raw = el.dataset.countTo!;
+      const end = parseInt(raw, 10);
+      const suffix = raw.replace(String(end), "");
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) continue;
+      const t0 = performance.now();
+      const tick = (t: number) => {
+        const k = Math.min(1, (t - t0) / 1400);
+        el.textContent = Math.round(end * (1 - Math.pow(1 - k, 4))) + suffix;
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+  }, { threshold: 0.6 });
+  counters.forEach((c) => io.observe(c));
+
+  // The chrome laurels in real 3D, once WebGL and src/scripts/laurel.js are
+  // there; the rendered PNG halves stay as the fallback.
+  const modules = import.meta.glob("../../scripts/laurel.js");
+  document.querySelectorAll<HTMLElement>("[data-awards]").forEach(async (root) => {
+    const load = modules["../../scripts/laurel.js"];
+    const canvas = root.querySelector<HTMLCanvasElement>(".awards_canvas");
+    if (!load || !canvas || !canvas.getContext("webgl2")) return;
+    try {
+      const { mountLaurels } = (await load()) as { mountLaurels: (c: HTMLCanvasElement, o: object) => unknown };
+      const slots = [...root.querySelectorAll<HTMLElement>("[data-laurel-slot]")];
+      mountLaurels(canvas, { count: slots.length, getSlots: () => slots });
+      root.classList.add("is-3d");
+    } catch (e) {
+      console.warn("laurels stay flat:", e);
+    }
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .awards_wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-space-small);
+      width: 100%;
+    }
+    .awards_head {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: var(--space-6);
+      align-items: end;
+      @media (width < 48rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .awards_title,
+    .awards_lead {
+      margin: 0;
+    }
+    .awards_title {
+      max-width: 12ch;
+    }
+    .awards_lead {
+      max-width: 34ch;
+      color: color-mix(in srgb, var(--text) 70%, transparent);
+    }
+    .awards_list,
+    .awards_stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin: 0;
+      border-top: var(--border-width) solid var(--grey-300);
+      @media (width < 40rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .awards_item,
+    .awards_stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-7) var(--space-4);
+      text-align: center;
+      & + & {
+        border-left: var(--border-width) solid var(--grey-300);
+        @media (width < 40rem) {
+          border-left: 0;
+          border-top: var(--border-width) solid var(--grey-300);
+        }
+      }
+    }
+    .awards_laurel {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 11rem;
+      height: 9.75rem;
+    }
+    .awards_half {
+      position: absolute;
+      top: 0;
+      width: 50%;
+      height: 100%;
+      object-fit: cover;
+      &.is-left {
+        left: 0;
+        object-position: left center;
+      }
+      &.is-right {
+        right: 0;
+        object-position: right center;
+      }
+    }
+    .awards_wrap.is-3d .awards_half {
+      visibility: hidden;
+    }
+    .awards_logo {
+      position: relative;
+      height: auto;
+      filter: brightness(0) invert(0.92);
+    }
+    .awards_line {
+      max-width: 22ch;
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 60%, transparent);
+    }
+    .awards_stats {
+      border-bottom: var(--border-width) solid var(--grey-300);
+    }
+    .awards_num {
+      font-family: var(--display-family);
+      font-size: clamp(5rem, 11vw, 10rem);
+      line-height: 0.8;
+      font-variant-numeric: tabular-nums;
+    }
+    .awards_label {
+      color: color-mix(in srgb, var(--text) 60%, transparent);
+    }
+    .awards_canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+  }
+</style>

@@ -3,20 +3,19 @@ import "@/styles/global.css";
 import BaseHead from "@/components/utility/BaseHead.astro";
 import SkipLink from "@/components/global/SkipLink.astro";
 import Nav from "@/components/global/Nav.astro";
+import Footer from "@/components/global/Footer.astro";
 import type { SeoProps } from "@/types.ts";
 
 type Props = SeoProps & {
   /** Theme for the whole page. `inherit` leaves the root defaults in place. */
   theme?: "inherit" | "light" | "dark" | "brand";
-  /**
-   * Fix the nav over the page rather than letting it stick in flow, so the
-   * first section starts underneath it. Give that section
-   * `paddingTop="navoverlap"` to clear the bar.
-   */
-  overlap?: boolean;
+  /** Hide the nav's lockup until the page's hero hands it over. */
+  logoHidden?: boolean;
+  /** Leave the footer off (full-screen pages). */
+  footer?: boolean;
 };
 
-const { theme = "inherit", overlap = false, ...seo } = Astro.props;
+const { theme = "dark", logoHidden = false, footer = true, ...seo } = Astro.props;
 ---
 
 <!doctype html>
@@ -27,9 +26,54 @@ const { theme = "inherit", overlap = false, ...seo } = Astro.props;
   </head>
   <body>
     <SkipLink />
-    <Nav overlap={overlap} />
+    <Nav logoHidden={logoHidden} />
     <main id="main" tabindex="-1">
       <slot />
     </main>
+    {footer && <Footer />}
+    <slot name="after" />
+    <script>
+      import "@/scripts/site.js";
+    </script>
   </body>
 </html>
+
+<style is:global>
+  @layer components {
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(1.5rem);
+      transition:
+        opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+        transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+      transition-delay: var(--reveal-delay, 0s);
+      &.is-in {
+        opacity: 1;
+        transform: none;
+      }
+    }
+    .cursor-tag {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 70;
+      padding: 0.45rem 0.7rem 0.35rem;
+      border-radius: var(--radius-round);
+      background: var(--brand-500);
+      color: var(--brand-text);
+      font-family: var(--display-family);
+      font-size: 0.95rem;
+      line-height: 1;
+      text-transform: uppercase;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      scale: 0.6;
+      transition: opacity 0.2s ease, scale 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+      &.is-on {
+        opacity: 1;
+        scale: 1;
+      }
+    }
+  }
+</style>

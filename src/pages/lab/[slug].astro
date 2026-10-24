@@ -1,0 +1,65 @@
+---
+// A bare stage for building one experiment: the piece, its Params, nothing else.
+import { EXPERIMENTS } from "@/data/experiments.js";
+
+export function getStaticPaths() {
+  return EXPERIMENTS.filter((e) => e.kind === "live").map((e) => ({ params: { slug: e.slug }, props: { e } }));
+}
+const { e } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{e.title} · Lab</title>
+    <style is:global>
+      html, body { margin: 0; height: 100%; background: #0d0d0d; color: #d9e2d2; font: 13px/1.3 ui-monospace, monospace; }
+      .lab { display: grid; grid-template-columns: 1fr 18rem; height: 100%; }
+      .lab-stage { position: relative; overflow: hidden; }
+      .lab.is-bare { grid-template-columns: 1fr; }
+      .lab.is-bare .lab-panel { display: none; }
+      html:has(.lab.is-bare) astro-dev-toolbar { display: none; }
+      .lab-panel { border-left: 1px solid #2e2e2e; padding: 1rem; overflow: auto; }
+      .lab-panel h1 { font-size: 13px; margin: 0 0 1rem; text-transform: uppercase; }
+      .params_row { display: grid; grid-template-columns: 1fr auto; gap: 0.25rem 0.5rem; margin-bottom: 0.75rem; }
+      .params_row input[type="range"], .params_row select, .params_toggle { grid-column: 1 / -1; width: 100%; }
+      .params_group { margin: 1.25rem 0 0.5rem; color: #a8ff66; text-transform: uppercase; }
+      .params_toggle { display: flex; gap: 0.25rem; }
+      .params_toggle button, .params_action { flex: 1; background: #232323; color: inherit; border: 0; padding: 0.4rem; cursor: pointer; }
+      .params_toggle button[aria-pressed="true"] { background: #a8ff66; color: #191919; }
+    </style>
+  </head>
+  <body>
+    <div class="lab">
+      <div class="lab-stage" data-slug={e.slug}></div>
+      <aside class="lab-panel"><h1>{e.title}</h1></aside>
+    </div>
+    <script>
+      import { createParams } from "@/scripts/params.js";
+      const modules = import.meta.glob("../../experiments/*.js");
+      type Handle = { update(v: object, p: string | null): void; action?(n: string): void; destroy(): void };
+      type Experiment = { params: object; mount(host: HTMLElement, values: object, ctx: object): Handle };
+      const stage = document.querySelector<HTMLElement>(".lab-stage")!;
+      // ?bare: the piece alone, for scripts/capture-experiments.mjs
+      if (new URLSearchParams(location.search).has("bare")) document.querySelector(".lab")!.classList.add("is-bare");
+      const slug = stage.dataset.slug;
+      const load = modules[`../../experiments/${slug}.js`];
+      if (!load) {
+        stage.textContent = `src/experiments/${slug}.js is not written yet.`;
+      } else {
+        const mod = (await load()) as Experiment;
+        const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        let handle: Handle | undefined;
+        const panel = createParams(document.querySelector(".lab-panel"), mod.params, {
+          onChange: (values: object, path: string | null) => handle?.update(values, path),
+          onAction: (name: string) => handle?.action?.(name),
+        });
+        handle = mod.mount(stage, { ...panel.values }, { reducedMotion });
+        Object.assign(window, { __experiment: { handle, panel } });
+      }
+    </script>
+  </body>
+</html>

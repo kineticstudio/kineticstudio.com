@@ -1,0 +1,113 @@
+---
+import KineticLogo from "@/components/content/KineticLogo.astro";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The line under the logo. */
+  heading?: string;
+}
+
+const { render = true, heading = "Captivating websites that tell compelling stories" } = Astro.props;
+---
+
+{
+  render && (
+    <section class="hero-lines_wrap" data-hero-lines>
+      <div class="hero-lines_stage">
+        <div class="hero-lines_logo">
+          <KineticLogo />
+        </div>
+        <div class="hero-lines_foot">
+          <h1 class="hero-lines_heading text-style-h4">{heading}</h1>
+          <p class="hero-lines_meta text-style-label">Brand, web design and development<br />for the companies building what's next</p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Native scroll; the logo rides it up into the nav and hands over.
+  document.querySelectorAll<HTMLElement>("[data-hero-lines]").forEach((root) => {
+    const logo = root.querySelector<HTMLElement>(".hero-lines_logo")!;
+    const foot = root.querySelector<HTMLElement>(".hero-lines_foot")!;
+    const nav = document.querySelector<HTMLElement>(".nav_wrap");
+    const navLogo = document.querySelector<HTMLElement>(".nav_logo");
+    if (!navLogo) return;
+
+    gsap.matchMedia().add("(prefers-reduced-motion: no-preference)", () => {
+      const target = () => {
+        const a = logo.getBoundingClientRect();
+        const b = navLogo.getBoundingClientRect();
+        // The hero logo carries the Studio pill; the nav lockup does not, so
+        // match the mark-and-word part: 1074 of the 1612 viewBox units.
+        const scale = b.width / (a.width * (1074 / 1612));
+        return { x: b.left - a.left, y: b.top - a.top - (a.height * scale - b.height) / 2, scale };
+      };
+      gsap.timeline({
+        scrollTrigger: {
+          trigger: root,
+          start: "top top",
+          end: "+=90%",
+          scrub: 0.5,
+          pin: true,
+          invalidateOnRefresh: true,
+          onUpdate: (st) => nav?.classList.toggle("logo-hidden", st.progress < 0.98),
+        },
+      })
+        .to(logo, { x: () => target().x, y: () => target().y, scale: () => target().scale, transformOrigin: "0 0", ease: "power2.inOut" }, 0)
+        .to(foot, { opacity: 0, y: -30, ease: "power1.in", duration: 0.4 }, 0);
+    });
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .hero-lines_wrap {
+      position: relative;
+    }
+    .hero-lines_stage {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100svh;
+      padding: 0 var(--site-margin);
+    }
+    .hero-lines_logo {
+      width: 100%;
+      will-change: transform;
+    }
+    .hero-lines_foot {
+      position: absolute;
+      inset: auto var(--site-margin) calc(var(--space-6) + 2.5rem);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: var(--space-4);
+    }
+    .hero-lines_heading {
+      max-width: 18ch;
+      margin: 0;
+    }
+    .hero-lines_meta {
+      margin: 0;
+      text-align: right;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    @media (width < 48rem) {
+      .hero-lines_foot {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .hero-lines_meta {
+        text-align: left;
+      }
+    }
+  }
+</style>
