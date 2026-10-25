@@ -23,15 +23,16 @@ export const COIN_LOOK = {
   chrome: {
     // the matcap it mirrors (public/images/matcaps), a tint over it
     metal: { matcap: "Studio dome", tint: "#ffffff" },
-    // the word: cap height, tracking (em), the bright bevel cut round it, the fill inside it
-    word: { size: 0.5, tracking: 0.03, bevel: 0.026, fill: "#050506" },
+    // the word, raised (Hunter, Oct 25: "like extruded"): cap height, tracking
+    // (em), how wide its rounded shoulders are, the field's smoked colour and how smoked it is
+    word: { size: 0.5, tracking: 0.03, bevel: 0.05, fill: "#101114", field: 0.85 },
     // the edge: the rolled radius, how domed the face is (its slope at the edge), the thickness
     edge: { round: 0.14, crown: 0.55, thick: 0.22 },
     // the light round the edge: turns a second, how bright and how tight its shine,
     // how much the matcap turns with it, how far each pill lags the one before (radians)
     light: { orbit: 0.1, highlight: 1.6, tight: 7, spin: 0.35, lag: 0.7 },
     // bloom on what is over the threshold, how wide, how far it spills onto the paper; the flares and their size
-    glow: { bloom: 0.9, threshold: 0.95, radius: 0.7, spill: 0.6, flare: 0.9, size: 1 },
+    glow: { bloom: 0.5, threshold: 1.5, radius: 0.6, spill: 0.5, flare: 0.9, size: 1 },
     // a few hairlines in the polish
     wear: { scratches: 10, seed: 5 },
     studio: { exposure: 1.3, shadow: 0.5 },

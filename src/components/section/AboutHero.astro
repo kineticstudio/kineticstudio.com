@@ -65,7 +65,7 @@ const LINE = [
   const DIALS: Record<string, Record<string, Record<string, Dial>>> = {
     chrome: {
       metal: { matcap: MATCAP_NAMES, tint: "color" },
-      word: { size: [0.3, 0.75, 0.005], tracking: [-0.05, 0.2, 0.005], bevel: [0.005, 0.05, 0.001], fill: "color" },
+      word: { size: [0.3, 0.75, 0.005], tracking: [-0.05, 0.2, 0.005], bevel: [0.005, 0.06, 0.001], fill: "color", field: [0, 1, 0.01] },
       edge: { round: [0.02, 0.3, 0.001], crown: [0, 1, 0.01], thick: [0.08, 0.4, 0.01] },
       light: { orbit: [0, 0.6, 0.005], highlight: [0, 4, 0.01], tight: [1, 30, 0.1], spin: [0, 2, 0.01], lag: [-2, 2, 0.01] },
       glow: { bloom: [0, 3, 0.01], threshold: [0.3, 2.5, 0.01], radius: [0, 1.5, 0.01], spill: [0, 2, 0.01], flare: [0, 2, 0.01], size: [0.2, 3, 0.01] },

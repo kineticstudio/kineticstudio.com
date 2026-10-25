@@ -365,8 +365,8 @@ const DESIGNS = {
      have bloom and flares"; "I want them to have a shine around the edges,
      like a light is rotating around them"). Shaded by a matcap rather than
      the studio: the face domed a little so it runs through the matcap's
-     reflections, the edge rolled, the word cut in with a bright bevel and
-     filled dark so it reads; a light circles each pill's edge (see
+     reflections, the edge rolled, the word raised in rounded chrome on a
+     smoked field so it reads; a light circles each pill's edge (see
      chromeMaterial), the hot part blooms and flares. */
   chrome: {
     matcap: true,
@@ -376,28 +376,34 @@ const DESIGNS = {
       [e.round, e.round * 0.3],
     ],
     edge: () => ({ color: [1, 1, 1], rough: 0, metal: 1 }),
+    /* Hunter, Oct 25: "I don't like how these look embossed. They should
+       look the other way, like extruded." So the word stands up out of the
+       face: each stroke rounded over its shoulders (bevel wide), so its sides
+       catch the matcap and the light going round, on a smoked, darker field
+       (field, fill); the field shadowed close round the letters' feet, and a
+       touch more below them, where the light from above would throw it. */
     face({ word: w, edge: e, wear: wr }, sd, tw, th, o, r) {
       const u = 1 / th, F = srgb(w.fill), W = tw / th, a = W / 2 - 0.5;
-      const bev = Math.max(w.bevel, 1.5 / o.px), k = 1.1;
-      // the bevel at about 48 degrees, then the floor
-      const H = (s) => (s >= 0 ? 0 : s > -bev ? s * k : -bev * k);
+      const sh = Math.max(w.bevel, 2 / o.px), hgt = sh;
+      // a quarter-round shoulder up to the letter's top
+      const H = (s) => (s >= 0 ? 0 : hgt * (1 - (1 - Math.min(-s / sh, 1)) ** 2));
       // the dome: highest along the pill's spine, its slope at the edge = crown
-      const A = e.crown / 4;
+      const A = e.crown / 4, drop = Math.max(1, Math.round(th * 0.018));
       const scr = marks(tw, th, scratching(wr.scratches, r, tw, th, 0.6));
       for (let y = 0; y < th; y++) {
-        const Y = 0.5 - (y + 0.5) / th;
+        const Y = 0.5 - (y + 0.5) / th, above = Math.max(0, y - drop) * tw;
         for (let x = 0; x < tw; x++) {
           const i = y * tw + x, X = (x + 0.5) / th - W / 2;
           const dx = Math.max(0, Math.abs(X) - a), rr = Math.min(1.05, Math.sqrt(dx * dx + Y * Y) / 0.5);
-          const s = sd[i] * u, t = -s;
+          const s = sd[i] * u;
           o.sl[i] = (H(s + u / 2) - H(s - u / 2)) / u;
-          const floor = clamp01((t - bev) / u + 0.5);
-          for (let c = 0; c < 3; c++) o.col[i * 3 + c] = mix(1, F[c], floor);
-          // (chrome has no roughness: its channel carries where the fill is)
-          o.rough[i] = floor;
-          o.ao[i] = 1 - floor * 0.35 * Math.exp(-Math.max(0, t - bev) / 0.02);
-          // the letters cut into the dome, their floor following it
-          o.hx[i] = A * (1 - rr * rr) - scr[i] * 0.0005 * (1 - floor);
+          const field = clamp01(s / u + 0.5);
+          for (let c = 0; c < 3; c++) o.col[i * 3 + c] = mix(1, F[c], field);
+          // (chrome has no roughness: its channel carries how smoked the field is)
+          o.rough[i] = field * w.field;
+          const below = Math.max(0, sd[above + x] * u);
+          o.ao[i] = 1 - field * (0.5 * Math.exp(-Math.max(0, s) / 0.016) + 0.3 * Math.exp(-below / 0.03));
+          o.hx[i] = A * (1 - rr * rr) - scr[i] * 0.0005 * field;
         }
       }
     },
@@ -820,7 +826,7 @@ function chromeMaterial(maps) {
         float lobe = pow(max(dot(normalize(n.xy + 1e-5), light), 0.0), tight) * edge;
         float lum = dot(mc, vec3(0.299, 0.587, 0.114));
         vec3 col = mc * (1.0 + lobe * highlight * 3.0) + lobe * highlight * (0.25 + lum) * vec3(1.0, 0.985, 0.96);
-        // the fill in the letters is enamel: its own colour, mirroring only faintly
+        // the smoked field: its own dark colour, mirroring only faintly
         col = mix(col, base * (0.6 + mc * 0.5) + mc * 0.05, inked);
         col *= ao * exposure;
         gl_FragColor = vec4(col, 1.0);
