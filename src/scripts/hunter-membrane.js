@@ -7,8 +7,8 @@
    spins around it as the membrane stays the same."
 
    How it is made, each frame, all on the GPU:
-     1. his head (a closed mesh from public/images/hunter-depth.png: the front
-        and back heights of a stand-in made from his headshot) turns behind
+     1. his head (a closed mesh from public/images/hunter-head.png: a stand-in
+        made from his headshot, see scripts/hunter-head) turns behind
         the sheet; an orthographic camera looking at the sheet renders how far
         each point of him comes through it (the obstacle);
      2. the sheet is drawn over him like latex: an obstacle problem (the sheet
@@ -27,11 +27,11 @@ import * as THREE from "three";
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import { createBloom } from "./chrome.js";
 
-// the head asset: front heights in 16 bits (R hi, G lo; 0 = not him), back in 8 (B)
-const FMAX = 0.4;
-const BMAX = 0.25;
-// where his head turns: the middle of his head, between his ears
-const PIVOT = new THREE.Vector3(362 / 720 - 0.5, 0, 0);
+// the head asset: for each direction out from the middle of his head (384 round, 193 top to
+// bottom), how far out his surface is, in 16 bits (R hi, G lo) of RMAX
+const RMAX = 0.8;
+// the middle of his head, where it turns (in the headshot's frame: x right, y up, z toward you)
+const PIVOT = new THREE.Vector3(362 / 720 - 0.5, 0.5 - 262 / 720, 0.03);
 
 const VERT = /* glsl */ `
   varying vec2 vUv;
@@ -46,70 +46,39 @@ async function loadHead(url) {
   const ctx = c.getContext("2d", { willReadFrequently: true });
   ctx.drawImage(bmp, 0, 0);
   const px = ctx.getImageData(0, 0, c.width, c.height).data;
-  const n = c.width;
-  const front = new Float32Array(n * n);
-  const back = new Float32Array(n * n);
-  const inside = new Uint8Array(n * n);
-  for (let i = 0; i < n * n; i++) {
-    const code = px[i * 4] * 256 + px[i * 4 + 1];
-    if (!code) continue;
-    inside[i] = 1;
-    front[i] = ((code - 1) / 65534) * FMAX;
-    back[i] = (px[i * 4 + 2] / 255) * BMAX;
-  }
-  return { n, front, back, inside };
+  const r = new Float32Array(c.width * c.height);
+  for (let i = 0; i < r.length; i++) r[i] = ((px[i * 4] * 256 + px[i * 4 + 1]) / 65535) * RMAX;
+  return { w: c.width, h: c.height - 1, r };
 }
 
-/* A closed head from the two height fields: the front, the back, and a
-   skirt joining them round the silhouette. `step` thins it (mobile). */
-function headGeometry({ n, front, back, inside }, step = 1) {
-  const m = Math.floor((n - 1) / step) + 1;
-  const at = (i, j) => j * step * n + i * step;
-  const ok = (i, j) => i >= 0 && j >= 0 && i < m && j < m && inside[at(i, j)];
-  const cell = (i, j) => ok(i, j) && ok(i + 1, j) && ok(i, j + 1) && ok(i + 1, j + 1);
-  const fId = new Int32Array(m * m).fill(-1);
-  const pos = [];
-  for (let j = 0; j < m; j++)
-    for (let i = 0; i < m; i++) {
-      if (!ok(i, j)) continue;
-      fId[j * m + i] = pos.length / 3;
-      const x = (i * step + 0.5) / n - 0.5;
-      const y = 0.5 - (j * step + 0.5) / n;
-      pos.push(x, y, front[at(i, j)]);
+/* His head: a sphere pushed out to his surface along each direction
+   (made offline from the headshot's depth; see the About notes in
+   src/data/membrane-look.js). `step` thins it (mobile). */
+function headGeometry({ w, h, r }, step = 1) {
+  const W = Math.floor(w / step), H = Math.floor(h / step);
+  const pos = new Float32Array(W * (H + 1) * 3);
+  const probe = [];
+  for (let j = 0; j <= H; j++) {
+    const ph = (j / H) * Math.PI;
+    for (let i = 0; i < W; i++) {
+      const th = ((i * step + 0.5) / w) * Math.PI * 2;
+      const rr = r[j * step * w + i * step];
+      const k = (j * W + i) * 3;
+      pos[k] = Math.sin(ph) * Math.sin(th) * rr;
+      pos[k + 1] = Math.cos(ph) * rr;
+      pos[k + 2] = Math.sin(ph) * Math.cos(th) * rr;
+      if (i % 4 === 0 && j % 3 === 0) probe.push(new THREE.Vector3(pos[k], pos[k + 1], pos[k + 2]));
     }
-  const nf = pos.length / 3;
-  for (let k = 0; k < nf; k++) pos.push(pos[k * 3], pos[k * 3 + 1], -back[0]); // placeholder, filled below
-  // the back's z, in the same order
-  {
-    let k = 0;
-    for (let j = 0; j < m; j++)
-      for (let i = 0; i < m; i++) {
-        if (!ok(i, j)) continue;
-        pos[(nf + k) * 3 + 2] = -back[at(i, j)];
-        k++;
-      }
   }
   const idx = [];
-  const F = (i, j) => fId[j * m + i];
-  for (let j = 0; j < m - 1; j++)
-    for (let i = 0; i < m - 1; i++) {
-      if (!cell(i, j)) continue;
-      const a = F(i, j), b = F(i + 1, j), c = F(i, j + 1), d = F(i + 1, j + 1);
-      idx.push(a, c, b, b, c, d); // front
-      idx.push(a + nf, b + nf, c + nf, b + nf, d + nf, c + nf); // back
-      // the skirt, on every edge no neighbouring cell shares
-      if (!cell(i, j - 1)) idx.push(a, b, b + nf, a, b + nf, a + nf);
-      if (!cell(i, j + 1)) idx.push(c, c + nf, d + nf, c, d + nf, d);
-      if (!cell(i - 1, j)) idx.push(a, a + nf, c + nf, a, c + nf, c);
-      if (!cell(i + 1, j)) idx.push(b, d, d + nf, b, d + nf, b + nf);
+  for (let j = 0; j < H; j++)
+    for (let i = 0; i < W; i++) {
+      const a = j * W + i, b = j * W + ((i + 1) % W), c = a + W, d = b + W;
+      idx.push(a, c, b, b, c, d);
     }
   const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
   g.setIndex(idx);
-  // a few thousand points to find how far forward he is at any angle
-  const probe = [];
-  const every = Math.max(1, Math.floor(pos.length / 3 / 2500));
-  for (let k = 0; k < pos.length / 3; k += every) probe.push(new THREE.Vector3(pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2]));
   return { geometry: g, probe };
 }
 
@@ -132,7 +101,7 @@ const pass = (fragmentShader, uniforms) =>
  * Mount the membrane on a canvas. `L` is MEMBRANE_LOOK (src/data/membrane-look.js).
  * @returns {null | { ready: Promise<void>, update(L): void, rebuild(L): void, dispose(): void }}
  */
-export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-depth.png", reduced = false, mobile = false } = {}) {
+export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-head.png", reduced = false, mobile = false } = {}) {
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, premultipliedAlpha: true, powerPreference: "high-performance" });
@@ -153,11 +122,15 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
   headScene.add(turn);
   const heightMat = new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
+    uniforms: { uNeck: { value: 0.12 } },
     vertexShader: /* glsl */ `
+      uniform float uNeck;
+      #define PIVOT_Y ${PIVOT.y.toFixed(4)}
       varying float vZ;
       void main() {
         vec4 w = modelMatrix * vec4(position, 1.0);
-        vZ = w.z;
+        // his neck sinks back under the jaw (it is his head that presses, not a column)
+        vZ = w.z - uNeck * smoothstep(-0.11, -0.24, position.y + PIVOT_Y);
         gl_Position = projectionMatrix * viewMatrix * w;
       }`,
     fragmentShader: /* glsl */ `
@@ -248,7 +221,9 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
       vec2 q = clamp(p, 0.0, 1.0);
       float h = texture2D(tState, q).r;
       float belly = uPillow * sin(3.14159265 * q.x) * sin(3.14159265 * q.y);
-      float ed = min(min(q.x, 1.0 - q.x), min(q.y, 1.0 - q.y));
+      // distance in from the frame, round at the corners so the roll has no seams
+      vec2 rq = abs(q - 0.5) - 0.4;
+      float ed = -(length(max(rq, 0.0)) + min(max(rq.x, rq.y), 0.0) - 0.1);
       float roll = 1.0 - clamp(ed / 0.06, 0.0, 1.0);
       return h + belly - uRim * 0.02 * roll * roll;
     }
@@ -281,6 +256,8 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
       uGrain: { value: 70 },
       uCavity: { value: 0.5 },
       uCorner: { value: 0.035 },
+      uDebug: { value: 0 },
+      tObj: { value: null },
     },
     vertexShader: /* glsl */ `
       uniform sampler2D tShape;
@@ -295,9 +272,9 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: /* glsl */ `
-      uniform sampler2D tShape, tMatcap;
+      uniform sampler2D tShape, tMatcap, tObj;
       uniform vec3 uTint;
-      uniform float uExposure, uContrast, uTexture, uGrain, uCavity, uCorner;
+      uniform float uExposure, uContrast, uTexture, uGrain, uCavity, uCorner, uDebug;
       varying vec2 vUv;
       varying vec3 vView;
       float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -331,6 +308,8 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
         float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - uCorner;
         float aa = max(fwidth(d), 1e-4);
         float alpha = 1.0 - smoothstep(-aa, aa, d);
+        if (uDebug > 0.5) c = vec3(s.a * uDebug);
+        if (uDebug < -0.5) c = vec3(texture2D(tObj, vUv).r * -uDebug);
         gl_FragColor = vec4(c * alpha, alpha);
       }`,
   });
@@ -391,6 +370,7 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
     if (head) renderer.render(headScene, headCam);
     renderer.setClearColor(0x000000, 0);
     // softened by the sheet's thickness
+    heightMat.uniforms.uNeck.value = L.press.neck;
     const sig = L.press.soft * (N / 256);
     blur.uniforms.uSigma.value = sig;
     blur.uniforms.tSrc.value = obj.texture;
@@ -406,14 +386,16 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
       draw(shrink, levels[k][0]);
     }
     // relax coarse to fine; a coarser texel spans more sheet, so it lets go faster
-    const eps = Math.pow(10, -(1.5 + 2.6 * THREE.MathUtils.clamp(L.latex.spread, 0, 1)));
+    // spread: how far round him the sheet is drawn up (a falloff length, in sheet heights)
+    const reach = 0.01 + 0.14 * THREE.MathUtils.clamp(L.latex.spread, 0, 1);
+    const eps = (1 / N / reach) ** 2 * 4;
     let prev = null;
     for (let k = levels.length - 1; k >= 0; k--) {
       const [o, a, b] = levels[k];
       copy.uniforms.tSrc.value = prev ? prev.texture : o.texture;
       draw(copy, a);
       let src = a, dst = b;
-      const scale = Math.pow(4, k) * Math.pow(256 / N, 2);
+      const scale = Math.pow(4, k);
       relax.uniforms.uK.value = 1 - Math.min(0.5, eps * scale);
       relax.uniforms.tObj.value = o.texture;
       relax.uniforms.uTexel.value.set(1 / o.width, 1 / o.height);
@@ -424,6 +406,18 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
         [src, dst] = [dst, src];
       }
       prev = src;
+    }
+    // the sheet's own smoothness: it leaves him with a fillet, not a kink
+    const sm = L.latex.smooth * (N / 256);
+    if (sm > 0.05) {
+      blur.uniforms.uSigma.value = sm;
+      blur.uniforms.tSrc.value = prev.texture;
+      blur.uniforms.uDir.value.set(1 / N, 0);
+      draw(blur, soft[0]);
+      blur.uniforms.tSrc.value = soft[0].texture;
+      blur.uniforms.uDir.value.set(0, 1 / N);
+      draw(blur, soft[1]);
+      prev = soft[1];
     }
     // the give
     const w = Math.PI * 2 * L.latex.spring;
@@ -525,13 +519,13 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
     if (!head) return;
     const leanR = THREE.MathUtils.degToRad(L.motion.lean);
     turn.rotation.set(lean.y * leanR * 0.6, yaw + lean.x * leanR, 0, "YXZ");
-    turn.position.set(PIVOT.x, PIVOT.y, 0);
+    turn.position.set(PIVOT.x, PIVOT.y, PIVOT.z);
     turn.updateMatrixWorld(true);
     // how far forward he is at this angle
     let zMax = -1;
-    for (const p of head.probe) zMax = Math.max(zMax, v3.copy(p).sub(PIVOT).applyMatrix4(turn.matrixWorld).z);
+    for (const p of head.probe) zMax = Math.max(zMax, v3.copy(p).applyMatrix4(turn.matrixWorld).z);
     const f = THREE.MathUtils.clamp(L.press.follow, 0, 1);
-    turn.position.z = L.press.depth - (f * zMax + (1 - f) * frontMost);
+    turn.position.z = PIVOT.z + L.press.depth - (f * zMax + (1 - f) * frontMost);
     turn.updateMatrixWorld(true);
     // and the view swings a touch toward the pointer, so the chrome moves
     const d = camera.userData.dist ?? 4;
@@ -551,6 +545,7 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
     place(reduced ? THREE.MathUtils.degToRad(35) : yawAt(t));
     simulate(dt);
     sheetMat.uniforms.tShape.value = shapeRT.texture;
+    sheetMat.uniforms.tObj.value = obj.texture;
     renderer.setRenderTarget(bloom.target);
     renderer.clear(true, true, false);
     renderer.render(scene, camera);
@@ -591,11 +586,10 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
     const data = await loadHead(headUrl);
     const { geometry, probe } = headGeometry(data, mobile ? 2 : 1);
     const mesh = new THREE.Mesh(geometry, heightMat);
-    mesh.position.copy(PIVOT).negate();
     mesh.frustumCulled = false;
     turn.add(mesh);
     head = { mesh, probe };
-    frontMost = probe.reduce((m, p) => Math.max(m, p.z), 0);
+    frontMost = probe.reduce((m, p) => Math.max(m, p.z + PIVOT.z), 0);
     // start a little way into the turn, already settled
     t = 14 / Math.max(0.01, L.motion.speed) * 0.02;
     apply();
@@ -634,6 +628,11 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
     },
     get t() {
       return t;
+    },
+    /** Show the sheet's heights (x gain) instead of the chrome; 0 for the chrome. */
+    debug(gain) {
+      sheetMat.uniforms.uDebug.value = gain;
+      frame(0);
     },
     dispose() {
       cancelAnimationFrame(raf);
