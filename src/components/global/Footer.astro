@@ -1,6 +1,6 @@
 ---
 import mark from "@/assets/brand/mark.svg?raw";
-import { CONTACT_EMAIL } from "@/consts.ts";
+import { CONTACT_EMAIL, SOCIAL } from "@/consts.ts";
 import CopyEmail from "@/components/content/CopyEmail.astro";
 import MarkLockup from "@/components/content/MarkLockup.astro";
 import ProjectBarrel from "@/components/content/ProjectBarrel.astro";
@@ -21,6 +21,11 @@ const year = new Date().getFullYear();
    projection); under it, Start a project is set as the logo itself, the
    mark's strokes wrapping a pill with the words in it, and the pill is the
    button; then the address, the pages, the sound and the year. */
+// the marks, drawn in the text colour
+const ICONS: Record<string, string> = {
+  X: '<path d="M17.75 3h3.07l-6.71 7.67L22 21h-6.18l-4.84-6.33L5.44 21H2.37l7.18-8.2L2 3h6.34l4.37 5.78L17.75 3Zm-1.08 16.18h1.7L7.4 4.73H5.58l11.09 14.45Z"/>',
+  LinkedIn: '<path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z"/>',
+};
 ---
 
 {
@@ -46,6 +51,15 @@ const year = new Date().getFullYear();
           <li><a class="footer_link text-style-label" href="/about">About</a></li>
           <li><a class="footer_link text-style-label" href="/contact">Contact</a></li>
           <li><a class="footer_link text-style-label" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li>
+        </ul>
+        <ul class="footer_social">
+          {SOCIAL.map((s) => (
+            <li>
+              <a class="footer_icon" href={s.href} target="_blank" rel="noopener" aria-label={`Hunter Thompson on ${s.name}`}>
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" set:html={ICONS[s.name]} />
+              </a>
+            </li>
+          ))}
         </ul>
         <button class="footer_sound text-style-label" type="button" data-sound-toggle aria-pressed="true">
           <span class="footer_bars" aria-hidden="true"><i /><i /><i /><i /></span>
@@ -163,12 +177,37 @@ const year = new Date().getFullYear();
         color: var(--text);
       }
     }
+    /* Hunter's profiles, as small marks */
+    .footer_social {
+      display: flex;
+      gap: 0.4rem;
+      margin: 0 0 0 auto;
+      padding: 0;
+      list-style: none;
+    }
+    .footer_icon {
+      display: grid;
+      place-items: center;
+      width: var(--pill-height);
+      height: var(--pill-height);
+      border: var(--pill-stroke) solid color-mix(in srgb, var(--text) 35%, transparent);
+      border-radius: 999px;
+      color: color-mix(in srgb, var(--text) 80%, transparent);
+      transition: border-color 0.3s ease, color 0.3s ease;
+      & svg {
+        width: 0.8rem;
+        height: 0.8rem;
+      }
+      &:hover {
+        border-color: var(--text);
+        color: var(--text);
+      }
+    }
     /* the sound, on or off: four bars that move while it is on */
     .footer_sound {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      margin-left: auto;
       padding: 0;
       border: 0;
       background: none;
@@ -211,7 +250,7 @@ const year = new Date().getFullYear();
       color: color-mix(in srgb, var(--text) 45%, transparent);
     }
     @media (width < 48rem) {
-      .footer_sound {
+      .footer_social {
         margin-left: 0;
       }
     }

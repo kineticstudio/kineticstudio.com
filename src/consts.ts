@@ -13,3 +13,9 @@ export const NOINDEX_ROUTES: string[] = ["/404", "/lab/*", "/lab-laurels", "/dir
 export const CONTACT_EMAIL = "hunter@kineticstudio.com";
 /** The contact form's Web3Forms access key (it is meant to be public: it only lets the form send to CONTACT_EMAIL). */
 export const WEB3FORMS_KEY = "5ee14a91-6389-4831-9646-5d077182d4e5";
+
+/** Hunter's own profiles, as icons in the footer (Oct 25). */
+export const SOCIAL = [
+  { name: "X", href: "https://x.com/hunterthompson" },
+  { name: "LinkedIn", href: "https://www.linkedin.com/in/hunterthompson/" },
+];
