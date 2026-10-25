@@ -1,0 +1,212 @@
+---
+import { CONTACT_EMAIL } from "@/consts.ts";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The word on the button. */
+  label?: string;
+  /** Utility classes. */
+  class?: string;
+  /** Draw the word as a pill button (src/styles/pill.css) rather than a quiet word. */
+  look?: "secondary" | "primary";
+}
+
+const { render = true, label = "Contact", class: className, look } = Astro.props;
+---
+
+{
+  /* After dmcg.co's header (Hunter, Oct 23): a word, and beside it a pill
+     that opens on hover with the email and a quiet Copy; a click copies it
+     and Copy turns to Copied with a tick. */
+  render && (
+    <span class:list={["copy-email_wrap", look && "is-pill", className]} data-copy-email>
+      <button class:list={["copy-email_button", look && `pill is-${look}`]} type="button" aria-label={`${label}: copy ${CONTACT_EMAIL}`}>
+        {label}
+      </button>
+      <span class="copy-email_pill" aria-hidden="true">
+        <span class="copy-email_text">
+          <span class="copy-email_address">{CONTACT_EMAIL}</span>
+          <span class="copy-email_action">
+            <span class="copy-email_copy">Copy</span>
+            <span class="copy-email_copied">
+              Copied
+              <svg viewBox="0 0 10 7" width="10" height="7"><path d="M1 3.6 3.7 6.2 9 1" /></svg>
+            </span>
+          </span>
+        </span>
+      </span>
+      <span class="sr-only" role="status" />
+    </span>
+  )
+}
+
+<script>
+  import { CONTACT_EMAIL } from "@/consts.ts";
+
+  document.querySelectorAll<HTMLElement>("[data-copy-email]").forEach((root) => {
+    const button = root.querySelector("button")!;
+    const status = root.querySelector('[role="status"]')!;
+    const sound = (name: string, rate = 1, gain = 1) => dispatchEvent(new CustomEvent("ks:sound", { detail: { name, rate, gain } }));
+    let timer = 0;
+    const open = () => {
+      if (root.classList.contains("is-open")) return;
+      root.classList.add("is-open");
+    };
+    const close = () => {
+      root.classList.remove("is-open");
+      clearTimeout(timer);
+      timer = window.setTimeout(() => root.classList.remove("is-copied"), 300);
+    };
+    root.addEventListener("pointerenter", open);
+    root.addEventListener("pointerleave", close);
+    button.addEventListener("focus", open);
+    button.addEventListener("blur", close);
+    button.addEventListener("click", async () => {
+      open();
+      try {
+        await navigator.clipboard.writeText(CONTACT_EMAIL);
+      } catch {
+        // no clipboard (an old browser, or a frame without permission): open the mail app instead
+        location.href = `mailto:${CONTACT_EMAIL}`;
+        return;
+      }
+      clearTimeout(timer);
+      root.classList.add("is-copied");
+      status.textContent = `${CONTACT_EMAIL} copied`;
+      sound("confirm", 1, 0.7);
+    });
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .copy-email_wrap {
+      --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .copy-email_button:not(.pill) {
+      padding: 0.55rem 0.9rem 0.5rem;
+      border: var(--border-width) solid transparent;
+      border-radius: 0.7rem;
+      background: none;
+      color: var(--text);
+      font-size: var(--text-main);
+      line-height: 1.1;
+      cursor: pointer;
+      transition: border-color 0.25s var(--ease);
+    }
+    .copy-email_wrap.is-open .copy-email_button:not(.pill) {
+      border-color: color-mix(in srgb, var(--text) 18%, transparent);
+    }
+    /* beside a pill button, the email's pill stands as tall and draws the same line */
+    .copy-email_wrap.is-pill {
+      & .copy-email_pill {
+        box-sizing: border-box;
+        height: var(--pill-height);
+        align-content: center;
+        padding-block: 0;
+        border: var(--pill-stroke) solid color-mix(in srgb, var(--text) 30%, transparent);
+      }
+      &.is-open .copy-email_pill {
+        padding-block: 0;
+      }
+    }
+    .copy-email_pill {
+      display: grid;
+      grid-template-columns: 0fr;
+      padding: 0.55rem 0;
+      border: var(--border-width) solid color-mix(in srgb, var(--text) 14%, transparent);
+      border-radius: var(--radius-round);
+      background: color-mix(in srgb, var(--text) 5%, transparent);
+      opacity: 0;
+      scale: 0.6;
+      transform-origin: 0 50%;
+      visibility: hidden;
+      transition:
+        grid-template-columns 0.45s var(--ease),
+        padding 0.45s var(--ease),
+        opacity 0.25s ease,
+        scale 0.45s var(--ease),
+        visibility 0s linear 0.45s;
+    }
+    .copy-email_wrap.is-open .copy-email_pill {
+      grid-template-columns: 1fr;
+      padding: 0.55rem 1.1rem;
+      opacity: 1;
+      scale: 1;
+      visibility: visible;
+      transition-delay: 0s;
+    }
+    .copy-email_text {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      opacity: 0;
+      filter: blur(3px);
+      translate: -5px 0;
+      transition: opacity 0.3s ease, filter 0.35s ease, translate 0.45s var(--ease);
+    }
+    .copy-email_wrap.is-open .copy-email_text {
+      opacity: 1;
+      filter: blur(0);
+      translate: 0 0;
+      transition-delay: 0.08s;
+    }
+    .copy-email_address {
+      font-size: var(--text-main);
+      line-height: 1.1;
+    }
+    .copy-email_action {
+      display: grid;
+      font-size: var(--text-small);
+      color: color-mix(in srgb, var(--text) 50%, transparent);
+      & > span {
+        grid-area: 1 / 1;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: opacity 0.25s ease, filter 0.3s ease;
+      }
+    }
+    .copy-email_copied {
+      opacity: 0;
+      filter: blur(3px);
+      & svg {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 12;
+        stroke-dashoffset: 12;
+        transition: stroke-dashoffset 0.35s var(--ease) 0.12s;
+      }
+    }
+    .copy-email_wrap.is-copied {
+      & .copy-email_copy {
+        opacity: 0;
+        filter: blur(3px);
+      }
+      & .copy-email_copied {
+        opacity: 1;
+        filter: blur(0);
+        & svg {
+          stroke-dashoffset: 0;
+        }
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .copy-email_pill,
+      .copy-email_text {
+        transition-duration: 0.01s;
+      }
+    }
+  }
+</style>

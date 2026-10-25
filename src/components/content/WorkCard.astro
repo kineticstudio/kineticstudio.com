@@ -1,5 +1,9 @@
 ---
 import MEDIA from "@/data/media.json";
+import CARDS from "@/data/cards.json";
+import LOOPS from "@/data/card-loops.json";
+import { MAT, cardSrc } from "@/data/card-embed.js";
+import SITES from "@/data/sites.json";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -29,56 +33,83 @@ const m = (MEDIA as Record<string, { w: number; h: number; ground: string; video
 const href = work.case ? `/work/${work.slug}` : work.url;
 const external = !work.case;
 const src = `/media/${work.cover}`;
+/* Hunter, Oct 24: a tile is a still until it's hovered (src/scripts/card-hover.js).
+   A project with a code-powered 3D card (scripts/sync-cards.mjs) shows the
+   card's own first frame and loads the live card on hover, overhanging the
+   tile by BLEED so the tilt has room. Every homepage tile with a card
+   (card-loops.json) rests on a loop recorded from it, and the live card picks
+   up at the loop's moment (Hunter, Oct 24: "looped video for all of the base
+   view items ... wherever it's at, it will take over that spot of the 3D").
+   A project with no card plays its loop on hover. */
+const card = (CARDS as string[]).includes(work.slug);
+const restLoop = card && (LOOPS as string[]).includes(work.slug);
+const BLEED = 32;
+// the card's own frame at the tile's shape (scripts/sync-cards.mjs records both)
+const shape = ratio === "fixed" ? "-4x3" : "";
+const still = card ? `/cards/${work.slug}/poster${shape}.jpg` : `${src}.jpg`;
+// Hunter, Oct 24: a click opens the project in a modal, its site full screen
+// (src/scripts/project-modal.js): a copy hosted with us, or the live page
+// where the site lets itself be framed; new-tab clicks still go to the site
+const site = (SITES as Record<string, { live?: boolean; hosted?: string; still?: string }>)[work.slug];
+const project = {
+  "data-project": work.slug,
+  "data-name": work.name,
+  "data-url": work.url,
+  "data-site": site?.hosted ?? (site?.live ? work.url : undefined),
+  // the page's own still (scripts/site-stills.mjs) when there is one, so the tween ends on the same picture
+  "data-still": site?.still ?? still,
+  "data-still-mat": site?.still ? undefined : "1",
+  "data-loop": m.video ? `${src}.mp4` : undefined,
+  "data-inset": MAT,
+};
+const link = { href, target: external ? "_blank" : undefined, rel: external ? "noopener" : undefined, ...project };
 ---
 
 {
   render && m && (
-    <a
-      class:list={["work-card_wrap", className]}
-      href={href}
-      target={external ? "_blank" : undefined}
-      rel={external ? "noopener" : undefined}
-      data-cursor={work.case ? "View case" : "Visit site ↗"}
+    <div
+      class:list={["work-card_wrap", card && "is-3d", className]}
       data-industry={work.industry}
       data-does={work.does.join("|")}
-      style={`--ground:${m.ground};--ratio:${ratio === "media" ? `${m.w}/${m.h}` : "4/3"}`}
+      style={`--ground:${m.ground};--ratio:${ratio === "media" ? `${m.w}/${m.h}` : "4/3"};--bleed:${BLEED}px;--mat:${MAT * 100}cqw`}
       {...rest}
     >
-      <div class="work-card_media">
-        {m.video ? (
-          <video
-            class="work-card_video"
-            data-loop
-            {...(eager ? { src: `${src}.mp4` } : { "data-src": `${src}.mp4` })}
-            poster={`${src}.jpg`}
-            muted
-            loop
-            playsinline
-            preload="none"
-            width={m.w}
-            height={m.h}
-            aria-hidden="true"
-          />
-        ) : (
-          <img class="work-card_video" src={`${src}.jpg`} alt="" width={m.w} height={m.h} loading={eager ? "eager" : "lazy"} />
-        )}
-        {(work.isNew || work.case) && (
+      <div
+        class:list={["work-card_media", !card && "is-matted"]}
+        data-card-src={card ? cardSrc(work.slug, { bleed: BLEED }) : undefined}
+        data-loop-src={!card && m.video ? `${src}.mp4` : undefined}
+        data-card-title={`${work.name}, a live miniature of the site`}
+      >
+        <a class="work-card_hit" {...link} data-card-link aria-label={`${work.name}: ${work.case ? "case study" : "visit the site"}`}>
+          {restLoop ? (
+            <video class="work-card_still" data-loop data-rest data-src={`/media/card-${work.slug}${shape}.mp4`} poster={still} muted loop playsinline preload="none" aria-hidden="true" />
+          ) : (
+            <img class="work-card_still" src={still} alt="" width={card ? 1200 : m.w} height={card ? (shape ? 900 : 750) : m.h} loading={eager ? "eager" : "lazy"} decoding="async" />
+          )}
+        </a>
+        <span class="work-card_stage" data-card-stage />
+        {/* no Case study pill (Hunter, Oct 23), and no cursor label (Oct 24: "Just keep it as a regular cursor") */}
+        {work.isNew && (
           <span class="work-card_tags">
-            {work.isNew && <span class="work-card_pill is-new">New</span>}
-            {work.case && <span class="work-card_pill">Case study</span>}
+            <span class="text-style-tag work-card_pill is-new">New</span>
           </span>
         )}
       </div>
       <div class="work-card_meta">
-        <h3 class="work-card_name text-style-h5">{work.name}</h3>
+        <h3 class="work-card_name text-style-h5"><a {...link}>{work.name}</a></h3>
         <p class="work-card_info text-style-label">
           <span>{work.industry}</span>
           <span>{work.does.join(", ")}{work.partner ? `, ${work.partner}` : ""}</span>
         </p>
       </div>
-    </a>
+    </div>
   )
 }
+
+<script>
+  import { armCards } from "@/scripts/card-hover.js";
+  armCards();
+</script>
 
 <style is:global>
   @layer components {
@@ -96,16 +127,92 @@ const src = `/media/${work.cover}`;
       background: var(--ground);
       transform: translateZ(0);
     }
-    .work-card_video {
+    .work-card_hit {
+      position: absolute;
+      inset: 0;
+      display: block;
+      overflow: hidden;
+      border-radius: var(--radius-media);
+    }
+    .work-card_still {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform 1.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+      transition: opacity 0.3s ease;
     }
-    .work-card_wrap:hover .work-card_video {
-      transform: scale(1.035);
+    /* the still stays put under the card while it fades in, then steps aside;
+       nothing scales, so the tile and its live card read as one thing */
+    .work-card_media.is-live.is-hovered .work-card_still {
+      opacity: 0;
+      transition: opacity 0.2s ease 0.6s;
+    }
+    /* the hover layer: a 3D card's frame (overhanging the tile) or a loop */
+    .work-card_stage {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      & .card-frame {
+        position: absolute;
+        inset: calc(var(--bleed) * -1);
+        width: calc(100% + var(--bleed) * 2);
+        height: calc(100% + var(--bleed) * 2);
+        border: 0;
+        color-scheme: normal;
+        background: transparent;
+        opacity: 0;
+        transition: opacity 0.35s ease;
+      }
+      & .card-loop {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: var(--radius-media);
+        opacity: 0;
+        transition: opacity 0.35s ease;
+      }
+    }
+    .work-card_media.is-live.is-hovered .work-card_stage :is(.card-frame, .card-loop) {
+      opacity: 1;
+      transition-duration: 0.6s;
+    }
+    /* once it's running the card takes the pointer (a click that isn't a drag opens the link) */
+    .work-card_media.is-live .card-frame {
+      pointer-events: auto;
+    }
+    /* a tile with no card yet: the recording on a mat, the border a card draws for itself */
+    .work-card_media {
+      container-type: inline-size;
+    }
+    .work-card_media.is-matted {
+      /* the recording's own ground, so a clip that sits on its brand colour gets one border, not two */
+      background: var(--ground, var(--mat-color));
+      & .work-card_still,
+      & .card-loop {
+        inset: var(--mat);
+        width: auto;
+        height: auto;
+        border-radius: calc(var(--radius-media) * 0.75);
+      }
+      & .work-card_still {
+        position: absolute;
+      }
+    }
+    .work-card_wrap.is-3d .work-card_media {
+      overflow: visible;
+      background: none;
+      transform: none;
+      z-index: 1;
+      &.is-hovered {
+        z-index: 2;
+      }
+    }
+    .work-card_name a {
+      color: inherit;
+      text-decoration: none;
     }
     .work-card_tags {
       position: absolute;
@@ -120,10 +227,6 @@ const src = `/media/${work.cover}`;
       background: color-mix(in srgb, var(--dark-900) 70%, transparent);
       backdrop-filter: blur(0.5rem);
       color: var(--sage-300);
-      font-family: var(--display-family);
-      font-size: 0.875rem;
-      line-height: 1;
-      text-transform: uppercase;
       &.is-new {
         background: var(--brand-500);
         color: var(--brand-text);

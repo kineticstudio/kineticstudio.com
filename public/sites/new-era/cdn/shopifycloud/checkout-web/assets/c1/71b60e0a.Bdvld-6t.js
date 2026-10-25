@@ -1,0 +1,1 @@
+class e extends Error{constructor(){super(...arguments),this.name="PaymentMethodDoNotMatchError"}}var s=(e=>(e.ShopPayProgressIntercept="ShopPay::Exception::ShopPayProgressIntercept",e))(s||{}),r=(e=>(e.Online="online",e.RetailPos="retail_pos",e))(r||{}),o=(e=>(e.Dismissed="dismissed",e.Pending="pending",e.Verified="verified",e))(o||{});export{r as C,e as P,o as S,s as a};

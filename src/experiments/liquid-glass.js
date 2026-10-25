@@ -25,7 +25,9 @@ export const params = {
   },
 };
 
-const CLIP = "/media/play/glass-source.mp4";
+// The site's root, from <link rel="site-root">, so this also works framed from a folder
+const ROOT = document.querySelector('link[rel="site-root"]')?.href ?? `${location.origin}/`;
+const CLIP = new URL("media/play/glass-source.mp4", ROOT).href;
 const DPR_CAP = 2;
 const MAX_PIXELS = 4.2e6;
 const MODES = { Clip: 0, Mark: 1, Stripes: 2, Gradient: 3 };
@@ -216,7 +218,7 @@ function quiet(host, text) {
   p.textContent = text;
   p.style.cssText =
     "position:absolute;inset:0;margin:0;display:grid;place-items:center;padding:2rem;text-align:center;" +
-    "color:rgba(217,226,210,.5);font:13px/1.4 ui-monospace,monospace;";
+    "color:rgba(217,226,210,.5);font:13px/1.4 var(--primary-family, sans-serif);";
   host.append(p);
   return { update() {}, action() {}, destroy() { p.remove(); } };
 }

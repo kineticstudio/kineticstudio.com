@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Distributional work card, 2026-10-23, on the engine of the Ethos, Epirus
+     and Venus Aerospace cards (a classic script, distributional-card-src/js/
+     card.js) and the Dawn card's architecture, with Hunter's notes built in
+     from the start: the miniature keeps touring while you hover, the light is
+     one soft round bloom under the pointer, you can drag the page like a phone
+     (or scrub it sideways: drag right to go further down), a notched ruler
+     slides with the scroll, and there is no Case Study pill.
+
+     distributional.com is now an archive page (Distributional became Talaria
+     Scientific), so the site Kinetic built is rebuilt from Kinetic's own
+     recording of it (kineticstudio public/media/distributional.mp4, the hero
+     and its cube) and the Wayback Machine's copy of that same build
+     (2025-10-13, "Deploy AI with confidence"), at its 1440px design width, as
+     HTML/CSS layers, each at its own depth. The hero's WebGL cube is redone in
+     CSS 3D (the lattice and its coloured blocks, trails and all); the four
+     lotties are the site's own animations taken apart into frozen vector
+     stills (lottie-web's own svg output) and driven here by transform and
+     opacity: the Problem shapes from the animation's own keyframes, the
+     Solution grid lighting cell by cell, the Product and Workflow squares
+     lifted off their diagrams. The sticky stack of Problem, Solution and
+     Product works as it does on the site. Fonts (Forma DJR Display and Mono,
+     Graphik) and art are the site's own, in distributional-card-src/. raw/
+     keeps the fetched HTML, CSS, fonts, lotties and the recording for
+     reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched from outside it:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=1      the site in a window on the card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Distributional work card</title>
+<script>
+  /* before first paint: embed or not, and the bleed */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="distributional-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Distributional, distributional.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- hero: the headline over the dot field, and the cube (WebGL on the site, CSS 3D here) -->
+              <header class="sec hero" data-tone="dark" data-stop="hero">
+                <div class="h-dots" data-layer="dot field" data-depth="-0.2" style="--lab-x:20px;--lab-y:20px"><img src="distributional-card-src/img/hero-dots.svg" alt=""></div>
+                <i class="h-rule"></i>
+                <div class="cube-box cube-lattice" data-layer="the cube" data-depth="0.12" style="--lab-x:300px;--lab-y:40px"><div class="cstage"><div class="cube" id="cubeL"></div></div></div>
+                <div class="cube-box cube-blocks" data-layer="blocks" data-depth="0.42" style="--lab-x:820px;--lab-y:40px"><div class="cstage"><div class="cube" id="cubeB"></div></div></div>
+                <h1 class="h1 h-title" data-layer="headline" data-depth="0.78">Deploy AI with confidence</h1>
+                <p class="lead h-lead" data-layer="body copy" data-depth="0.55">Rely on your AI with Distributional, the only adaptive testing platform built for enterprise AI applications</p>
+                <div class="btn pink h-btn" data-layer="button" data-depth="0.9" style="--lab-y:-34px">Get Access<i class="cn"></i></div>
+              </header>
+
+              <!-- the sticky stack: Problem, then Solution sliding over it, then the Product card over that -->
+              <div class="stack" id="stack" data-tone="dark">
+                <section class="problem" data-pin="problem" data-tone="dark" data-stop="problem">
+                  <div class="eyebrow p-eye" data-layer="eyebrow" data-depth="0.4">Problem</div>
+                  <h2 class="h2 p-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,12">Trusting AI requires an understanding of how it behaves and that requires a new approach to testing.</h2>
+                  <div class="lot dots grey p-lot" data-layer="the shapes" data-depth="0.08" style="--lab-x:20px;--lab-y:20px"><div class="p-shapes" id="pShapes" data-layer="shapes" data-depth="0.3" style="--lab-x:900px;--lab-y:20px"></div></div>
+                  <div class="col3 p-cols">
+                    <div style="left:80px;width:356px"><div class="eyebrow" data-layer="title" data-depth="0.5">AI Testing is Incomplete</div><p data-layer="copy" data-depth="0.34">AI apps are more than just inputs and outputs. Testing should cover every attribute of every part of the app.</p></div>
+                    <div style="left:476px;width:356px"><div class="eyebrow" data-layer="title" data-depth="0.5">Changes in Behavior Are Hard to Parse</div><p data-layer="copy" data-depth="0.34">Without an effective way to see and understand changes in behavior, you&rsquo;re stuck scrambling through siloed data and components to fix issues.</p></div>
+                    <div style="left:873px;width:356px"><div class="eyebrow" data-layer="title" data-depth="0.5">AI evolution outpaces your evals</div><p data-layer="copy" data-depth="0.34">Most evals give you a snapshot of performance in time. Testing should adapt with your app based on real-world usage, ensuring you always are getting the behavior you want.</p></div>
+                  </div>
+                </section>
+
+                <div class="sol-wrap">
+                  <section class="solution" data-pin="solution" data-tone="dark" data-stop="solution">
+                    <div class="eyebrow s-eye" data-layer="eyebrow" data-depth="0.4">solution</div>
+                    <h2 class="h2 s-h" data-layer="headline" data-depth="0.72">Ensure AI apps behave consistently with adaptive testing</h2>
+                    <div class="lot s-lot" data-layer="grid" data-depth="0.12" style="--lab-x:20px;--lab-y:-40px">
+                      <img class="s-grid" src="distributional-card-src/img/solution-grid.svg" alt="">
+                      <img class="s-spread" id="spreadBlue" src="distributional-card-src/img/solution-blue-spread.svg" alt="">
+                      <img class="s-spread" id="spreadGreen" src="distributional-card-src/img/solution-green-spread.svg" alt="">
+                      <img class="s-spread" id="spreadPink" src="distributional-card-src/img/solution-pink-spread.svg" alt="">
+                      <div class="s-sqs" data-layer="cells" data-depth="0.44" style="--lab-x:740px;--lab-y:40px">
+                        <img class="s-sq" id="sqBlueL" src="distributional-card-src/img/solution-blue-light.svg" alt="" style="--x:720;--y:123">
+                        <img class="s-sq" id="sqBlue" src="distributional-card-src/img/solution-blue-solid.svg" alt="" style="--x:720;--y:123">
+                        <img class="s-sq" id="sqGreenL" src="distributional-card-src/img/solution-green-light.svg" alt="" style="--x:203;--y:225">
+                        <img class="s-sq" id="sqGreen" src="distributional-card-src/img/solution-green-solid.svg" alt="" style="--x:203;--y:225">
+                        <img class="s-sq" id="sqPinkL" src="distributional-card-src/img/solution-pink-light.svg" alt="" style="--x:927;--y:433">
+                        <img class="s-sq" id="sqPink" src="distributional-card-src/img/solution-pink-solid.svg" alt="" style="--x:927;--y:433">
+                      </div>
+                    </div>
+                    <div class="col3 s-cols">
+                      <div style="left:74px;width:333px"><div class="eyebrow" data-layer="title" data-depth="0.5">coverage</div><p data-layer="copy" data-depth="0.34">Apply comprehensive testing that covers every attribute of every part of your app to provide a complete definition of behavior.</p></div>
+                      <div style="left:447px;width:333px"><div class="eyebrow" data-layer="title" data-depth="0.5">clarity</div><p data-layer="copy" data-depth="0.34">Detect behavior shifts and gain clear insights into what&rsquo;s driving changes, down to specific result sets.</p></div>
+                      <div style="left:820px;width:333px"><div class="eyebrow" data-layer="title" data-depth="0.5">control</div><p data-layer="copy" data-depth="0.34">Adapt your tests continuously to keep pace with new developments and push updates with predictability and control.</p></div>
+                    </div>
+                  </section>
+
+                  <div class="prod-wrap">
+                    <section class="product" data-tone="dark" data-stop="product">
+                      <div class="eyebrow o-eye" data-layer="eyebrow" data-depth="0.4">distributional product</div>
+                      <h2 class="h2 o-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,12">The only enterprise platform for adaptive testing</h2>
+                      <div class="btn ink o-btn" data-layer="button" data-depth="0.88" data-shadow="0,0.3,10" style="--lab-y:-34px">Learn More<i class="cn"></i></div>
+                      <div class="lot o-lot">
+                        <img class="o-base" src="distributional-card-src/img/product-base.svg" alt="" data-layer="the platform" data-depth="0.14" style="--lab-x:120px;--lab-y:40px">
+                        <div class="o-stack" style="--x:736;--y:258;--w:125;--h:156;--lab-y:-34px" data-layer="insight" data-depth="0.52" data-shadow="0.14,0.22,8"><img id="stackGreen" src="distributional-card-src/img/product-green.svg" alt=""></div>
+                        <div class="o-stack" style="--x:602;--y:420;--w:120;--h:155" data-layer="insight" data-depth="0.5" data-shadow="0.14,0.22,8"><img id="stackPink" src="distributional-card-src/img/product-pink.svg" alt=""></div>
+                      </div>
+                      <div class="col3 o-cols">
+                        <div style="left:64px;width:290px"><div class="eyebrow" data-layer="title" data-depth="0.5">define desired behavior</div><p data-layer="copy" data-depth="0.34">Automatically generate a behavioral fingerprint from your app&rsquo;s runtime logs and existing metrics, and create tests to track behavior changes over time.</p></div>
+                        <div style="left:395px;width:290px"><div class="eyebrow" data-layer="title" data-depth="0.5">Understand Changes in Behavior</div><p data-layer="copy" data-depth="0.34">Distributional alerts you to behavior changes and gives you insights into what exactly is changing. Pinpoint causes at any level of depth to quickly take action.</p></div>
+                        <div style="left:725px;width:290px"><div class="eyebrow" data-layer="title" data-depth="0.5">improve based on changes</div><p data-layer="copy" data-depth="0.34">Use production usage insights to evolve your AI app. Automatically calibrate tests to minimize false positives. Add tests with a single click to avoid false negatives. And upgrade to a new version or architecture without fear it will break your build.</p></div>
+                      </div>
+                    </section>
+                  </div>
+                </div>
+              </div>
+
+              <!-- workflow -->
+              <section class="sec work" data-tone="light" data-stop="workflow">
+                <div class="eyebrow w-eye" data-layer="eyebrow" data-depth="0.4">workflow</div>
+                <h2 class="h2 w-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,12">Get the confidence to realize AI&rsquo;s full potential</h2>
+                <div class="btn ink w-btn" data-layer="button" data-depth="0.88" data-shadow="0,0.3,10" style="--lab-y:-34px">get access<i class="cn"></i></div>
+                <div class="lot dots w-lot" data-layer="dot grid" data-depth="0.04" style="--lab-x:20px;--lab-y:20px">
+                  <img class="w-base" src="distributional-card-src/img/workflow-base.svg" alt="" data-layer="the loop" data-depth="0.2" style="--lab-x:80px;--lab-y:60px">
+                  <div class="w-sq" style="--x:698;--y:97;--w:112;--h:112" data-layer="improve" data-depth="0.5" data-shadow="0.2,0.24,8"><img id="wfImprove" src="distributional-card-src/img/workflow-improve.svg" alt=""></div>
+                  <div class="w-sq" style="--x:992;--y:271;--w:71;--h:71" data-layer="understand" data-depth="0.46" data-shadow="0.2,0.24,8"><img id="wfUnderstand" src="distributional-card-src/img/workflow-understand.svg" alt=""></div>
+                </div>
+                <div class="w-ben" style="left:86px"><img src="distributional-card-src/img/icon-uptime.svg" alt="" data-layer="icon" data-depth="0.56" data-shadow="0,0.22,6"><h3 class="eyebrow" data-layer="title" data-depth="0.42">Maximize Uptime</h3></div>
+                <div class="w-ben" style="left:413px"><img src="distributional-card-src/img/icon-resolve.svg" alt="" data-layer="icon" data-depth="0.56" data-shadow="0,0.22,6"><h3 class="eyebrow" data-layer="title" data-depth="0.42">Resolve Issues Faster</h3></div>
+                <div class="w-ben" style="left:740px"><img src="distributional-card-src/img/icon-scale.svg" alt="" data-layer="icon" data-depth="0.56" data-shadow="0,0.22,6"><h3 class="eyebrow" data-layer="title" data-depth="0.42">Scale to Support More Teams &amp; More Apps</h3></div>
+                <div class="w-ben" style="left:1067px"><img src="distributional-card-src/img/icon-deploy.svg" alt="" data-layer="icon" data-depth="0.56" data-shadow="0,0.22,6"><h3 class="eyebrow" data-layer="title" data-depth="0.42">deploy Higher-Value AI Apps</h3></div>
+              </section>
+
+              <!-- use cases -->
+              <section class="sec uses" data-tone="dark" data-stop="uses">
+                <div class="eyebrow u-eye" data-layer="eyebrow" data-depth="0.4">use cases</div>
+                <h2 class="h2 u-h" data-layer="headline" data-depth="0.72">Adaptive testing in action</h2>
+                <div class="u-card" style="left:86px" data-layer="use case" data-depth="0.26"><img src="distributional-card-src/img/usecase-pink.svg" alt=""><h3 class="h5" data-layer="title" data-depth="0.56">Defining &amp; detecting shifts in behavioral consistency</h3></div>
+                <div class="u-card" style="left:522px" data-layer="use case" data-depth="0.26"><img src="distributional-card-src/img/usecase-green.svg" alt=""><h3 class="h5" data-layer="title" data-depth="0.56">Testing text data for an AI app</h3></div>
+                <div class="u-card" style="left:958px" data-layer="use case" data-depth="0.26"><img src="distributional-card-src/img/usecase-yellow.svg" alt=""><h3 class="h5" data-layer="title" data-depth="0.56">Root cause analysis in multi-component AI pipelines</h3></div>
+                <img class="u-px" src="distributional-card-src/img/px-blue-corner.svg" alt="" data-layer="pixels" data-depth="0.3">
+              </section>
+
+              <!-- elevate your AI testing -->
+              <section class="sec cta" data-tone="dark" data-stop="cta">
+                <img class="c-lattice" src="distributional-card-src/img/cta-lattice.svg" alt="" data-layer="lattice" data-depth="0.08" style="--lab-x:820px;--lab-y:80px">
+                <img class="c-lines" src="distributional-card-src/img/cta-lines.svg" alt="" data-layer="paths" data-depth="0.22" style="--lab-x:1100px;--lab-y:100px">
+                <div class="c-sqs" data-layer="squares" data-depth="0.48" data-shadow="0.08,0.2,10" style="--lab-x:1040px;--lab-y:60px"><img id="ctaSquares" src="distributional-card-src/img/cta-squares.svg" alt=""></div>
+                <h2 class="h2 c-h" data-layer="headline" data-depth="0.74" data-shadow="0,0.22,14">Elevate your AI testing</h2>
+                <p class="lead c-p" data-layer="body copy" data-depth="0.5">Join the leading enterprises transforming their AI apps with Distributional&rsquo;s adaptive testing platform.</p>
+                <div class="btn white c-btn" data-layer="button" data-depth="0.9" data-shadow="0,0.34,10" style="--lab-y:-34px">Get access<i class="cn"></i></div>
+                <img class="c-px-top" src="distributional-card-src/img/px-ink-top.svg" alt="" data-layer="pixels" data-depth="0.3" style="--lab-x:-120px">
+                <img class="c-px-bot" src="distributional-card-src/img/px-ink-bottom.svg" alt="">
+              </section>
+
+              <!-- the footer -->
+              <footer class="sec foot" data-tone="dark" data-stop="footer">
+                <i class="f-mid"></i><i class="f-rule"></i>
+                <img class="f-mark" src="distributional-card-src/img/footer-mark.svg" alt="" data-layer="mark" data-depth="0.56">
+                <div class="f-cols" data-layer="links" data-depth="0.34" style="--lab-y:-34px">
+                  <div style="left:0"><b class="eyebrow">Product</b><span>Platform</span><span>Docs</span></div>
+                  <div style="left:158px"><b class="eyebrow">Resources</b><span>Blog</span><span>Videos</span><span>Papers</span></div>
+                  <div style="left:316px"><b class="eyebrow">About</b><span>Company</span><span>News</span><span>Values</span><span>Careers</span></div>
+                </div>
+                <div class="f-legal" data-layer="small print" data-depth="0.22" style="--lab-y:-34px">
+                  <span style="left:0">Copyright &copy;2025 Distributional</span><span style="left:236px">Privacy Policy</span><span style="left:352px">Service Agreement</span><span style="left:506px">License Agreement</span><span style="left:660px">Site by Kinetic Studio</span>
+                </div>
+                <div class="f-social" data-layer="social" data-depth="0.4" style="--lab-y:-34px">
+                  <img style="left:3px;top:3px;width:18px" src="distributional-card-src/img/social-linkedin.svg" alt="">
+                  <img style="left:51px;top:4px;width:18px" src="distributional-card-src/img/social-x.svg" alt="">
+                  <img style="left:96px;top:2px;width:28px" src="distributional-card-src/img/social-youtube.svg" alt="">
+                </div>
+              </footer>
+            </div>
+
+            <!-- the nav, sticky in the window as on the site -->
+            <nav class="abs nav" id="nav">
+              <div class="nav-band" data-layer="nav" data-depth="0.5" style="--lab-x:300px;--lab-y:60px">
+                <img class="nav-logo" src="distributional-card-src/img/logo.svg" alt="">
+                <span class="nav-link" style="left:575px">platform</span>
+                <span class="nav-link" style="left:672px">Docs</span>
+                <span class="nav-link" style="left:734px">resources<img src="distributional-card-src/img/chevron.svg" alt=""></span>
+                <span class="nav-link" style="left:847px">About<img src="distributional-card-src/img/chevron.svg" alt=""></span>
+              </div>
+              <div class="btn grey nav-btn" data-layer="nav button" data-depth="0.64">Get Access<i class="cn"></i></div>
+            </nav>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Distributional</h3>
+      <p><span>AI</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk; the Problem lottie's own keyframes ride with it -->
+<script src="distributional-card-src/js/problem-shapes.js"></script>
+<script src="distributional-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, the Studio's own Params (defineParams from /shared/params/params.js).
+   Embedded on the site there is no panel and nothing is fetched, so the module
+   is only loaded here, and only when served (opened from disk there is no
+   studio to load it from): the card runs on its defaults without it. */
+const card = window.distributionalCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'distributional work card';
+    const D = card.defaults;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        cube: [D['motion.cube'], 0, 3, 0.05],              // the hero cube's turn and its blocks
+        lotties: [D['motion.lotties'], 0, 3, 0.05],        // the Problem shapes, the Solution grid, the lifted squares
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        scrub: [D['drag.scrub'], 0, 6, 0.1],               // page px per px of a sideways drag (right = further down)
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

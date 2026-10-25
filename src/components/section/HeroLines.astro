@@ -4,7 +4,7 @@ import KineticLogo from "@/components/content/KineticLogo.astro";
 interface Props {
   /** Set to `false` to omit the component. */
   render?: boolean;
-  /** The line under the logo. */
+  /** The line above the work; leave empty when the next section carries it (WorkField). */
   heading?: string;
 }
 
@@ -13,56 +13,108 @@ const { render = true, heading = "Captivating websites that tell compelling stor
 
 {
   render && (
-    <section class="hero-lines_wrap" data-hero-lines>
-      <div class="hero-lines_stage">
+    <section class:list={["hero-lines_wrap", !heading && "is-bare"]} data-hero-lines>
+      <div class="hero-lines_intro" aria-hidden="true">
         <div class="hero-lines_logo">
           <KineticLogo />
         </div>
-        <div class="hero-lines_foot">
-          <h1 class="hero-lines_heading text-style-h4">{heading}</h1>
-          <p class="hero-lines_meta text-style-label">Brand, web design and development<br />for the companies building what's next</p>
-        </div>
       </div>
+      {heading && (
+        <div class="hero-lines_head">
+          <h1 class="hero-lines_heading text-style-h4">
+            {heading.split(" ").map((w) => (
+              <span class="hero-lines_word"><span>{w}</span></span>
+            ))}
+          </h1>
+        </div>
+      )}
     </section>
   )
 }
 
 <script>
   import { gsap } from "gsap";
-  import { ScrollTrigger } from "gsap/ScrollTrigger";
-  gsap.registerPlugin(ScrollTrigger);
+  import { HOME_LOOK } from "@/data/home-look.js";
 
-  // Native scroll; the logo rides it up into the nav and hands over.
+  /* The intro plays by itself, no scroll: the lines fire in, KINETIC slides
+     out, the logo flies up into the nav's corner, then the work comes in
+     (WorkIndex with `intro` waits for "ks:intro-done"). A click, a key or a
+     scroll skips to the end. It plays whenever you arrive at the homepage
+     (a new visit, a reload, the Studio opening it); coming back from another
+     page of the site, the nav's pill pulls the lines in instead. */
   document.querySelectorAll<HTMLElement>("[data-hero-lines]").forEach((root) => {
+    const intro = root.querySelector<HTMLElement>(".hero-lines_intro")!;
     const logo = root.querySelector<HTMLElement>(".hero-lines_logo")!;
-    const foot = root.querySelector<HTMLElement>(".hero-lines_foot")!;
+    // its width while the intro plays (HOME_LOOK.intro.logo; Hunter, Oct 24: "a little too big")
+    logo.style.width = `min(100%, ${HOME_LOOK.intro.logo}rem)`;
+    const words = root.querySelectorAll(".hero-lines_word > span");
     const nav = document.querySelector<HTMLElement>(".nav_wrap");
     const navLogo = document.querySelector<HTMLElement>(".nav_logo");
-    if (!navLogo) return;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // the nav marks a click on one of the site's own links
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem("ks-internal") === "1";
+      sessionStorage.removeItem("ks-internal");
+    } catch {}
 
-    gsap.matchMedia().add("(prefers-reduced-motion: no-preference)", () => {
-      const target = () => {
-        const a = logo.getBoundingClientRect();
-        const b = navLogo.getBoundingClientRect();
-        // The hero logo carries the Studio pill; the nav lockup does not, so
-        // match the mark-and-word part: 1074 of the 1612 viewBox units.
-        const scale = b.width / (a.width * (1074 / 1612));
-        return { x: b.left - a.left, y: b.top - a.top - (a.height * scale - b.height) / 2, scale };
-      };
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: root,
-          start: "top top",
-          end: "+=90%",
-          scrub: 0.5,
-          pin: true,
-          invalidateOnRefresh: true,
-          onUpdate: (st) => nav?.classList.toggle("logo-hidden", st.progress < 0.98),
-        },
-      })
-        .to(logo, { x: () => target().x, y: () => target().y, scale: () => target().scale, transformOrigin: "0 0", ease: "power2.inOut" }, 0)
-        .to(foot, { opacity: 0, y: -30, ease: "power1.in", duration: 0.4 }, 0);
-    });
+    // the work starts coming in while the logo is still flying
+    let shown = false;
+    const reveal = () => {
+      if (shown) return;
+      shown = true;
+      root.classList.add("is-in");
+      gsap.fromTo(words, { yPercent: 110, y: 0 }, { yPercent: 0, y: 0, duration: reduced ? 0 : 1, stagger: 0.035, ease: "expo.out" });
+      document.documentElement.dataset.intro = "done";
+      window.dispatchEvent(new CustomEvent("ks:intro-done"));
+    };
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      reveal();
+      // the nav's logo takes over in the same frame the intro's goes: without
+      // this its 0.4 s fade left just the pill's outline for a few frames
+      nav?.classList.add("is-handover");
+      nav?.classList.remove("logo-hidden");
+      intro.hidden = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => nav?.classList.remove("is-handover")));
+      removeEventListener("wheel", skip);
+      removeEventListener("keydown", skip);
+      removeEventListener("touchmove", skip);
+      intro.removeEventListener("click", skip);
+    };
+    const skip = () => {
+      dock?.kill();
+      finish();
+    };
+
+    // the move from the centre to the nav's logo: the same 690 x 201 drawing
+    let dock: gsap.core.Tween | null = null;
+    const toCorner = () => {
+      if (done || !navLogo) return finish();
+      const a = logo.getBoundingClientRect();
+      const b = navLogo.getBoundingClientRect();
+      const scale = b.width / a.width;
+      dock = gsap.to(logo, {
+        // sucked up into the corner: slow to leave, quick to arrive
+        x: b.left - a.left, y: b.top - a.top, scale, transformOrigin: "0 0", duration: HOME_LOOK.intro.dockFor, ease: "expo.inOut",
+        onUpdate() { if (this.progress() > 0.55) reveal(); },
+        onComplete: finish,
+      });
+    };
+
+    if (seen || reduced) {
+      finish();
+      return;
+    }
+    nav?.classList.add("logo-hidden");
+    addEventListener("wheel", skip, { passive: true });
+    addEventListener("keydown", skip);
+    addEventListener("touchmove", skip, { passive: true });
+    intro.addEventListener("click", skip);
+    // straight on: the logo says it is built as its lines finish collapsing, so the two read as one move
+    root.addEventListener("kinetic-logo:built", toCorner);
   });
 </script>
 
@@ -70,43 +122,40 @@ const { render = true, heading = "Captivating websites that tell compelling stor
   @layer components {
     .hero-lines_wrap {
       position: relative;
+      padding: calc(var(--nav-height) + var(--space-3)) var(--site-margin) var(--space-6);
     }
-    .hero-lines_stage {
-      position: relative;
+    .hero-lines_wrap.is-bare {
+      padding: 0;
+    }
+    .hero-lines_intro {
+      position: fixed;
+      inset: 0;
+      z-index: 55;
       display: flex;
-      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      height: 100svh;
       padding: 0 var(--site-margin);
+      cursor: pointer;
+      &[hidden] {
+        display: none;
+      }
     }
     .hero-lines_logo {
-      width: 100%;
+      width: min(100%, 44rem);
       will-change: transform;
     }
-    .hero-lines_foot {
-      position: absolute;
-      inset: auto var(--site-margin) calc(var(--space-6) + 2.5rem);
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: var(--space-4);
-    }
     .hero-lines_heading {
-      max-width: 18ch;
+      max-width: 28ch;
       margin: 0;
     }
-    .hero-lines_meta {
-      margin: 0;
-      text-align: right;
-      color: color-mix(in srgb, var(--text) 55%, transparent);
-    }
-    @media (width < 48rem) {
-      .hero-lines_foot {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .hero-lines_meta {
-        text-align: left;
+    .hero-lines_word {
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: top;
+      padding-right: 0.2em;
+      & > span {
+        display: inline-block;
+        transform: translateY(110%);
       }
     }
   }

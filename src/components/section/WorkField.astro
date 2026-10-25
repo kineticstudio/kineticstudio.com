@@ -1,0 +1,257 @@
+---
+import MEDIA from "@/data/media.json";
+import { WORK } from "@/data/work.js";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The line in the middle of the field; a "|" breaks it onto a second line. */
+  heading?: string;
+  /** How many projects float in it. */
+  count?: number;
+}
+
+const { render = true, heading = "Captivating websites that | tell compelling stories", count = 18 } = Astro.props;
+const media = MEDIA as Record<string, { w: number; h: number; ground: string; video: boolean }>;
+const cards = WORK.filter((w) => media[w.cover]?.video).slice(0, count);
+const GAP = 420;
+
+// Two bands, above the line and below it, spread wide: nothing in the middle
+let seed = 11;
+const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const placed = cards.map((w, i) => {
+  const side = i % 2 ? 1 : -1;
+  return {
+    w,
+    x: (rand() * 2 - 1) * 46,
+    y: side * (27 + rand() * 20),
+    z: -i * GAP,
+    s: 0.8 + rand() * 0.35,
+  };
+});
+---
+
+{
+  render && (
+    <section class="field_wrap" data-field data-depth={cards.length * GAP}>
+      <div class="field_stage">
+        <div class="field_space">
+          <div class="field_camera">
+            {placed.map((p) => (
+              <a
+                class="field_card"
+                href={p.w.case ? `/work/${p.w.slug}` : p.w.url}
+                target={p.w.case ? undefined : "_blank"}
+                rel={p.w.case ? undefined : "noopener"}
+                data-z={p.z}
+                style={`--x:${p.x.toFixed(1)}vw;--y:${p.y.toFixed(1)}vh;--s:${p.s.toFixed(2)};--ratio:${media[p.w.cover].w}/${media[p.w.cover].h}`}
+              >
+                <video data-src={`/media/${p.w.cover}.mp4`} poster={`/media/${p.w.cover}.jpg`} muted loop playsinline preload="none" />
+                <span class="field_name">{p.w.name}</span>
+                <span class="field_meta">{p.w.industry}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+        <div class="field_head">
+          <h1 class="field_heading text-style-h5">
+            {heading.split("|").map((line) => (
+              <span class="field_line">
+                {line.trim().split(" ").map((w) => (
+                  <span class="field_word"><span>{w}</span></span>
+                ))}
+              </span>
+            ))}
+          </h1>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* The homepage after the Lines intro: the work keeps coming at you on its
+     own, and scrolling flies you through it faster (Portal's flythrough,
+     endless: a piece that passes you goes round to the back). Native
+     scroll; the section is pinned while you fly. */
+  document.querySelectorAll<HTMLElement>("[data-field]").forEach((root) => {
+    const stage = root.querySelector<HTMLElement>(".field_stage")!;
+    const camera = root.querySelector<HTMLElement>(".field_camera")!;
+    const words = root.querySelectorAll(".field_word > span");
+    const DEPTH = Number(root.dataset.depth);
+    const cards = [...root.querySelectorAll<HTMLElement>(".field_card")].map((el) => ({
+      el,
+      z: Number(el.dataset.z),
+      video: el.querySelector("video")!,
+      playing: false,
+    }));
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let drift = 0, scroll = 0, speed = 0, last = 0, raf = 0, visible = true;
+    const place = () => {
+      const cam = drift + scroll;
+      for (const c of cards) {
+        // wrap: every piece sits between far behind and just past you
+        const rel = ((((c.z + cam) % DEPTH) + DEPTH) % DEPTH) - DEPTH + 300;
+        const far = Math.min(1, Math.max(0, (rel + 1700) / 700));
+        const near = Math.min(1, Math.max(0, (300 - rel) / 380));
+        const o = far * near;
+        c.el.style.transform = `translate(-50%, -50%) translate3d(var(--x), var(--y), ${rel.toFixed(1)}px) scale(var(--s))`;
+        c.el.style.opacity = o.toFixed(3);
+        c.el.style.pointerEvents = o > 0.5 ? "auto" : "none";
+        const want = o > 0.04;
+        if (want !== c.playing) {
+          c.playing = want;
+          if (want) {
+            if (!c.video.src) c.video.src = c.video.dataset.src!;
+            c.video.play().catch(() => {});
+          } else c.video.pause();
+        }
+      }
+    };
+    const frame = (t: number) => {
+      raf = 0;
+      const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+      last = t;
+      speed += ((reduced ? 0 : 70) - speed) * 0.04;
+      drift += speed * dt;
+      place();
+      if (visible && !document.hidden) raf = requestAnimationFrame(frame);
+    };
+    const run = () => {
+      if (!raf) {
+        last = 0;
+        raf = requestAnimationFrame(frame);
+      }
+    };
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible) run();
+    }).observe(stage);
+    document.addEventListener("visibilitychange", () => !document.hidden && visible && run());
+
+    // scrolling flies faster through the same field
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: root,
+        start: "top top",
+        end: () => `+=${innerHeight * 3}`,
+        pin: stage,
+        scrub: 0.8,
+        onUpdate: (st) => {
+          scroll = st.progress * DEPTH * 1.1;
+          if (reduced) place();
+        },
+      },
+    });
+
+    // it comes in when the intro hands over
+    const start = () => {
+      root.classList.add("is-in");
+      gsap.fromTo(words, { yPercent: 110, y: 0 }, { yPercent: 0, y: 0, duration: reduced ? 0 : 1, stagger: 0.035, ease: "expo.out" });
+      speed = reduced ? 0 : 900; // a rush in, settling to the drift
+      place();
+      run();
+    };
+    if (document.documentElement.dataset.intro === "done") start();
+    else addEventListener("ks:intro-done", start, { once: true });
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .field_wrap {
+      position: relative;
+    }
+    .field_stage {
+      position: relative;
+      height: 100svh;
+      overflow: hidden;
+    }
+    .field_space {
+      position: absolute;
+      inset: 0;
+      perspective: 900px;
+      perspective-origin: 50% 48%;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+    .field_wrap.is-in .field_space {
+      opacity: 1;
+    }
+    .field_camera {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+    }
+    .field_card {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 24vw;
+      min-width: 14rem;
+      opacity: 0;
+      color: var(--text);
+      will-change: transform, opacity;
+      & video {
+        width: 100%;
+        aspect-ratio: var(--ratio);
+        border-radius: var(--radius-media);
+        object-fit: cover;
+        background: var(--dark-700);
+      }
+    }
+    .field_name {
+      display: inline-block;
+      margin-top: 0.6rem;
+      font-family: var(--display-family);
+      font-size: 1.5rem;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+    .field_meta {
+      float: right;
+      margin-top: 0.75rem;
+      font-family: var(--primary-family);
+      font-size: 0.7rem;
+      text-transform: none;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .field_head {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      padding: 0 var(--site-margin);
+      pointer-events: none;
+    }
+    .field_heading {
+      margin: 0;
+      text-align: center;
+    }
+    .field_line {
+      display: block;
+    }
+    .field_word {
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: top;
+      padding-right: 0.2em;
+      & > span {
+        display: inline-block;
+        transform: translateY(110%);
+      }
+    }
+    @media (width < 48rem) {
+      .field_card {
+        width: 52vw;
+        min-width: 0;
+      }
+    }
+  }
+</style>

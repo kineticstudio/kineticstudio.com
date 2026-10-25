@@ -1,0 +1,2 @@
+import{t as o}from"./chunk.window_CAbVMZox.esm.js";const t={coreAuthDomain:o.location.origin,payAuthDomain:"https://shop.app",payAuthDomainAlt:"https://pay.shopify.com"};const a=t.coreAuthDomain,n=t.payAuthDomain,p=t.payAuthDomainAlt;export{n,p as r,a as t};
+//# sourceMappingURL=chunk.authorize_DINGMyE5.esm.js.map

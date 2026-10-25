@@ -1,12 +1,14 @@
-/* Chrome laurel: the award laurel, in polished metal.
+/* Chrome laurel: the award laurel, in mirror chrome with a bloom.
 
-   The studio's Blender laurel rebuilt live (src/scripts/laurel.js): drag to
-   turn it, dial its leaves and branches, and Explode it to watch every leaf
-   fly off and spring home. */
+   The studio's Blender laurel rebuilt live (src/scripts/laurel.js), in the
+   site's chrome (src/scripts/chrome.js): drag to turn it, dial its
+   leaves, branches, metal and glow, and Explode it to watch every leaf fly
+   off and spring home. */
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { buildLaurel, createChromeEnvironment, createChromeMaterial } from "../scripts/laurel.js";
+import { buildLaurel } from "../scripts/laurel.js";
+import { createBloom, createChrome, createChromeWorld } from "../scripts/chrome.js";
 
 export const params = {
   leaves: {
@@ -14,15 +16,22 @@ export const params = {
     length: [1, 0.6, 1.5, 0.01],
     width: [1, 0.5, 1.8, 0.01],
     curl: [0.05, -0.08, 0.2, 0.005],
+    ridge: [0.85, 0, 1, 0.01],
+    thickness: [0.42, 0.1, 0.8, 0.01],
   },
   branch: {
     opening: [56, 12, 140, 1],
     spread: [1, 0.8, 1.25, 0.01],
   },
   metal: {
-    roughness: [0.07, 0, 0.5, 0.01],
-    tint: "#f6f6f9",
-    environment: [1, 0.2, 2.5, 0.01],
+    roughness: [0.035, 0, 0.5, 0.005],
+    tint: "#f2f2f4",
+    environment: [1.4, 0.2, 3, 0.01],
+  },
+  glow: {
+    bloom: [1.1, 0, 3, 0.01],
+    threshold: [0.8, 0.2, 6, 0.01],
+    spread: [0.85, 0.3, 1, 0.01],
   },
   motion: {
     rotationSpeed: [0.45, 0, 2, 0.01],
@@ -33,7 +42,7 @@ export const params = {
   explode: { type: "action", label: "Explode" },
 };
 
-const SHAPE = ["leaves.pairs", "leaves.length", "leaves.width", "leaves.curl", "branch.opening", "branch.spread"];
+const SHAPE = ["leaves.pairs", "leaves.length", "leaves.width", "leaves.curl", "leaves.ridge", "leaves.thickness", "branch.opening", "branch.spread"];
 const DEG = Math.PI / 180;
 
 export function mount(host, values, ctx = {}) {
@@ -45,7 +54,7 @@ export function mount(host, values, ctx = {}) {
 
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+    renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: "high-performance" });
   } catch {
     canvas.remove();
     const note = document.createElement("p");
@@ -54,15 +63,19 @@ export function mount(host, values, ctx = {}) {
     host.append(note);
     return { update() {}, action() {}, destroy: () => note.remove() };
   }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const pr = Math.min(window.devicePixelRatio || 1, 2);
+  renderer.setPixelRatio(pr);
+  renderer.setClearColor(0x000000, 0);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.95;
 
   const scene = new THREE.Scene();
-  const env = createChromeEnvironment(renderer);
+  const env = createChromeWorld(renderer, { look: "mirror", tilt: -32 });
   scene.environment = env.texture;
-  scene.background = new THREE.Color(v["stage.ground"]);
+  const bloom = createBloom(renderer);
 
-  const material = createChromeMaterial({ roughness: v["metal.roughness"] });
-  const rim = new THREE.DirectionalLight(0xeef3ea, 1.4);
+  const material = createChrome({ roughness: v["metal.roughness"] });
+  const rim = new THREE.DirectionalLight(0xffffff, 2.2);
   rim.position.set(-2, 2.5, -3);
   scene.add(rim);
 
@@ -85,8 +98,11 @@ export function mount(host, values, ctx = {}) {
     material.roughness = v["metal.roughness"];
     material.color.set(v["metal.tint"]);
     material.envMapIntensity = v["metal.environment"];
-    rim.intensity = 1.4 * v["metal.environment"];
-    scene.background.set(v["stage.ground"]);
+    rim.intensity = 1.6 * v["metal.environment"];
+    bloom.strength = v["glow.bloom"];
+    bloom.threshold = v["glow.threshold"];
+    bloom.radius = v["glow.spread"];
+    canvas.style.background = v["stage.ground"];
   };
 
   const rebuild = () => {
@@ -99,6 +115,8 @@ export function mount(host, values, ctx = {}) {
       length: v["leaves.length"],
       width: v["leaves.width"],
       curl: v["leaves.curl"],
+      ridge: v["leaves.ridge"],
+      thickness: v["leaves.thickness"],
       opening: v["branch.opening"],
       spread: v["branch.spread"],
       bow: 0.2, // a little crown curve, so it stays sculptural when turned edge-on
@@ -126,6 +144,7 @@ export function mount(host, values, ctx = {}) {
     const w = host.clientWidth, h = host.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h, false);
+    bloom.setSize(w * pr, h * pr);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     const tan = Math.tan((camera.fov * DEG) / 2);
@@ -205,7 +224,12 @@ export function mount(host, values, ctx = {}) {
   let visible = document.visibilityState !== "hidden";
   let onscreen = true;
 
-  const render = () => renderer.render(scene, camera);
+  const render = () => {
+    renderer.setRenderTarget(bloom.target);
+    renderer.clear();
+    renderer.render(scene, camera);
+    bloom.finish();
+  };
   const frame = (now) => {
     raf = 0;
     const dt = Math.min(0.05, (now - last) / 1000);
@@ -279,6 +303,7 @@ export function mount(host, values, ctx = {}) {
       controls.dispose();
       laurel?.traverse((c) => c.isMesh && c.geometry.dispose());
       material.dispose();
+      bloom.dispose();
       env.dispose();
       renderer.dispose();
       renderer.forceContextLoss();

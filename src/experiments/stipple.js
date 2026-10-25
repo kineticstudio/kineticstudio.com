@@ -24,7 +24,9 @@ export const params = {
   colour: { ink: "#d9e2d2", ground: "#0d0d0d" },
 };
 
-const SOURCE = "/media/play/stipple-source.mp4";
+// The site's root, from <link rel="site-root">, so this also works framed from a folder
+const ROOT = document.querySelector('link[rel="site-root"]')?.href ?? `${location.origin}/`;
+const SOURCE = new URL("media/play/stipple-source.mp4", ROOT).href;
 
 /* 3D simplex noise (after Stefan Gustavson), seeded. Returns about -1..1. */
 function simplex3(seed = 7) {

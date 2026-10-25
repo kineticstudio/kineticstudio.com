@@ -10,7 +10,8 @@
     "build": "astro build",
     "preview": "astro preview --port 8758",
     "astro": "astro",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "build:studio": "KS_STUDIO_BUILD=1 astro build --outDir dist-studio && node scripts/relativize.mjs dist-studio"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",

@@ -1,0 +1,1 @@
+import{u as e}from"./2c1ab0fe.DrXlxjip.js";import{e as t}from"./164ad2e3.CwH6Mz8a.js";function o({merchandiseItem:o,hideBadge:i,size:r="small"}){if(null==o)return null;const{title:a,quantity:s,image:n}=o,l=1!==s?s:void 0;return e(t,{size:r,alt:n?.altText||a,src:n?.one,srcSet:n?`${n.one} 1x, ${n.two} 2x, ${n.four} 4x`:void 0,totalItems:i?void 0:l})}export{o as M};

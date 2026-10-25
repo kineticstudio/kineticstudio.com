@@ -1,6 +1,9 @@
 ---
-import mark from "@/assets/brand/mark-ink.svg?raw";
+import mark from "@/assets/brand/mark.svg?raw";
 import { CONTACT_EMAIL } from "@/consts.ts";
+import CopyEmail from "@/components/content/CopyEmail.astro";
+import MarkLockup from "@/components/content/MarkLockup.astro";
+import ProjectBarrel from "@/components/content/ProjectBarrel.astro";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -9,47 +12,61 @@ interface Props {
 
 const { render = true } = Astro.props;
 const year = new Date().getFullYear();
+/* The footer, dark on every page, and the end of every page (Hunter, Oct 25:
+   "I don't like the footer. There's a card on top of the work, and then the
+   footer just has another set of lines ... The start a project should be at
+   the bottom of every page, so really, it could be a part of the footer").
+
+   The best of the work goes round a barrel (ProjectBarrel, the Playground's
+   projection); under it, Start a project is set as the logo itself, the
+   mark's strokes wrapping a pill with the words in it, and the pill is the
+   button; then the address, the pages, the sound and the year. */
 ---
 
 {
   render && (
-    <footer class="footer_wrap">
+    <footer class="footer_wrap theme-dark">
+      <ProjectBarrel class="footer_barrel" />
+
       <div class="footer_cta">
         <p class="footer_eyebrow text-style-label">Have something in mind?</p>
-        <a class="footer_big text-style-display" href="/contact">
-          <span>Start a</span> <span>project</span>
-          <span class="footer_arrow" aria-hidden="true">↗</span>
+        <a class="footer_start" href="/contact" aria-label="Start a project">
+          <MarkLockup label="Start a project" />
         </a>
+        <div class="footer_reach">
+          <p class="text-style-main">Hunter reads every note and replies within a day.</p>
+          <CopyEmail label="Copy email" look="secondary" />
+        </div>
       </div>
+
       <div class="footer_bar">
-        <span class="footer_mark" set:html={mark} aria-hidden="true" />
-        <a class="footer_link text-style-label" href={`mailto:${CONTACT_EMAIL}`} data-copy={CONTACT_EMAIL}>{CONTACT_EMAIL}</a>
+        <a class="footer_mark" href="/" aria-label="Kinetic Studio, home" set:html={mark} />
         <ul class="footer_links">
-          <li><a class="footer_link text-style-label" href="/work">Work</a></li>
           <li><a class="footer_link text-style-label" href="/playground">Playground</a></li>
           <li><a class="footer_link text-style-label" href="/about">About</a></li>
+          <li><a class="footer_link text-style-label" href="/contact">Contact</a></li>
+          <li><a class="footer_link text-style-label" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li>
         </ul>
+        <button class="footer_sound text-style-label" type="button" data-sound-toggle aria-pressed="true">
+          <span class="footer_bars" aria-hidden="true"><i /><i /><i /><i /></span>
+          Sound
+        </button>
         <p class="footer_meta text-style-label">© {year} Kinetic Studio</p>
+        <a class="footer_link footer_top text-style-label" href="#main">Back to top ↑</a>
       </div>
     </footer>
   )
 }
 
 <script>
-  // A nugget: clicking the address copies it, and says so.
-  document.querySelectorAll<HTMLAnchorElement>("[data-copy]").forEach((a) => {
-    a.addEventListener("click", async (event) => {
-      if (event.metaKey || event.ctrlKey) return;
-      try {
-        await navigator.clipboard.writeText(a.dataset.copy ?? "");
-        event.preventDefault();
-        const text = a.textContent;
-        a.textContent = "Copied to clipboard";
-        window.dispatchEvent(new CustomEvent("ks:sound", { detail: "tick" }));
-        setTimeout(() => (a.textContent = text), 1600);
-      } catch {}
-    });
-  });
+  // back to the top, smoothly, and the page's start takes the focus
+  document.querySelectorAll<HTMLAnchorElement>(".footer_top").forEach((a) =>
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      document.getElementById("main")?.focus({ preventScroll: true });
+    }),
+  );
 </script>
 
 <style is:global>
@@ -57,76 +74,151 @@ const year = new Date().getFullYear();
     .footer_wrap {
       position: relative;
       margin-top: auto;
-      padding: var(--section-space-large) var(--site-margin) var(--space-5);
-      border-top: var(--border-width) solid var(--grey-300);
+      padding: var(--section-space-small) 0 var(--space-5);
       background: var(--background);
       color: var(--text);
+      overflow: hidden;
     }
+    /* Start a project, as the logo: the pill fills as you reach for it, and slides a touch,
+       the way the nav's pill moves */
     .footer_cta {
       display: flex;
       flex-direction: column;
-      gap: var(--space-4);
-      padding-bottom: var(--section-space-medium);
+      align-items: center;
+      gap: var(--space-5);
+      padding: var(--space-6) var(--site-margin) var(--section-space-small);
+      text-align: center;
     }
     .footer_eyebrow {
-      color: color-mix(in srgb, var(--text) 55%, transparent);
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 60%, transparent);
     }
-    .footer_big {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-start;
-      column-gap: 0.18em;
+    .footer_start {
+      display: block;
+      max-width: 100%;
       color: var(--text);
-      font-size: clamp(4.5rem, 15vw, 15rem);
-      line-height: 0.82;
-      transition: color 0.3s ease;
-      &:hover {
-        color: var(--brand-500);
+      font-size: clamp(3rem, 10.5vw, 11rem);
+      text-decoration: none;
+      & .mark-lockup_pill {
+        transition:
+          background-color 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+          color 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+          translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      @media (hover: hover) {
+        &:hover .mark-lockup_pill {
+          background: var(--text);
+          color: var(--background);
+          translate: 0.03em 0;
+        }
+      }
+      &:focus-visible {
+        outline: var(--focus-width, 2px) solid var(--text);
+        outline-offset: 0.2em;
+        border-radius: 999px;
       }
     }
-    .footer_arrow {
-      font-family: var(--primary-family);
-      font-size: 0.5em;
-      line-height: 1;
-      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-    .footer_big:hover .footer_arrow {
-      transform: translate(0.12em, -0.12em);
+    .footer_reach {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      & p {
+        margin: 0;
+        color: color-mix(in srgb, var(--text) 75%, transparent);
+      }
     }
     .footer_bar {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: var(--space-4) var(--space-6);
+      margin: 0 var(--site-margin);
       padding-top: var(--space-5);
-      border-top: var(--border-width) solid var(--grey-300);
+      border-top: var(--border-width) solid var(--border);
     }
     .footer_mark {
+      display: block;
       width: 1.75rem;
-      color: var(--sage-300);
+      color: var(--text);
       & svg {
+        display: block;
         width: 100%;
         height: auto;
       }
     }
     .footer_links {
       display: flex;
-      gap: var(--space-4);
-      margin: 0 0 0 auto;
+      flex-wrap: wrap;
+      gap: var(--space-2) var(--space-5);
+      margin: 0;
+      padding: 0;
+      list-style: none;
     }
     .footer_link {
       color: color-mix(in srgb, var(--text) 70%, transparent);
+      text-decoration: none;
       &:hover {
         color: var(--text);
       }
     }
+    /* the sound, on or off: four bars that move while it is on */
+    .footer_sound {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-left: auto;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: color-mix(in srgb, var(--text) 70%, transparent);
+      cursor: pointer;
+      &:hover {
+        color: var(--text);
+      }
+    }
+    .footer_bars {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 0.8rem;
+      & i {
+        width: 2px;
+        height: 30%;
+        background: currentColor;
+      }
+    }
+    .footer_sound[aria-pressed="true"] .footer_bars i {
+      animation: footer-bars 0.9s ease-in-out infinite alternate;
+      &:nth-child(2) {
+        animation-delay: -0.3s;
+      }
+      &:nth-child(3) {
+        animation-delay: -0.6s;
+      }
+      &:nth-child(4) {
+        animation-delay: -0.15s;
+      }
+    }
+    @keyframes footer-bars {
+      to {
+        height: 100%;
+      }
+    }
     .footer_meta {
-      color: color-mix(in srgb, var(--text) 40%, transparent);
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 45%, transparent);
     }
     @media (width < 48rem) {
-      .footer_links {
+      .footer_sound {
         margin-left: 0;
-        width: 100%;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .footer_sound[aria-pressed="true"] .footer_bars i {
+        animation: none;
+        height: 70%;
       }
     }
   }

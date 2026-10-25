@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Code-powered work card for New Era (neweracap.com), 2026-10-23, built on the
+     Wispr Flow card's engine (04-Wispr-Flow-work-card.html), itself from Dawn's:
+     - the miniature is New Era's launch pages rebuilt in HTML and CSS layers at a
+       1440px design width, scaled into a 16:10 card laid out K times larger so
+       tilted text stays sharp; one spring-driven loop, transforms and opacity only
+     - idle, it tours 59FIFTY Day (the stickers slap on one by one), the arc of caps,
+       the wave of collectable coins and the store's Shop by Silhouette rail, on a
+       ~21 s loop of eased stops
+     - hover tilts it toward the pointer (10 degrees) and the layers separate by
+       depth with soft shadows that grow with height; the light is one round bloom
+       that follows the pointer; the tour keeps running under the hover
+     - press and drag scrolls the miniature either way: up and down like a phone
+       (1:1), left and right scrubs (drag right, further down the page), with
+       momentum and clamped ends; the tour picks up from there after a beat
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge, on a
+       transparent page; it pauses when hidden or when the parent posts
+       {type: "ks-card", visible: false}, and a click or tap posts
+       {type: "ks-card-open"}. &bleed=N keeps N px of clear frame round the card
+       (the site's iframe overhangs the tile by that much), &radius=N rounds it;
+       touch drag is off unless &touchdrag=1, so a swipe over the tile scrolls the site
+
+     The campaign pages are no longer live, so the first three sections come from
+     Kinetic's own films of them (kineticstudio public/media new-era.mp4,
+     new-era-hats.mp4, new-era-coins.mp4): measured off their frames, the Gold
+     Standard sculpture lifted out of the cover film, the sticker from New Era's
+     official 59FIFTY artwork in gold foil. The caps, the silhouette rail and the
+     footer are today's store, fetched 2026-10-23. Everything lives in
+     new-era-card-src/; raw/ keeps the fetched and reference files, never executed. -->
+<title>New Era work card</title>
+<script>
+  /* ?embed=1 is the site tile. &radius=N rounds the card's corners. &bleed=N: the site's iframe overhangs the tile by N px on every side
+     (room for the tilt), so the card keeps N px of clear frame round it and sits exactly on the tile at rest.
+     &touchdrag=1 lets a finger drag the miniature; off by default, so a swipe over the tile scrolls the site. */
+  (function () {
+    const q = new URLSearchParams(location.search);
+    if (q.get('embed') !== '1') return;
+    const h = document.documentElement;
+    h.classList.add('embed');
+    const b = parseFloat(q.get('bleed'));
+    if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    const r = parseFloat(q.get('radius'));   // &radius=N: the card's corner radius in px (the site passes 6)
+    if (r >= 0) h.style.setProperty('--card-r', r + 'px');
+  })();
+</script>
+<link rel="stylesheet" href="new-era-card-src/css/card.css">
+<link rel="stylesheet" href="new-era-card-src/css/site.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="New Era, 59FIFTY Day and launch pages, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- 59FIFTY Day -->
+              <section class="sec hero" id="s-hero" data-tone="light">
+                <div class="concrete" data-layer="concrete" data-depth="-0.2"><img src="new-era-card-src/img/concrete.webp" alt=""></div>
+                <div class="nv" data-layer="nav" data-depth="0.45">
+                  <img class="nv-logo" src="new-era-card-src/img/flag-ink.svg" alt="">
+                  <span class="nv-link" style="left:92px">New</span><i class="nv-dot" style="left:128px"></i>
+                  <span class="nv-link" style="left:168px">Teams</span>
+                  <span class="nv-link" style="left:250px">Headwear</span>
+                  <span class="nv-link" style="left:355px">Apparel</span>
+                  <span class="nv-link" style="left:446px">Fitteds</span>
+                  <span class="nv-link" style="left:529px">Collections</span>
+                  <span class="nv-link" style="left:643px">Sales</span>
+                  <span class="nv-link" style="left:1201px">Loyalty</span>
+                  <svg class="nv-ico" style="left:1278px" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M11 2C6.02944 2 2 6.02944 2 11C2 15.9706 6.02944 20 11 20C13.125 20 15.078 19.2635 16.6177 18.0319L21 22.4142L22.4142 21L18.0319 16.6177C19.2635 15.078 20 13.125 20 11C20 6.02944 15.9706 2 11 2ZM4 11C4 7.13401 7.13401 4 11 4C14.866 4 18 7.13401 18 11C18 14.866 14.866 18 11 18C7.13401 18 4 14.866 4 11Z" fill="currentColor"/></svg>
+                  <svg class="nv-ico" style="left:1334px" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C9.51472 2 7.5 4.01472 7.5 6.5C7.5 8.98528 9.51472 11 12 11C14.4853 11 16.5 8.98528 16.5 6.5C16.5 4.01472 14.4853 2 12 2ZM9.5 6.5C9.5 5.11929 10.6193 4 12 4C13.3807 4 14.5 5.11929 14.5 6.5C14.5 7.88071 13.3807 9 12 9C10.6193 9 9.5 7.88071 9.5 6.5Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12 12.5C7.58172 12.5 4 16.0817 4 20.5V22H20V20.5C20 16.0817 16.4183 12.5 12 12.5ZM12 14.5C15.1453 14.5 17.7254 16.9202 17.9795 20H6.02054C6.27461 16.9202 8.85467 14.5 12 14.5Z" fill="currentColor"/></svg>
+                  <svg class="nv-ico" style="left:1390px" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M17 2H7V7H3V22H21V7H17V2ZM15 9V12H17V9H19V20H5V9H7V12H9V9H15ZM15 7V4H9V7H15Z" fill="currentColor"/></svg>
+                  <span class="nv-badge">0</span>
+                </div>
+                <div class="lockup" data-layer="logo" data-depth="0.5" data-shadow="-0.2,0.12,10">
+                  <img class="flag" src="new-era-card-src/img/flag-ink.svg" alt="">
+                  <img class="word" src="new-era-card-src/img/wordmark-ink.svg" alt="">
+                </div>
+                <div class="h59" data-layer="headline" data-depth="0.6" data-shadow="-0.2,0.14,12">59FIFTY</div>
+                <div class="hday" data-layer="headline" data-depth="0.72" data-shadow="-0.2,0.16,12">DAY</div>
+                <p class="hero-p" data-layer="body copy" data-depth="0.45">Since 1954 the 59FIFTY has been the true fitted cap of the game. Find your size, collect the stickers and celebrate the original, all day.</p>
+                <div class="pill-btn shop-all" data-layer="button" data-depth="0.85" data-shadow="-0.2,0.3,10">Shop All</div>
+                <div class="band" data-layer="next rail" data-depth="0.08"><img src="new-era-card-src/img/band.webp" alt=""></div>
+                <div class="gold" data-layer="sculpture" data-depth="0.78" data-shadow="-0.2,0.42,18"><img src="new-era-card-src/img/gold-standard.webp" alt=""></div>
+                <div class="stk" style="left:332px;top:206px" data-layer="sticker" data-depth="0.95" data-shadow="-0.2,0.4,8" data-rot="-6"><div class="stk-in"><img src="new-era-card-src/img/sticker-foil.webp" alt=""></div></div>
+                <div class="stk" style="left:568px;top:304px" data-layer="sticker" data-depth="1" data-shadow="-0.2,0.4,8" data-rot="-12"><div class="stk-in"><img src="new-era-card-src/img/sticker-foil.webp" alt=""></div></div>
+                <div class="stk" style="left:862px;top:242px" data-layer="sticker" data-depth="1.05" data-shadow="-0.2,0.4,8" data-rot="-14"><div class="stk-in"><img src="new-era-card-src/img/sticker-foil.webp" alt=""></div></div>
+                <div class="stk" style="left:747px;top:400px" data-layer="sticker" data-depth="1.1" data-shadow="-0.2,0.4,8" data-rot="-22"><div class="stk-in"><img src="new-era-card-src/img/sticker-foil.webp" alt=""></div></div>
+                <div class="stk" style="left:1036px;top:334px" data-layer="sticker" data-depth="1.15" data-shadow="-0.2,0.4,8" data-rot="-19"><div class="stk-in"><img src="new-era-card-src/img/sticker-foil.webp" alt=""></div></div>
+                <div class="pill-btn remove" data-layer="button" data-depth="0.9" data-shadow="-0.2,0.3,8"><img src="new-era-card-src/img/sticker-foil.webp" alt="">Remove all stickers</div>
+              </section>
+
+              <!-- the official cap of sports worldwide -->
+              <section class="sec hats" id="s-hats" data-tone="dark">
+                <div class="arc" id="arc" data-layer="caps" data-depth="0.6"></div>
+                <h2 class="hats-h" data-layer="headline" data-depth="0.7" data-shadow="0,0.3,14">The Official Cap of<br>Sports Worldwide</h2>
+                <p class="hats-p" data-layer="body copy" data-depth="0.5">The caps of every major league, made by New Era for more than a century. Find your team and your fit.</p>
+                <div class="pill-btn shop-now" data-layer="button" data-depth="0.85" data-shadow="0,0.34,10">Shop Now</div>
+              </section>
+
+              <!-- collectable coins -->
+              <section class="sec coins-sec" id="s-coins" data-tone="dark">
+                <div class="spot" data-layer="spotlight" data-depth="-0.25"></div>
+                <div class="coins" id="coins" data-layer="coins" data-depth="0.55"></div>
+              </section>
+
+              <!-- shop by silhouette, as on today's store -->
+              <section class="sec silo" id="s-silo" data-tone="dark">
+                <h2 class="silo-h" data-layer="headline" data-depth="0.6" data-shadow="0,0.3,12">Shop by <span>Silhouette</span></h2>
+                <div class="silo-arrows" data-layer="arrows" data-depth="0.7">
+                  <i><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L4 6l3.5 3.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
+                  <i><svg viewBox="0 0 12 12" fill="none"><path d="M4.5 2.5L8 6 4.5 9.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
+                </div>
+                <div class="rail" data-layer="silhouettes" data-depth="0.35">
+                  <div class="rail-track" id="railTrack">
+                    <div class="tile"><img src="new-era-card-src/img/silo-5950.webp" alt=""><b>59FIFTY</b><small>Fitted</small></div>
+                    <div class="tile"><img src="new-era-card-src/img/silo-950.webp" alt=""><b>9FIFTY</b><small>Adjustable</small></div>
+                    <div class="tile"><img src="new-era-card-src/img/silo-920.webp" alt=""><b>9TWENTY</b><small>Adjustable</small></div>
+                    <div class="tile"><img src="new-era-card-src/img/silo-940.webp" alt=""><b>9FORTY</b><small>Adjustable</small></div>
+                    <div class="tile"><img src="new-era-card-src/img/silo-3930.webp" alt=""><b>39THIRTY</b><small>Stretch Fit</small></div>
+                    <div class="tile"><img src="new-era-card-src/img/silo-970.webp" alt=""><b>9SEVENTY</b><small>Adjustable</small></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- footer, as on today's store -->
+              <section class="sec foot" id="s-foot" data-tone="dark">
+                <div class="foot-join" data-layer="heading" data-depth="0.4">Join our email list</div>
+                <div class="badges" data-layer="badges" data-depth="0.45">
+                  <i><svg viewBox="0 0 24 24"><path fill="#fff" d="M16.4 12.6c0-2.5 2.1-3.7 2.2-3.8-1.2-1.7-3-2-3.7-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9-1.7 0-3.3 1-4.2 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9 0 0-2.7-1-2.7-4.2zM13.9 5.2c.7-.9 1.2-2 1-3.2-1 0-2.3.7-3 1.5-.7.8-1.2 2-1.1 3.1 1.2.1 2.3-.6 3.1-1.4z"/></svg><small>Download on the</small><b>App Store</b></i>
+                  <i><svg viewBox="0 0 24 24"><path fill="#34a853" d="M3.6 2.2l9.5 9.8-9.5 9.8c-.4-.2-.6-.6-.6-1.1V3.3c0-.5.2-.9.6-1.1z"/><path fill="#fbbc04" d="M16.3 15.2l-3.2-3.2 3.2-3.2 3.8 2.2c1.1.6 1.1 1.6 0 2.1z"/><path fill="#4285f4" d="M16.3 8.8L13.1 12 3.6 2.2c.3-.2.8-.2 1.3.1z"/><path fill="#ea4335" d="M16.3 15.2l-11.4 6.5c-.5.3-1 .3-1.3.1l9.5-9.8z"/></svg><small>GET IT ON</small><b>Google Play</b></i>
+                </div>
+                <div class="foot-col foot-a" data-layer="links" data-depth="0.3">
+                  <span class="lab">About</span><span style="top:44px">Our Story</span><span style="top:74px">Work With Us</span><span style="top:105px">Caps For Your Team</span><span style="top:135px">Doing Business With Us</span><span style="top:166px">Rewards</span><span style="top:196px">Locations</span>
+                </div>
+                <div class="foot-col foot-b" data-layer="links" data-depth="0.3">
+                  <span class="lab">Support</span><span style="top:44px">Help &amp; FAQs</span><span style="top:74px">Shipping</span><span style="top:105px">Returns</span><span style="top:135px">Gift Cards</span><span style="top:166px">Contact Us</span><span style="top:196px">Media Inquires</span><span style="top:226px">Return and Refund Policy</span><span style="top:257px">Terms and Conditions</span><span style="top:287px">Brand Protection</span>
+                </div>
+                <div class="foot-logo" data-layer="wordmark" data-depth="0.5"><img src="new-era-card-src/img/logo-inline-white.svg" alt=""></div>
+                <div class="foot-c" data-layer="copyright" data-depth="0.3">© 2026 New Era Cap</div>
+                <div class="social" data-layer="social" data-depth="0.45">
+                  <img style="left:0" src="new-era-card-src/img/social-facebook.svg" alt=""><img style="left:40px" src="new-era-card-src/img/social-instagram.svg" alt=""><img style="left:80px" src="new-era-card-src/img/social-twitter.svg" alt=""><img style="left:120px" src="new-era-card-src/img/social-tiktok.svg" alt=""><img style="left:160px" src="new-era-card-src/img/social-pinterest.svg" alt=""><img style="left:200px" src="new-era-card-src/img/social-youtube.svg" alt="">
+                </div>
+                <div class="foot-rule"></div>
+                <div class="foot-legal" data-layer="legal" data-depth="0.2">All rights reserved. Product name, logos, visor stickers are New Era Trademarks.</div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>New Era</h3>
+      <p><span>Consumer</span><span>Web design</span></p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { startCard, DEFAULTS } from './new-era-card-src/js/card.js';
+
+const EMBED = document.documentElement.classList.contains('embed');
+const card = startCard({ embed: EMBED });
+window.__newEraCard = card;
+
+/* The dials. Embedded on the site there is no panel at all, and opened straight
+   from disk there is no studio to serve the module, so it loads on demand and the
+   card runs on its defaults without it. */
+if (!EMBED) {
+  import('/shared/params/params.js').then(({ defineParams }) => {
+    const TOOL = 'new era work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [DEFAULTS['layers.depth'], 0, 2.5, 0.01],        // how far apart the layers sit
+        parallax: [DEFAULTS['layers.parallax'], 0, 3, 0.01],    // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [DEFAULTS['layers.spread'], 0, 1, 0.01],        // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [DEFAULTS['tilt.tiltMax'], 0, 20, 0.5],        // degrees
+        perspective: [DEFAULTS['tilt.perspective'], 1, 6, 0.05],// eye distance, in card widths
+        hoverScale: [DEFAULTS['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [DEFAULTS['light.bloom'], 0, 1.5, 0.01],         // the round light under the pointer
+        bloomSize: [DEFAULTS['light.bloomSize'], 0.4, 2.5, 0.05], // its diameter, in card widths
+        rim: [DEFAULTS['light.rim'], 0, 1, 0.01],
+        shadow: [DEFAULTS['light.shadow'], 0, 1, 0.01],
+      },
+      motion: {
+        scrollSpeed: [DEFAULTS['motion.scrollSpeed'], 0, 3, 0.05],
+        stiffness: [DEFAULTS['motion.stiffness'], 40, 500, 1],
+        damping: [DEFAULTS['motion.damping'], 4, 60, 0.5],
+        capsSpeed: [DEFAULTS['motion.capsSpeed'], 0, 3, 0.05],  // how fast the arc of caps turns
+        coinWave: [DEFAULTS['motion.coinWave'], 0, 3, 0.05],    // how fast the coins flip down the row
+      },
+      drag: {
+        momentum: [DEFAULTS['drag.momentum'], 0, 3, 0.05],      // how far a flick carries
+        scrub: [DEFAULTS['drag.scrub'], 0, 6, 0.1],             // px of page per px of sideways drag
+        resumeAfter: [DEFAULTS['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [DEFAULTS['card.cardSize'], 24, 72, 0.5],     // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: DEFAULTS['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: DEFAULTS['card.frame'] },
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: DEFAULTS['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  }).catch(() => { /* no studio here: the card runs on its defaults */ });
+}
+</script>
+</body>
+</html>

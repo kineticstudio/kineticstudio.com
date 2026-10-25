@@ -1,5 +1,6 @@
 ---
 import { AWARDS, STATS } from "@/data/work.js";
+import { laurelLayoutVars } from "@/data/laurel-look.js";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -10,6 +11,10 @@ interface Props {
   lead?: string;
   /** Show the three numbers under the awards. */
   stats?: boolean;
+  /** Just the three laurels in a line, small, no headline or rules (the wheel's header). */
+  compact?: boolean;
+  /** Leave the 3D laurels to the page (the laurel tuner mounts its own). */
+  manual?: boolean;
   /** Utility classes. */
   class?: string;
 }
@@ -19,40 +24,46 @@ const {
   heading = "Award-winning creative direction",
   lead = "Kinetic is led by Hunter Thompson: a big New York agency, then founding designer at startups, and now brand and bespoke websites for the companies building what's next.",
   stats = true,
+  compact = false,
+  manual = false,
   class: className,
 } = Astro.props;
 ---
 
 {
   render && (
-    <div class:list={["awards_wrap", className]} data-awards>
-      <div class="awards_head">
-        <h2 class="awards_title text-style-h2" data-reveal>{heading}</h2>
-        <p class="awards_lead text-style-large" data-reveal style="--reveal-delay:0.1s">{lead}</p>
-      </div>
+    <div class:list={["awards_wrap", compact && "is-compact", className]} data-awards={manual ? "manual" : ""} style={compact ? laurelLayoutVars() : undefined}>
+      {!compact && (
+        <div class="awards_head">
+          <h2 class="awards_title text-style-h2" data-reveal>{heading}</h2>
+          <p class="awards_lead text-style-large" data-reveal style="--reveal-delay:0.1s">{lead}</p>
+        </div>
+      )}
+      <div class="awards_row">
       <ul class="awards_list">
         {AWARDS.map((a, i) => (
           <li class="awards_item" data-reveal style={`--reveal-delay:${0.1 * i}s`}>
             <div class="awards_laurel" data-laurel-slot>
               <img class="awards_half is-left" src="/images/awards/laurel-chrome.png" alt="" />
-              <img class="awards_logo" src={a.logo} alt={a.name} style={`width:${a.width}rem`} />
+              <img class="awards_logo" src={a.logo} alt={a.name} style={`--logo-w:${a.width}rem`} />
               <img class="awards_half is-right" src="/images/awards/laurel-chrome.png" alt="" />
             </div>
-            <p class="awards_line text-style-label">{a.line}</p>
+            <p class="awards_line text-style-small">{a.line}</p>
           </li>
         ))}
       </ul>
-      {stats && (
+      <canvas class="awards_canvas" aria-hidden="true" />
+      </div>
+      {stats && !compact && (
         <ul class="awards_stats">
           {STATS.map((s, i) => (
             <li class="awards_stat" data-reveal style={`--reveal-delay:${0.1 * i}s`}>
-              <span class="awards_num" data-count-to={s.value}>{s.value}</span>
+              <span class="awards_num text-style-figure" data-count-to={s.value}>{s.value}</span>
               <span class="awards_label text-style-label">{s.label}</span>
             </li>
           ))}
         </ul>
       )}
-      <canvas class="awards_canvas" aria-hidden="true" />
     </div>
   )
 }
@@ -80,17 +91,52 @@ const {
   }, { threshold: 0.6 });
   counters.forEach((c) => io.observe(c));
 
-  // The chrome laurels in real 3D, once WebGL and src/scripts/laurel.js are
-  // there; the rendered PNG halves stay as the fallback.
+  import { laurelOptions, laurelLayoutVars } from "@/data/laurel-look.js";
+
+  // The laurels in real 3D chrome, once WebGL and src/scripts/laurel.js
+  // are there; the rendered PNG halves stay as the fallback. Every setting
+  // is in src/data/laurel-look.js (tuned at /tools/laurels).
   const modules = import.meta.glob("../../scripts/laurel.js");
-  document.querySelectorAll<HTMLElement>("[data-awards]").forEach(async (root) => {
+  document.querySelectorAll<HTMLElement>("[data-awards]:not([data-awards='manual'])").forEach(async (root) => {
     const load = modules["../../scripts/laurel.js"];
-    const canvas = root.querySelector<HTMLCanvasElement>(".awards_canvas");
+    let canvas = root.querySelector<HTMLCanvasElement>(".awards_canvas");
     if (!load || !canvas || !canvas.getContext("webgl2")) return;
     try {
       const { mountLaurels } = (await load()) as { mountLaurels: (c: HTMLCanvasElement, o: object) => unknown };
       const slots = [...root.querySelectorAll<HTMLElement>("[data-laurel-slot]")];
-      mountLaurels(canvas, { count: slots.length, getSlots: () => slots });
+      // Hunter, Oct 24: "the 3D laurels still don't look great. They need to
+      // look like chrome. Maybe we need to rebuild them and have them have a
+      // different shape." Fewer, plumper leaves (round both ways, a soft
+      // crease down each) big enough to carry a whole reflection, in the
+      // polished world: sky over a hot horizon over black, the horizon
+      // landing mid-leaf, so every leaf has a bright face and a black one with
+      // a hard line between. The bloom kept low: strong, it washed the metal
+      // to flat silver. The wreath opened wider so the logo has room. On a
+      // light page the horizon sits higher, so the metal reads dark on paper.
+      const light = getComputedStyle(root).colorScheme === "light";
+      type Handle = { destroy(): void; update(o: object): void; render(): void };
+      const mount = (look?: object, on = canvas) => mountLaurels(on, { count: slots.length, getSlots: () => slots, ...laurelOptions(look as never, { light }) }) as Handle;
+      let handle = mount();
+      // kept on the row, so the homepage's particle hero can draw a fresh frame of it, and
+      // its Params can change the look: live where it can, built again (on a fresh canvas,
+      // the old one's context is gone) when the leaves or the wreath change
+      Object.assign(root, {
+        __laurels: handle,
+        __laurelLook(look: object, rebuild: boolean) {
+          if (root.classList.contains("is-compact")) root.setAttribute("style", laurelLayoutVars(look as never));
+          if (rebuild) {
+            handle.destroy();
+            const fresh = canvas.cloneNode() as HTMLCanvasElement;
+            canvas.replaceWith(fresh);
+            canvas = fresh;
+            handle = mount(look, fresh);
+            Object.assign(root, { __laurels: handle });
+          } else {
+            handle.update(laurelOptions(look as never, { light }));
+            handle.render();
+          }
+        },
+      });
       root.classList.add("is-3d");
     } catch (e) {
       console.warn("laurels stay flat:", e);
@@ -158,8 +204,8 @@ const {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 11rem;
-      height: 9.75rem;
+      width: 14rem;
+      height: 9.5rem;
     }
     .awards_half {
       position: absolute;
@@ -181,31 +227,89 @@ const {
     }
     .awards_logo {
       position: relative;
+      width: calc(var(--logo-w) * 1.35);
       height: auto;
       filter: brightness(0) invert(0.92);
+      :where(.theme-light) & {
+        filter: brightness(0) opacity(0.85);
+      }
     }
     .awards_line {
       max-width: 22ch;
       margin: 0;
+      text-wrap: balance;
       color: color-mix(in srgb, var(--text) 60%, transparent);
     }
     .awards_stats {
       border-bottom: var(--border-width) solid var(--grey-300);
     }
-    .awards_num {
-      font-family: var(--display-family);
-      font-size: clamp(5rem, 11vw, 10rem);
-      line-height: 0.8;
-      font-variant-numeric: tabular-nums;
-    }
     .awards_label {
       color: color-mix(in srgb, var(--text) 60%, transparent);
     }
+    .awards_wrap.is-compact {
+      gap: 0;
+      & .awards_list {
+        border-top: 0;
+        grid-template-columns: repeat(3, auto);
+        justify-content: center;
+        gap: var(--awards-gap, 5.5rem);
+      }
+      & .awards_item {
+        gap: var(--space-1);
+        padding: 0;
+        border: 0;
+      }
+      & .awards_laurel {
+        width: var(--laurel-w, 10rem);
+        height: calc(var(--laurel-w, 10rem) * 0.675);
+      }
+      & .awards_logo {
+        width: calc(var(--logo-w) * var(--logo-scale, 0.85));
+      }
+      & .awards_line {
+        max-width: 22ch;
+        margin-top: var(--space-1);
+        font-size: var(--line-size, var(--text-small));
+      }
+      & .awards_canvas {
+        inset: -3rem -2rem;
+        width: calc(100% + 4rem);
+        height: calc(100% + 6rem);
+      }
+      /* on a phone the three share the width, so the row never runs off it */
+      @media (width < 48rem) {
+        & .awards_list {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: var(--space-2);
+        }
+        & .awards_laurel {
+          width: min(100%, 6.5rem);
+          height: auto;
+          aspect-ratio: 10 / 6.75;
+        }
+        & .awards_logo {
+          width: calc(var(--logo-w) * 0.6);
+        }
+        & .awards_line {
+          max-width: 13ch;
+          font-size: 0.8125rem;
+        }
+      }
+    }
+    .awards_row {
+      position: relative;
+      & .awards_list {
+        position: relative;
+        z-index: 1;
+      }
+    }
+    /* bleeds past the row so the hop and the glow have room */
     .awards_canvas {
       position: absolute;
-      inset: 0;
+      inset: -5rem 0;
       width: 100%;
-      height: 100%;
+      max-width: none; /* the reset caps canvases at 100%: this one overhangs the row */
+      height: calc(100% + 10rem);
       pointer-events: none;
     }
   }

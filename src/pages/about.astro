@@ -1,17 +1,22 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
 import Section from "@/components/wrapper/Section.astro";
-import AboutStudio from "@/components/section/AboutStudio.astro";
-import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
-import ClientWall from "@/components/content/ClientWall.astro";
+import AboutHero from "@/components/section/AboutHero.astro";
+import AboutFounder from "@/components/section/AboutFounder.astro";
+import AboutStats from "@/components/section/AboutStats.astro";
+import ClientLogos from "@/components/content/ClientLogos.astro";
+import StudioReel from "@/components/section/StudioReel.astro";
 ---
 
-<Layout title="About" description="Kinetic Studio is led by Hunter Thompson: award-winning creative direction, realized with flagship AI.">
-  <AboutStudio />
-  <Section paddingTop="large">
-    <AwardsLaurels heading="Thirteen years of craft" lead="Webby, Awwwards and SXSW recognition, 119 websites and more than 60 clients, from first-time founders to Anthropic and Google." />
+<Layout title="About" theme="light" description="Kinetic Studio is led by Hunter Thompson: award-winning creative direction, realized with flagship AI.">
+  {/* Hunter, Oct 24: the studio's headline leads; he is a row under it (AboutFounder), turning in 3D with his
+      quote and signature; Oct 25: the numbers in a row of their own (AboutStats), then the clients' logos
+      running past and the Creative Studio, dark from edge to edge */}
+  <AboutHero />
+  <AboutFounder />
+  <AboutStats />
+  <Section paddingTop="none" paddingBottom="large">
+    <ClientLogos heading="Clients" />
   </Section>
-  <Section paddingTop="medium" paddingBottom="large">
-    <ClientWall />
-  </Section>
+  <StudioReel />
 </Layout>

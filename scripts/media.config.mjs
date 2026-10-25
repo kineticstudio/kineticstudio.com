@@ -2,7 +2,7 @@
 
    from   capture    a live experiment, recorded by scripts/capture-experiments.mjs
           portfolio  the swimlanes design's finished loops (kinetic-creative-studio
-                     clients/kinetic/designs/portfolio-src/media), copied as is
+                     clients/kinetic/designs/01-Personal/portfolio-src/media), copied as is
           twitter    iCloud 💻 Kinetic/twitter, Hunter's recordings
           mirror     the Webflow mirror's portfolio hover videos and stills
                      (kineticstudio-webflow-mirror/assets)
@@ -47,6 +47,17 @@ export const MEDIA = [
   { id: "counsel-mobile", from: "twitter", file: "counsel-hero-home.mp4", ss: 1, dur: 5 },
 
   { id: "wispr-flow", from: "portfolio", file: "wispr-flow" },
+  // Hunter, Oct 24: three more on the homepage, from his own recordings
+  { id: "claude-community", from: "twitter", file: "claude-community-globe.mp4", ss: 2, dur: 6 },
+  { id: "superinterviews", from: "twitter", file: "superinterview-home.mp4", ss: 15.5, dur: 5, loop: "bounce" },
+  { id: "rylo", from: "twitter", file: "rylo-home.mp4", ss: 0.5, dur: 5, loop: "bounce" },
+  { id: "elio", from: "twitter", file: "elio-hero.mp4", ss: 0.8, dur: 5, loop: "bounce" },
+  { id: "dorm-room-fund", from: "twitter", file: "dorm-room-fund-home.mp4", ss: 0.6, dur: 6, loop: "bounce" },
+  // the client logos' hover loops (Hunter, Oct 24), for clients with no project of their own here
+  { id: "client-buck-mason", from: "twitter", file: "buck.mov", ss: 0.5, dur: 5, loop: "bounce" },
+  { id: "client-superhuman", from: "twitter", file: "superhuman-login.mp4", ss: 2, dur: 5 },
+  // moses round two, Everything sheds (the Creative Studio design, recorded from the Studio on Oct 24)
+  { id: "moses", from: "capture", file: "moses-home.mp4", ss: 4.8, dur: 6, loop: "bounce" },
   { id: "flow-hero", from: "mirror", file: "videos/flow2-transcode.mp4", ss: 0.5, dur: 5 },
   { id: "flow-notes", from: "mirror", file: "videos/flow3-transcode.mp4", ss: 1, dur: 5, loop: "bounce" },
   { id: "wispr-flow-brand", from: "portfolio", file: "wispr-flow-brand" },

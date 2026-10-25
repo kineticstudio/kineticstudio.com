@@ -1,0 +1,110 @@
+{
+  "wispr-flow": {
+    "video": "/media/scroll/wispr-flow.mp4",
+    "poster": "/media/scroll/wispr-flow.jpg",
+    "duration": 24.6,
+    "from": "/sites/wispr-flow/index.html"
+  },
+  "dawn": {
+    "video": "/media/scroll/dawn.mp4",
+    "poster": "/media/scroll/dawn.jpg",
+    "duration": 18.85,
+    "from": "/sites/dawn/index.html"
+  },
+  "anthropic-community": {
+    "video": "/media/scroll/anthropic-community.mp4",
+    "poster": "/media/scroll/anthropic-community.jpg",
+    "duration": 22,
+    "from": "/sites/anthropic-community/index.html"
+  },
+  "moses": {
+    "video": "/media/scroll/moses.mp4",
+    "poster": "/media/scroll/moses.jpg",
+    "duration": 24.39,
+    "from": "https://moses.kineticstudio.com/designs/moses/round-two/01-everything-sheds"
+  },
+  "ethos": {
+    "video": "/media/scroll/ethos.mp4",
+    "poster": "/media/scroll/ethos.jpg",
+    "duration": 18.52,
+    "from": "https://www.ethos.network/"
+  },
+  "rime": {
+    "video": "/media/scroll/rime.mp4",
+    "poster": "/media/scroll/rime.jpg",
+    "duration": 15.14,
+    "from": "https://www.rime.ai/"
+  },
+  "august-health": {
+    "video": "/media/scroll/august-health.mp4",
+    "poster": "/media/scroll/august-health.jpg",
+    "duration": 18.06,
+    "from": "/sites/august-health/index.html"
+  },
+  "rylo": {
+    "video": "/media/scroll/rylo.mp4",
+    "poster": "/media/scroll/rylo.jpg",
+    "duration": 24.6,
+    "from": "/sites/rylo/index.html"
+  },
+  "cambium": {
+    "video": "/media/scroll/cambium.mp4",
+    "poster": "/media/scroll/cambium.jpg",
+    "duration": 16.86,
+    "from": "https://www.cambium.com/"
+  },
+  "venus-aerospace": {
+    "video": "/media/scroll/venus-aerospace.mp4",
+    "poster": "/media/scroll/venus-aerospace.jpg",
+    "duration": 15.76,
+    "from": "https://venusaero.com/"
+  },
+  "epirus": {
+    "video": "/media/scroll/epirus.mp4",
+    "poster": "/media/scroll/epirus.jpg",
+    "duration": 14.6,
+    "from": "/sites/epirus/index.html"
+  },
+  "new-era": {
+    "video": "/media/scroll/new-era.mp4",
+    "poster": "/media/scroll/new-era.jpg",
+    "duration": 17.63,
+    "from": "/sites/new-era/index.html"
+  },
+  "happy-droid": {
+    "video": "/media/scroll/happy-droid.mp4",
+    "poster": "/media/scroll/happy-droid.jpg",
+    "duration": 24.6,
+    "from": "https://www.happydroid.ai/"
+  },
+  "metamag": {
+    "video": "/media/scroll/metamag.mp4",
+    "poster": "/media/scroll/metamag.jpg",
+    "duration": 19.31,
+    "from": "https://metamag.us"
+  },
+  "roam-robotics": {
+    "video": "/media/scroll/roam-robotics.mp4",
+    "poster": "/media/scroll/roam-robotics.jpg",
+    "duration": 17.25,
+    "from": "https://www.roamrobotics.com/"
+  },
+  "dorm-room-fund": {
+    "video": "/media/scroll/dorm-room-fund.mp4",
+    "poster": "/media/scroll/dorm-room-fund.jpg",
+    "duration": 14.6,
+    "from": "https://www.dormroomfund.com/"
+  },
+  "elio": {
+    "video": "/media/scroll/elio.mp4",
+    "poster": "/media/scroll/elio.jpg",
+    "duration": 24.6,
+    "from": "https://elio-site.kineticstudio.com/"
+  },
+  "counsel-health": {
+    "video": "/media/scroll/counsel-health.mp4",
+    "poster": "/media/scroll/counsel-health.jpg",
+    "duration": 24.61,
+    "from": "https://www.counselhealth.com/"
+  }
+}

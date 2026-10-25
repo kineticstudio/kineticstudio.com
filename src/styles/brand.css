@@ -1,0 +1,16 @@
+/* Generated from tokens.json by build.mjs. Do not edit; change tokens.json. */
+:root {
+  --kb-ink: #191919;
+  --kb-ground: #0d0d0d;
+  --kb-ground-2: #161616;
+  --kb-ground-3: #232323;
+  --kb-rule: #2e2e2e;
+  --kb-sage: #d9e2d2;
+  --kb-sage-light: #eef1ea;
+  --kb-sage-tint: #e9efe4;
+  --kb-sage-rule: #b4beab;
+  --kb-lime: #a8ff66;
+  --kb-font-display: "Panell Condensed", "Arial Narrow", sans-serif;
+  --kb-font-text: "Neue Montreal", "Helvetica Neue", Arial, sans-serif;
+  --kb-font-mono: "Neue Montreal Mono", ui-monospace, monospace;
+}

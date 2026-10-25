@@ -1,0 +1,160 @@
+/* Dorm Room Fund (www.dormroomfund.com, designed and built by Kinetic), the
+   homepage rebuilt at its own 1440px width. Every size, colour and position
+   here was read off the live page at 1440 x 900 on 2026-10-24 (its computed
+   styles and boxes, raw/shared.css and the page's own inline styles in
+   raw/index.html). Heights the page gives in vh (the 300vh hero with its sticky
+   door, the 140vh network) follow the miniature's own screen height, --vh.
+
+   The type is the site's one face, Satoshi, in the two cuts it ships (Medium
+   for nearly everything, Regular for the advisors' roles); the heavier weights
+   the page asks for (the advisors' names, the buttons) are drawn the way the
+   browser draws them on the live page, from Medium. */
+
+@font-face { font-family: "DRF Satoshi"; src: url("../fonts/Satoshi-Medium.woff2") format("woff2"); font-weight: 500; font-display: block; }
+@font-face { font-family: "DRF Satoshi"; src: url("../fonts/Satoshi-Regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
+
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  --ink: #1c1525; --lav: #d9d5df; --lav-muted: #b8b0c4; --lav-lightest: #f1eff4; --elevated: #3e344c;
+  --violet: #9378ee; --violet-light: #a892f2; --orange: #ff6a33;
+  background: var(--ink);
+  color: var(--lav);
+  font: 500 16px/24px "DRF Satoshi", Arial, sans-serif;
+  text-rendering: geometricPrecision;
+}
+.vp p, .vp h1, .vp h2, .vp h3 { margin: 0; font-weight: 500; }
+.vp img { display: block; }
+.vp i, .vp b { font-style: normal; font-weight: inherit; }
+.page { position: absolute; left: 0; top: 0; width: 1440px; height: calc(var(--vh, 900px) * 4.4 + 1691px); will-change: transform; }
+.sec, .sec > *, .abs { position: absolute; }
+.sec { left: 12px; width: 1416px; }
+[data-depth] { will-change: transform; }
+
+/* the scroll reveals the page plays (its fd-h2, fd-paragraph, fd-fade and fd-fade-children): words and lines
+   rise out of a mask, children fade up. Driven by js/card.js on the card's clock. */
+.w { display: inline-block; vertical-align: top; overflow: clip; padding-bottom: 20px; margin-bottom: -20px; }
+.w > i { display: inline-block; will-change: transform, opacity; }
+.ln { display: block; overflow: clip; padding-bottom: 20px; margin-bottom: -20px; }
+.ln > i { display: block; will-change: transform, opacity; }
+.rv { will-change: transform, opacity; }
+
+/* ---------- the nav, fixed in the viewport: the logo tile, Apply, the menu ---------- */
+.nav { left: 24px; top: 24px; width: 277px; height: 80px; z-index: 10; }
+.nav > * { position: absolute; top: 0; height: 80px; }
+.nav .logo { left: 0; width: 109px; border-radius: 12px; background: var(--lav-muted); }
+.nav .logo img { position: absolute; left: 16px; top: 16px; width: 77px; height: 48px; }
+.nav .apply { left: 113px; width: 80px; border-radius: 8px; background: var(--orange); color: var(--ink);
+  display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 27px; }
+.nav .menu { left: 197px; width: 80px; border-radius: 12px; background: var(--ink); }
+.nav .menu i { position: absolute; left: 26px; width: 28px; height: 2px; background: var(--lav); }
+
+/* ---------- 1 the hero: "The first yes." and the door (300vh, the screen pinned inside it) ---------- */
+.hero { left: 0; top: 0; width: 1440px; height: calc(var(--vh, 900px) * 3); background: var(--ink); }
+.hero-pin { left: 12px; top: 0; width: 1416px; height: var(--vh, 900px); overflow: hidden; will-change: transform; }
+.hero-slide { position: absolute; left: 0; top: 0; width: 708px; height: 100%; z-index: 2; will-change: transform; }
+.hero-slide > * { position: absolute; }
+.hero-h { left: 114px; top: calc((var(--vh, 900px) - 186px) / 2); font-size: 82px; line-height: 82px; white-space: nowrap; }
+.hero-p { left: 114px; top: calc((var(--vh, 900px) - 186px) / 2 + 114px); width: 384px; font-size: 24px; line-height: 36px; }
+/* the door: hinged on its right edge, swung to -72deg (ajar) at the top of the page and opening flat over the
+   hero's 200vh of scroll (rotateY(-72 x (1 - cubicOut(p)))), the page's own numbers counting up as it opens */
+.door-scene { position: absolute; left: 0; top: 10px; width: 1416px; height: calc(var(--vh, 900px) - 20px); z-index: 1;
+  perspective: 1800px; perspective-origin: 100% 50%; }
+.door { position: absolute; inset: 0; border-radius: 20px; background: var(--violet); overflow: hidden;
+  box-shadow: -40px 0 120px rgba(0, 0, 0, .35); transform-origin: 100% 50%; transform: rotateY(-72deg);
+  backface-visibility: hidden; will-change: transform; }
+.door-text { position: absolute; left: 80px; top: calc((var(--vh, 900px) - 20px - 360.8px) / 2);
+  display: flex; flex-direction: column; align-items: flex-start;
+  font-size: 82px; line-height: 1.1; letter-spacing: -.04em; color: var(--ink); white-space: nowrap; }
+.door-text .dl { display: block; }
+.door-text .br { color: #fff; }
+.door-text .you { color: var(--lav); }
+/* a counter: a column of 0 to 9 (and a blank, for a leading place) per digit, and the rest of the line after it.
+   Satoshi's figures are proportional and kerned, so js/card.js measures them and places each digit, and the
+   words after, by transform, exactly where the page's own text puts them as it swaps the number */
+.odo { display: inline-block; vertical-align: top; position: relative; width: .6em; height: var(--lh, 1.1em); clip-path: inset(0 -3em); }
+.odo > span { position: absolute; left: 0; top: 0; white-space: nowrap; will-change: transform; }
+.odo > span > i { display: block; height: var(--lh, 1.1em); }
+.tl { display: inline-block; white-space: pre; will-change: transform; }
+.ph { display: inline-block; width: 60px; height: 80px; vertical-align: bottom; margin-left: 8px; position: relative; top: -2px; }
+.ph-in { position: absolute; inset: 0; border-radius: 5px; overflow: hidden; transform: rotate(-5deg);
+  box-shadow: 0 8px 20px rgba(28, 21, 37, .25); background: var(--elevated); }
+.ph-in img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top;
+  transform: translateX(-110%); will-change: transform; }
+
+/* ---------- 2 "The first door is the hardest. We hold it open." and the companies ---------- */
+.btd { top: calc(var(--vh, 900px) * 3 + 12px); height: 854px; border-radius: 20px; background: var(--lav); color: var(--ink); overflow: hidden; }
+.btd-h { left: 80px; top: 96px; width: 864px; font-size: 72px; line-height: 79.2px; letter-spacing: -2.88px; }
+.btd-arrows { left: 1216px; top: 198px; width: 120px; height: 56px; }
+.btd-arrows > i { position: absolute; top: 0; width: 56px; height: 56px; border-radius: 12px; border: 1.5px solid rgba(28, 21, 37, .2);
+  display: flex; align-items: center; justify-content: center; font-size: 22px; line-height: 24.2px; }
+.cs { top: 302px; width: 360px; height: 400px; border-radius: 16px; }
+.cs > .in { position: absolute; inset: 0; border-radius: 16px; perspective: 1400px; }
+.cb { position: absolute; inset: 0; border-radius: 16px; background: var(--orange); padding: 32px; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: space-between; }
+.cb-top { display: flex; flex-direction: column; gap: 12px; opacity: 0; transform: translateX(88px); will-change: transform, opacity; }
+.cb-avs { display: flex; padding: 4px 0 8px 4px; }
+.cb-avs .av { width: 72px; height: 96px; }
+.cb-avs .av img { width: 72px; height: 96px; border-radius: 6px; object-fit: cover; object-position: 50% 0;
+  box-shadow: 0 8px 20px rgba(28, 21, 37, .25); transform: rotate(4deg); }
+.cb-info { display: flex; flex-direction: column; gap: 16px; opacity: 0; transform: translateX(88px); will-change: transform, opacity; }
+.cb-meta { opacity: .01; font-size: 11px; line-height: 16.5px; font-weight: 700; }
+.cb-name { font-size: 26px; line-height: 28.6px; letter-spacing: -.52px; }
+.cb-quote { font-size: 14px; line-height: 20.3px; }
+.cb-go { position: absolute; right: 20px; top: 20px; width: 36px; height: 36px; border-radius: 50%; background: var(--lav-lightest);
+  display: flex; align-items: center; justify-content: center; font-size: 16px; opacity: 0; transform: translateX(40px); }
+.ca { position: absolute; inset: 6px; z-index: 2; border-radius: 8px; background: var(--lav-lightest); padding: 32px; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start;
+  box-shadow: 4px 0 12px rgba(28, 21, 37, .1); transform-origin: 0 50%; backface-visibility: hidden; }
+.ca .logo { height: 32px; width: auto; max-width: 60%; object-fit: contain; object-position: 0 50%; }
+.ca .desc { font-size: 20px; line-height: 24px; letter-spacing: -.8px; }
+.ca .go { position: absolute; right: 20px; top: 20px; width: 36px; height: 36px; border-radius: 50%; background: var(--orange);
+  display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+/* ---------- 3 "A network built for the next problem" (140vh) ---------- */
+.net { left: 0; width: 1440px; top: calc(var(--vh, 900px) * 3 + 878px); height: calc(var(--vh, 900px) * 1.4);
+  border-radius: 20px; background: var(--ink); overflow: hidden; text-align: center; --pt: clamp(48px, calc(var(--vh, 900px) * .09), 110px); }
+.net-h { left: 0; top: var(--pt); width: 1440px; font-size: 56px; line-height: 56px; }
+.net-p { left: 344px; top: calc(var(--pt) + 128px); width: 752px; font-size: 24px; line-height: 33.6px; color: rgba(217, 213, 223, .6); }
+.net-rings, .net-card { left: 580px; top: calc(var(--vh, 900px) * .868 - 187.5px); width: 280px; height: 375px; }
+.net-rings { z-index: 1; }
+.net-rings > i { position: absolute; border: 1.5px solid rgba(185, 168, 245, .65); }
+.net-rings > i.lit { border-color: rgba(195, 180, 248, .72); opacity: 0; }
+.net-avs { left: 0; top: 0; width: 1440px; height: 100%; z-index: 2; }
+.avi { position: absolute; left: 0; top: 0; width: 184px; will-change: transform, opacity; }
+.avf { position: absolute; left: 0; top: 0; width: 184px; display: flex; flex-direction: column; gap: 6px; opacity: 0; }
+.avf img { width: 184px; aspect-ratio: 3 / 4; object-fit: cover; object-position: top; border-radius: 12px; background: var(--elevated); }
+.avf p { font-size: 22px; line-height: 1.3; letter-spacing: -.01em; }
+.avf b { display: block; font-weight: 800; color: var(--lav); }
+.avf small { display: block; font-size: inherit; font-weight: 400; color: var(--violet-light); }
+.net-card { z-index: 3; border-radius: 20px; background: var(--violet); box-shadow: 0 40px 100px rgba(0, 0, 0, .45); }
+.net-count { --lh: 30.24px; left: 0; top: 172.4px; width: 280px; font-size: 20.16px; line-height: 30.24px; font-weight: 600; letter-spacing: -.4032px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.net-count .odo { color: #fff; }
+
+/* ---------- 4 "What comes after the first yes?" ---------- */
+.cta { top: calc(var(--vh, 900px) * 4.4 + 890px); height: 429px; border-radius: 20px; background: var(--lav); color: var(--ink); }
+.cta-h { left: 80px; top: 152px; font-size: 72px; line-height: 79.2px; letter-spacing: -2.88px; white-space: nowrap; }
+.cta-p { left: 80px; top: 248px; font-size: 20px; line-height: 30px; opacity: .7; white-space: nowrap; }
+.cta-btn { left: 1152px; top: 187px; width: 184px; height: 56px; }
+.cta-btn > i { position: absolute; inset: 0; border-radius: 12px; background: var(--orange); border: 1.5px solid var(--orange);
+  display: flex; align-items: center; justify-content: center; font-size: 16px; line-height: 24px; font-weight: 700; white-space: nowrap; }
+
+/* ---------- the footer: the door tile, the two calls, the links ---------- */
+.foot { top: calc(var(--vh, 900px) * 4.4 + 1331px); height: 360px; }
+.f-logo { left: 0; top: 0; width: 315px; height: 315px; border-radius: 20px; background: var(--lav-muted); overflow: hidden; }
+.f-logo .on { position: absolute; inset: 0; background: var(--violet); opacity: 0; }
+.f-door { position: absolute; left: 87.5px; top: 72.5px; width: 140px; height: 170px; }
+.f-door svg { display: block; width: 140px; height: 170px; overflow: visible; }
+.f-cta { left: 319px; width: 403px; height: 155.5px; border-radius: 20px; background: var(--violet); color: var(--ink);
+  display: flex; align-items: center; justify-content: center; font-size: 24px; line-height: 36px; }
+.f-link { left: 726px; width: 690px; height: 75.75px; border-radius: 12px; background: var(--elevated);
+  display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 19.8px; font-weight: 700; letter-spacing: -.36px; }
+.f-bottom { left: 0; top: 315px; width: 1416px; height: 45px; font-size: 14px; line-height: 21px; color: rgba(217, 213, 223, .5); }
+.f-bottom > * { position: absolute; top: 12px; }
+.f-bottom svg { width: 16px; height: 16px; top: 2.5px; position: relative; display: block; }
+
+/* shadow twins: a darkened, blurred copy of a lifted layer, left on the surface below it */
+.twin { filter: brightness(0) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; }
+.twin * { will-change: auto !important; }

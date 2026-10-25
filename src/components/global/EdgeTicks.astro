@@ -1,0 +1,61 @@
+---
+// The notched edges of the 2026 briefs (kinetic-contracts brand-2026/ticks.svg):
+// a short tick every 48 px down both sides of the page. They travel with the
+// scroll, and a page can turn them itself ("ks:ticks", in px): the wheel does.
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+---
+
+{
+  render && (
+    <>
+      <div class="ticks_wrap is-left" aria-hidden="true" />
+      <div class="ticks_wrap is-right" aria-hidden="true" />
+    </>
+  )
+}
+
+<script>
+  let extra = 0, raf = 0;
+  const paint = () => {
+    raf = 0;
+    document.documentElement.style.setProperty("--ticks-shift", `${(-scrollY + extra).toFixed(1)}px`);
+  };
+  const request = () => (raf ||= requestAnimationFrame(paint));
+  addEventListener("scroll", request, { passive: true });
+  addEventListener("ks:ticks", (e) => {
+    extra = Number((e as CustomEvent).detail) || 0;
+    request();
+  });
+  paint();
+</script>
+
+<style is:global>
+  @layer components {
+    .ticks_wrap {
+      --tick-step: 3rem;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      z-index: 40;
+      width: 0.625rem;
+      pointer-events: none;
+      background-image: linear-gradient(to bottom, color-mix(in srgb, var(--sage-300) 14%, transparent) 1px, transparent 1px);
+      background-size: 100% var(--tick-step);
+      background-position: 0 var(--ticks-shift, 0px);
+      &.is-left {
+        left: 0;
+      }
+      &.is-right {
+        right: 0;
+      }
+      @media (width < 48rem) {
+        width: 0.4rem;
+      }
+    }
+  }
+</style>

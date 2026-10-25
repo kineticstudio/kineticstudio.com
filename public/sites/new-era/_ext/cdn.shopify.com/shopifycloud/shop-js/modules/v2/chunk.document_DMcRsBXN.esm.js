@@ -1,0 +1,2 @@
+const e="undefined"==typeof document?{activeElement:null,addEventListener:()=>{},appendChild:()=>{},body:{},cookie:"",createElement:()=>{},createTextNode:()=>{},documentElement:{clientHeight:0,clientWidth:0,dir:"",lang:"",style:{overflow:"",removeProperty:()=>{},setProperty:()=>{}}},getElementById:()=>null,head:{appendChild:()=>{}},location:void 0,querySelector:()=>{},querySelectorAll:()=>[],removeEventListener:()=>{},styleSheets:{},visibilityState:"hidden"}:document;export{e as t};
+//# sourceMappingURL=chunk.document_DMcRsBXN.esm.js.map

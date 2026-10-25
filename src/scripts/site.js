@@ -2,8 +2,9 @@
 
    - Loops: every <video data-loop> plays only while it is on screen.
    - Reveals: [data-reveal] fades up the first time it enters the view.
-   - Sound: off by default. The nav's bars turn on soft synthesized ticks for
-     hovers and clicks (no audio files); the choice is remembered.
+   - Sound: a small kit made in code (earshot), on by default but quiet, and
+     kept to clicks and a few moments (no hover ticks); S mutes it and the
+     choice is remembered.
    - Hidden keys: G flips a Work view between grid and list, S toggles sound,
      and the console says hello. */
 
@@ -57,38 +58,73 @@ export function watchReveals(root = document) {
 
 /* ---- sound ---------------------------------------------------------- */
 
+/* A sound kit made in code: earshot's bank (github.com/Leonxlnx/earshot),
+   rendered by scripts/build-sounds.py into public/sfx/<role>.m4a. On by
+   default; the nav's bars (or S) mute it, and the choice is remembered.
+   Browsers only allow audio after a click or key, so nothing plays before. */
+
 const KEY = "ks-sound";
+const ROLES = ["hover", "click", "toggle", "line", "glide", "pull", "open", "close", "detent", "confirm", "key"];
+const ALIAS = { tick: "click" };
+const ROOT = document.querySelector('link[rel="site-root"]')?.href ?? `${location.origin}/`;
 let ctx = null;
-let soundOn = false;
+let master = null;
+const buffers = new Map();
+let soundOn = true;
 try {
-  soundOn = localStorage.getItem(KEY) === "on";
+  soundOn = localStorage.getItem(KEY) !== "off";
 } catch {}
 
-function tone(freq, dur = 0.06, gain = 0.035, type = "sine") {
-  if (!soundOn) return;
-  ctx ??= new AudioContext();
-  const t = ctx.currentTime;
-  const o = ctx.createOscillator();
-  const g = ctx.createGain();
-  o.type = type;
-  o.frequency.setValueAtTime(freq, t);
-  o.frequency.exponentialRampToValueAtTime(freq * 0.7, t + dur);
-  g.gain.setValueAtTime(gain, t);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(ctx.destination);
-  o.start(t);
-  o.stop(t + dur + 0.02);
+function audio() {
+  if (ctx) return ctx;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  ctx = new AC();
+  master = ctx.createGain();
+  master.gain.value = 0.45;
+  master.connect(ctx.destination);
+  for (const role of ROLES) {
+    fetch(new URL(`sfx/${role}.m4a`, ROOT))
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject()))
+      .then((b) => ctx.decodeAudioData(b))
+      .then((buf) => buffers.set(role, buf))
+      .catch(() => {});
+  }
+  return ctx;
 }
 
-const SOUNDS = {
-  hover: () => tone(1800, 0.035, 0.018),
-  tick: () => tone(1200, 0.05, 0.03, "triangle"),
-  open: () => {
-    tone(660, 0.12, 0.03);
-    setTimeout(() => tone(990, 0.14, 0.025), 60);
-  },
+let lastHover = 0;
+export function sound(name, { rate = 1, gain = 1 } = {}) {
+  if (!soundOn) return;
+  const role = ALIAS[name] ?? name;
+  if (role === "hover") {
+    const now = performance.now();
+    if (now - lastHover < 45) return;
+    lastHover = now;
+  }
+  const c = audio();
+  if (!c || c.state !== "running") return;
+  const buf = buffers.get(role);
+  if (!buf) return;
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  src.playbackRate.value = rate;
+  const g = c.createGain();
+  g.gain.value = gain;
+  src.connect(g).connect(master);
+  src.start();
+}
+
+// for checking from a console: is the audio awake, how many sounds loaded
+Object.defineProperty(window, "__ksSound", { get: () => ({ on: soundOn, state: ctx?.state ?? "asleep", loaded: buffers.size }) });
+
+// the first click or key wakes the audio up
+const wake = () => {
+  const c = audio();
+  c?.resume?.();
 };
-export const sound = (name) => SOUNDS[name]?.();
+addEventListener("pointerdown", wake, { capture: true });
+addEventListener("keydown", wake, { capture: true });
 
 function setSound(on) {
   soundOn = on;
@@ -96,23 +132,64 @@ function setSound(on) {
     localStorage.setItem(KEY, on ? "on" : "off");
   } catch {}
   document.querySelectorAll("[data-sound-toggle]").forEach((b) => b.setAttribute("aria-pressed", String(on)));
-  if (on) sound("open");
+  if (on) {
+    wake();
+    setTimeout(() => sound("toggle"), 30);
+  }
 }
 
 document.querySelectorAll("[data-sound-toggle]").forEach((b) => {
   b.setAttribute("aria-pressed", String(soundOn));
-  b.addEventListener("click", () => setSound(!soundOn));
+  b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    setSound(!soundOn);
+  });
 });
-window.addEventListener("ks:sound", (e) => sound(e.detail));
+window.addEventListener("ks:sound", (e) => {
+  const d = e.detail;
+  typeof d === "string" ? sound(d) : sound(d?.name, d);
+});
 
-let lastHover = null;
+// a soft note as the pointer finds something to press (Hunter, Oct 25: "I
+// also feel like we lost the sound effects"): once per thing, mouse only
+let hovered = null;
 document.addEventListener("pointerover", (e) => {
-  const el = e.target.closest?.("a, button, [data-sound]");
-  if (el && el !== lastHover) sound("hover");
-  lastHover = el;
+  if (e.pointerType && e.pointerType !== "mouse") return;
+  const el = e.target.closest?.("a, button, .contact_chip, [data-sound]");
+  if (el && el !== hovered) sound("hover", { gain: 0.55 });
+  hovered = el;
 });
+
 document.addEventListener("click", (e) => {
-  if (e.target.closest?.("a, button")) sound("tick");
+  const el = e.target.closest?.("a, button");
+  if (!el || el.matches("[data-sound-toggle]")) return;
+  sound(el.matches("[aria-pressed], [aria-selected], [role=tab]") ? "toggle" : "click", { gain: 0.6 });
+});
+
+/* ---- page to page --------------------------------------------------- */
+
+/* The browser crossfades the old page into the new one from a snapshot it
+   takes as the old page goes, and a WebGL canvas (the laurels, the hero's
+   particles, an experiment) or a playing video comes out white in it:
+   every page change flashed white. They sit out the snapshot (a tile's
+   still shows under its loop); a 2D canvas is kept, it is drawn fine. (A
+   canvas with a WebGL context has no 2D one to give.) */
+const sittingOut = [];
+addEventListener("pageswap", () => {
+  for (const c of document.querySelectorAll("canvas, video")) {
+    if (c.tagName === "CANVAS") {
+      let flat = null;
+      try {
+        flat = c.getContext("2d");
+      } catch {}
+      if (flat) continue;
+    }
+    c.style.visibility = "hidden";
+    sittingOut.push(c);
+  }
+});
+addEventListener("pageshow", (e) => {
+  if (e.persisted) for (const c of sittingOut.splice(0)) c.style.visibility = "";
 });
 
 /* ---- cursor label -------------------------------------------------- */
@@ -153,5 +230,31 @@ console.log(
   "font: 12px monospace; color: #d9e2d2",
 );
 
+/* ---- button hovers ------------------------------------------------- */
+
+// every text-only button gets the rolling label (styles/hover.css)
+const ROLL = ".nav_link, .nav_contact, .contact_submit, .exp_btn, .work-index_view, .work-index_chip, .play_caption-actions > *, .footer_link, .copy-email_button";
+
+/** @param {ParentNode} [root] */
+export function rollLabels(root = document) {
+  root.querySelectorAll(ROLL).forEach((el) => {
+    if (el.dataset.rolled || el.children.length || !el.textContent.trim()) return;
+    const text = el.textContent.trim();
+    el.dataset.rolled = "1";
+    const roll = document.createElement("span");
+    roll.className = "roll";
+    const a = document.createElement("span");
+    a.className = "roll_a";
+    a.textContent = text;
+    const b = document.createElement("span");
+    b.className = "roll_b";
+    b.setAttribute("aria-hidden", "true");
+    b.textContent = text;
+    roll.append(a, b);
+    el.replaceChildren(roll);
+  });
+}
+
 watchLoops();
 watchReveals();
+rollLabels();

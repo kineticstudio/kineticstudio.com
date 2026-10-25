@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<body style="display: none;">
+<script>
+
+  const domReady = function(callback) {
+    document.readyState === "interactive" || document.readyState === "complete" ? callback() : document.addEventListener("DOMContentLoaded", callback);
+  };
+
+  domReady(function() {
+    let messageId;
+    const companyId = 'addd896d-42d5-4832-9b12-d9de241f2d9d';
+    const originalUrl = 'https://www.augusthealth.com/';
+    const storageKey = 'prospectio_addd896d-42d5-4832-9b12-d9de241f2d9d'
+
+    const url = new URL(originalUrl);
+    messageId = url.searchParams.get('_ovlpm');
+
+    if (isLocalStorageEnabled()) {
+      if (messageId) {
+        storeMessageId(storageKey, messageId)
+      } else {
+        messageId = retrieveMessageId(storageKey);
+      }
+    }
+
+    if (!messageId) {
+      messageId = '';
+    }
+
+    if (messageId) {
+      const i = document.createElement("img");
+      i.setAttribute('src', `/sites/august-health/_ext/app.overloop.com/companies/${companyId}/track?m=${messageId}&u=https%3A%2F%2Fwww.augusthealth.com%2F&t=August+Health+EHR%3A+Enhance+Senior+Living+Care+`);
+      i.setAttribute('height', '1px');
+      i.setAttribute('width', '1px');
+      i.width = '1';
+      i.height = '1';
+      document.body.appendChild(i);
+    }
+  });
+
+  function storeMessageId(storageKey, messageId) {
+    window.localStorage.setItem(storageKey, messageId);
+  }
+
+  function retrieveMessageId(storageKey) {
+    return window.localStorage.getItem(storageKey);
+  }
+
+  function isLocalStorageEnabled() {
+    try {
+      const key = `__storage__test`;
+      window.localStorage.setItem(key, null);
+      window.localStorage.removeItem(key);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+</script>
+
+</body>
+</html>

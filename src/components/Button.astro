@@ -166,12 +166,19 @@ const named = {
       justify-content: center;
       align-items: center;
       gap: 0.5em;
-      padding: 0.75em 1.5em;
+      /* the one pill (src/styles/pill.css): its height, its line, the nav's words */
+      box-sizing: border-box;
+      height: var(--pill-height);
+      padding: 0.1rem var(--pill-pad) 0;
       background-color: var(--button-background);
       color: var(--button-text);
-      border: var(--border-width) solid var(--button-border);
+      border: var(--pill-stroke) solid var(--button-border);
       border-radius: var(--button-radius, 0.5em);
-      line-height: 1.2;
+      font-family: var(--display-family);
+      font-size: var(--pill-type);
+      line-height: 1;
+      text-transform: uppercase;
+      white-space: nowrap;
       text-decoration: none;
       text-align: center;
       transition:
@@ -201,8 +208,12 @@ const named = {
         --button-text-hover: var(--link-text-hover);
         --button-border-hover: var(--link-border);
 
+        height: auto;
         padding: 0.4em 0;
         border: 0;
+        font-family: inherit;
+        font-size: inherit;
+        text-transform: none;
         border-bottom: var(--border-width) solid var(--button-border);
         border-radius: 0;
         background-image: linear-gradient(
@@ -226,7 +237,8 @@ const named = {
       }
       &:is(.play, .close, .arrow) {
         gap: 0;
-        padding: 0.75em;
+        width: var(--pill-height);
+        padding: 0;
         border-radius: var(--radius-round);
       }
       &.back .button_mark {

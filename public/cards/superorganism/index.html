@@ -1,0 +1,997 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Code-powered work card, Superorganism (superorganism.com, ours: web design
+     and development), 2026-10-23. Built on the Dawn card's architecture
+     (01-Code-powered-work-card.html): a 1440px design-width miniature of the
+     live homepage rebuilt in HTML and CSS, split into explicit layers, each at
+     its own height above the card plane, one spring-driven loop, transforms
+     and opacity only, the card laid out K times bigger and scaled back so
+     tilted type stays sharp.
+
+     Built in from the start, from Hunter's notes on Dawn:
+     - an idle scroll tour of the best sections, eased stops, about 20 s a loop
+     - Apple TV hover: tilt toward the pointer, layers part by depth, shadows
+       growing with height, and ONE soft round bloom of light under the
+       pointer (no streaks, no bands)
+     - the tour keeps running while hovered
+     - drag to scroll on both axes (drag up = page down 1:1; drag right = further down,
+       2.5x, a scrub), momentum, clamped ends; the tour
+       pauses, then resumes from where the drag left it after a beat
+     - a fine notched ruler beside the card whose ticks slide with the scroll
+     - no Case Study pill; the label row under the card in normal mode only
+
+     The site's own scroll choreography is kept: the hero is pinned while the
+     cloud bank and the white sheet roll up over it, and each section's
+     heading is revealed under the rounded bottom of the sheet above it
+     (sticky to the viewport bottom, as on the live site).
+
+     Everything Superorganism-side was taken from the live site on 2026-10-23
+     and lives in superorganism-card-src/: its Roboto Serif (instanced to the
+     weights and optical sizes the page uses, subset to Latin) and Syncopate,
+     its logo, mark and wordmark, the cutout pairs that break out of their
+     frames (cougar, mangrove, six portfolio cards), the founders, and the
+     footer jellyfish. The hero and About backgrounds are videos on the live
+     site: here they are stills pulled from those videos, and the cloud bank
+     (a screen-blended video) is one frame un-blended to white with alpha, so
+     it composites the same without a blend mode. raw/ keeps the fetched HTML
+     and CSS for reference; nothing in it is executed.
+
+     ?embed=1 is the site's tile: no params, no chrome, no label row, the card
+     edge to edge at the frame's aspect (cropped, never letterboxed) on a
+     transparent page. It pauses while document.hidden or after the parent
+     posts {type: "ks-card", visible: false}, and a click that is not a drag
+     posts {type: "ks-card-open"} to the parent. Options, as on the Dawn card:
+       &bleed=N      the iframe overhangs the tile by N px a side (the site uses 32): the card keeps
+                     N px clear round it, sits exactly on the tile at rest, and tilts into that room
+       &touchdrag=1  let a finger drag the miniature (off by default, so a swipe over the tile
+                     scrolls the site; a tap still opens). Mouse drag is always on.
+       &radius=N     round the card's corners (CSS px). -->
+<title>Superorganism work card</title>
+<script>
+  // before first paint, so the embed never flashes the studio page
+  if (new URLSearchParams(location.search).get('embed') === '1') {
+    document.documentElement.classList.add('is-embed');
+    // &bleed=N: the site's iframe overhangs its tile by N px a side; the card keeps that clear so at rest it sits exactly on the tile
+    const b = parseFloat(new URLSearchParams(location.search).get('bleed'));
+    if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+  }
+</script>
+<style>
+@font-face { font-family: "SO Serif"; src: url("superorganism-card-src/fonts/roboto-serif.woff2") format("woff2"); font-weight: 100 400; font-display: block; }
+@font-face { font-family: "SO Syncopate"; src: url("superorganism-card-src/fonts/syncopate-bold.woff2") format("woff2"); font-weight: 700; font-display: block; }
+@font-face { font-family: "SO Syncopate"; src: url("superorganism-card-src/fonts/syncopate-regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: "KS Panell Condensed"; src: url("superorganism-card-src/fonts/panell-condensed-medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "KS Mono"; src: url("superorganism-card-src/fonts/neue-montreal-mono-book.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #0d0d0d;
+  color: #eef1ea;
+  font-family: "KS Mono", ui-monospace, monospace;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+.is-embed, .is-embed body { background: transparent; }
+
+/* ---------- Kinetic: the page and the work card ---------- */
+.stage {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  --size: 40;
+  --ar: 1.6;
+  --card-w: min(calc(var(--size) * 1vw), calc((100vh - 150px) * var(--ar)));
+}
+@media (max-width: 700px) { .stage { --card-w: calc(100vw - 32px); } }
+.slot { width: var(--card-w); display: flex; flex-direction: column; gap: clamp(14px, 1.1vw, 16px); }
+
+/* the hit area never moves; only what is inside it does */
+.persp {
+  position: relative;
+  width: 100%; aspect-ratio: var(--ar);
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: grab;
+}
+.persp.is-dragging { cursor: grabbing; }
+.is-embed .stage { display: block; }
+.is-embed .slot { position: absolute; inset: 0; width: auto; display: block; }
+.is-embed .persp { position: absolute; inset: var(--bleed, 0px); width: auto; height: auto; aspect-ratio: auto; }
+.is-embed .meta, .is-embed .card-shadow { display: none; }
+
+.card-shadow {
+  position: absolute; inset: 6% 7% -1% 7%;
+  border-radius: 12%;
+  background: rgba(0, 0, 0, .9);
+  filter: blur(30px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+/* Laid out K times its size and scaled back down inside its own 3D transform:
+   Chrome rasters a clipped layer under perspective at one texel per layout px,
+   so at K = DPR x 1.25 the tilted card stays as sharp as the flat one. */
+.card {
+  position: absolute; left: 0; top: 0;
+  --k: 1;
+  border-radius: calc(var(--r, 6px) * var(--k));
+  background: #def2ef;
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  isolation: isolate;
+}
+.card, .card * { user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+
+/* the site's own window: inset on the card ground when framed */
+.win {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  overflow: hidden;
+  background: #342b19;
+  will-change: transform;
+}
+.win-shadow {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  background: #3b5a55;
+  filter: blur(calc(var(--card-px, 576px) * .022));
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.card:not(.is-framed) .win-shadow { display: none; }
+
+/* The light, the Apple TV way: one soft round bloom under the pointer, brightest
+   there and fading to nothing, added on top (screen), plus a faint brightening
+   of the rim nearest it. Both move by transform only. No streaks. */
+.bloom, .rim { position: absolute; z-index: 6; pointer-events: none; opacity: 0; will-change: transform, opacity; }
+.bloom {
+  width: calc(var(--card-px, 576px) * 1.3); height: calc(var(--card-px, 576px) * 1.3);
+  left: calc(var(--card-px, 576px) * -.65); top: calc(var(--card-px, 576px) * -.65);
+  background: radial-gradient(circle closest-side,
+    rgba(255, 253, 246, .7), rgba(255, 252, 244, .4) 18%, rgba(255, 251, 242, .17) 40%,
+    rgba(255, 251, 242, .05) 64%, rgba(255, 251, 242, .012) 84%, rgba(255, 251, 242, 0) 100%);
+  mix-blend-mode: screen;
+}
+.rim {
+  left: 0; top: 0; width: 100%; height: 100%;
+  border-radius: inherit; overflow: hidden;
+  padding: calc(1.5px * var(--k));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  mix-blend-mode: screen;
+}
+.rim i {
+  position: absolute; display: block;
+  width: calc(var(--card-px, 576px) * .9); height: calc(var(--card-px, 576px) * .9);
+  left: calc(var(--card-px, 576px) * -.45); top: calc(var(--card-px, 576px) * -.45);
+  background: radial-gradient(circle closest-side, rgba(255, 252, 244, .8), rgba(255, 252, 244, .22) 45%, rgba(255, 252, 244, 0) 100%);
+  will-change: transform;
+}
+
+/* The ruler: 1px notches every 6px, very quiet, one brighter mark fixed at the
+   reading position; the notches slide with the miniature's scroll. Beside the
+   card when full bleed, in the window's margin when framed, inside the card
+   edge in the embed (there is nothing beside it), toned to the section under it. */
+.ruler { position: absolute; pointer-events: none; overflow: hidden; z-index: 7;
+  -webkit-mask: linear-gradient(transparent, #000 24%, #000 76%, transparent); mask: linear-gradient(transparent, #000 24%, #000 76%, transparent); }
+.ruler .ticks { position: absolute; left: 0; right: 0; top: calc(var(--np) * -2); bottom: calc(var(--np) * -2);
+  background: repeating-linear-gradient(to bottom, var(--tick) 0 var(--nw), transparent var(--nw) var(--np)); will-change: transform, opacity; }
+.ruler .mark { position: absolute; top: 50%; height: var(--nw); background: var(--mark); left: calc(var(--nw) * -2); right: calc(var(--nw) * -2); will-change: opacity; }
+.ruler .t-dark { --tick: rgba(24, 22, 16, .16); }
+.ruler .t-light { --tick: rgba(238, 241, 234, .15); }
+.ruler .m-dark { --mark: rgba(24, 22, 16, .6); }
+.ruler .m-light { --mark: rgba(238, 241, 234, .7); }
+.ruler-out { --nw: 1px; --np: 6px; width: 5px; height: 44%; top: 28%; right: -16px; }
+.ruler-in { --nw: calc(1px * var(--k)); --np: calc(6px * var(--k)); width: calc(5px * var(--k)); height: 44%; top: 28%; }
+.ruler-in.in-margin { right: calc(var(--mx) / 2 - 2.5px * var(--k)); }
+.ruler-in.in-page { right: calc(12px * var(--k)); }
+.slot.no-ruler .ruler, .slot:not(.ruler-outside) .ruler-out, .slot.ruler-outside .ruler-in { display: none; }
+@media (max-width: 700px) { .ruler-out { right: -11px; } }
+
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: clamp(14px, 1.1vw, 16px); }
+.meta h3 {
+  margin: 0;
+  font-family: "KS Panell Condensed", "Arial Narrow", sans-serif; font-weight: 500;
+  font-size: clamp(22px, 1.95vw, 28px); line-height: .94; letter-spacing: -.02em;
+  text-transform: uppercase;
+}
+.meta p {
+  margin: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
+  text-align: right;
+  font-family: "KS Mono", ui-monospace, monospace;
+  font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
+  color: rgba(238, 241, 234, .5);
+}
+
+/* ---------- Superorganism: the miniature, at its own 1440px design width ---------- */
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  --grizzly: #342b19; --black: #181610; --smoke: #e9eaec;
+  font-family: "SO Serif", Georgia, serif;
+  font-weight: 300; font-size: 16px; line-height: 1.5; letter-spacing: -.48px;
+  color: #000;
+  text-rendering: geometricPrecision;
+  font-synthesis: none;
+}
+:where(.vp) :where(h1, h2, h3, b) { font-weight: inherit; } /* no UA bold: the font has no bold to synthesise from */
+.page { position: absolute; left: 0; top: 0; width: 1440px; background: var(--grizzly); will-change: transform; }
+.page > section { position: relative; width: 1440px; }
+.page section > * { position: absolute; margin: 0; }
+[data-depth] { will-change: transform; }
+[data-pin] { will-change: transform; }
+.vp img { display: block; }
+.syn { font-family: "SO Syncopate", Arial, sans-serif; font-weight: 700; text-transform: uppercase; }
+.mega { font-size: 120px; line-height: 114px; font-weight: 200; letter-spacing: -3.6px; text-align: center; left: 314px; width: 813px; }
+.lede { font-size: 24px; line-height: 32px; text-align: center; left: 314px; width: 813px; }
+.sheet { border-radius: 0 0 64px 64px; box-shadow: 0 6px 7px rgba(0, 0, 0, .012), 0 17px 18px rgba(0, 0, 0, .02), 0 35px 37px rgba(0, 0, 0, .02), 0 72px 77px rgba(0, 0, 0, .03), 0 198px 212px rgba(0, 0, 0, .02); }
+.under { margin-top: -64px; }
+/* a sheet that starts under a sticky heading reaches up behind it, so the two never show a seam */
+.ext::before { content: ""; position: absolute; left: 0; right: 0; top: -80px; height: 81px; background: inherit; }
+
+/* hero: pinned while the clouds and the white sheet roll up over it */
+.hero { height: var(--vh); z-index: 0; background: var(--grizzly); }
+.h-frame { left: 14.4px; top: 14.4px; width: 1411.2px; height: calc(var(--vh) - 14.4px); border-radius: 64px 64px 0 0; overflow: hidden; background: #000; }
+.h-frame > * { position: absolute; }
+/* the video's own framing (cover, then 1.1x), a touch bigger so the deep layer never shows an edge */
+.h-mount { --fh: calc(var(--vh) - 14.4px); height: calc(var(--fh) * 1.14); width: calc(var(--fh) * 1.14 * 1.7778); left: calc((1411.2px - var(--fh) * 1.14 * 1.7778) / 2); top: calc(var(--fh) * -.07); }
+.h-mount img { width: 100%; height: 100%; }
+.h-shade { inset: 0; background: rgba(90, 86, 86, .13); }
+.h-logo { left: 576px; top: 36px; width: 288px; }
+.h-logo img { width: 288px; height: 43.6px; }
+.h-title { left: 209px; width: 1022px; top: calc(var(--vh) / 2 - 115px); font-size: 115.2px; line-height: 115.2px; letter-spacing: -3.456px; color: var(--smoke); text-align: center; }
+
+/* the cloud bank and the white sheet (the site's screen-blended cloud video, one frame un-blended) */
+.veil { height: 995px; z-index: 13; background: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, .62) 49px, #fff 134px); }
+.clouds { left: -50px; top: -600px; width: 1540px; height: 866px; }
+.clouds img { width: 100%; height: 100%; }
+.amb-h { left: 388px; width: 664px; top: 353px; font-size: 64px; line-height: 70.4px; text-align: center; }
+.amb-p { left: 388px; width: 664px; top: 526px; font-size: 24px; line-height: 32px; text-align: center; }
+.amb-mark { left: 695.5px; top: 686px; width: 49px; }
+.amb-mark img { width: 49px; height: 53px; }
+
+/* sticky section headings, revealed under the sheet above */
+.sticky { overflow: hidden; }
+.sh-approach { height: 418px; z-index: 12; background: #def2ef; }
+.sh-portfolio { height: 530px; z-index: 10; background: var(--black); color: #fff; }
+.sh-pledge { height: 810px; z-index: 4; background: #f2fbed; }
+.sticky .mega { top: 192px; }
+.sh-approach .lede { top: 354px; }
+.sh-portfolio .lede { top: 338px; }
+
+/* approach rows: the photo in its frame and its cutout breaking out of the top. The cutout lives in a
+   window that moves with the photo (the frame, 112px taller), so lifting it can never show its edges
+   past the frame, and its lower part dissolves into the same photo underneath. Both images rise
+   140px as the row crosses the viewport, as on the live site: the animal climbs out of its frame. */
+.approach { height: 1125px; z-index: 11; background: #def2ef; }
+.st { width: 691px; height: 486px; }
+.st > * { position: absolute; }
+.st-box { left: 0; top: 112px; width: 691px; height: 374px; border-radius: 40px; overflow: hidden; background: #c9ddd6; }
+.st-box img { position: absolute; left: 0; width: 691px; height: 505px; top: -131px; }
+.st-clip { left: 0; top: 0; width: 691px; height: 486px; border-radius: 0 0 40px 40px; overflow: hidden; }
+.st-cut { left: 0; top: 0; width: 691px; height: 486px; position: absolute; }
+.st-cut img { position: absolute; left: 0; width: 691px; }
+.par { will-change: transform; }
+.fade { -webkit-mask-image: linear-gradient(#000 0, #000 58%, transparent 94%); mask-image: linear-gradient(#000 0, #000 58%, transparent 94%); }
+.st-text { width: 320px; }
+.st-text > * { margin: 0; }
+.st-text h3 { font-size: 24px; line-height: 28.8px; }
+.st-text p { margin-top: 16px; font-size: 16px; line-height: 24px; }
+.st-text hr { margin: 16px 0 0; border: 0; height: 1px; background: rgba(52, 43, 25, .1); }
+.st-text .lab { margin-top: 16px; font-size: 12px; line-height: 18px; }
+.st-chips { width: 320px; display: flex; flex-wrap: wrap; gap: 4px 2px; }
+.st-chips span { padding: 8px 16px; border-radius: 1600px; background: rgba(52, 43, 25, .05); font-size: 14px; line-height: 21px; white-space: nowrap; }
+
+/* portfolio cards: photo, the cutout over its top edge (in a window that moves with the photo), name */
+.portfolio { height: 1118px; z-index: 9; background: var(--black); color: #fff; }
+.pf { width: 357px; height: 480.8px; }
+.pf > * { position: absolute; }
+.pf-card { left: 0; top: 40.8px; width: 357px; height: 440px; border-radius: 40px; overflow: hidden; background: #3b3f2d; }
+.pf-card img { width: 100%; height: 100%; object-fit: cover; }
+.pf-clip { left: 0; top: 0; width: 357px; height: 480.8px; border-radius: 100px 100px 40px 40px; overflow: hidden; }
+.pf-top { position: absolute; left: 0; top: 0; width: 357px; }
+.pf-top img { width: 357px; }
+.pf-name { left: 35px; top: 421.8px; font-size: 16px; line-height: 19.2px; color: #fff; text-shadow: 0 1px 40px #000; white-space: nowrap; }
+
+/* about: the kelp still in its own window, two founders */
+.about { height: 990px; z-index: 8; border-radius: 0 0 64px 64px; overflow: hidden; color: #fff; background: #1c2f3d; }
+.ab-kelp { left: -130px; top: -90px; width: 1700px; height: 1170px; }
+.ab-kelp img { width: 100%; height: 100%; object-fit: cover; }
+.ab-tint { inset: 0; background: radial-gradient(circle, rgba(24, 22, 16, .3), rgba(0, 0, 0, 0) 70%), linear-gradient(rgba(38, 59, 80, .3), rgba(38, 59, 80, .3)), linear-gradient(rgba(6, 8, 12, 0) 52%, rgba(6, 8, 12, .82)); }
+.about .mega { top: 192px; }
+.about .lede { top: 338px; }
+.ab-pic { top: 498px; width: 375px; height: 300px; border-radius: 20px; overflow: hidden; background: var(--black); }
+.ab-pic img { width: 100%; height: 100%; object-fit: cover; }
+.ab-pic::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(24, 22, 16, 0) 62%, rgba(24, 22, 16, .35)); }
+.ab-name { top: 815px; width: 375px; text-align: center; }
+.ab-name b { display: block; font-weight: 700; font-size: 16px; line-height: 19.2px; }
+.ab-name i { display: block; margin-top: 4px; font-style: normal; font-size: 12px; line-height: 12px; color: var(--smoke); opacity: .8; }
+
+/* pledge */
+.pl-num { left: 0; width: 1440px; top: 69px; text-align: center; font-size: 585.24px; line-height: 556px; font-weight: 100; letter-spacing: -40.97px; white-space: nowrap; }
+.pl-label { left: 314px; width: 813px; top: 625px; text-align: center; font-size: 16px; line-height: 19.2px; }
+.sh-pledge .lede { top: 677px; }
+.lede u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+/* footer */
+.footer { height: 930px; z-index: 2; background: #fff; }
+.ft-jelly { left: 0; top: 0; width: 1440px; height: 835px; }
+.ft-jelly img { width: 100%; height: 100%; }
+.ft-word { left: 144px; top: 630px; width: 1152px; }
+.ft-word img { width: 1152px; height: 162px; }
+.ft-row { left: 144px; top: 846px; width: 1152px; height: 24px; color: var(--grizzly); font-size: 14px; line-height: 21px; }
+.ft-row > * { position: absolute; top: 1px; }
+.ft-row svg { display: block; }
+.tail { height: 72px; }
+
+/* shadow twins: a darkened, blurred copy of a lifted layer, left on the surface below it */
+.twin { filter: brightness(0) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; }
+
+/* debug: layer outlines */
+.show-layers [data-layer] { outline: 3px dashed #a8ff66; outline-offset: -3px; }
+.show-layers [data-layer]::after {
+  content: attr(data-layer) "  z " attr(data-depth);
+  position: absolute; left: 6px; top: 6px; z-index: 50;
+  padding: 3px 8px 2px; border-radius: 4px;
+  background: #a8ff66; color: #0d0d0d;
+  font: 500 22px/1.15 "KS Mono", ui-monospace, monospace;
+  text-transform: uppercase; letter-spacing: .02em; text-shadow: none;
+  white-space: nowrap; text-align: left;
+}
+</style>
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Superorganism, superorganism.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0.1" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <section class="hero" data-pin="top" data-tone="dark">
+                <div class="h-frame">
+                  <div class="h-mount" data-layer="mountains" data-depth="-0.35"><img src="superorganism-card-src/img/mountains.webp" alt=""></div>
+                  <div class="h-shade"></div>
+                </div>
+                <div class="h-logo" data-layer="logo" data-depth="0.5" data-shadow="0,0.2,10"><img src="superorganism-card-src/img/logo.svg" alt=""></div>
+                <h1 class="h-title" data-layer="headline" data-depth="0.66" data-shadow="-0.2,0.34,16">We can do more<br>than co-exist.</h1>
+              </section>
+
+              <section class="veil sheet" data-tone="light">
+                <div class="clouds" data-layer="clouds" data-depth="0.95"><img src="superorganism-card-src/img/clouds.webp" alt=""></div>
+                <h2 class="amb-h" data-stop="ambition" data-layer="headline" data-depth="0.6">For those with<br>wild ambition.</h2>
+                <p class="amb-p" data-layer="body copy" data-depth="0.42">Superorganism is the first venture firm dedicated to biodiversity. We work with founders bold enough to imagine an abundant future for humans and nature alike.</p>
+                <div class="amb-mark" data-layer="mark" data-depth="0.86" data-shadow="0,0.3,8"><img src="superorganism-card-src/img/mark.svg" alt=""></div>
+              </section>
+
+              <section class="sh-approach sticky under" data-pin="sticky" data-tone="light">
+                <h2 class="mega" data-layer="headline" data-depth="0.55">Approach</h2>
+                <p class="lede" data-layer="body copy" data-depth="0.38">Nature runs through our entire economy.<br>Our investment strategy does too.</p>
+              </section>
+
+              <section class="approach sheet ext" data-tone="light">
+                <div class="st" style="left:144px;top:8px" data-stop="cougar" data-layer="photo" data-depth="0.24">
+                  <div class="st-box"><img class="par" src="superorganism-card-src/img/cougar-bg.webp" alt=""></div>
+                  <div class="st-clip"><div class="st-cut fade" data-layer="cutout" data-depth="0.5" data-shadow="0.24,0.5,12"><img class="par" src="superorganism-card-src/img/cougar-top.webp" alt="" style="top:-142px;height:628px"></div></div>
+                </div>
+                <div class="st-text" style="left:976px;top:141px" data-layer="copy" data-depth="0.4">
+                  <h3 class="syn">Extinction<br>Drivers</h3>
+                  <p>The industries most responsible for biodiversity loss are the ones that most need disruption. We look for startups with new ideas to slow and reverse drivers of extinction.</p>
+                  <hr>
+                  <div class="syn lab">Interest areas</div>
+                </div>
+                <div class="st-chips" style="left:976px;top:394px" data-layer="chips" data-depth="0.54"><span>Agriculture</span><span>Circular Economy</span><span>Cities</span><span>Invasive Species</span><span>Pollution</span></div>
+
+                <div class="st" style="left:605px;top:509px" data-layer="photo" data-depth="0.24">
+                  <div class="st-box"><img class="par" src="superorganism-card-src/img/mangrove-bg.webp" alt=""></div>
+                  <div class="st-clip"><div class="st-cut fade" data-layer="cutout" data-depth="0.5" data-shadow="0.24,0.45,12"><img class="par" src="superorganism-card-src/img/mangrove-top.webp" alt="" style="top:-42px;height:528px"></div></div>
+                </div>
+                <div class="st-text" style="left:144px;top:667px" data-layer="copy" data-depth="0.4">
+                  <h3 class="syn">Climate<br>x Biodiversity</h3>
+                  <p>Biodiversity and climate are intrinsically linked, and we invest in tech-driven solutions that are win-wins for both.</p>
+                  <hr>
+                  <div class="syn lab">Interest areas</div>
+                </div>
+                <div class="st-chips" style="left:144px;top:871px" data-layer="chips" data-depth="0.54"><span>Adaptation</span><span>Forests</span><span>MRV</span><span>Oceans</span><span>Soil</span><span>Wildfire</span></div>
+              </section>
+
+              <section class="sh-portfolio sticky under" data-pin="sticky" data-tone="dark">
+                <h2 class="mega" data-stop="portfolio" data-layer="headline" data-depth="0.55">Portfolio</h2>
+                <p class="lede" data-layer="body copy" data-depth="0.38">From fungi to fintech, we back pre-seed and seed startups that are literally changing the world.</p>
+              </section>
+
+              <section class="portfolio sheet ext" data-tone="dark" id="portfolio"></section>
+
+              <section class="about under" data-tone="dark">
+                <div class="ab-kelp" data-layer="kelp" data-depth="-0.3"><img src="superorganism-card-src/img/kelp.webp" alt=""></div>
+                <div class="ab-tint"></div>
+                <h2 class="mega" data-layer="headline" data-depth="0.6">About Us</h2>
+                <p class="lede" data-layer="body copy" data-depth="0.42">Our mission is to find and supercharge founders taking on the planet’s most important work. Together, we bring networks and over two decades of experience across conservation, venture, and startups.</p>
+                <div class="ab-pic" style="left:325px" data-layer="portrait" data-depth="0.34" data-shadow="0,0.4,14"><img src="superorganism-card-src/img/tom.webp" alt=""></div>
+                <div class="ab-pic" style="left:720px" data-layer="portrait" data-depth="0.34" data-shadow="0,0.4,14"><img src="superorganism-card-src/img/kevin.webp" alt=""></div>
+                <div class="ab-name syn" style="left:325px" data-layer="name" data-depth="0.48"><b>Tom Quigley</b><i>Managing Director</i></div>
+                <div class="ab-name syn" style="left:720px" data-layer="name" data-depth="0.48"><b>Kevin Webb</b><i>Managing Director</i></div>
+              </section>
+
+              <section class="sh-pledge sticky under" data-pin="sticky" data-tone="light">
+                <div class="pl-num" data-layer="figure" data-depth="0.45" data-shadow="0,0.16,14">10%</div>
+                <h2 class="pl-label syn" data-layer="label" data-depth="0.6">A pledge to nature</h2>
+                <p class="lede" data-layer="body copy" data-depth="0.4">We’ve pledged 10% of Superorganism’s profits to future conservation efforts. Learn more about the nature funding gap <u>here</u>.</p>
+              </section>
+
+              <section class="footer sheet ext" data-tone="light">
+                <div class="ft-word" data-layer="wordmark" data-depth="0.36"><img src="superorganism-card-src/img/wordmark.svg" alt=""></div>
+                <div class="ft-jelly" data-stop="footer" data-layer="jellyfish" data-depth="0.8" data-shadow="0,0.2,16"><img src="superorganism-card-src/img/jellyfish.webp" alt=""></div>
+                <div class="ft-row" data-layer="footer row" data-depth="0.26">
+                  <svg style="left:0;top:3px" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#342b19" stroke-width="1.1"><circle cx="8" cy="8" r="6.6"/><ellipse cx="8" cy="8" rx="2.9" ry="6.6"/><path d="M1.6 8h12.8M2.6 4.6h10.8M2.6 11.4h10.8"/></svg>
+                  <span style="left:24px">Proudly based in SF &amp; NYC</span>
+                  <span style="left:488px">hello@superorganism.com</span>
+                  <svg style="left:1092px;top:0" width="24" height="24" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.5" fill="#342b19"/><rect x="5.6" y="9.6" width="2.6" height="8.4" fill="#fff"/><circle cx="6.9" cy="6.7" r="1.55" fill="#fff"/><path d="M10.4 9.6h2.5v1.2c.5-.8 1.5-1.4 2.8-1.4 2.2 0 3 1.4 3 3.8V18h-2.6v-4.3c0-1.2-.3-2-1.4-2-1.2 0-1.7.9-1.7 2.1V18h-2.6z" fill="#fff"/></svg>
+                  <svg style="left:1128px;top:0" width="24" height="24" viewBox="0 0 24 24" fill="#342b19"><path d="M3.2 3h5.3l4.4 6.1L18.1 3h2.2l-6.4 7.4L21 21h-5.3l-4.7-6.6L5.2 21H3l6.9-8z M6.2 4.6l10.3 14.8h1.9L8.1 4.6z"/></svg>
+                </div>
+              </section>
+              <div class="tail"></div>
+            </div>
+          </div>
+        </div>
+        <div class="ruler ruler-in" id="rulerIn" aria-hidden="true"><div class="ticks t-dark"></div><div class="ticks t-light"></div><div class="mark m-dark"></div><div class="mark m-light"></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" id="rulerOut" aria-hidden="true"><div class="ticks t-light"></div><div class="mark m-light"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Superorganism</h3>
+      <p><span>Venture</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+const $ = (q, r = document) => r.querySelector(q);
+const $$ = (q, r = document) => [...r.querySelectorAll(q)];
+const EMBED = document.documentElement.classList.contains('is-embed');
+const BLEED = EMBED ? Math.max(0, parseFloat(new URLSearchParams(location.search).get('bleed')) || 0) : 0;
+// inside the site a finger swipe over the tile must scroll the site, so touch drag is opt-in there (&touchdrag=1); a tap still opens
+const TOUCH_DRAG = !EMBED || new URLSearchParams(location.search).get('touchdrag') === '1';
+const qs = new URLSearchParams(location.search);
+const stage = $('#stage'), slot = $('.slot'), persp = $('#persp'), card = $('#card'), win = $('#win'), vp = $('#vp'), page = $('#page');
+const cshadow = $('#cshadow'), winShadow = $('#winShadow'), bloom = $('#bloom'), rimLight = $('#rimLight'), rim = $('#rim');
+const rulerIn = $('#rulerIn'), rulerOut = $('#rulerOut');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+const DW = 1440;                      // the site's design width
+const FRAME = { x: 0.045, y: 0.07 };  // framed: window inset, sides as a share of card width, top and bottom of its height
+// the site's border (Hunter, Oct 24: "a border on all screen recordings and whatever we hover over"):
+// &mat=F draws the card framed, its window inset F x the card's width on every side
+const MAT = Math.min(0.3, Math.max(0, parseFloat(new URLSearchParams(location.search).get('mat')) || 0));
+const LIGHT = { x: 0.05, y: 0.2 };    // shadow throw per px of height: light from above, a touch left
+const D2R = Math.PI / 180;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+/* ---- the portfolio grid, from the site's own pairs (photo + the cutout that breaks out of its top) ---- */
+const CARDS = [ // [name, file stem, cutout height at 357 wide]
+  ['Cambium Carbon', 'cambium', 325.8], ['Funga', 'funga', 325.8], ['Inversa', 'inversa', 325.8],
+  ['Spoor', 'spoor', 480], ['Supercool', 'supercool', 479.4], ['Ulysses', 'ulysses', 480],
+];
+$('#portfolio').innerHTML = CARDS.map(([name, f, th], i) => {
+  const x = [144, 541, 938][i % 3], y = i < 3 ? 46 : 550;
+  const stop = i === 0 ? ' data-stop="cards"' : '';
+  return `<div class="pf" style="left:${x}px;top:${y - 40.8}px"${stop} data-layer="card" data-depth="0.26">`
+    + `<div class="pf-card"><img src="superorganism-card-src/img/${f}-bg.webp" alt=""></div>`
+    + `<div class="pf-clip"><div class="pf-top fade" style="height:${th}px" data-layer="cutout" data-depth="0.5" data-shadow="0.26,0.5,12"><img src="superorganism-card-src/img/${f}-top.webp" alt="" style="height:${th}px"></div></div>`
+    + `<div class="pf-name syn" data-layer="name" data-depth="0.58">${name}</div></div>`;
+}).join('');
+
+/* ---- shadow twins: a dark blurred copy of a lifted layer, cast on a surface below it ---- */
+for (const el of $$('[data-shadow]')) {
+  const [surface, alpha, blur] = el.dataset.shadow.split(',').map(Number);
+  const tw = el.cloneNode(true);
+  for (const n of [tw, ...tw.querySelectorAll('*')]) for (const a of ['data-layer', 'data-depth', 'data-shadow', 'data-stop', 'id']) n.removeAttribute(a);
+  tw.classList.add('twin');
+  tw.setAttribute('aria-hidden', 'true');
+  tw.style.setProperty('--blur', blur + 'px');
+  el.before(tw);
+  el._twin = { el: tw, surface, alpha, last: '', op: '' };
+}
+
+/* ---- the strategy rows' rise: the photo and its cutout (and the cutout's shadow) slide up inside the frame ---- */
+const rises = $$('.st').map((el) => ({ el, imgs: $$('.par', el), top: 0, last: '' }));
+
+/* ---- pinned and sticky sections ---- */
+const sections = $$('.page > section').map((el, i) => ({ el, pin: el.dataset.pin || '', tone: el.dataset.tone === 'dark' ? 1 : 0, z: +getComputedStyle(el).zIndex || 0, top: 0, h: 0, off: 0, last: '' }));
+const pins = sections.filter((S) => S.pin);
+
+/* ---- layers ---- */
+const layers = $$('[data-depth]').map((el) => ({
+  el, d: +el.dataset.depth, kind: el.dataset.kind || 'page',
+  twin: el._twin || null, parent: null, sec: null, cx: 0, cy: 0, hh: 0, A: null, last: '',
+}));
+for (const L of layers) {
+  let p = L.el.parentElement;
+  while (p && !p.hasAttribute('data-depth')) p = p.parentElement;
+  L.parent = p ? layers.find((x) => x.el === p) : null;
+  const s = L.el.closest('.page > section');
+  L.sec = s ? sections.find((S) => S.el === s && S.pin) || null : null;
+}
+function posIn(el, root) {
+  let x = 0, y = 0, n = el;
+  while (n && n !== root) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+  return [x + el.offsetWidth / 2, y + el.offsetHeight / 2];
+}
+
+/* ---- state ---- */
+const V = {};
+const dial = (k, d) => (EMBED ? d : V[k] ?? d);
+let cw = 576, ch = 360, K = 2.5, cardW = 1440, cardH = 900;
+let s = 0.4, VH = 900, maxScroll = 6000, framed = false;
+let stops = [0, 1000, 2400, 3600, 6400];
+const spr = { rx: { x: 0, v: 0 }, ry: { x: 0, v: 0 }, h: { x: 0, v: 0 } };
+const glow = { x: 0.5, y: 0.5 };
+let scroll = 0, clock = 0, liftNow = 1, toneSm = 1;
+let hovered = false, pointer = { x: 0, y: 0 }, pointerLive = false;
+let touching = false, touchHold = false, touchRelease = -1;
+
+function layout() {
+  stage.style.setProperty('--size', dial('card.cardSize', 40));
+  stage.style.setProperty('--ar', dial('card.aspect', '16:10') === '4:3' ? 4 / 3 : 1.6);
+  framed = MAT > 0 || (!EMBED && !!dial('card.frame', false));
+  card.classList.toggle('is-framed', framed);
+  slot.classList.toggle('ruler-outside', !EMBED && !framed);
+  slot.classList.toggle('no-ruler', !dial('card.ruler', true));
+  rulerIn.classList.toggle('in-margin', framed);
+  rulerIn.classList.toggle('in-page', !framed);
+  card.style.setProperty('--r', EMBED ? (+(qs.get('radius') || 0)) + 'px' : '6px');
+
+  cw = persp.clientWidth; ch = persp.clientHeight;
+  K = Math.min(4, Math.max(1, (window.devicePixelRatio || 1) * 1.25));
+  cardW = cw * K; cardH = ch * K;
+  card.style.setProperty('--k', K);
+  Object.assign(card.style, { width: cardW + 'px', height: cardH + 'px', left: (cw - cardW) / 2 + 'px', top: (ch - cardH) / 2 + 'px' });
+  const mx = framed ? (MAT ? MAT * cardW : FRAME.x * cardW) : 0, my = framed ? (MAT ? MAT * cardW : FRAME.y * cardH) : 0;
+  card.style.setProperty('--mx', mx + 'px');
+  card.style.setProperty('--my', my + 'px');
+  card.style.setProperty('--win-r', framed ? (cardW * 0.0125) + 'px' : '0px');
+  card.style.setProperty('--card-px', cardW + 'px');
+  const winW = cardW - 2 * mx, winH = cardH - 2 * my;
+  // the design viewport follows the frame's aspect; past the sane range it crops (cover), never letterboxes
+  VH = Math.round(clamp(DW * winH / winW, 560, 1500));
+  s = Math.max(winW / DW, winH / VH);
+  vp.style.setProperty('--vh', VH + 'px');
+  vp.style.transform = `translate(${((winW - DW * s) / 2).toFixed(2)}px, ${((winH - VH * s) / 2).toFixed(2)}px) scale(${s})`;
+  persp.style.perspective = (dial('tilt.perspective', 2.4) * cw) + 'px';
+  card.style.transform = `scale(${1 / K})`;
+
+  // caches go to null, not '': '' is itself a value (no transform), and a stale one would never be cleared
+  for (const S of sections) { S.top = S.el.offsetTop; S.h = S.el.offsetHeight; S.last = null; }
+  for (const L of layers) {
+    const root = L.kind === 'card' ? card : page;
+    [L.cx, L.cy] = posIn(L.el, root);
+    L.hh = L.el.offsetHeight / 2 + (L.twin ? 40 : 0);
+    L.last = null; if (L.twin) { L.twin.last = null; L.twin.op = null; }
+  }
+  maxScroll = Math.max(0, page.offsetHeight - VH);
+  for (const R of rises) { R.top = posIn(R.el, page)[1] - R.el.offsetHeight / 2 + 112; R.last = null; }
+  const at = (name) => { const el = $(`[data-stop="${name}"]`); return el ? posIn(el, page)[1] - el.offsetHeight / 2 : 0; };
+  const ftop = sections.find((S) => S.el.classList.contains('footer')).top;
+  stops = [
+    0,
+    at('ambition') - VH / 2,                           // the cloud bank thinning into the white sheet, as the live site sits at this point
+    at('cougar') + 112 + 131 - VH / 2,                 // the cougar row, its head out of the frame
+    (at('portfolio') + at('cards') + 480.8) / 2 - VH / 2, // "Portfolio" and the first row of cards
+    ftop + 435 - VH / 2,                               // the jellyfish over the wordmark, the footer line in view
+  ].map((y) => Math.round(clamp(y, 0, maxScroll)));
+  scroll = clamp(scroll, 0, maxScroll);
+}
+
+/* ---- the tour: hold at each stop, ease to the next, glide home. A small state
+   machine rather than a function of time, so a drag can hand control back
+   from wherever it left the page. ---- */
+const HOLD = [2.4, 0.9, 1.6, 1.6, 1.6];
+const MOVE = [2.0, 2.2, 2.2, 2.8, 3.4];          // 20.7 s a loop at speed 1
+const ease = (t) => 0.5 - 0.5 * Math.cos(Math.PI * clamp(t, 0, 1));
+const T = { phase: 'hold', i: 0, t: 0, from: 0, next: 0, dur: 1 };
+function tourStep(dt) {
+  T.t += dt;
+  for (let guard = 0; guard < 20; guard++) {
+    if (T.phase === 'hold') {
+      if (T.t < HOLD[T.i]) break;
+      T.t -= HOLD[T.i];
+      Object.assign(T, { phase: 'move', from: null, next: (T.i + 1) % stops.length, dur: MOVE[T.i] });
+    } else {
+      if (T.t < T.dur) break;
+      T.t -= T.dur;
+      Object.assign(T, { phase: 'hold', i: T.next });
+    }
+  }
+  if (T.phase === 'hold') return stops[T.i];
+  const from = T.from ?? stops[T.i];
+  return from + (stops[T.next] - from) * ease(T.t / T.dur);
+}
+function tourResumeFrom(y) {
+  // close to a stop: hold there; otherwise ease on to the next stop down the page (home from the bottom)
+  const near = stops.findIndex((v) => Math.abs(v - y) < 28);
+  if (near >= 0) { Object.assign(T, { phase: 'hold', i: near, t: Math.min(HOLD[near] * 0.5, 0.6) }); return; }
+  let j = stops.findIndex((v) => v > y);
+  if (j < 0) j = 0;
+  const dist = Math.abs(stops[j] - y);
+  Object.assign(T, { phase: 'move', i: (j + stops.length - 1) % stops.length, from: y, next: j, t: 0, dur: clamp(0.7 + dist / 1500, 0.9, 3.4) });
+}
+function tourSeek(t) { Object.assign(T, { phase: 'hold', i: 0, t: 0, from: null }); scroll = tourStep(t); }
+
+/* ---- dragging the miniature ---- */
+const SCRUB = 2.5;   // page px per px of horizontal drag
+const drag = { armed: false, axis: 'y', lx: 0, ly: 0, active: false, id: -1, x: 0, y: 0, t0: 0, scroll0: 0, k: 1, samples: [], type: '' };
+let momentum = 0, coasting = false, resumeAt = -1, manual = false;
+
+function step(S, target, k, c, dt) {
+  const n = Math.ceil(dt / (1 / 240));
+  const h = dt / n;
+  for (let i = 0; i < n; i++) { S.v += (-k * (S.x - target) - c * S.v) * h; S.x += S.v * h; }
+}
+
+/* ---- the frame ---- */
+let tPrev = 0, rafId = 0, running = false;
+function frame(now) {
+  rafId = 0;
+  if (!running) return;
+  const dt = Math.min(0.05, Math.max(0, (now - tPrev) / 1000));
+  tPrev = now; clock += dt;
+  const still = reduced.matches;
+  const k = dial('motion.stiffness', 110), c = dial('motion.damping', 21);
+  const tiltMax = dial('tilt.tiltMax', 5);
+  const hold = dial('debug.hold', false);
+
+  if (touchRelease >= 0 && clock > touchRelease) { touchRelease = -1; touching = false; }
+  const engaged = hovered || touching || touchHold || hold || still;
+  let nx = 0, ny = 0;
+  if (still) { nx = -0.38; ny = -0.3; }
+  else if (engaged) {
+    if ((hovered || drag.active || touching) && pointerLive) { nx = pointer.x; ny = pointer.y; }
+    else { nx = 0.42 * Math.sin(clock * 0.55); ny = 0.3 * Math.sin(clock * 0.77 + 1.1); }
+  }
+  const hT = engaged ? 1 : 0;
+  if (still) { spr.rx.x = -ny * tiltMax; spr.ry.x = nx * tiltMax; spr.h.x = 1; spr.rx.v = spr.ry.v = spr.h.v = 0; glow.x = nx * 0.5 + 0.5; glow.y = ny * 0.5 + 0.5; }
+  else {
+    step(spr.rx, -ny * tiltMax, k, c, dt);
+    step(spr.ry, nx * tiltMax, k, c, dt);
+    step(spr.h, hT, k * 0.8, c * 0.95, dt);
+    // the bloom rides the pointer itself, a touch smoothed
+    const a = 1 - Math.exp(-dt / 0.07);
+    glow.x += (nx * 0.5 + 0.5 - glow.x) * a; glow.y += (ny * 0.5 + 0.5 - glow.y) * a;
+  }
+
+  // the scroll: the tour runs whether hovered or not; a drag takes over, coasts, waits a beat, hands back
+  if (drag.active) {
+    // set by the pointer, below
+  } else if (coasting) {
+    scroll += momentum * dt;
+    momentum *= Math.exp(-dt / (0.33 * dial('motion.momentum', 1)));
+    if (scroll <= 0 || scroll >= maxScroll) { scroll = clamp(scroll, 0, maxScroll); momentum = 0; }
+    if (Math.abs(momentum) < 14) { coasting = false; resumeAt = clock + dial('motion.resumeAfter', 1.2); }
+  } else if (manual) {
+    if (!still && resumeAt >= 0 && clock >= resumeAt) { manual = false; resumeAt = -1; tourResumeFrom(scroll); }
+  } else if (!still) {
+    scroll = tourStep(dt * dial('motion.scrollSpeed', 1));
+  } else scroll = 0;
+  scroll = clamp(scroll, 0, maxScroll);
+
+  render(dt);
+  if (running) rafId = requestAnimationFrame(frame);
+}
+
+function fitLift(lift, rx, ry) {
+  // the embed can only grow into its bleed: keep the tilted card's projected corners inside the frame
+  if (!EMBED) return lift;
+  const rw = cw / 2 + BLEED, rh = ch / 2 + BLEED;
+  const P = parseFloat(persp.style.perspective) || 2.4 * cw;
+  const a = rx * D2R, b = ry * D2R;
+  let worst = 1;
+  for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+    const x = sx * cw / 2 * lift, y = sy * ch / 2 * lift;
+    const x1 = x * Math.cos(b), z1 = -x * Math.sin(b);
+    const y2 = y * Math.cos(a) - z1 * Math.sin(a), z2 = y * Math.sin(a) + z1 * Math.cos(a);
+    const f = P / (P - z2);
+    worst = Math.max(worst, Math.abs(x1 * f) / rw, Math.abs(y2 * f) / rh);
+  }
+  return lift / worst;
+}
+
+function render(dt) {
+  const rx = spr.rx.x, ry = spr.ry.x;
+  const hc = Math.max(-0.2, Math.min(1.2, spr.h.x));
+  const h01 = clamp(spr.h.x, 0, 1);
+  const depth = dial('layers.depth', 1), par = dial('layers.parallax', 1), spread = dial('layers.spread', 0.4);
+  const shadowK = dial('light.shadow', 0.7), bloomK = dial('light.bloom', 0.85), rimK = dial('light.rim', 0.5);
+  const lift = fitLift(1 + (dial('tilt.hoverScale', EMBED && !BLEED ? 1 : 1.012) - 1) * hc, rx, ry);
+  liftNow = lift;
+
+  // pinned hero and sticky headings: the offset that keeps them where the live site keeps them
+  for (const S of pins) {
+    const off = S.pin === 'top' ? clamp(scroll, 0, VH + 160) : clamp((VH - S.h) - (S.top - scroll), -(S.h - 64), 0);
+    S.off = off;
+    const str = off ? `translate3d(0, ${off.toFixed(2)}px, 0)` : '';
+    if (str !== S.last) { S.el.style.transform = str; S.last = str; }
+  }
+  page.style.transform = `translate3d(0, ${(-scroll).toFixed(2)}px, 0)`;
+  // the live site's rise: 140px over the frame's travel from 78% down the viewport to 150px above it
+  for (const R of rises) {
+    const topV = R.top - scroll;
+    if (topV > VH + 200 || topV < -700) continue;
+    const str = `translate3d(0, ${(140 * clamp((topV + 150) / (0.778 * VH + 150), 0, 1)).toFixed(2)}px, 0)`;
+    if (str !== R.last) { for (const im of R.imgs) im.style.transform = str; R.last = str; }
+  }
+
+  // the card tilts toward the pointer
+  card.style.transform = `rotateX(${rx.toFixed(3)}deg) rotateY(${ry.toFixed(3)}deg) scale(${(lift / K).toFixed(5)})`;
+
+  // the eye in card space: perspective P in front of the card centre, rotated into the card's frame
+  const P = dial('tilt.perspective', 2.4) * cardW / lift;
+  const a = rx * D2R, b = ry * D2R;
+  const E = { x: -P * Math.sin(b) * Math.cos(a), y: P * Math.sin(a), z: P * Math.cos(a) * Math.cos(b) };
+  const Zsep = 0.16 * cardW * depth;
+  const quiet = Math.abs(hc) < 0.0005 && Math.abs(rx) < 0.001 && Math.abs(ry) < 0.001;
+  const halfView = VH / 2 * s;
+
+  for (const L of layers) {
+    const u = L.kind === 'card' ? 1 : s;
+    const Q = L.kind === 'card' ? { x: L.cx - cardW / 2, y: L.cy - cardH / 2 }
+      : { x: (L.cx - DW / 2) * s, y: (L.cy + (L.sec ? L.sec.off : 0) - scroll - VH / 2) * s };
+    // far off screen: leave it be (it is written again the moment it comes back)
+    if (L.kind !== 'card' && Math.abs(Q.y) - L.hh * s > halfView + 260 * s) { L.A = null; continue; }
+    const project = (d, extra) => {
+      const z = d * Zsep * hc;
+      const t = E.z / Math.max(E.z * 0.25, E.z - z);
+      return { Q, z, t, o: { x: (t - 1) * (spread * Q.x - par * E.x) + extra.x, y: (t - 1) * (spread * Q.y - par * E.y) + extra.y } };
+    };
+    L.A = project(L.d, { x: 0, y: 0 });
+    const write = (el, A, cache) => {
+      let o = A.o, sc = A.t;
+      const Pp = L.parent && L.parent.A;
+      if (Pp) {
+        o = { x: (A.Q.x - Pp.Q.x) * (1 / Pp.t - 1) + (A.o.x - Pp.o.x) / Pp.t, y: (A.Q.y - Pp.Q.y) * (1 / Pp.t - 1) + (A.o.y - Pp.o.y) / Pp.t };
+        sc = A.t / Pp.t;
+      }
+      const str = quiet ? '' : `translate3d(${(o.x / u).toFixed(2)}px, ${(o.y / u).toFixed(2)}px, 0) scale(${sc.toFixed(5)})`;
+      if (str !== cache.last) { el.style.transform = str; cache.last = str; }
+    };
+    write(L.el, L.A, L);
+    if (L.twin) {
+      const Tw = L.twin;
+      const zs = Tw.surface * Zsep * hc;
+      const throwPx = Math.max(0, L.A.z - zs);
+      write(Tw.el, project(Tw.surface, { x: throwPx * LIGHT.x, y: throwPx * LIGHT.y }), Tw);
+      const op = (Tw.alpha * shadowK * h01).toFixed(3);
+      if (op !== Tw.op) { Tw.el.style.opacity = op; Tw.op = op; }
+    }
+  }
+
+  // framed: the window's own shadow on the card ground
+  if (framed) {
+    const W = layers[0].A;
+    const throwPx = Math.max(0, W.z) + cardW * 0.012;
+    winShadow.style.transform = `translate3d(${(W.o.x + throwPx * LIGHT.x * 1.4).toFixed(2)}px, ${(W.o.y + throwPx * LIGHT.y * 1.4).toFixed(2)}px, 0) scale(${(0.985 + 0.01 * h01).toFixed(4)})`;
+    winShadow.style.opacity = (0.42 + 0.28 * h01 * shadowK).toFixed(3);
+  }
+
+  // the light: one round bloom under the pointer, the rim nearest it, the card's own shadow
+  const gx = glow.x * cardW, gy = glow.y * cardH;
+  bloom.style.transform = `translate3d(${gx.toFixed(1)}px, ${gy.toFixed(1)}px, 0)`;
+  bloom.style.opacity = (bloomK * h01).toFixed(3);
+  rimLight.style.transform = `translate3d(${gx.toFixed(1)}px, ${gy.toFixed(1)}px, 0)`;
+  rim.style.opacity = (rimK * h01).toFixed(3);
+  if (!EMBED) {
+    const ex = tiltMax() ? ry / tiltMax() : 0, ey = tiltMax() ? -rx / tiltMax() : 0;
+    cshadow.style.transform = `translate3d(${(-ex * 0.035 * cw).toFixed(1)}px, ${((0.03 + 0.035 * h01 - ey * 0.02) * cw).toFixed(1)}px, 0) scale(${(0.96 + 0.06 * h01).toFixed(3)})`;
+    cshadow.style.opacity = ((0.18 + 0.42 * h01) * (0.4 + shadowK)).toFixed(3);
+  }
+
+  // the ruler: notches move with the page at its on-screen rate; the mark stays at the reading position
+  if (slot.classList.contains('ruler-outside')) {
+    const px = scroll * s / K * lift;
+    rulerOut.firstElementChild.style.transform = `translate3d(0, ${(-(px % 6)).toFixed(2)}px, 0)`;
+  } else {
+    const pitch = 6 * K, px = scroll * s;
+    const y = `translate3d(0, ${(-(px % pitch)).toFixed(2)}px, 0)`;
+    const [tDark, tLight, mDark, mLight] = rulerIn.children;
+    tDark.style.transform = tLight.style.transform = y;
+    // which section sits under the mark: light ticks on dark ground, dark on light
+    let tone = framed ? 0 : 1;
+    if (!framed) {
+      const yMid = scroll + VH / 2;
+      let best = null;
+      for (const S of sections) {
+        const top = S.top + S.off, bot = top + S.h;
+        if (yMid >= top && yMid < bot && (!best || S.z > best.z)) best = S;
+      }
+      tone = best ? best.tone : 1;
+    }
+    toneSm += (tone - toneSm) * (1 - Math.exp(-dt / 0.18));
+    const lo = toneSm.toFixed(3), hi = (1 - toneSm).toFixed(3);
+    tLight.style.opacity = mLight.style.opacity = lo;
+    tDark.style.opacity = mDark.style.opacity = hi;
+  }
+}
+const tiltMax = () => dial('tilt.tiltMax', 5);
+
+/* ---- input ---- */
+function setPointer(e) {
+  const r = persp.getBoundingClientRect();
+  pointer.x = clamp(((e.clientX - r.left) / r.width) * 2 - 1, -1, 1);
+  pointer.y = clamp(((e.clientY - r.top) / r.height) * 2 - 1, -1, 1);
+  pointerLive = true;
+}
+function openCard() {
+  // the site owns navigation: tell the frame, never leave the page ourselves
+  if (window.parent !== window) window.parent.postMessage({ type: 'ks-card-open' }, '*');
+}
+if (!TOUCH_DRAG) persp.style.touchAction = 'pan-y';
+persp.addEventListener('pointerenter', (e) => { if (e.pointerType !== 'touch') { hovered = true; setPointer(e); } });
+persp.addEventListener('pointerleave', (e) => { if (e.pointerType !== 'touch' && !drag.active) { hovered = false; pointerLive = false; } });
+persp.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const fingerOnly = e.pointerType === 'touch' && !TOUCH_DRAG;   // a tap still counts; a swipe belongs to the site
+  if (!fingerOnly) setPointer(e);
+  if (e.pointerType === 'touch') { if (!fingerOnly) { touching = true; touchRelease = -1; } } else hovered = true;
+  Object.assign(drag, { armed: true, active: false, id: e.pointerId, x: e.clientX, y: e.clientY, t0: performance.now(), scroll0: scroll, samples: [], type: e.pointerType });
+});
+persp.addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'touch') { hovered = true; setPointer(e); }
+  else if (drag.armed && TOUCH_DRAG) setPointer(e);
+  if (!drag.armed || e.pointerId !== drag.id) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.active) {
+    if (Math.hypot(dx, dy) < 6) return;
+    if (drag.type === 'touch' && !TOUCH_DRAG) { drag.armed = false; return; }   // not a tap, and not ours to scroll
+    // it is a drag now, not a click: take the page from the tour
+    drag.active = true; manual = true; coasting = false; momentum = 0; resumeAt = -1;
+    // both axes scroll: whichever moved more at the start wins for this drag. Vertical is 1:1 (drag up =
+    // page down); horizontal scrubs, drag right = further down, at 2.5 px of page per px of drag
+    drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+    drag.lx = e.clientX; drag.ly = e.clientY; drag.scroll0 = scroll;
+    drag.k = K / (s * liftNow);                         // design px per screen px: the page stays under the finger
+    persp.classList.add('is-dragging');
+    try { persp.setPointerCapture(e.pointerId); } catch { /* fine without */ }
+    return;
+  }
+  const delta = drag.axis === 'x' ? (e.clientX - drag.lx) * SCRUB * drag.k : -(e.clientY - drag.ly) * drag.k;
+  drag.lx = e.clientX; drag.ly = e.clientY;
+  scroll = clamp(scroll + delta, 0, maxScroll);       // incremental, so reversing at an end responds at once
+  const now = performance.now();
+  drag.samples.push({ t: now, y: scroll });
+  while (drag.samples.length > 2 && now - drag.samples[0].t > 90) drag.samples.shift();
+});
+function endDrag(e, cancelled) {
+  if (!drag.armed || (e && e.pointerId !== drag.id)) return;
+  const wasDrag = drag.active;
+  drag.armed = drag.active = false;
+  persp.classList.remove('is-dragging');
+  if (wasDrag) {
+    const sm = drag.samples, now = performance.now();
+    let v = 0;
+    if (sm.length >= 2 && now - sm[sm.length - 1].t < 70) {
+      const a = sm[0], b = sm[sm.length - 1];
+      v = (b.y - a.y) / Math.max(0.016, (b.t - a.t) / 1000);
+    }
+    momentum = reduced.matches ? 0 : clamp(v, -9000, 9000);
+    coasting = Math.abs(momentum) >= 14;
+    if (!coasting) resumeAt = clock + dial('motion.resumeAfter', 1.2);
+  } else if (!cancelled) {
+    // a click, not a drag
+    openCard();
+    if (drag.type === 'touch' && !EMBED) touchHold = !touchHold;
+  }
+  if (drag.type === 'touch' && TOUCH_DRAG) touchRelease = clock + (wasDrag ? 1.2 : 0.05);
+  if (e && e.pointerType !== 'touch') {
+    const r = persp.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) { hovered = false; pointerLive = false; }
+  }
+}
+persp.addEventListener('pointerup', (e) => endDrag(e, false));
+persp.addEventListener('pointercancel', (e) => endDrag(e, true));
+persp.addEventListener('dragstart', (e) => e.preventDefault());
+
+/* ---- running and pausing: hidden tabs, and the site saying the tile is off screen ---- */
+let parentVisible = true;
+function sync() {
+  const want = !document.hidden && parentVisible;
+  if (want && !running) { running = true; rafId = requestAnimationFrame((t) => { tPrev = t; frame(t); }); }
+  else if (!want && running) { running = false; if (rafId) cancelAnimationFrame(rafId); rafId = 0; }
+}
+document.addEventListener('visibilitychange', sync);
+window.addEventListener('message', (e) => {
+  if (e.source !== window.parent || window.parent === window) return;
+  const d = e.data;
+  if (d && d.type === 'ks-card' && typeof d.visible === 'boolean') { parentVisible = d.visible; sync(); }
+});
+
+new ResizeObserver(() => layout()).observe(persp);
+const watchDpr = () => matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { layout(); watchDpr(); }, { once: true });
+watchDpr();
+document.fonts.ready.then(layout);
+window.addEventListener('load', layout);
+layout();
+// a handle for the verify scripts: read state, jump the tour
+window.__soCard = {
+  get scroll() { return scroll; }, get h() { return spr.h.x; }, get maxScroll() { return maxScroll; }, get stops() { return stops.slice(); },
+  get running() { return running; }, get tour() { return { ...T }; }, get manual() { return manual || coasting || drag.active; },
+  layers: layers.length, layout, seek: tourSeek,
+};
+sync();
+
+/* ---- dials (the studio's own Params; none in the embed) ---- */
+if (!EMBED && location.protocol !== 'file:') {
+  // loaded only outside the embed (and off disk there is no studio), so the site's frame never needs the studio
+  let defineParams = null;
+  try { ({ defineParams } = await import('/shared/params/params.js')); } catch { /* opened outside the studio: defaults */ }
+  if (defineParams) {
+  const TOOL = 'superorganism work card';
+  defineParams(TOOL, {
+    layers: {
+      depth: [1, 0, 2.5, 0.01],          // how far apart the layers sit
+      parallax: [1, 0, 3, 0.01],         // how much they slide as the card tilts (1 = true to the tilt)
+      spread: [0.4, 0, 1, 0.01],         // perspective push away from the centre
+    },
+    tilt: {
+      tiltMax: [5, 0, 20, 0.5],         // degrees
+      perspective: [2.4, 1, 6, 0.05],    // eye distance, in card widths
+      hoverScale: [1.012, 1, 1.12, 0.001],
+    },
+    light: {
+      bloom: [0.85, 0, 1, 0.01],         // the round bloom under the pointer
+      rim: [0.5, 0, 1, 0.01],            // the edge nearest the pointer
+      shadow: [0.7, 0, 1, 0.01],         // cast shadows under lifted layers
+    },
+    motion: {
+      scrollSpeed: [1, 0, 3, 0.05],      // the idle tour
+      momentum: [1, 0.2, 2.5, 0.05],     // how far a flick coasts
+      resumeAfter: [1.2, 0.2, 4, 0.1],   // seconds before the tour takes the page back
+      stiffness: [110, 40, 500, 1],
+      damping: [21, 4, 60, 0.5],
+    },
+    card: {
+      cardSize: [40, 24, 72, 0.5],       // vw, as on the work grid
+      aspect: { type: 'select', options: ['16:10', '4:3'], default: '16:10' },
+      frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: false },
+      ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: true },
+    },
+    debug: {
+      outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+      hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+    },
+    copyProps: { type: 'action', label: 'Copy props' },
+  }, {
+    onChange(values, path) {
+      Object.assign(V, values);
+      card.classList.toggle('show-layers', !!values['debug.outlines']);
+      if (!path || /^card\.|tilt\.perspective/.test(path)) layout();
+    },
+    onAction(name) {
+      if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...V }, null, 2);
+    },
+  });
+  }
+}
+</script>
+</body>
+</html>

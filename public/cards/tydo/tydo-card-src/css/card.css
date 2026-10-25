@@ -1,0 +1,338 @@
+/* Tydo work card. The page chrome (stage, card, light, ruler, label row)
+   follows the IngredientAI and Happy Droid cards; everything under .vp is
+   Tydo rebuilt at its own 1440px design width from its home page as Kinetic
+   shipped it (tydo.com, archived 2024-03-04, rendered at 1440x900 in
+   headless Chromium and measured element by element). The type is the
+   site's own Inter, the colours its own tokens. */
+
+@font-face { font-family: "TY Inter"; src: url("../fonts/Inter-Variable-latin.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+@font-face { font-family: "KS Panell Condensed"; src: url("../fonts/PanellCondensed-TRIAL-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "KS Mono"; src: url("../fonts/PPNeueMontrealMono-Book.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #0d0d0d;
+  color: #eef1ea;
+  font-family: "KS Mono", ui-monospace, monospace;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Kinetic: the page and the work card ---------- */
+.stage {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  --size: 40;
+  --card-w: min(calc(var(--size) * 1vw), calc((100vh - 150px) * 4 / 3));
+}
+@media (max-width: 700px) { .stage { --card-w: calc(100vw - 32px); } }
+
+.slot { width: var(--card-w); display: flex; flex-direction: column; gap: clamp(14px, 1.1vw, 16px); }
+
+/* the hit area never moves; only what is inside it does */
+.persp {
+  position: relative;
+  width: 100%; aspect-ratio: 4 / 3;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+.persp.is-dragging { cursor: grabbing; }
+.card-shadow {
+  position: absolute; inset: 6% 7% -1% 7%;
+  border-radius: 12%;
+  background: rgba(0, 0, 0, .9);
+  filter: blur(30px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+/* laid out K times its size and scaled back inside its own 3D transform, so
+   the tilted card rasters as sharp as the flat one (see the Dawn card) */
+.card {
+  position: absolute; left: 0; top: 0;
+  --k: 1;
+  border-radius: calc(var(--r, 6px) * var(--k));
+  background: var(--frame-color, #e9e6dc);
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  isolation: isolate;
+}
+.card, .card * { user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+
+/* the site's browser window, inset on the card ground when framed */
+.win {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  overflow: hidden;
+  background: #f8f7f2;
+  will-change: transform;
+}
+.win-shadow {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  background: #000;
+  filter: blur(calc(var(--card-px, 576px) * .022));
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.card:not(.is-framed) .win-shadow { display: none; }
+
+/* The light, as on an Apple TV poster: one soft round bloom of light under
+   the pointer, brightest there and fading to nothing, added on top (screen).
+   No stripes, no bands. It moves by transform only. The rim is a faint
+   brightening of the card edge nearest the pointer, the same bloom seen
+   through a thin ring mask. */
+.bloom, .rim { position: absolute; z-index: 6; pointer-events: none; opacity: 0; will-change: transform, opacity; }
+.bloom {
+  width: calc(var(--card-px, 576px) * 1.3); height: calc(var(--card-px, 576px) * 1.3);
+  left: calc(var(--card-px, 576px) * -.65); top: calc(var(--card-px, 576px) * -.65);
+  background: radial-gradient(circle closest-side,
+    rgba(255, 255, 255, .72), rgba(255, 255, 255, .5) 9%, rgba(255, 255, 255, .26) 22%, rgba(250, 252, 255, .11) 40%,
+    rgba(250, 252, 255, .04) 62%, rgba(250, 252, 255, .01) 82%, rgba(250, 252, 255, 0) 100%);
+  mix-blend-mode: screen;
+}
+.rim {
+  left: 0; top: 0; width: 100%; height: 100%;
+  border-radius: inherit; overflow: hidden;
+  padding: calc(1.5px * var(--k));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  mix-blend-mode: screen;
+}
+.rim i {
+  position: absolute; display: block;
+  width: calc(var(--card-px, 576px) * .9); height: calc(var(--card-px, 576px) * .9);
+  left: calc(var(--card-px, 576px) * -.45); top: calc(var(--card-px, 576px) * -.45);
+  background: radial-gradient(circle closest-side, rgba(255, 255, 255, .85), rgba(255, 255, 255, .22) 45%, rgba(255, 255, 255, 0) 100%);
+  will-change: transform;
+}
+
+/* The scroll ruler: 1px notches every 6px that slide as the miniature
+   scrolls, one brighter mark fixed at the reading position. Framed, it sits
+   in the window's right margin on the card ground; full bleed, just outside
+   the card (embedded, just inside its right edge, its ink dark over the
+   sand and yellow, light over the deepspace and purple bands). */
+.notches { position: absolute; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); }
+.notches .ticks { position: absolute; left: 0; right: 0; top: calc(var(--np) * -2); bottom: calc(var(--np) * -2);
+  background: repeating-linear-gradient(to bottom, var(--tick) 0 var(--nw), transparent var(--nw) var(--np)); will-change: transform; }
+.notches .mark { position: absolute; top: 50%; height: var(--nw); background: var(--mark); }
+.notches-in { --nw: calc(1px * var(--k)); --np: calc(6px * var(--k));
+  width: calc(5px * var(--k)); height: 46%; top: 27%; right: calc(var(--mx) / 2 - 2.5px * var(--k)); z-index: 2; overflow: visible; }
+.notches-in .ink { position: absolute; inset: 0; overflow: hidden; will-change: opacity; }
+.notches-in .dark { --tick: rgba(14, 13, 26, .16); --mark: rgba(14, 13, 26, .6); }
+.notches-in .light { --tick: rgba(248, 247, 242, .17); --mark: rgba(248, 247, 242, .7); opacity: 0; }
+.notches-in .mark { left: 0; right: 0; }
+.notches-out { --nw: 1px; --np: 6px; --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .62);
+  width: 5px; height: 46%; top: 27%; right: -16px; }
+.notches-out .mark { left: -2px; right: -2px; }
+.card.is-framed .notches-in .light { opacity: 0 !important; }
+.card.is-framed .notches-in .dark { opacity: 1 !important; }
+.card.is-framed.is-dark-frame .notches-in .dark { --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .6); }
+.card:not(.is-framed) .notches-in, .slot:not(.full) .notches-out, .no-notches .notches { display: none; }
+
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: clamp(14px, 1.1vw, 16px); }
+.meta h3 {
+  margin: 0;
+  font-family: "KS Panell Condensed", "Arial Narrow", sans-serif; font-weight: 500;
+  font-size: clamp(22px, 1.95vw, 28px); line-height: .94; letter-spacing: -.02em;
+  text-transform: uppercase;
+}
+.meta p {
+  margin: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
+  text-align: right;
+  font-family: "KS Mono", ui-monospace, monospace;
+  font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
+  color: rgba(238, 241, 234, .5);
+}
+
+/* Embed (?embed=1): the card alone, edge to edge at the frame's own aspect,
+   on a transparent page. The site's tile frames it. */
+html.is-embed, html.is-embed body { background: transparent; }
+.is-embed .stage { display: block; }
+.is-embed .slot { position: absolute; inset: 0; width: auto; display: block; }
+.is-embed .persp { position: absolute; inset: var(--bleed, 0px); width: auto; height: auto; aspect-ratio: auto; }
+.is-embed .meta, .is-embed .notches-out, .is-embed .card-shadow { display: none; }
+/* full bleed in a tile there is no margin to sit in, so the ruler rides just inside the right edge */
+.is-embed .card:not(.is-framed) .notches-in { display: block; right: calc(7px * var(--k)); }
+
+/* ---------- Tydo: the miniature, at its own 1440px design width ---------- */
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  background: var(--sand);
+  --sand: #f8f7f2; --deep: #0e0d1a; --purple: #573fea; --teal: #45c9c1; --yellow: #ffde70;
+  --lav: #b4a8fc; --pink: #f480d4; --banner: #ded9ff; --grey: #f1f1f1;
+  font-family: "TY Inter", Inter, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px; line-height: 1.5; font-weight: 400;
+  color: var(--deep);
+  text-rendering: geometricPrecision;
+}
+.page { position: absolute; left: 0; top: 0; width: 1440px; height: 8117px; z-index: 1; background: var(--sand); will-change: transform; }
+.sec { position: absolute; left: 0; width: 1440px; }
+.sec > *, .vp .fixed, .fixed > * { position: absolute; }
+[data-depth] { will-change: transform; }
+:where(.vp h1, .vp h2, .vp h3, .vp h4, .vp p, .vp ul) { margin: 0; font-weight: inherit; }
+.vp img { display: block; }
+.vp svg { display: block; overflow: visible; }
+
+.hero { z-index: 2; }
+.dark { background: var(--deep); }
+.cream { background: var(--sand); }
+.yellow { background: var(--yellow); }
+.purple-bg { background: var(--purple); }
+.purple { color: var(--purple); }
+.sand { color: var(--sand); }
+.white-t { color: #fff; }
+.center { text-align: center; }
+
+/* the site's type */
+.body16 { font-size: 16px; line-height: 22.4px; font-weight: 500; }
+.body20 { font-size: 20px; line-height: 28px; font-weight: 500; }
+.body20.lh30 { line-height: 30px; }
+.label16 { font-size: 16px; line-height: 24px; font-weight: 600; color: #fff; white-space: nowrap; }
+.btn {
+  height: 56px; padding: 16px 20px; border-radius: 12px;
+  background: var(--purple); color: #fff;
+  font-size: 16px; line-height: 24px; font-weight: 600; white-space: nowrap; text-align: center;
+}
+.btn.white { background: #fff; color: var(--purple); }
+
+/* the nav, fixed in the window: the lavender banner and the sand bar */
+.nav { left: 0; top: 0; width: 1440px; height: 160px; z-index: 5; }
+.nav-band { left: 0; top: 0; width: 1440px; height: 160px; background: var(--sand); }
+.banner { position: absolute; left: 0; top: 0; width: 1440px; height: 56px; background: var(--banner); }
+.banner-t { position: absolute; left: 0; top: 17px; width: 1440px; text-align: center;
+  font-size: 16px; line-height: 22.4px; font-weight: 700; color: var(--purple); white-space: nowrap; }
+.n-logo { position: absolute; left: 108px; top: 93px; width: 69px; height: 32px; }
+.n-links { position: absolute; left: 0; top: 96px; width: 1440px; height: 24px; }
+.n-links span { position: absolute; top: 0; font-size: 16px; line-height: 24px; font-weight: 500; color: #222; white-space: nowrap; }
+.n-links svg { display: inline-block; width: 11px; height: 7px; margin-left: 7px; vertical-align: 2px; }
+.n-btn { position: absolute; left: 1206px; top: 80px; }
+
+/* the hero */
+.h1 { width: 592px; padding-top: 50px; font-size: 80px; line-height: 80px; font-weight: 600; letter-spacing: -.05em; }
+.h1 .purple { letter-spacing: -.05em; line-height: .9; }
+.h-wrap { left: 730px; top: 40px; width: 592px; height: 761px; border-radius: 24px; background: var(--purple); overflow: hidden; }
+.h-pan { position: absolute; inset: 0; will-change: transform; transform: scale(1.1); }
+.h-pan img { width: 100%; height: 100%; }
+
+/* the marquees: a row the width of the page, its track sliding left */
+.marq { left: 0; width: 1440px; overflow: hidden; }
+.marq .track { position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; white-space: nowrap; will-change: transform; }
+.brands { height: 58px; }
+.brands .track img { width: 80px; flex: none; margin-right: 52px; }
+.icons { height: 68px; }
+.icons .track i { position: relative; flex: none; width: 68px; height: 68px; margin-right: 20px; border: 4px solid var(--purple); border-radius: 50%; background: var(--purple); }
+.icons .track i img { width: 60px; height: 60px; }
+.loop { height: 157px; }
+.loop .track img { width: 360px; height: 157px; flex: none; }
+
+/* meet customer intelligence */
+.h-meet { font-size: 84px; line-height: 75.6px; font-weight: 600; letter-spacing: -.05em; color: var(--teal); white-space: nowrap; }
+.vcard { top: 570px; width: 374px; height: 576px; border-radius: 24px; background: #fff; box-shadow: 12px 12px 0 var(--purple); overflow: hidden; }
+.vcard > * { position: absolute; }
+.vc-copy { left: 40px; top: 40px; width: 294px; height: 110px; }
+.vc-t { position: absolute; left: 0; top: 0; font-size: 24px; line-height: 26.4px; font-weight: 600; white-space: nowrap; }
+.vc-d { position: absolute; left: 0; width: 294px; font-size: 16px; line-height: 22.4px; font-weight: 500; }
+.vc-img img { width: 100%; height: 100%; }
+
+/* quick & tailored setup */
+.h-setup { width: 484px; font-size: 92px; line-height: 92px; font-weight: 600; letter-spacing: -1.6px; }
+.o7 { opacity: .7; }
+.step { left: 728px; width: 90px; height: 86px; }
+.disc { position: absolute; width: 75.8px; height: 75.8px; border: 2px solid var(--purple); border-radius: 50%; background: var(--c); font-style: normal; }
+.num { position: absolute; left: 0; top: 0; width: 71.8px; padding-top: 19px; text-align: center;
+  font-size: 40px; line-height: 34px; font-weight: 600; letter-spacing: -1.6px; color: var(--purple); }
+.step-t { left: 858px; width: 460px; height: 60px; }
+.step-t h3 { position: absolute; left: 0; top: 0; font-size: 24px; line-height: 26.4px; font-weight: 600; letter-spacing: -.72px; white-space: nowrap; }
+.step-t p { position: absolute; left: 0; top: 34px; font-size: 16px; line-height: 22.4px; font-weight: 500; white-space: nowrap; }
+
+/* tydo helps everyone */
+.h-every { width: 604px; font-size: 92px; line-height: 92px; font-weight: 600; letter-spacing: -4.6px; color: var(--purple); }
+.acc { left: 108px; width: 1224px; border-radius: 24px; background: var(--c); }
+.acc > * { position: absolute; }
+.acc-head { width: 572px; height: 104px; }
+.acc-eb { position: absolute; left: 0; top: 0; font-size: 24px; line-height: 33.6px; font-weight: 500; }
+.acc-head .acc-t { position: absolute; left: 0; top: 34px; }
+.acc-t { font-size: 60px; line-height: 66px; font-weight: 600; letter-spacing: -1.8px; white-space: nowrap; }
+.acc-list { left: 622px; top: 36px; width: 572px; height: 216px; }
+.acc-li { position: absolute; left: 0; width: 572px; }
+.acc-li img { position: absolute; left: 0; top: 0; width: 22px; height: 22px; }
+.acc-li p { position: absolute; left: 38px; top: 0; width: 534px; font-size: 16px; line-height: 24px; font-weight: 400; }
+.acc-li strong { font-weight: 500; }
+.quote { left: 108px; width: 789px; height: 339px; border-radius: 24px; background: #fff; box-shadow: 8px 8px 0 rgba(0, 0, 0, .16); }
+.quote > * { position: absolute; }
+.q-text { left: 32px; top: 44px; width: 725px; font-size: 28px; line-height: 39.2px; font-weight: 500; }
+.q-who { left: 32px; top: 225px; width: 340px; height: 70px; font-size: 16px; line-height: 22.4px; font-weight: 500; }
+.q-who img { position: absolute; left: 0; top: 0; width: 70px; height: 70px; border-radius: 50%; object-fit: cover; }
+.q-who div { position: absolute; left: 94px; top: 12px; white-space: nowrap; }
+.q-who div + div { top: 35px; }
+.mh { left: 943px; width: 389px; height: 339px; border-radius: 24px; overflow: hidden; box-shadow: 8px 8px 0 rgba(0, 0, 0, .16); background: #e9e6ff; }
+.mh img { width: 100%; height: 100%; object-fit: cover; }
+
+/* the big centred headings */
+.h80 { font-size: 80px; line-height: 88px; font-weight: 600; letter-spacing: -2.4px; text-align: center; }
+.h48 { font-size: 48px; line-height: 57.6px; font-weight: 600; letter-spacing: -.8px; text-align: center; color: var(--sand); }
+
+/* the platform, its dashboard and five tiles */
+.pf { width: 460px; height: 413px; }
+.pf-p { position: absolute; }
+
+/* we're flexible */
+.plan { top: 433px; width: 390px; height: 253px; border: 1px solid #000; border-radius: 24px; background: #fff; box-shadow: 8px 8px 0 var(--c); }
+.plan-in { position: absolute; left: 28px; top: 28px; width: 332px; height: 190px; }
+.plan-in h3 { font-size: 32px; line-height: 35.2px; font-weight: 600; letter-spacing: -.96px; margin: 0 0 12px; padding-left: 1px; }
+.plan-in ul { padding-left: 20px; font-size: 16px; line-height: 22.4px; font-weight: 500; }
+.plan-in li { margin-bottom: 4px; }
+
+/* the footer */
+.foot { z-index: 0; }
+.f-logo { width: 75px; height: 32px; }
+.f-sub { left: 108px; top: 777px; width: 1224px; height: 100px; }
+.f-sub > * { position: absolute; }
+.f-sub label { left: 0; top: 0; font-size: 16px; line-height: 24px; font-weight: 500; color: var(--grey); }
+.f-ph { left: 0; top: 44px; font-size: 24px; line-height: 29px; color: #999581; white-space: nowrap; }
+.f-line { left: 0; top: 89px; width: 1224px; height: 1px; background: var(--lav); }
+.f-arrow { left: 1200px; top: 48px; width: 24px; height: 24px; color: var(--lav); }
+.f-cols { left: 0; top: 981px; width: 1440px; height: 320px; }
+.f-col { position: absolute; top: 0; width: 240px; height: 320px; }
+.f-h { position: absolute; left: 0; top: 0; font-size: 16px; line-height: 24px; color: var(--grey); white-space: nowrap; }
+.f-h.sm { font-size: 14px; line-height: 19.6px; font-weight: 500; }
+.f-a { position: absolute; left: 0; font-size: 24px; line-height: 33.6px; font-weight: 600; color: var(--lav); white-space: nowrap; }
+.f-a[style*="width"] { white-space: normal; }
+.f-legal { left: 0; top: 1333px; width: 1440px; height: 26px; }
+.f-legal span { position: absolute; top: 3px; font-size: 14px; line-height: 21px; color: var(--grey); white-space: nowrap; }
+.f-legal img { position: absolute; top: 0; width: 24px; height: 24px; }
+
+/* debug: every layer outlined and labelled */
+.show-layers [data-layer] { outline: 3px dashed #ff5ad1; outline-offset: -3px; }
+.show-layers [data-layer]::after {
+  content: attr(data-layer) "  z " attr(data-depth);
+  position: absolute; left: var(--lab-x, 6px); top: var(--lab-y, 6px); z-index: 50;
+  padding: 3px 8px 2px; border-radius: 4px;
+  background: #ff5ad1; color: #0d0d0d;
+  font: 500 22px/1.15 "KS Mono", ui-monospace, monospace;
+  -webkit-text-fill-color: #0d0d0d; text-transform: uppercase; letter-spacing: .02em;
+  white-space: nowrap; text-align: left; text-shadow: none;
+}
+.card.show-layers > [data-layer] { outline-width: calc(1px * var(--k)); outline-offset: calc(-1px * var(--k)); }
+.card.show-layers > [data-layer]::after { font-size: calc(8px * var(--k)); left: auto; right: calc(4px * var(--k)); top: auto; bottom: calc(4px * var(--k)); padding: calc(2px * var(--k)) calc(4px * var(--k)) calc(1px * var(--k)); border-radius: calc(2px * var(--k)); }
+/* images and empty discs cannot hold a label of their own */
+.show-layers img[data-layer]::after, .show-layers i[data-layer]::after { content: none; }
+
+/* shadow twins: the layer's own shape in black, softened, thrown by the light
+   (panels, cards and buttons cast a plain rounded box) */
+.twin { pointer-events: none; opacity: 0; filter: brightness(0) blur(var(--blur, 10px)); will-change: transform, opacity; }
+.twin.box { background: #000 !important; box-shadow: none !important; border-color: #000 !important; filter: blur(var(--blur, 14px)); }
+.twin.box > * { display: none; }

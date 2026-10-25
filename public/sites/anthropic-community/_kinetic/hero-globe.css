@@ -1,0 +1,41 @@
+/* Kinetic's hero for the Claude Community page: the 3D globe Kinetic built for it.
+
+   The live page has since swapped the globe for a hand-drawn illustration and
+   new hero copy; this copy puts Kinetic's version back (as Kinetic's own
+   recordings show it, March 2026, and as the work card rebuilds it): the
+   headline as it is, the body and button on the left under it, and the globe
+   rising from the bottom right of the hero. hero-globe.js does the rest once
+   React has hydrated. Measured off the card (public/cards/anthropic-community),
+   whose 1312 px column is this page's 1440 px one (x 1.0976). */
+
+[class*="HeroIllustrationStagger-module"][class*="__hero"] { position: relative; overflow: hidden; }
+/* the illustration goes; until the script has the hero, its body waits unseen (no flash of the other copy) */
+[class*="HeroIllustrationStagger-module"][class*="__illustration"] { display: none !important; }
+[class*="HeroIllustrationStagger-module"][class*="__body"] { visibility: hidden; }
+.kc-hero [class*="HeroIllustrationStagger-module"][class*="__body"] { visibility: visible; }
+
+.kc-hero [class*="HeroIllustrationStagger-module"][class*="__grid"] { position: relative; min-height: 738px; }
+.kc-hero [class*="HeroIllustrationStagger-module"][class*="__body"] {
+  position: absolute; left: 0; top: 387px; width: 640px; margin: 0; z-index: 2; grid-area: auto !important;
+}
+.kc-hero [class*="HeroIllustrationStagger-module"][class*="__subheadline"] { max-width: none; white-space: nowrap; }
+.kc-hero [class*="HeroIllustrationStagger-module"][class*="__headline"] { position: relative; z-index: 2; pointer-events: none; }
+.kc-hero [class*="HeroIllustrationStagger-module"][class*="__headline"] * { pointer-events: auto; }
+
+/* the hairline down the left margin, as on Kinetic's page */
+.kc-rule { position: absolute; left: 124px; top: 574px; width: 1px; bottom: 0; background: #e8e6dc; opacity: .7; z-index: 1; pointer-events: none; }
+
+/* the globe: a canvas box on the hero, under the copy */
+.kc-globe { position: absolute; z-index: 1; touch-action: pan-y; cursor: grab; -webkit-user-select: none; user-select: none; }
+.kc-globe.is-dragging { cursor: grabbing; }
+.kc-globe canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+
+/* the event tip that rides a city */
+.kc-tip { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; pointer-events: none; will-change: transform, opacity; }
+.kc-tip > * { position: absolute; white-space: nowrap; font-family: var(--font-anthropic-sans), system-ui, sans-serif; }
+.kc-tip-pill {
+  left: -94px; top: -37px; width: 188px; height: 36px; border-radius: 9px;
+  background: #fff; box-shadow: 0 2px 11px rgba(20, 20, 19, .1), 0 0 0 .5px rgba(20, 20, 19, .04);
+  font-weight: 500; font-size: 16px; line-height: 36px; text-align: center; color: #5e5d59;
+}
+.kc-tip-city { left: -90px; top: 14px; width: 180px; text-align: center; font-weight: 600; font-size: 16px; line-height: 22px; color: #d97757; }

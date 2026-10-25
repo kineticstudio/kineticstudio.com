@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Code-powered work card for Anthropic: the Claude community page
+     (claude.com/community) with the 3D globe Kinetic built for it, 2026-10-24,
+     on the Ethos and Wispr Flow cards' engine:
+     - the miniature is the community page rebuilt in HTML and CSS layers at
+       its 1440px width, scaled into a card laid out K times larger so tilted
+       text stays sharp; one spring-driven loop, transforms and opacity only
+     - the globe is the point of the project, so it is rebuilt live, not as a
+       still: a sphere of land dots with the cities as clay markers, hairline
+       arcs between neighbours and the sphere's thin outline, drawn in one
+       canvas with a minimal WebGL (no libraries, a 2D fallback), on its own
+       depth layer; it turns from the card's own requestAnimationFrame clock,
+       one full turn per tour, slow while it is on screen, and its
+       "2 upcoming events" tip rides the city it labels
+     - idle, it tours the page (the hero and its globe, the upcoming events,
+       bring your big ideas, find your space, the closing call to action) on a
+       ~21 s loop of eased stops that starts and ends on the hero
+     - hover tilts it toward the pointer (10 degrees) and the layers separate by
+       depth with soft shadows that grow with height; the light is one round
+       bloom that follows the pointer; the globe's dots swell under the pointer
+       as they do on the page; the tour keeps running under the hover
+     - press and drag scrolls the miniature either way: drag up, page goes
+       down (1:1); drag right, it scrubs further down, left back up (2.5x);
+       momentum and clamped ends; the tour picks up from there after a beat
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge,
+       on a transparent page; &radius=N rounds it; &bleed=N keeps N px of clear
+       frame round it; &mat=F frames it on the clay ground (the site's border);
+       it pauses when hidden or when the parent posts {type: "ks-card",
+       visible: false}; {type: "ks-card", at: seconds} puts the tour (and the
+       globe's turn) at that time; a click or tap posts {type: "ks-card-open"};
+       touch drag is off unless &touchdrag=1, so a swipe scrolls the site
+
+     Sources: the live page has since replaced the globe (a hand-drawn globe
+     illustration and new copy), so the hero and the globe are rebuilt from
+     Kinetic's own recordings (claude-community.mp4 in the portfolio and
+     Hunter's claude-community-globe.mp4, March 2026), and the rest of the page
+     from the web archive's capture of 2026-03-19, the closest to the
+     recording, with its Anthropic Sans and Serif, pictograms, icons and photo.
+     raw/ keeps the fetched HTML, CSS, fonts and images; nothing in it runs. -->
+<title>Anthropic Community work card</title>
+<script>
+  /* before first paint. ?embed=1 is the site tile. &bleed=N: the site's iframe overhangs the tile by N px
+     on every side (room for the tilt), so the card keeps N px of clear frame round it and sits exactly on the
+     tile at rest. &radius=N rounds the card's corners. &touchdrag=1 lets a finger drag the miniature. */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    if (q.get('embed') !== '1') return;
+    var h = document.documentElement;
+    h.classList.add('embed');
+    var b = parseFloat(q.get('bleed'));
+    if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    var r = parseFloat(q.get('radius'));   // the site passes 6
+    if (r >= 0) h.style.setProperty('--card-r', r + 'px');
+  })();
+</script>
+<link rel="stylesheet" href="anthropic-community-card-src/css/card.css">
+<link rel="stylesheet" href="anthropic-community-card-src/css/site.css">
+</head>
+
+<body>
+<!-- the page's own icons, once -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-chev" viewBox="0 0 20 20"><path d="M14.128 7.16482C14.3126 6.95983 14.6298 6.94336 14.835 7.12771C15.0402 7.31242 15.0567 7.62952 14.8721 7.83477L10.372 12.835L10.2939 12.9053C10.2093 12.9667 10.1063 13 9.99995 13C9.85833 12.9999 9.72264 12.9402 9.62788 12.835L5.12778 7.83477L5.0682 7.75273C4.95072 7.55225 4.98544 7.28926 5.16489 7.12771C5.34445 6.96617 5.60969 6.95939 5.79674 7.09744L5.87193 7.16482L9.99995 11.7519L14.128 7.16482Z" fill="currentColor"/></symbol>
+  <symbol id="i-search" viewBox="0 0 20 20"><path d="M8.5 2C12.0899 2 15 4.91015 15 8.5C15 10.1149 14.4094 11.5908 13.4346 12.7275L17.8535 17.1465L17.918 17.2246C18.0461 17.4187 18.0244 17.6827 17.8535 17.8535C17.6827 18.0244 17.4187 18.0461 17.2246 17.918L17.1465 17.8535L12.7275 13.4346C11.5908 14.4094 10.1149 15 8.5 15C4.91015 15 2 12.0899 2 8.5C2 4.91015 4.91015 2 8.5 2ZM8.5 3C5.46243 3 3 5.46243 3 8.5C3 11.5376 5.46243 14 8.5 14C11.5376 14 14 11.5376 14 8.5C14 5.46243 11.5376 3 8.5 3Z" fill="currentColor"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 20 20"><path d="M9.5 3C9.77614 3 10 3.22386 10 3.5C10 3.77614 9.77614 4 9.5 4H4.5C4.22386 4 4 4.22386 4 4.5V15.5C4 15.7761 4.22386 16 4.5 16H15.5C15.7761 16 16 15.7761 16 15.5V10.5C16 10.2239 16.2239 10 16.5 10C16.7761 10 17 10.2239 17 10.5V15.5C17 16.3284 16.3284 17 15.5 17H4.5C3.67157 17 3 16.3284 3 15.5V4.5C3 3.67157 3.67157 3 4.5 3H9.5ZM16.5 3C16.5374 3 16.5747 3.00436 16.6113 3.0127C16.6347 3.01803 16.6574 3.02559 16.6797 3.03418C16.687 3.03701 16.6939 3.04076 16.7012 3.04395C16.7213 3.05283 16.7409 3.06272 16.7598 3.07422C16.7675 3.07892 16.7757 3.08274 16.7832 3.08789C16.8082 3.10508 16.8317 3.12471 16.8535 3.14648L16.918 3.22461C16.9289 3.24116 16.9356 3.25988 16.9443 3.27734C16.95 3.28857 16.9572 3.29894 16.9619 3.31055C16.9789 3.35212 16.9888 3.39547 16.9941 3.43945C16.9966 3.45953 17 3.47957 17 3.5V7.5C17 7.77614 16.7761 8 16.5 8C16.2239 8 16 7.77614 16 7.5V4.70703L11.8535 8.85352C11.6583 9.04878 11.3417 9.04878 11.1465 8.85352C10.9512 8.65825 10.9512 8.34175 11.1465 8.14648L15.293 4H12.5C12.2239 4 12 3.77614 12 3.5C12 3.22386 12.2239 3 12.5 3H16.5Z" fill="currentColor"/></symbol>
+  <symbol id="i-blob" viewBox="0 0 40 40"><path d="M24.438 39.9976C22.7176 39.9716 21.0947 39.8296 19.3827 39.688C17.5507 39.5364 15.7162 39.4504 13.8838 39.2756C13.1418 39.2048 12.4006 39.0968 11.6561 39.0412C10.2349 37.7892 8.62688 36.646 7.25605 35.3461C6.80484 34.9181 6.40045 34.4253 5.93884 34.0053C5.67203 33.7625 5.03081 33.3357 4.84841 33.1041C4.6904 32.9029 4.426 32.1469 4.2792 31.8529C3.92439 31.1429 3.49999 30.4673 3.13798 29.7661C2.15516 27.8641 1.23875 25.9213 0.341931 23.9757C0.28193 23.8457 0.0275247 23.319 0.0135244 23.2254C-0.0228763 22.9854 0.0243199 22.2318 0.0371202 21.9486C0.121522 20.0902 0.135122 18.2378 0.237924 16.3774C0.252724 16.1086 0.197526 15.6882 0.242727 15.4546C0.285928 15.231 0.762736 14.4402 0.891939 14.1562C1.31955 13.2178 1.76155 12.2914 2.19236 11.3551C2.75957 10.1227 3.22439 8.84148 3.9144 7.66829C4.38681 7.29029 4.94121 7.03069 5.43482 6.68869C7.60967 5.18231 9.5661 3.32232 11.7485 1.82114C12.4146 1.36274 13.237 0.95994 13.9298 0.508744C14.057 0.425945 14.545 0.00995265 14.6418 0.000752728C14.727 -0.00724721 14.9034 0.051152 14.9978 0.050352C16.8402 0.0363521 18.4007 0.433547 20.1935 0.640745C21.7851 0.824743 23.3952 0.930341 24.9792 1.18594C25.9064 1.33514 26.8388 1.60394 27.7737 1.72034C28.4929 1.80994 29.2301 1.76833 29.9441 1.93553C32.0134 3.76192 33.9182 5.7667 35.7142 7.87148C35.819 7.99428 35.895 8.16748 36.0062 8.29628C36.4434 8.80227 37.0423 9.23467 37.4771 9.73867C37.7767 10.0859 38.0391 11.921 38.1551 12.4774C38.7971 15.5558 39.2847 18.6914 39.8235 21.7862C39.9423 22.4678 40.1347 22.6302 39.8579 23.3226C39.1979 24.9729 38.6023 26.6625 37.9587 28.3241C37.4987 29.5113 37.0415 30.7001 36.5642 31.8801C34.1726 34.0161 31.4917 35.8149 28.7637 37.478L25.122 39.9988C24.8944 39.9964 24.6652 40.0024 24.4376 39.9988L24.438 39.9976Z" fill="currentColor"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 20 20"><path d="M10.25 2C11.0283 2 11.6867 2.50842 11.9141 3.21094C12.1623 3.07581 12.4475 3 12.75 3C13.7165 3 14.5 3.7835 14.5 4.75V6.16992C14.7275 6.06176 14.9814 6 15.25 6C16.2165 6 17 6.7835 17 7.75V11.25C17 14.9779 13.9779 18 10.25 18C6.52208 18 3.5 14.9779 3.5 11.25V8C3.5 7.44772 3.94772 7 4.5 7H5C5.36464 7 5.70563 7.09906 6 7.26953V4.75C6 3.7835 6.7835 3 7.75 3C8.05224 3 8.33688 3.07606 8.58496 3.21094C8.81229 2.50827 9.47163 2 10.25 2ZM10.25 3C9.83579 3 9.5 3.33579 9.5 3.75V9.5C9.5 9.77614 9.27614 10 9 10C8.72386 10 8.5 9.77614 8.5 9.5V4.75C8.5 4.33579 8.16421 4 7.75 4C7.33579 4 7 4.33579 7 4.75V11.002C8.32553 11.0277 9.48461 11.8814 9.90918 13.1221L9.98535 13.3789L10 13.4785C10.0102 13.711 9.85565 13.9267 9.62109 13.9854C9.38677 14.0438 9.1493 13.9264 9.04883 13.7168L9.01465 13.6211L8.96289 13.4463C8.66901 12.5877 7.85929 12 6.93848 12H6.5C6.22386 12 6 11.7761 6 11.5V9C6 8.44772 5.55228 8 5 8H4.5V11.25C4.5 14.4256 7.07436 17 10.25 17C13.4256 17 16 14.4256 16 11.25V7.75C16 7.33579 15.6642 7 15.25 7C14.8358 7 14.5 7.33579 14.5 7.75V10.5C14.5 10.7761 14.2761 11 14 11C13.7239 11 13.5 10.7761 13.5 10.5V4.75C13.5 4.33579 13.1642 4 12.75 4C12.3358 4 12 4.33579 12 4.75V9.5C12 9.77614 11.7761 10 11.5 10C11.2239 10 11 9.77614 11 9.5V3.75C11 3.33579 10.6642 3 10.25 3Z" fill="currentColor"/></symbol>
+  <symbol id="i-cap" viewBox="0 0 20 20"><path d="M9.82227 3.03223C9.95577 2.98149 10.1064 2.99085 10.2344 3.05859L18.7344 7.55859C18.8977 7.64533 19 7.81501 19 8C19 8.185 18.8977 8.35466 18.7344 8.44141L16.9805 9.36914C16.9919 9.41102 17 9.45452 17 9.5V13.1113C16.9999 13.4845 16.8596 13.862 16.5674 14.1377C16.2667 14.4214 15.7273 14.8927 15 15.3721V17.5C15 17.7761 14.7761 18 14.5 18C14.2239 18 14 17.7761 14 17.5V15.957C12.8979 16.5301 11.532 17 10 17C7.15439 17 4.87641 15.3894 3.8125 14.4785L3.43262 14.1377C3.14045 13.862 3.00008 13.4845 3 13.1113V9.5C3 9.45461 3.00722 9.41095 3.01855 9.36914L1.26562 8.44141C1.10227 8.35466 1 8.185 1 8C1.00001 7.81501 1.10227 7.64533 1.26562 7.55859L9.76562 3.05859L9.82227 3.03223ZM4 13.1113C4.00008 13.2383 4.04751 13.3426 4.11914 13.4102L4.47461 13.7295C5.46045 14.5708 7.5074 16 10 16C11.558 16 12.9406 15.4397 14 14.8154V10.9473L10.2344 12.9414C10.088 13.0189 9.91197 13.0189 9.76562 12.9414L4 9.88867V13.1113ZM14.9902 10.4229C14.9942 10.4483 15 10.4737 15 10.5V14.1484C15.3834 13.8602 15.6826 13.5972 15.8809 13.4102C15.9525 13.3426 15.9999 13.2383 16 13.1113V9.88867L14.9902 10.4229ZM2.56738 8L10 11.9336L13.0986 10.293L9.75684 8.4375L9.67383 8.37891C9.49755 8.22746 9.44522 7.96793 9.5625 7.75684C9.67978 7.54585 9.92776 7.45286 10.1494 7.52246L10.2432 7.5625L14.1533 9.73438L17.4316 8L10 4.06543L2.56738 8Z" fill="currentColor"/></symbol>
+  <symbol id="i-discord" viewBox="0 0 24 24"><path d="M19.6361 5.02293C18.1907 4.35768 16.6648 3.88574 15.0973 3.61914C14.8828 4.0046 14.6888 4.40118 14.5159 4.80723C12.8463 4.55431 11.1484 4.55431 9.47881 4.80723C9.30587 4.40122 9.1118 4.00464 8.8974 3.61914C7.32897 3.88799 5.80205 4.36106 4.35518 5.02641C1.48276 9.29864 0.704092 13.4648 1.09342 17.5717C2.77558 18.8211 4.6584 19.7714 6.66003 20.381C7.11074 19.7717 7.50956 19.1252 7.85226 18.4484C7.20135 18.2041 6.57311 17.9025 5.9748 17.5474C6.13227 17.4326 6.28627 17.3143 6.43508 17.1995C8.17601 18.0225 10.0761 18.4492 12 18.4492C13.9238 18.4492 15.8239 18.0225 17.5648 17.1995C17.7154 17.323 17.8694 17.4413 18.0251 17.5474C17.4257 17.9031 16.7963 18.2052 16.1442 18.4502C16.4865 19.1266 16.8853 19.7725 17.3364 20.381C19.3398 19.7738 21.224 18.824 22.9065 17.5735C23.3633 12.8107 22.1261 8.68285 19.6361 5.02293ZM8.34541 15.046C7.26047 15.046 6.36414 14.0562 6.36414 12.8385C6.36414 11.6209 7.22932 10.6224 8.34195 10.6224C9.45458 10.6224 10.344 11.6209 10.325 12.8385C10.3059 14.0562 9.45112 15.046 8.34541 15.046ZM15.6545 15.046C14.5678 15.046 13.675 14.0562 13.675 12.8385C13.675 11.6209 14.5401 10.6224 15.6545 10.6224C16.7689 10.6224 17.6514 11.6209 17.6323 12.8385C17.6133 14.0562 16.7602 15.046 15.6545 15.046Z" fill="currentColor"/></symbol>
+  <symbol id="i-reddit" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M19.9604 3.48098C19.9604 4.85119 18.8496 5.96196 17.4794 5.96196C16.306 5.96196 15.3228 5.14734 15.0647 4.05278C13.6253 4.25048 12.5132 5.48823 12.5132 6.98103L12.513 6.99038C14.732 7.07274 16.7607 7.69779 18.3679 8.69226C18.9581 8.23899 19.6969 7.96954 20.4986 7.96954C22.4324 7.96954 24 9.53718 24 11.471C24 12.8655 23.1847 14.0697 22.0047 14.6328C21.895 18.7019 17.4625 21.9752 12.0107 21.9752C6.56347 21.9752 2.13389 18.7074 2.01697 14.643C0.825309 14.0844 0 12.8741 0 11.471C0 9.53718 1.56764 7.96954 3.50142 7.96954C4.30745 7.96954 5.04987 8.2419 5.64167 8.69961C7.23364 7.71151 9.2407 7.08636 11.4375 6.9932L11.4372 6.98241C11.4372 4.90089 13.0236 3.1822 15.0507 2.97221C15.2854 1.84604 16.2836 1 17.4794 1C18.8496 1 19.9604 2.11077 19.9604 3.48098ZM7.17128 15.4805C8.15284 15.4805 8.99557 15.0223 9.05388 13.7617V13.7631C9.11219 12.5025 8.36387 11.4501 7.38231 11.4501C6.40075 11.4501 5.55802 12.2748 5.49971 13.5354C5.4414 14.796 6.18972 15.4805 7.17128 15.4805ZM16.8446 15.4805C15.863 15.4805 15.0203 15.0223 14.962 13.7617V13.7631C14.9037 12.5025 15.652 11.4501 16.6335 11.4501C17.6151 11.4501 18.4578 12.2748 18.5161 13.5354C18.5744 14.796 17.8261 15.4805 16.8446 15.4805ZM12.0068 16.4607C10.7906 16.4607 9.6244 16.5204 8.54705 16.6301C8.36239 16.6481 8.24577 16.8397 8.31797 17.0105C8.9219 18.453 10.3463 19.4665 12.0068 19.4665C13.6673 19.4665 15.0931 18.453 15.6957 17.0105C15.7678 16.8397 15.6498 16.6481 15.4666 16.6301C14.3878 16.5204 13.223 16.4607 12.0068 16.4607Z" fill="currentColor"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 20 20"><path d="M11.8535 4.64648C11.6582 4.45136 11.3417 4.45127 11.1465 4.64648C10.9513 4.8417 10.9514 5.15826 11.1465 5.35352L15.293 9.50001H3.5C3.22386 9.50001 3 9.72387 3 10C3.00006 10.2761 3.22389 10.5 3.5 10.5H15.293L11.1465 14.6465C10.9514 14.8418 10.9513 15.1583 11.1465 15.3535C11.3417 15.5487 11.6583 15.5486 11.8535 15.3535L16.8535 10.3535C16.9473 10.2598 17 10.1326 17 10C17 9.90061 16.9703 9.80418 16.916 9.72267L16.8535 9.64649L11.8535 4.64648Z" fill="currentColor"/></symbol>
+  <symbol id="i-up" viewBox="0 0 20 20"><path d="M10 3C10.1326 3.00003 10.2598 3.05274 10.3535 3.14648L15.3536 8.14648C15.5486 8.34174 15.5487 8.6583 15.3536 8.85352C15.1583 9.04873 14.8418 9.04863 14.6465 8.85352L10.5 4.70703V16.5C10.5 16.7761 10.2761 16.9999 10 17C9.72389 17 9.50003 16.7761 9.50003 16.5V4.70703L5.35353 8.85352C5.15827 9.04862 4.84172 9.04868 4.6465 8.85352C4.45128 8.6583 4.45138 8.34176 4.6465 8.14648L9.64651 3.14648L9.72268 3.08398C9.8042 3.02967 9.90062 3 10 3Z" fill="currentColor"/></symbol>
+  <symbol id="i-write" viewBox="0 0 20 20"><path d="M9.72821 2.87934C10.0318 2.10869 10.9028 1.72933 11.6735 2.03266L14.4655 3.13226C15.236 3.43593 15.6145 4.30697 15.3112 5.07758L11.3903 15.0307C11.2954 15.2717 11.1394 15.4835 10.9391 15.6459L10.8513 15.7123L7.7077 17.8979C7.29581 18.1843 6.73463 17.9917 6.57294 17.5356L6.54657 17.4409L5.737 13.6987C5.67447 13.4092 5.69977 13.107 5.80829 12.8315L9.72821 2.87934ZM6.73798 13.1987C6.70201 13.2903 6.69385 13.3906 6.71454 13.4868L7.44501 16.8627L10.28 14.892L10.3376 14.8452C10.3909 14.7949 10.4325 14.7332 10.4597 14.6645L13.0974 7.96723L9.37567 6.50141L6.73798 13.1987ZM11.3073 2.96332C11.0504 2.86217 10.7601 2.98864 10.6589 3.24555L9.74188 5.57074L13.4636 7.03754L14.3806 4.71137C14.4817 4.45445 14.3552 4.16413 14.0983 4.06293L11.3073 2.96332Z" fill="currentColor"/></symbol>
+  <symbol id="i-learn" viewBox="0 0 20 20"><path d="M11.5859 2C11.9837 2.00004 12.3652 2.15818 12.6465 2.43945L15.5605 5.35352C15.8418 5.63478 16 6.01629 16 6.41406V16.5C16 17.3284 15.3284 18 14.5 18H5.5C4.72334 18 4.08461 17.4097 4.00781 16.6533L4 16.5V3.5C4 2.67157 4.67157 2 5.5 2H11.5859ZM5.5 3C5.22386 3 5 3.22386 5 3.5V16.5C5 16.7761 5.22386 17 5.5 17H14.5C14.7761 17 15 16.7761 15 16.5V7H12.5C11.6716 7 11 6.32843 11 5.5V3H5.5ZM12.54 13.3037C12.6486 13.05 12.9425 12.9317 13.1963 13.04C13.45 13.1486 13.5683 13.4425 13.46 13.6963C13.1651 14.3853 12.589 15 11.7998 15C11.3132 14.9999 10.908 14.7663 10.5996 14.4258C10.2913 14.7661 9.88667 14.9999 9.40039 15C8.91365 15 8.50769 14.7665 8.19922 14.4258C7.89083 14.7661 7.48636 15 7 15C6.72386 15 6.5 14.7761 6.5 14.5C6.5 14.2239 6.72386 14 7 14C7.21245 14 7.51918 13.8199 7.74023 13.3037L7.77441 13.2373C7.86451 13.0913 8.02513 13 8.2002 13C8.40022 13.0001 8.58145 13.1198 8.66016 13.3037C8.88121 13.8198 9.18796 14 9.40039 14C9.61284 13.9998 9.9197 13.8197 10.1406 13.3037L10.1748 13.2373C10.2649 13.0915 10.4248 13.0001 10.5996 13C10.7997 13 10.9808 13.1198 11.0596 13.3037C11.2806 13.8198 11.5874 13.9999 11.7998 14C12.0122 14 12.319 13.8198 12.54 13.3037ZM12.54 9.30371C12.6486 9.05001 12.9425 8.93174 13.1963 9.04004C13.45 9.14863 13.5683 9.44253 13.46 9.69629C13.1651 10.3853 12.589 11 11.7998 11C11.3132 10.9999 10.908 10.7663 10.5996 10.4258C10.2913 10.7661 9.88667 10.9999 9.40039 11C8.91365 11 8.50769 10.7665 8.19922 10.4258C7.89083 10.7661 7.48636 11 7 11C6.72386 11 6.5 10.7761 6.5 10.5C6.5 10.2239 6.72386 10 7 10C7.21245 10 7.51918 9.8199 7.74023 9.30371L7.77441 9.2373C7.86451 9.09126 8.02513 9 8.2002 9C8.40022 9.00008 8.58145 9.11981 8.66016 9.30371C8.88121 9.8198 9.18796 10 9.40039 10C9.61284 9.99978 9.9197 9.81969 10.1406 9.30371L10.1748 9.2373C10.2649 9.09147 10.4248 9.00014 10.5996 9C10.7997 9 10.9808 9.11975 11.0596 9.30371C11.2806 9.8198 11.5874 9.99989 11.7998 10C12.0122 10 12.319 9.81985 12.54 9.30371ZM12 5.5C12 5.77614 12.2239 6 12.5 6H14.793L12 3.20703V5.5Z" fill="currentColor"/></symbol>
+  <symbol id="i-code" viewBox="0 0 20 20"><path d="M11.6318 4.01757C11.898 4.09032 12.055 4.36555 11.9824 4.63183L8.98242 15.6318C8.90966 15.8981 8.63449 16.0551 8.36816 15.9824C8.10193 15.9097 7.94495 15.6345 8.01758 15.3682L11.0176 4.36816C11.0904 4.102 11.3656 3.94497 11.6318 4.01757ZM13.124 6.17089C13.3059 5.96325 13.6213 5.9423 13.8291 6.12402L17.8291 9.62402L17.9014 9.70215C17.9647 9.78754 18 9.89182 18 10C18 10.1441 17.9375 10.281 17.8291 10.376L13.8291 13.876L13.7471 13.9346C13.5449 14.0498 13.2833 14.011 13.124 13.8291C12.9649 13.6472 12.9606 13.3824 13.1016 13.1973L13.1709 13.124L16.7412 10L13.1709 6.87597C12.9632 6.69411 12.9422 6.37866 13.124 6.17089ZM6.25293 6.06542C6.45509 5.95025 6.71675 5.98908 6.87598 6.17089C7.03513 6.35279 7.03933 6.6176 6.89844 6.80273L6.8291 6.87597L3.25879 10L6.8291 13.124C7.03682 13.3059 7.05771 13.6213 6.87598 13.8291C6.69413 14.0369 6.37869 14.0578 6.1709 13.876L2.1709 10.376L2.09863 10.2979C2.03528 10.2124 2 10.1082 2 10C2.00005 9.85591 2.06247 9.71893 2.1709 9.62402L6.1709 6.12402L6.25293 6.06542Z" fill="currentColor"/></symbol>
+</svg>
+
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Anthropic, the Claude Community page with its globe, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- hero: Kinetic's version, with the globe -->
+              <section class="sec hero" id="s-hero" data-tone="light">
+                <i class="margin-rule" data-layer="rule" data-depth="0.04"></i>
+                <div class="globe" id="globe" data-layer="globe" data-depth="0.22"><canvas id="globeCanvas"></canvas></div>
+                <h1 class="hero-h" data-layer="headline" data-depth="0.7" data-shadow="0,0.12,16"><span class="l1">Where problem solvers</span><span class="l2">think together</span></h1>
+                <p class="hero-p" data-layer="body copy" data-depth="0.5">Join the Claude Community to share solutions,<br>help each other, and push the boundaries of what’s<br>possible with AI. Keep thinking.</p>
+                <div class="btn dark hero-btn" data-layer="button" data-depth="0.85" data-shadow="0,0.16,14">Join the waitlist</div>
+                <div class="globe-tips" data-layer="event tip" data-depth="0.6">
+                  <div class="tip" id="tip"><div class="tip-pill">2 upcoming events</div><div class="tip-city" id="tipCity">Miami</div></div>
+                </div>
+              </section>
+
+              <!-- upcoming community events -->
+              <section class="sec events" id="s-events" data-tone="light">
+                <img class="pict" src="anthropic-community-card-src/img/pict-calendar.png" alt="" data-layer="pictogram" data-depth="0.45">
+                <h2 class="h2" data-layer="headline" data-depth="0.7" data-shadow="0,0.12,14">Upcoming community events</h2>
+                <p class="lead ev-lead" data-layer="body copy" data-depth="0.5">Claude Community Events are hosted globally by Claude Community<br>Ambassadors. Meet others building with Claude, and keep thinking.</p>
+                <div class="search" data-layer="search" data-depth="0.3"><svg><use href="#i-search"/></svg><span>Search events</span></div>
+                <div class="btn dark ev-all" data-layer="button" data-depth="0.8" data-shadow="0,0.16,14">View all<svg><use href="#i-ext"/></svg></div>
+                <div class="ev-head"><span style="left:312px">Title</span><span style="left:896px">Location</span><span style="left:1088px">Date</span></div>
+                <div class="ev-rows" data-layer="events" data-depth="0.2">
+                  <div class="ev" style="top:0"><i class="cc" style="--c:#e3dacc"><svg><use href="#i-blob"/></svg><b>AU</b></i><span class="t">Perth | Claude Code for Everyone</span><span class="loc">Perth, AU</span><span class="dt">March 19, 2026</span></div>
+                  <div class="ev" style="top:93px"><i class="cc on-dark" style="--c:#788c5d"><svg><use href="#i-blob"/></svg><b>FR</b></i><span class="t">Paris | Claude Code for Developers</span><span class="loc">Paris, FR</span><span class="dt">March 19, 2026</span></div>
+                  <div class="ev" style="top:186px"><i class="cc" style="--c:#bcd1ca"><svg><use href="#i-blob"/></svg><b>US</b></i><span class="t">Chicago | Claude Code for HealthTech</span><span class="loc">Chicago, US</span><span class="dt">March 19, 2026</span></div>
+                  <div class="ev" style="top:279px"><i class="cc on-dark" style="--c:#6a9bcc"><svg><use href="#i-blob"/></svg><b>KE</b></i><span class="t">Nairobi | Claude for Everyone</span><span class="loc">Nairobi, KE</span><span class="dt">March 20, 2026</span></div>
+                  <div class="ev" style="top:372px"><i class="cc" style="--c:#cbcadb"><svg><use href="#i-blob"/></svg><b>MX</b></i><span class="t">Monterrey | Claude Code for Everyone</span><span class="loc">Monterrey, MX</span><span class="dt">March 20, 2026</span></div>
+                  <div class="ev" style="top:465px"><i class="cc" style="--c:#ebcece"><svg><use href="#i-blob"/></svg><b>MX</b></i><span class="t">Mexico City | Claude Code for Builders - Build Day</span><span class="loc">Ciudad de México, MX</span><span class="dt">March 21, 2026</span></div>
+                  <div class="ev last" style="top:558px"><i class="cc" style="--c:#e3dacc"><svg><use href="#i-blob"/></svg><b>DE</b></i><span class="t">Munich | Claude Code for Everyone</span><span class="loc">München, DE</span><span class="dt">March 23, 2026</span></div>
+                </div>
+              </section>
+
+              <!-- bring your big ideas in to the world -->
+              <section class="sec ideas" id="s-ideas" data-tone="light">
+                <img class="pict" src="anthropic-community-card-src/img/pict-globe.png" alt="" data-layer="pictogram" data-depth="0.45">
+                <h2 class="h2" data-layer="headline" data-depth="0.7" data-shadow="0,0.12,14">Bring your big ideas in to<br>the world</h2>
+                <p class="lead id-lead" data-layer="body copy" data-depth="0.5">Build and lead the community you want to see.</p>
+                <div class="mrow mrow-a" data-layer="programme" data-depth="0.28">
+                  <svg class="mi"><use href="#i-hand"/></svg>
+                  <h3>Become a Claude<br>Community<br>Ambassador</h3>
+                  <p>Build and lead the Claude<br>Community in your city with support<br>from Anthropic.</p>
+                  <div class="tbtn oat" data-layer="button" data-depth="0.5">Learn more</div>
+                </div>
+                <div class="mrow mrow-b" data-layer="programme" data-depth="0.28">
+                  <svg class="mi"><use href="#i-cap"/></svg>
+                  <h3>Join a Claude Campus<br>Program</h3>
+                  <p>Lead student-driven AI initiatives with<br>support from Anthropic.</p>
+                  <div class="tbtn oat" data-layer="button" data-depth="0.5">Learn more</div>
+                </div>
+                <div class="mcard photo" data-layer="photo card" data-depth="0.55" data-shadow="0,0.22,22">
+                  <img src="anthropic-community-card-src/img/community-marginalia.jpg" alt="">
+                  <p>Build together with the<br>Claude Community.</p>
+                </div>
+                <div class="mcard stat" data-layer="stat card" data-depth="0.6" data-shadow="0,0.22,22">
+                  <div class="st-h">Our growing community</div>
+                  <div class="st-n" style="top:61px">33</div><div class="st-l" style="top:109px">Countries</div>
+                  <i class="st-rule"></i>
+                  <div class="st-n" style="top:162px">67</div><div class="st-l" style="top:212px">Cities</div>
+                </div>
+              </section>
+
+              <!-- find your space -->
+              <section class="sec space" id="s-space" data-tone="light">
+                <img class="pict" src="anthropic-community-card-src/img/pict-lock.png" alt="" data-layer="pictogram" data-depth="0.45">
+                <h2 class="h2" data-layer="headline" data-depth="0.7" data-shadow="0,0.12,14">Find your space</h2>
+                <p class="lead sp-lead" data-layer="body copy" data-depth="0.5">Connect with other builders online to learn and share.</p>
+                <div class="feat" style="left:240px" data-layer="discord" data-depth="0.3">
+                  <svg class="fi"><use href="#i-discord"/></svg>
+                  <h3>Claude Developer Discord</h3>
+                  <p>Real-time help, project sharing, and active<br>discussions with thousands of developers.</p>
+                  <div class="tbtn ring" data-layer="button" data-depth="0.55">Join server</div>
+                </div>
+                <div class="feat" style="left:736px" data-layer="reddit" data-depth="0.3">
+                  <svg class="fi"><use href="#i-reddit"/></svg>
+                  <h3>Reddit</h3>
+                  <p>Long-form discussions, project showcases, and<br>community knowledge that sticks around.</p>
+                  <div class="tbtn ring" data-layer="button" data-depth="0.55">Join subreddit</div>
+                </div>
+              </section>
+
+              <!-- where problem solvers think together -->
+              <section class="sec cta" id="s-cta" data-tone="dark">
+                <h2 class="h2 cta-h" data-layer="headline" data-depth="0.7" data-shadow="0,0.3,16">Where problem<br>solvers think together</h2>
+                <div class="btn light cta-btn" data-layer="button" data-depth="0.85" data-shadow="0,0.4,12">View events</div>
+                <div class="news" data-layer="newsletter" data-depth="0.3" data-shadow="0,0.5,24">
+                  <img class="mail" src="anthropic-community-card-src/img/mailbox.svg" alt="" data-layer="pictogram" data-depth="0.5">
+                  <h3>Get insights in your inbox</h3>
+                  <p>Get monthly highlights: featured projects, upcoming<br>events, and tips from expert problem solvers.</p>
+                  <div class="field" data-layer="email" data-depth="0.42"><span>Enter your email</span><i class="go"><svg><use href="#i-arrow"/></svg></i></div>
+                  <p class="fine">By subscribing, you agree to receive Claude marketing emails and agree to<br>the <u>Privacy Policy</u>. You can unsubscribe any time.</p>
+                </div>
+              </section>
+
+              <!-- footer -->
+              <section class="sec foot" id="s-foot" data-tone="dark">
+                <img class="f-logo" src="anthropic-community-card-src/img/claude-logo-light.svg" alt="" data-layer="logo" data-depth="0.5">
+                <div class="prompt" data-layer="prompt" data-depth="0.4"><span>How can I help you today?</span><i><svg><use href="#i-up"/></svg></i></div>
+                <div class="chips" data-layer="chips" data-depth="0.45"><span><svg><use href="#i-write"/></svg>Write</span><span><svg><use href="#i-learn"/></svg>Learn</span><span><svg><use href="#i-code"/></svg>Code</span></div>
+                <div class="cols" data-layer="links" data-depth="0.22">
+                  <div style="left:512px"><b>Products</b><span>Claude</span><span>Claude Code</span><span>Claude Code for Enterprise</span><span>Claude Cowork</span><span>Max plan</span><span>Team plan</span><span>Enterprise plan</span><span>Download app</span><span>Pricing</span><span>Log in</span></div>
+                  <div style="left:736px"><b>Solutions</b><span>AI agents</span><span>Claude Code Security</span><span>Code modernization</span><span>Coding</span><span>Customer support</span><span>Education</span><span>Financial services</span><span>Government</span><span>Healthcare</span><span>Life sciences</span><span>Nonprofits</span></div>
+                  <div style="left:960px"><b>Resources</b><span>Blog</span><span>Claude partner network</span><span>Community</span><span>Connectors</span><span>Courses</span><span>Customer stories</span><span>Engineering at Anthropic</span><span>Events</span><span>Plugins</span><span>Powered by Claude</span><span>Service partners</span><span>Startups program</span><span>Tutorials</span><span>Use cases</span></div>
+                  <div style="left:1184px"><b>Help and security</b><span>Availability</span><span>Status</span><span>Support center</span><b class="gap">Terms and policies</b><span>Privacy choices</span><span>Privacy policy</span><span>Responsible disclosure policy</span><span>Terms of service: Commercial</span><span>Terms of service: Consumer</span><span>Usage policy</span></div>
+                </div>
+              </section>
+            </div>
+
+            <!-- the nav and the page's own sub nav, fixed in the viewport -->
+            <nav class="nav abs" id="nav">
+              <div class="nav-bar abs" data-layer="nav" data-depth="0.5" data-shadow="0,0.1,14">
+                <img class="nav-logo" src="anthropic-community-card-src/img/claude-logo-dark.svg" alt="">
+                <div class="nav-links"><span>Meet Claude<svg><use href="#i-chev"/></svg></span><span>Platform<svg><use href="#i-chev"/></svg></span><span>Solutions<svg><use href="#i-chev"/></svg></span><span>Pricing<svg><use href="#i-chev"/></svg></span><span>Learn<svg><use href="#i-chev"/></svg></span></div>
+                <div class="nbtn line" data-layer="nav button" data-depth="0.62">Contact sales</div>
+                <div class="nbtn dark" data-layer="nav button" data-depth="0.66" data-shadow="0.5,0.24,8">Try Claude</div>
+              </div>
+              <div class="subnav abs" data-layer="sub nav" data-depth="0.4"><span>Community</span><span class="sub-r">Explore here<svg><use href="#i-chev"/></svg></span></div>
+            </nav>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Anthropic</h3>
+      <p><span>AI</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="anthropic-community-card-src/js/globe-data.js"></script>
+<script src="anthropic-community-card-src/js/globe.js"></script>
+<script src="anthropic-community-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the Dawn card's way: the studio's own Params,
+   defineParams from /shared/params/params.js. Embedded on the site there is
+   no panel and nothing is fetched, so the module is only loaded here, and
+   only when served (opened from disk there is no studio to load it from). */
+const card = window.__anthropicCommunityCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const D = card.defaults;
+    const TOOL = 'anthropic community work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round light under the pointer
+        bloomSize: [D['light.bloomSize'], 0.4, 2.5, 0.05], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],
+        shadow: [D['light.shadow'], 0, 1, 0.01],
+      },
+      motion: {
+        scrollSpeed: [D['motion.scrollSpeed'], 0, 3, 0.05],
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [D['drag.momentum'], 0, 3, 0.05],        // how far a flick carries
+        scrub: [D['drag.scrub'], 0, 6, 0.1],               // px of page per px of sideways drag
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      globe: {
+        turn: [D['globe.turn'], 0, 1, 0.01],               // 1 = one full turn per tour; 0 holds it still
+        dotSize: [D['globe.dotSize'], 1, 6, 0.05],         // land dots, page px
+        magnify: [D['globe.magnify'], 0, 1.5, 0.01],       // how much the dots swell under the pointer
+        land: { type: 'toggle', labels: ['As recorded', 'True to the map'], default: D['globe.land'] },
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: D['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],                  // the ground the window sits on when framed (and the site's mat)
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+/* Kinetic's side: the page, the work card, its light and its ruler (the Wispr Flow card's, with a
+   terracotta ground for the framed view, the colour of Kinetic's own Claude recordings). */
+@font-face { font-family: "KS Panell Condensed"; src: url("../fonts/PanellCondensed-TRIAL-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "KS Mono"; src: url("../fonts/PPNeueMontrealMono-Book.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #0d0d0d;
+  color: #eef1ea;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+html.embed, html.embed body { background: transparent; }
+
+.stage {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  --size: 40; --ar: 1.6;
+  --card-w: min(calc(var(--size) * 1vw), calc((100vh - 150px) * var(--ar)));
+}
+@media (max-width: 700px) { .stage { --card-w: calc(100vw - 32px); } }
+.slot { width: var(--card-w); display: flex; flex-direction: column; gap: clamp(14px, 1.1vw, 16px); }
+
+/* the hit area never moves; only what is inside it does */
+.persp {
+  position: relative;
+  width: 100%; aspect-ratio: var(--ar);
+  perspective: 1400px; perspective-origin: 50% 50%;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: grab;
+}
+.persp.is-dragging { cursor: grabbing; }
+html.embed .stage { display: block; }
+html.embed .slot { position: absolute; inset: 0; width: auto; display: block; }
+html.embed .persp { position: absolute; inset: var(--bleed, 0px); width: auto; height: auto; aspect-ratio: auto; }
+html.embed .meta, html.embed:not(.has-bleed) .card-shadow { display: none; }
+
+.card-shadow {
+  position: absolute; inset: 6% 7% -1% 7%;
+  border-radius: 12%;
+  background: rgba(0, 0, 0, .9);
+  filter: blur(30px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+/* Laid out K times its size and scaled back inside its own 3D transform, so the
+   tilted card is rastered at screen density and stays as sharp as the flat one. */
+.card {
+  position: absolute; left: 0; top: 0;
+  --k: 1;
+  border-radius: calc(var(--r, 6px) * var(--k));
+  background: #cc7057;   /* framed: the terracotta ground of Kinetic's own recordings */
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  isolation: isolate;
+}
+html.embed .card { --r: var(--card-r, 0px); }
+/* full bleed, the card's own ground is the page's colour, so no terracotta fringe shows at its edges */
+.card:not(.is-framed) { background: var(--page-bg, #141413); }
+.card, .card * { user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+
+.win {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  overflow: hidden;
+  /* a hard clip: with the window's rounded corners, blurred twins could otherwise paint past its edge mid-scroll */
+  clip-path: inset(0 round var(--win-r, 0px));
+  contain: paint;
+  background: #141413;
+  will-change: transform;
+}
+.win-shadow {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  background: #5c2a1c;
+  filter: blur(calc(var(--card-px, 576px) * .022));
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.card:not(.is-framed) .win-shadow { display: none; }
+
+/* The light, as on an Apple TV poster: one soft round bloom of light under the
+   pointer, brightest there and fading to nothing, added on top. The rim nearest it
+   brightens a touch. Both move by transform only. Screen-blending a white light is
+   the same sum as laying it over at that alpha, so no blend mode: a blend over a
+   large card costs whole frames, plain alpha costs nothing. */
+.bloom, .rim { position: absolute; z-index: 6; pointer-events: none; opacity: 0; will-change: transform, opacity; }
+.bloom {
+  width: var(--bloom-d); height: var(--bloom-d);
+  left: calc(var(--bloom-d) / -2); top: calc(var(--bloom-d) / -2);
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side,
+    rgba(255, 252, 240, .46), rgba(255, 251, 238, .28) 16%, rgba(255, 250, 236, .13) 36%,
+    rgba(255, 250, 236, .05) 58%, rgba(255, 250, 236, .012) 80%, rgba(255, 250, 236, 0));
+}
+.rim {
+  left: 0; top: 0; width: 100%; height: 100%;
+  border-radius: inherit; overflow: hidden;
+  padding: calc(1.5px * var(--k));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.rim i {
+  position: absolute; display: block;
+  width: calc(var(--card-px, 576px) * .9); height: calc(var(--card-px, 576px) * .9);
+  left: calc(var(--card-px, 576px) * -.45); top: calc(var(--card-px, 576px) * -.45);
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side, rgba(255, 252, 242, .8), rgba(255, 252, 242, .22) 45%, rgba(255, 252, 242, 0));
+  will-change: transform;
+}
+
+/* The ruler: a short fine scale beside the card whose notches slide with the
+   miniature's scroll, one brighter mark fixed at the reading position.
+   Outside the card on the page; inside it when framed (in the window's margin)
+   or embedded (on the page's right edge, its ink following the section under it). */
+.ruler { position: absolute; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(transparent, #000 24%, #000 76%, transparent); mask: linear-gradient(transparent, #000 24%, #000 76%, transparent); }
+.ruler .ticks { position: absolute; left: 0; right: 0; top: calc(var(--np) * -2); bottom: calc(var(--np) * -2);
+  background: repeating-linear-gradient(to bottom, var(--tick) 0 var(--nw), transparent var(--nw) var(--np)); will-change: transform; }
+.ruler .mark { position: absolute; top: 50%; height: var(--nw); background: var(--mark); }
+.ruler-out { --nw: 1px; --np: 6px; --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .62);
+  width: 5px; height: 34%; top: 33%; right: -16px; }
+.ruler-out .mark { left: -2px; right: -2px; }
+.ruler-in { z-index: 5; --nw: calc(1px * var(--k)); --np: calc(6px * var(--k));
+  width: calc(5px * var(--k)); height: 34%; top: 33%; right: calc(14px * var(--k)); }
+.card.is-framed .ruler-in { right: calc(var(--mx) / 2 - 2.5px * var(--k)); }
+.ruler-in .ink { position: absolute; inset: 0; will-change: opacity; }
+.ruler-in .dark { --tick: rgba(20, 20, 19, .15); --mark: rgba(20, 20, 19, .6); }
+.ruler-in .light { --tick: rgba(250, 249, 245, .15); --mark: rgba(250, 249, 245, .62); opacity: 0; }
+.ruler-in .mark { left: calc(-2px * var(--k)); right: calc(-2px * var(--k)); }
+.slot:not(.is-bleed) .ruler-out, .card:not(.ruler-inside) .ruler-in, .no-ruler .ruler { display: none; }
+
+/* the label row, as on the work grid */
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: clamp(14px, 1.1vw, 16px); }
+.meta h3 {
+  margin: 0;
+  font-family: "KS Panell Condensed", "Arial Narrow", sans-serif; font-weight: 500;
+  font-size: clamp(22px, 1.95vw, 28px); line-height: .94; letter-spacing: -.02em;
+  text-transform: uppercase;
+}
+.meta p {
+  margin: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
+  text-align: right;
+  font-family: "KS Mono", ui-monospace, monospace;
+  font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
+  color: rgba(238, 241, 234, .5);
+}
+
+/* debug: layer outlines */
+.show-layers [data-layer] { outline: 3px dashed #a8ff66; outline-offset: -3px; }
+.show-layers [data-layer]::after {
+  content: attr(data-layer) "  z " attr(data-depth);
+  position: absolute; left: 6px; top: 6px; z-index: 50;
+  padding: 3px 8px 2px; border-radius: 4px;
+  background: #a8ff66; color: #0d0d0d;
+  font: 500 20px/1.15 "KS Mono", ui-monospace, monospace;
+  text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; text-align: left;
+}
+.card.show-layers > [data-layer] { outline-width: calc(1px * var(--k)); outline-offset: calc(-1px * var(--k)); }
+.card.show-layers > [data-layer]::after { font-size: calc(8px * var(--k)); }

@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Code-powered work card for Dorm Room Fund (www.dormroomfund.com, "First
+     Check for Student Founders"; Kinetic designed and built the site),
+     2026-10-24, built on the Wispr Flow and moses cards' engine:
+     - the miniature is the live homepage rebuilt in HTML and CSS layers at its
+       own 1440px width, scaled into a 16:10 card laid out K times larger so
+       tilted text stays sharp; one spring-driven loop, transforms and opacity
+       only
+     - the hero is the point of the design: the violet door, hinged on its right
+       edge and ajar beside "The first yes.", swings open flat as the page
+       scrolls, a real CSS 3D rotateY in the page's own perspective (1800px from
+       the right edge) driven by the miniature's scroll on the card's clock, with
+       the page's numbers counting up as it opens and the founders' photos
+       sliding through "where you are"
+     - idle, it tours the door ajar, the door open (339+ companies), "The first
+       door is the hardest" with the companies (Cursor's card swings open to its
+       orange back), "A network built for the next problem" with the advisors
+       flying into the violet card, the closing call and the footer (its door
+       tile toggling), and back home, the door closing behind it: a fixed ~21 s
+       loop of eased stops
+     - hover tilts it toward the pointer (tilt.tiltMax, 5 degrees as on the other
+       cards, up to 20) and the layers separate by
+       depth with soft shadows that grow with height; the light is one round
+       bloom that follows the pointer; the tour keeps running under the hover
+     - press and drag scrolls the miniature either way: drag up, page goes
+       down (1:1); drag right, it scrubs further down, left back up (2.5x);
+       momentum and clamped ends; the tour picks up from there after a beat
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge,
+       on a transparent page; it pauses when hidden or when the parent posts
+       {type: "ks-card", visible: false}; {type: "ks-card", at: seconds} puts
+       the tour at that time (the site's resting loop is this tour recorded);
+       a click or tap posts {type: "ks-card-open"}. &bleed=N keeps N px of clear
+       frame round the card, &radius=N rounds its corners, &mat=F draws it
+       framed (the site's border on every tile: the window inset F x the card's
+       width on all four sides, on DRF's violet, card.frameColor), and touch
+       drag is off unless &touchdrag=1, so a swipe over the tile scrolls the site
+
+     Everything DRF-side was taken from the live site on 2026-10-24 and lives in
+     dorm-room-fund-card-src/: its Satoshi files, its logo, the founders' and
+     advisors' photos, the companies' logos and the door tile's own SVG. raw/
+     keeps the fetched HTML, CSS, fonts and images for reference; nothing in it
+     is used or executed. -->
+<title>Dorm Room Fund work card</title>
+<script>
+  /* ?embed=1 is the site tile. &radius=N rounds the card's corners. &bleed=N: the site's iframe overhangs the tile by N px on every side
+     (room for the tilt), so the card keeps N px of clear frame round it and sits exactly on the tile at rest.
+     &touchdrag=1 lets a finger drag the miniature; off by default, so a swipe over the tile scrolls the site. */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    if (q.get('embed') !== '1') return;
+    var h = document.documentElement;
+    h.classList.add('embed');
+    var b = parseFloat(q.get('bleed'));
+    if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    var r = parseFloat(q.get('radius'));   // &radius=N: the card's corner radius in px (the site passes 6)
+    if (r >= 0) h.style.setProperty('--card-r', r + 'px');
+  })();
+</script>
+<link rel="stylesheet" href="dorm-room-fund-card-src/css/card.css">
+<link rel="stylesheet" href="dorm-room-fund-card-src/css/site.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Dorm Room Fund, dormroomfund.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- 1 the hero: 300vh, the screen pinned; "The first yes." slides away as the door swings open -->
+              <section class="sec hero" id="s-hero" data-tone="light">
+                <div class="hero-pin" data-pin="hero">
+                  <div class="hero-slide" data-pin="slide">
+                    <h1 class="hero-h" data-layer="headline" data-depth="0.7">The first yes.</h1>
+                    <p class="hero-p" data-layer="body copy" data-depth="0.5">We write the first check for founders still in school or just out.</p>
+                  </div>
+                  <div class="door-scene" data-layer="door" data-depth="0.28">
+                    <div class="door" id="door">
+                      <p class="door-text" data-layer="door copy" data-depth="0.56">
+                        <span class="dl"><b class="br"><span class="odo" data-num="c" data-place="2"></span><span class="odo" data-num="c" data-place="1"></span><span class="odo" data-num="c" data-place="0"></span><span class="tl" data-num="c">+</span></b><span class="tl" data-num="c"> companies</span></span>
+                        <span class="dl"><b class="br">$<span class="odo" data-num="b" data-place="1"></span><span class="odo" data-num="b" data-place="0"></span><span class="tl" data-num="b">B+</span></b><span class="tl" data-num="b"> in follow-on capital</span></span>
+                        <span class="dl"><b class="br"><span class="odo" data-num="y" data-place="1"></span><span class="odo" data-num="y" data-place="0"></span><span class="tl" data-num="y">+</span></b><span class="tl" data-num="y"> years backing student founders</span></span>
+                        <span class="dl">Each one started where <span class="you"><b class="br">you</b></span> are <span class="ph" data-layer="founder" data-depth="0.86"><span class="ph-in" id="doorPhoto"><img src="dorm-room-fund-card-src/img/hero-01.webp" alt=""><img src="dorm-room-fund-card-src/img/hero-02.webp" alt=""><img src="dorm-room-fund-card-src/img/hero-03.webp" alt=""><img src="dorm-room-fund-card-src/img/hero-04.webp" alt=""><img src="dorm-room-fund-card-src/img/hero-05.webp" alt=""><img src="dorm-room-fund-card-src/img/hero-06.webp" alt=""><img src="dorm-room-fund-card-src/img/hero-07.webp" alt=""><img src="dorm-room-fund-card-src/img/hero-08.webp" alt=""><img src="dorm-room-fund-card-src/img/hero-09.webp" alt=""><img src="dorm-room-fund-card-src/img/hero-10.webp" alt=""></span></span></span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- 2 the first door is the hardest: the companies, each card a door onto its founders -->
+              <section class="sec btd" id="s-btd" data-tone="light">
+                <h2 class="btd-h" data-layer="headline" data-depth="0.6" data-shadow="0,0.14,14" data-split="words" data-rv="btdh">The first door is the hardest. We hold it open.</h2>
+                <div class="btd-arrows" data-layer="arrows" data-depth="0.72"><i class="rv" data-rv="arrows" style="left:0">←</i><i class="rv" data-rv="arrows" style="left:64px">→</i></div>
+                <div class="cs" id="flipCard" style="left:68px" data-layer="company card" data-depth="0.34" data-shadow="0,0.32,18" data-twin="box">
+                  <div class="in rv" data-rv="cards">
+                    <div class="cb">
+                      <div class="cb-top" id="cbTop"><div class="cb-avs"><div class="av" data-layer="founder" data-depth="0.62"><img id="cbAv" src="dorm-room-fund-card-src/img/cursor-michael-truell.webp" alt=""></div></div></div>
+                      <div class="cb-info" id="cbInfo"><div class="cb-meta">Developer Tools · MIT, 2022</div><div class="cb-name">Michael Truell</div><div class="cb-quote">We backed Michael before he had an idea, let alone a product. The bet was not on a category or a deck. It was on a builder we knew would keep going.</div></div>
+                      <i class="cb-go" id="cbGo">→</i>
+                    </div>
+                    <div class="ca" id="flipFace"><img class="logo" src="dorm-room-fund-card-src/img/cursor.svg" alt=""><div class="desc">Where coding dissolves into conversation.</div><i class="go">→</i></div>
+                  </div>
+                </div>
+                <div class="cs" style="left:444px" data-layer="company card" data-depth="0.3" data-shadow="0,0.3,18" data-twin="box">
+                  <div class="in rv" data-rv="cards"><div class="cb"></div><div class="ca"><img class="logo" src="dorm-room-fund-card-src/img/dandy.svg" alt=""><div class="desc">Where dentistry catches up to software.</div><i class="go">→</i></div></div>
+                </div>
+                <div class="cs" style="left:820px" data-layer="company card" data-depth="0.3" data-shadow="0,0.3,18" data-twin="box">
+                  <div class="in rv" data-rv="cards"><div class="cb"></div><div class="ca"><img class="logo" src="dorm-room-fund-card-src/img/sheld.svg" alt=""><div class="desc">Where tools become wingmen.</div><i class="go">→</i></div></div>
+                </div>
+                <div class="cs" style="left:1196px" data-layer="company card" data-depth="0.3" data-shadow="0,0.3,18" data-twin="box">
+                  <div class="in rv" data-rv="cards"><div class="cb"></div><div class="ca"><img class="logo" src="dorm-room-fund-card-src/img/commure.svg" alt=""><div class="desc">Where healthcare gives time back.</div><i class="go">→</i></div></div>
+                </div>
+              </section>
+
+              <!-- 3 a network built for the next problem: the advisors fly into the violet card, the count goes up -->
+              <section class="sec net" id="s-net" data-tone="dark">
+                <h2 class="net-h" data-layer="headline" data-depth="0.6" data-split="words" data-rv="neth">A network built<br>for the next problem</h2>
+                <p class="net-p" data-layer="body copy" data-depth="0.44"><span class="ln"><i class="rv" data-rv="netp">Your first check is only the beginning. You join a network of founders,</i></span><span class="ln"><i class="rv" data-rv="netp">operators, and investors who can help with the next hire, customer,</i></span><span class="ln"><i class="rv" data-rv="netp">round, or hard-won answer.</i></span></p>
+                <div class="net-rings" id="netRings" data-layer="rings" data-depth="0.16"></div>
+                <div class="net-avs" id="netAvs" data-layer="advisors" data-depth="0.4"></div>
+                <div class="net-card" id="netCard" data-layer="network card" data-depth="0.55">
+                  <div class="abs net-count" data-layer="count" data-depth="0.78"><span class="odo" data-num="n" data-place="2"></span><span class="odo" data-num="n" data-place="1"></span><span class="odo" data-num="n" data-place="0"></span><span class="tl" data-num="n"> advisors</span></div>
+                </div>
+              </section>
+
+              <!-- 4 what comes after the first yes? -->
+              <section class="sec cta" id="s-cta" data-tone="light">
+                <h2 class="cta-h" data-layer="headline" data-depth="0.62" data-shadow="0,0.16,14" data-split="words" data-rv="ctah">What comes after the first yes?</h2>
+                <p class="cta-p" data-layer="body copy" data-depth="0.45"><span class="ln"><i class="rv" data-rv="ctap">How we invest, who we back, and what comes with a DRF check.</i></span></p>
+                <div class="cta-btn" data-layer="button" data-depth="0.84" data-shadow="0,0.36,12"><i class="rv" data-rv="ctab">See how we work</i></div>
+              </section>
+
+              <!-- the footer: the door tile (it toggles open), the two calls, the links -->
+              <section class="sec foot" id="s-foot" data-tone="dark">
+                <div class="f-logo" data-layer="door tile" data-depth="0.3">
+                  <i class="on" id="togOn"></i>
+                  <div class="f-door" data-layer="door" data-depth="0.56"><svg viewBox="0 0 534 646" fill="none" aria-hidden="true">
+                    <path d="M476.215 0C507.897 9.89581e-05 533.581 25.6838 533.581 57.3662V439.227C533.581 461.705 522.296 482.683 503.539 495.072L275.985 645.369H57.3662C25.6837 645.369 0 619.685 0 588.003V205.857C0 183.331 11.3321 162.316 30.1533 149.938L258.154 0H476.215Z" fill="#1c1525"/>
+                    <g id="togPanel"><path d="M34 182.569H228.642C249.764 182.569 266.886 199.691 266.886 220.813V573.464C266.886 594.585 249.764 611.708 228.642 611.708H34V182.569Z" fill="#b8b0c4"/><path id="togPanelOn" d="M34 182.569H228.642C249.764 182.569 266.886 199.691 266.886 220.813V573.464C266.886 594.585 249.764 611.708 228.642 611.708H34V182.569Z" fill="#ff6a33" opacity="0"/></g>
+                  </svg></div>
+                </div>
+                <div class="f-cta" style="top:0" data-layer="apply" data-depth="0.42">Apply for funding</div>
+                <div class="f-cta" style="top:159.5px" data-layer="join" data-depth="0.42">Join the investor team</div>
+                <div class="f-link" style="top:0" data-layer="link" data-depth="0.3">Portfolio</div>
+                <div class="f-link" style="top:79.75px" data-layer="link" data-depth="0.3">Team</div>
+                <div class="f-link" style="top:159.5px" data-layer="link" data-depth="0.3">How we work</div>
+                <div class="f-link" style="top:239.25px" data-layer="link" data-depth="0.3">Blog</div>
+                <div class="f-bottom" data-layer="small print" data-depth="0.18">
+                  <span style="left:4px">Dorm Room Fund © 2026</span><span style="left:185px">Press Kit</span><span style="left:256px">Legal</span>
+                  <span style="left:1364px"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117l11.966 15.644z"/></svg></span>
+                  <span style="left:1396px"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></span>
+                </div>
+              </section>
+            </div>
+
+            <!-- the nav, fixed in the viewport -->
+            <nav class="abs nav" id="nav">
+              <div class="logo" data-layer="logo" data-depth="0.5" data-edge="lt" data-shadow="0,0.22,10"><img src="dorm-room-fund-card-src/img/drf-logo-dark.svg" alt=""></div>
+              <div class="apply" data-layer="apply" data-depth="0.7" data-edge="t" data-shadow="0,0.3,10">Apply</div>
+              <div class="menu" data-layer="menu" data-depth="0.5" data-edge="t"><i style="top:31px"></i><i style="top:39px"></i><i style="top:47px"></i></div>
+            </nav>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Dorm Room Fund</h3>
+      <p><span>Venture</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="dorm-room-fund-card-src/js/card.js"></script>
+<script type="module">
+const card = window.__dormRoomFundCard;
+const DEFAULTS = card.defaults;
+
+/* The dials. Embedded on the site there is no panel at all, and opened straight
+   from disk there is no studio to serve the module, so it loads on demand and the
+   card runs on its defaults without it. */
+if (!card.embed && location.protocol !== 'file:') {
+  import('/shared/params/params.js').then(({ defineParams }) => {
+    const TOOL = 'dorm room fund work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [DEFAULTS['layers.depth'], 0, 2.5, 0.01],        // how far apart the layers sit
+        parallax: [DEFAULTS['layers.parallax'], 0, 3, 0.01],    // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [DEFAULTS['layers.spread'], 0, 1, 0.01],        // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [DEFAULTS['tilt.tiltMax'], 0, 20, 0.5],        // degrees
+        perspective: [DEFAULTS['tilt.perspective'], 1, 6, 0.05],// eye distance, in card widths
+        hoverScale: [DEFAULTS['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [DEFAULTS['light.bloom'], 0, 1.5, 0.01],         // the round light under the pointer
+        bloomSize: [DEFAULTS['light.bloomSize'], 0.4, 2.5, 0.05], // its diameter, in card widths
+        rim: [DEFAULTS['light.rim'], 0, 1, 0.01],
+        shadow: [DEFAULTS['light.shadow'], 0, 1, 0.01],
+      },
+      motion: {
+        scrollSpeed: [DEFAULTS['motion.scrollSpeed'], 0, 3, 0.05],
+        stiffness: [DEFAULTS['motion.stiffness'], 40, 500, 1],
+        damping: [DEFAULTS['motion.damping'], 4, 60, 0.5],
+      },
+      door: {
+        ajar: [DEFAULTS['door.ajar'], 0, 90, 0.5],              // degrees the hero's door stands open at the top (the page's 72)
+        perspective: [DEFAULTS['door.perspective'], 600, 4000, 10], // the door scene's own perspective, page px (the page's 1800)
+      },
+      drag: {
+        momentum: [DEFAULTS['drag.momentum'], 0, 3, 0.05],      // how far a flick carries
+        scrub: [DEFAULTS['drag.scrub'], 0, 6, 0.1],             // px of page per px of sideways drag
+        resumeAfter: [DEFAULTS['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [DEFAULTS['card.cardSize'], 24, 72, 0.5],     // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: DEFAULTS['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: DEFAULTS['card.frame'] },
+        frameColor: DEFAULTS['card.frameColor'],                 // the mat (DRF's violet), also with the site's &mat=F
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: DEFAULTS['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  }).catch(() => { /* no studio here: the card runs on its defaults */ });
+}
+</script>
+</body>
+</html>

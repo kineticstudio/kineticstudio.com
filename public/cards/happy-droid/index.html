@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Happy Droid work card, 2026-10-23, built on the Venus Aerospace and
+     Epirus cards' engine (itself the Ethos card's, from the Dawn card) with
+     Hunter's notes built in from the start: the miniature keeps touring while
+     you hover, the light is one soft round bloom under the pointer, you can
+     drag the page like a phone (up and down) or scrub it sideways (right goes
+     further down the page), a notched ruler slides with the scroll, and there
+     is no Case Study pill.
+
+     Happy Droid (www.happydroid.ai, ours) is rebuilt here at its 1440px
+     design width as HTML/CSS layers, each at its own depth, with the live
+     page's own scroll choreography: the droid turning round to face you as
+     the hero holds (the site's frame sequence, sixteen of its sixty frames
+     in one sprite, with its first and last frames as crisp stills), happy and
+     droid drifting up, the hero blurring away (two blurs baked from the live
+     page, cross-faded) over "a customer-centric robot" growing in, the three
+     pills growing from 500 x 280 to full width as their captions sharpen in
+     and dissolve and the renders come into focus (blurred stills of the
+     renders, cross-faded), the investors, and the footer pinned under the
+     page with the mark's petals rising and fanning out (the site's logo
+     animation, redrawn in SVG from its own paths). Fonts and images are the
+     site's own, in happy-droid-card-src/. raw/ keeps the fetched HTML, CSS,
+     fonts, images and animation data for reference; nothing in it is
+     executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched from outside it:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=1      the site in a window on the card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Happy Droid work card</title>
+<script>
+  /* before first paint: embed or not, and the bleed */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="happy-droid-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Happy Droid, happydroid.ai, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+              <div class="main" id="main">
+
+                <!-- the hero wrapper: the hero holds while the droid turns, then blurs away over the statement -->
+                <section class="sec hw" data-stop="hero">
+                  <div class="lay" data-pin="lay">
+                    <div class="lay-in" id="layIn">
+                      <div class="label lay-eb" data-layer="eyebrow" data-depth="0.46" style="--lab-x:200px;--lab-y:-40px">A customer-centric robot</div>
+                      <h2 class="lay-h" data-layer="statement" data-depth="0.68" data-shadow="0,0.2,14" style="--lab-x:120px;--lab-y:190px">Thoughtfully designed to work among people. With the ability to act, observe, and learn, it empowers humanity to achieve a better quality of life.</h2>
+                    </div>
+                  </div>
+                  <div class="hero" data-pin="hero">
+                    <div class="h-blur h-blur2" id="hBlur2" data-layer="blur" data-depth="0.04"><img src="happy-droid-card-src/img/hero-blur2.webp" alt=""></div>
+                    <div class="h-blur h-blur1" id="hBlur1" data-layer="blur" data-depth="0.04"><img src="happy-droid-card-src/img/hero-blur1.webp" alt=""></div>
+                    <div class="h-ground" id="hGround" data-layer="hero ground" data-depth="0.04" style="--lab-x:60px;--lab-y:40px">
+                      <div class="h-head" data-layer="the droid" data-depth="0.26" style="--lab-x:120px;--lab-y:60px">
+                        <div class="hd-clip">
+                          <img class="hd-sprite" id="hdA" src="happy-droid-card-src/img/head-sprite.webp" alt="">
+                          <img class="hd-sprite" id="hdB" src="happy-droid-card-src/img/head-sprite.webp" alt="">
+                          <img class="hd-still" id="hdBack" src="happy-droid-card-src/img/head-back.webp" alt="">
+                          <img class="hd-still" id="hdFace" src="happy-droid-card-src/img/head-face.webp" alt="">
+                        </div>
+                      </div>
+                      <div class="h-word h-happy" data-layer="happy" data-depth="0.72" data-shadow="0.04,0.3,18" style="--lab-y:-30px"><span class="rv">happy</span></div>
+                      <div class="h-word h-droid" data-layer="droid" data-depth="0.72" data-shadow="0.04,0.3,18" style="--lab-y:-30px"><span class="rv">droid</span></div>
+                      <div class="h-arrow" data-layer="arrow" data-depth="0.86" style="--lab-x:-40px;--lab-y:-40px"><svg id="hArrow" viewBox="0 0 45 23" fill="none" preserveAspectRatio="xMidYMid meet"><path d="M1 0.5L22.5 22L44 0.5" stroke="currentColor" stroke-width="1.1"/></svg></div>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- the features: each pill pinned as it grows, its caption and render coming in -->
+                <section class="sec feat" data-stop="paint shop" style="--w:1215px;--h:657.3px">
+                  <div class="f-pin" data-pin="f1">
+                    <div class="f-shadow" data-layer="shadow" data-depth="0.04" style="--lab-x:400px;--lab-y:-40px"><div class="f-sc"></div></div>
+                    <div class="f-pill" data-layer="pill" data-depth="0.32" style="--lab-x:400px;--lab-y:40px"><div class="f-sc f-clip">
+                      <img src="happy-droid-card-src/img/paintshop-blur2.webp" alt="">
+                      <img class="f-med" src="happy-droid-card-src/img/paintshop-blur1.webp" alt="">
+                      <img class="f-sharp" src="happy-droid-card-src/img/paintshop.webp" alt="">
+                    </div></div>
+                    <div class="f-text" data-layer="caption" data-depth="0.8" style="--lab-x:560px;--lab-y:-40px"><span class="rv"><b>Always available to be a helping hand</b><b class="glow">Always available to be a helping hand</b></span></div>
+                  </div>
+                </section>
+                <section class="sec feat" data-stop="steel mill" style="--w:1282.5px;--h:693.8px">
+                  <div class="f-pin" data-pin="f2">
+                    <div class="f-shadow" data-layer="shadow" data-depth="0.04" style="--lab-x:400px;--lab-y:-40px"><div class="f-sc"></div></div>
+                    <div class="f-pill" data-layer="pill" data-depth="0.32" style="--lab-x:400px;--lab-y:40px"><div class="f-sc f-clip">
+                      <img src="happy-droid-card-src/img/steel-blur2.webp" alt="">
+                      <img class="f-med" src="happy-droid-card-src/img/steel-blur1.webp" alt="">
+                      <img class="f-sharp" src="happy-droid-card-src/img/steel.webp" alt="">
+                    </div></div>
+                    <div class="f-text" data-layer="caption" data-depth="0.8" style="--lab-x:560px;--lab-y:-40px"><span class="rv"><b>... and to do the jobs in dangerous environments</b><b class="glow">... and to do the jobs in dangerous environments</b></span></div>
+                  </div>
+                </section>
+                <section class="sec feat" data-stop="home" style="--w:1350px;--h:730.3px">
+                  <div class="f-pin" data-pin="f3">
+                    <div class="f-shadow" data-layer="shadow" data-depth="0.04" style="--lab-x:400px;--lab-y:-40px"><div class="f-sc"></div></div>
+                    <div class="f-pill" data-layer="pill" data-depth="0.32" style="--lab-x:400px;--lab-y:40px"><div class="f-sc f-clip">
+                      <img src="happy-droid-card-src/img/house-blur2.webp" alt="">
+                      <img class="f-med" src="happy-droid-card-src/img/house-blur1.webp" alt="">
+                      <img class="f-sharp" src="happy-droid-card-src/img/house.webp" alt="">
+                    </div></div>
+                    <div class="f-text" data-layer="caption" data-depth="0.8" style="--lab-x:560px;--lab-y:-40px"><span class="rv"><b>to allow us to enjoy our every moment</b><b class="glow">to allow us to enjoy our every moment</b></span></div>
+                  </div>
+                </section>
+
+                <div class="sp" style="height:432px"></div>
+
+                <!-- backed by the best -->
+                <section class="sec inv" id="inv" data-stop="investors">
+                  <div class="label inv-t" data-layer="eyebrow" data-depth="0.46" style="--lab-x:140px;--lab-y:-40px">Backed by the best</div>
+                  <div class="inv-l inv-k" data-layer="khosla" data-depth="0.6" data-shadow="0,0.16,8" style="--lab-y:36px"><img src="happy-droid-card-src/img/khosla.avif" width="401" height="58" alt=""></div>
+                  <div class="inv-l inv-r" data-layer="r7" data-depth="0.6" data-shadow="0,0.16,8" style="--lab-y:36px"><img src="happy-droid-card-src/img/r7.avif" width="401" height="56" alt=""></div>
+                </section>
+
+                <div class="sp" style="height:calc(216px + var(--vh) * .1)"></div>
+              </div>
+
+              <!-- the footer, pinned to the window's bottom under the page -->
+              <footer class="sec foot" id="foot" data-pin="foot" data-stop="footer">
+                <div class="f-mark" data-layer="mark" data-depth="0.74" data-shadow="0,0.22,14" style="--lab-x:-60px;--lab-y:-30px">
+                  <div class="mk-rise"><svg viewBox="-337.2 -376.8 674.4 696.2" fill="#000">
+                    <g class="pt" data-r0="-90.21"><path d="M-210.3 -210.3C-237.9 -182.6 -235.2 -134.7 -175.9 -101.3C-175.9 -101.3 0.0 -0.0 0.0 -0.0C0.0 -0.0 -101.3 -175.9 -101.3 -175.9C-134.7 -235.2 -182.6 -238.0 -210.3 -210.3Z"/></g>
+                    <g class="pt" data-r0="-45.31"><path d="M-228.4 -0.1C-228.4 30.0 -200.8 54.6 -150.5 40.5C-150.5 40.5 0.0 -0.1 0.0 -0.1C0.0 -0.1 -150.5 -40.5 -150.5 -40.5C-200.8 -54.6 -228.4 -30.1 -228.4 -0.1Z"/></g>
+                    <g class="pt" data-r0="0"><path d="M-137.1 137.0C-119.0 155.1 -87.8 153.3 -66.0 114.7C-66.0 114.7 0.0 -0.0 0.0 -0.0C0.0 -0.0 -114.6 66.0 -114.6 66.0C-153.3 87.8 -155.1 119.0 -137.1 137.0Z"/></g>
+                    <g class="pt" data-r0="90.00"><path d="M210.3 -210.3C237.9 -182.6 235.2 -134.6 175.9 -101.2C175.9 -101.2 0.0 0.0 0.0 0.0C0.0 0.0 101.3 -175.8 101.3 -175.8C134.7 -235.1 182.6 -237.9 210.3 -210.3Z"/></g>
+                    <g class="pt" data-r0="45.06"><path d="M228.4 -0.0C228.4 30.1 200.8 54.6 150.5 40.6C150.5 40.6 0.0 -0.0 0.0 -0.0C0.0 -0.0 150.5 -40.5 150.5 -40.5C200.8 -54.5 228.4 -30.1 228.4 -0.0Z"/></g>
+                    <g class="pt" data-r0="0"><path d="M137.1 137.0C119.0 155.1 87.8 153.3 66.0 114.7C66.0 114.7 0.0 -0.0 0.0 -0.0C0.0 -0.0 114.6 66.0 114.6 66.0C153.3 87.8 155.1 119.0 137.1 137.0Z"/></g>
+                  </svg></div>
+                </div>
+                <div class="f-word" data-layer="wordmark" data-depth="0.56" style="--lab-y:52px"><img src="happy-droid-card-src/img/wordmark.avif" width="468" height="80" alt=""></div>
+                <div class="f-loc" data-layer="location" data-depth="0.44" style="--lab-x:150px">San Mateo, CA</div>
+                <div class="f-links" data-layer="links" data-depth="0.5" style="--lab-x:210px"><span style="left:0">Contact</span><span style="left:113.3px">Careers</span></div>
+              </footer>
+            </div>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Happy Droid</h3>
+      <p><span>AI</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="happy-droid-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the Dawn card's way: the studio's own Params,
+   defineParams from /shared/params/params.js. Embedded on the site there is
+   no panel and nothing is fetched, so the module is only loaded here, and
+   only when served (opened from disk there is no studio to load it from). */
+const card = window.happyDroidCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'happy droid work card';
+    const D = card.values;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        bounce: [D['motion.bounce'], 0, 2, 0.05],          // the hero arrow's bounce (3 s on the site)
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        scrub: [D['drag.scrub'], 0.5, 6, 0.1],             // page px per px of a sideways drag (right = down the page)
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

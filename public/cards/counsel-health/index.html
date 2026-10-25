@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Counsel Health work card, 2026-10-23, built on the Ethos and Wispr Flow
+     cards' engine (03, 04), which carry the Dawn card's architecture (01) with
+     Hunter's notes built in from the start:
+     - the miniature is counselhealth.com's homepage rebuilt in HTML and CSS
+       layers at its own 1440px width, laid out K times larger than the card
+       and scaled back, so tilted text stays sharp; one spring-driven loop,
+       transforms and opacity only
+     - idle, it tours the site on a ~20 s loop of eased stops: the navy hero,
+       the "one place" ring the hero rides up off, one place to start, the
+       four walkthrough steps with the phone held still while they go by,
+       pricing, why members stay, the members' notes and the footer
+     - hover tilts it toward the pointer (10 degrees) and the layers separate
+       by depth with soft shadows that grow with height; one round bloom of
+       light follows the pointer; the tour keeps running under the hover
+     - press and drag scrolls it either way: vertical like a phone (drag up,
+       page down, 1:1), horizontal as a scrub (drag right, further down the
+       page, about 2.5x); whichever axis moves more wins; momentum, clamped
+       ends, and the tour picks up from where it was let go
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge
+       at the frame's aspect (cropped, never letterboxed), on a transparent
+       page, nothing fetched. &bleed=N keeps N px of clear frame round the card
+       (the site's iframe overhangs the tile by that much, room for the tilt),
+       &radius=N rounds its corners, &touchdrag=1 lets a finger drag it (off by
+       default, so a swipe over the tile scrolls the site; a tap still opens).
+       It pauses when hidden or when the parent posts
+       {type: "ks-card", visible: false} (true resumes), and a click that is
+       not a drag posts {type: "ks-card-open"} to the parent.
+
+     Everything Counsel-side was taken from the live site on 2026-10-23 and
+     lives in counsel-health-card-src/: its Cooper and GT America files, its
+     logo and photography, its copy, colours and spacing measured at
+     1440x900. The hero's drawn thread, its cycling health card and the
+     category ring are scripted on the live site; here they are redrawn as
+     SVG and HTML and moved with transforms and opacity. raw/ keeps the
+     fetched HTML, CSS, scripts (as .txt) and images for reference; nothing in
+     it is executed or loaded. -->
+<title>Counsel Health work card</title>
+<script>
+  /* before first paint: embed or not, and the studio's own type for the label row
+     (served by the studio; opened from disk the label uses the bundled copies) */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    var h = document.documentElement;
+    if (embed) {
+      h.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    } else if (location.protocol !== 'file:') {
+      var l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = '/fonts/kinetic/fonts.css';
+      document.head.appendChild(l);
+    }
+  })();
+</script>
+<link rel="stylesheet" href="counsel-health-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Counsel Health, counselhealth.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- the stack: the navy hero rides up off the cream ring, which holds still behind it -->
+              <section class="sec stack" id="s-stack" data-tone="light">
+                <div class="under" data-pin="under">
+                  <div class="under-in">
+                    <div class="ring" id="ring" data-layer="ring" data-depth="0.1" style="--lab-x:420px;--lab-y:120px"></div>
+                    <div class="u-labels" id="uLabelsFar" data-layer="needs" data-depth="0.42" style="--lab-x:120px;--lab-y:250px"></div>
+                    <div class="u-labels" id="uLabelsNear" data-layer="needs" data-depth="0.28" style="--lab-x:120px;--lab-y:290px"></div>
+                    <h2 class="cooper ctr u-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.2,14" style="--lab-x:440px;--lab-y:-34px">One place for more<br>of your needs</h2>
+                    <p class="u-p" data-layer="body copy" data-depth="0.5">From quick questions and prescriptions to lab results, chronic care and referrals, Counsel can help with more of your health in one place.</p>
+                    <div class="u-chip-wrap" id="uChips"></div>
+                  </div>
+                </div>
+
+                <div class="hero" data-tone="dark">
+                  <div class="thread" data-layer="thread" data-depth="0.08" style="--lab-x:60px;--lab-y:40px"><svg id="heroThread" viewBox="-40 0 1520 300" aria-hidden="true"></svg></div>
+                  <div class="banner" data-layer="banner" data-depth="0.18"><div class="banner-t">Counsel unveils new visual identity to bring their vision to life in new ways <b>Read more</b></div></div>
+                  <div class="nav" data-layer="nav" data-depth="0.34" style="--lab-x:640px;--lab-y:22px">
+                    <img class="abs nav-logo" src="counsel-health-card-src/img/logo.svg" alt="">
+                    <div class="abs nav-links"><span>Individuals<i data-icon="chev"></i></span><span>Enterprise<i data-icon="chev"></i></span><span>Resources<i data-icon="chev"></i></span><span>Company<i data-icon="chev"></i></span></div>
+                    <div class="abs nav-in">Sign in</div>
+                  </div>
+                  <div class="nav-btn" data-layer="nav button" data-depth="0.56" data-shadow="0.34,0.32,8,1">Get started for free</div>
+                  <h1 class="cooper ctr h-title" data-layer="headline" data-depth="0.8" data-shadow="0,0.34,16" style="--lab-x:350px">From questions to<br>care, all in one place</h1>
+                  <div class="ask" data-layer="ask Counsel" data-depth="0.62" data-shadow="0,0.42,18,1">
+                    <span class="ask-ph" data-ph>It’s been over a year since my last physical</span>
+                    <span class="ask-ph" data-ph style="opacity:0">I’ve had a sore throat for three days, what could it be?</span>
+                    <span class="ask-ph" data-ph style="opacity:0">My blood pressure is 145/92, is that ok?</span>
+                    <span class="ask-go" data-icon="arrow"></span>
+                  </div>
+                  <div class="cats" data-layer="categories" data-depth="0.46" style="--lab-y:34px">
+                    <span class="cat" style="left:0;width:91px">Primary care</span>
+                    <span class="cat" style="left:97px;width:86px">Urgent care</span>
+                    <span class="cat" style="left:189px;width:92px">Chronic care</span>
+                    <span class="cat" style="left:287px;width:95px">Prescriptions</span>
+                    <span class="cat" style="left:388px;width:82px">Lab results</span>
+                  </div>
+                  <div class="ctr hipaa" data-layer="trust" data-depth="0.3"><i data-icon="lock"></i>Counsel is HIPAA compliant &amp; SOC2 secure</div>
+                  <div class="mcard" id="mcard" data-layer="health card" data-depth="0.52" data-shadow="0.08,0.46,20,1" style="--lab-y:-34px">
+                    <div class="mc" data-mc>
+                      <img src="counsel-health-card-src/img/man-writing.webp" alt="" style="object-position:50% 35%">
+                      <span class="chip" style="background:var(--mist)">Primary care</span>
+                      <div class="mc-story"><b>Your health history</b><small>Visits, medications &amp; labs</small></div>
+                    </div>
+                    <div class="mc" data-mc style="opacity:0">
+                      <img src="counsel-health-card-src/img/sore-throat.webp" alt="" style="object-position:50% 50%">
+                      <span class="chip" style="background:var(--pink)">Urgent care</span>
+                      <span class="mc-cap">Fever</span>
+                      <span class="cooper mc-stat">100.4<small>°F</small></span>
+                    </div>
+                    <div class="mc" data-mc style="opacity:0;background:#fef5dc">
+                      <span class="chip" style="background:var(--yellow)">Chronic care</span>
+                      <svg class="mc-chart" id="mcChart" viewBox="0 0 244 116" aria-hidden="true"></svg>
+                      <span class="cooper mc-stat">145/92<small>mmHg</small></span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- one place to start with your health -->
+              <section class="sec breath" id="s-breath" data-tone="dark">
+                <div class="b-thread" data-layer="thread" data-depth="0.06" style="--lab-x:40px;--lab-y:120px"><svg id="breathThread" viewBox="0 0 1440 900" aria-hidden="true"></svg></div>
+                <div class="b-photo" data-layer="photo" data-depth="0.36" data-shadow="0.06,0.22,22" style="--lab-x:40px;--lab-y:40px"><img src="counsel-health-card-src/img/pregnant-woman.webp" alt=""></div>
+                <h2 class="cooper b-h" data-layer="headline" data-depth="0.76" data-shadow="0,0.22,14">One place to start<br>with your health</h2>
+                <p class="b-p" data-layer="body copy" data-depth="0.52">You don’t need to know whether you need a doctor, urgent care or just an answer. Start with Counsel and we’ll help you figure out what comes next.</p>
+              </section>
+
+              <!-- the walkthrough: the phone holds still while Nora's four steps go by -->
+              <section class="sec walk" id="s-walk" data-tone="light">
+                <div class="ph-pin" data-pin="phone">
+                  <div class="phone abs" data-layer="phone" data-depth="0.3" data-shadow="0,0.3,24,1" style="--lab-x:30px;--lab-y:-34px">
+                    <div class="screen">
+                      <span class="sb-time">9:41</span><span class="sb-island"></span><span class="sb-icons" data-icon="status"></span>
+                      <div class="ph-head"><span class="ph-btn" style="left:16px" data-icon="menu"></span><b>Get advice</b><span class="ph-btn" style="left:301px" data-icon="person"></span></div>
+
+                      <div class="ps" data-ps data-layer="screen" data-depth="0.5" style="--lab-y:120px">
+                        <div class="bub-me" style="top:104px">I’ve been feeling really tired lately</div>
+                        <div class="ai-copy" style="top:166px"><p>Let me get a better picture of what you’re experiencing. I’ll ask about the fatigue itself, sleep and daily habits, and a few health checks that can commonly affect energy.</p><p>If it makes sense, you can add a doctor to this chat, and they will have the full context of our conversation.</p><p>To start, can you describe what “really tired” feels like for you, and when it started?</p></div>
+                        <div class="srcs" style="top:404px"><span><i data-icon="wave"></i>1 conversation</span><span><i data-icon="globe"></i>3 trusted sources</span><span><i data-icon="copy"></i></span></div>
+                        <div class="dr-bar" style="top:655px"><span class="av"><img src="counsel-health-card-src/img/doctor-03.webp" alt=""><img src="counsel-health-card-src/img/doctor-01.webp" alt=""><img src="counsel-health-card-src/img/doctor-02.webp" alt=""></span><span style="margin-left:4px">A doctor can join after 8am</span><span class="wait">2 min wait ›</span></div>
+                        <div class="composer" style="top:688px">Ask anything...<i class="clip" data-icon="clip"></i><i class="send" data-icon="up"></i></div>
+                      </div>
+
+                      <div class="ps" data-ps data-layer="screen" data-depth="0.5" style="opacity:0;--lab-y:120px">
+                        <div class="dr-card">
+                          <div class="polaroid" style="left:51px;transform:rotate(-3deg)"><img src="counsel-health-card-src/img/doctor-01.webp" alt="">Dr. Kate<br>Brennan</div>
+                          <div class="polaroid" style="left:205px;transform:rotate(3deg)"><img src="counsel-health-card-src/img/doctor-02.webp" alt="">Dr. Laura<br>Whitfield</div>
+                          <div class="polaroid" style="left:122px;top:22px;z-index:1"><img src="counsel-health-card-src/img/doctor-03.webp" alt="">Dr. Nick<br>Raman</div>
+                          <b class="dr-t">Get treatment in 2 minutes</b>
+                          <p class="dr-p">A board-certified doctor will join this chat to start your treatment.</p>
+                          <span class="dr-go">Get started</span>
+                        </div>
+                        <div class="dr-bar" style="top:655px"><span class="av"><img src="counsel-health-card-src/img/doctor-03.webp" alt=""><img src="counsel-health-card-src/img/doctor-01.webp" alt=""><img src="counsel-health-card-src/img/doctor-02.webp" alt=""></span><span style="margin-left:4px">Add a doctor</span><span class="wait">2 min wait ›</span></div>
+                        <div class="composer" style="top:688px">Ask anything...<i class="clip" data-icon="clip"></i><i class="send" data-icon="up"></i></div>
+                      </div>
+
+                      <div class="ps" data-ps data-layer="screen" data-depth="0.5" style="opacity:0;--lab-y:120px">
+                        <div class="bub-dr" style="top:104px"><img src="counsel-health-card-src/img/doctor-01.webp" alt="">I’m ordering some labs to help figure out what’s going on.</div>
+                        <div class="lab">
+                          <small style="left:20px">Lab order</small><small style="right:20px">Nora</small>
+                          <svg id="labMap" viewBox="0 0 285 147" aria-hidden="true"></svg>
+                          <b>Lab ordered</b><span>Quest Diagnostics · 0.6 mi</span><i data-icon="check"></i>
+                        </div>
+                        <div class="open-band" style="top:656px"><span>This visit will remain open for 7 days</span></div>
+                        <div class="composer" style="top:656px">Ask anything...<i class="clip" data-icon="clip"></i><i class="send" data-icon="up"></i></div>
+                      </div>
+
+                      <div class="ps" data-ps data-layer="screen" data-depth="0.5" style="opacity:0;--lab-y:120px">
+                        <div class="row-lab"><i data-icon="doc"></i>Lab ordered at Quest</div>
+                        <div class="bub-res">Your blood count and iron panel are consistent with iron deficiency anemia, we should start you on a once-every-other day iron supplement and remeasure this in ~8 weeks.</div>
+                        <img class="av-res" src="counsel-health-card-src/img/doctor-01.webp" alt="">
+                        <div class="bub-q">I had no idea. What usually causes iron deficiency? Is it something I’m eating?</div>
+                        <div class="open-band" style="top:656px"><span>This visit will remain open for 4 days</span></div>
+                        <div class="composer" style="top:656px">Ask anything...<i class="clip" data-icon="clip"></i><i class="send" data-icon="up"></i></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="step" style="top:calc(var(--vh) / 2 - 82px)" data-step>
+                  <span class="chip" style="background:var(--leaf)" data-layer="chip" data-depth="0.6">Chat</span>
+                  <h3 class="cooper" data-layer="headline" data-depth="0.74" data-shadow="0,0.2,10">Ask Counsel anything</h3>
+                  <p data-layer="body copy" data-depth="0.48">Nora has been unusually tired for a few weeks. She asks Counsel what could be going on.</p>
+                </div>
+                <div class="step" style="top:calc(var(--vh) / 2 + 558px)" data-step>
+                  <span class="chip" style="background:var(--mist)" data-layer="chip" data-depth="0.6">Doctor</span>
+                  <h3 class="cooper" data-layer="headline" data-depth="0.74" data-shadow="0,0.2,10">Add a doctor to the chat</h3>
+                  <p data-layer="body copy" data-depth="0.48">No appointments, or video calls. A doctor joins Nora’s chat in minutes to help her decide what to do next.</p>
+                </div>
+                <div class="step" style="top:calc(var(--vh) / 2 + 1198px)" data-step>
+                  <span class="chip" style="background:var(--yellow)" data-layer="chip" data-depth="0.6">Action</span>
+                  <h3 class="cooper" data-layer="headline" data-depth="0.74" data-shadow="0,0.2,10">From answer to action</h3>
+                  <p data-layer="body copy" data-depth="0.48">Her doctor orders labs. If she needed a prescription or referral instead, Counsel could handle that too.</p>
+                </div>
+                <div class="step" style="top:calc(var(--vh) / 2 + 1838px)" data-step>
+                  <span class="chip" style="background:var(--pink)" data-layer="chip" data-depth="0.6">Follow-up</span>
+                  <h3 class="cooper" data-layer="headline" data-depth="0.74" data-shadow="0,0.2,10">Care that keeps going</h3>
+                  <p data-layer="body copy" data-depth="0.48">Results, treatment, and follow-up stay connected, so Nora never has to start over.</p>
+                </div>
+              </section>
+
+              <!-- pricing -->
+              <section class="sec pricing" id="s-pricing" data-tone="light">
+                <h2 class="cooper ctr pr-h" data-layer="headline" data-depth="0.74" data-shadow="0,0.18,14" style="--lab-x:200px">Start free. Add a doctor when you need one.</h2>
+                <p class="ctr pr-sub" data-layer="body copy" data-depth="0.5" style="--lab-x:250px">Ask Counsel anything at no cost. Pay $29 when you need a doctor, or get unlimited access for $300/year.</p>
+                <div class="plan" style="left:80px;--lab-x:400px" data-layer="plan" data-depth="0.28" data-shadow="0,0.2,20,1">
+                  <small>Pay per visit</small>
+                  <span class="cooper price" data-layer="price" data-depth="0.6">$29</span><span class="per" style="left:165px">/ visit</span>
+                  <span class="lead">Chat with Counsel for free. When you need a doctor, just pay for the visit.</span>
+                  <ul><li><i style="background:var(--leaf)"></i>Board-certified doctors join your chat in minutes</li><li><i style="background:var(--blue)"></i>Visits stay open for 7 days</li><li><i style="background:var(--pink)"></i>No subscription or commitment</li></ul>
+                  <span class="btn" data-layer="button" data-depth="0.72" data-shadow="0.28,0.24,8,1">Get started for free</span>
+                </div>
+                <div class="plan dark" style="left:732px" data-layer="plan" data-depth="0.28" data-shadow="0,0.28,20,1">
+                  <small>Membership</small>
+                  <span class="cooper price" data-layer="price" data-depth="0.6">$300</span><span class="per" style="left:206px">/ year</span>
+                  <span class="lead">Unlimited access to doctors whenever you need care.</span>
+                  <ul><li><i style="background:var(--yellow)"></i>Unlimited doctor visits</li><li><i style="background:var(--leaf)"></i>No per-visit fees</li><li><i style="background:var(--blue)"></i>Built for managing conditions and regular check-ins</li></ul>
+                  <span class="btn" data-layer="button" data-depth="0.72" data-shadow="0.28,0.3,8,1">Become a member</span>
+                </div>
+              </section>
+
+              <!-- why members stay -->
+              <section class="sec why" id="s-why" data-tone="light">
+                <h2 class="cooper ctr why-h" data-layer="headline" data-depth="0.74" data-shadow="0,0.18,14" style="--lab-x:500px">Why members stay</h2>
+                <div class="wcard" style="left:80px" data-layer="card" data-depth="0.26" data-shadow="0,0.2,16,1">
+                  <img style="top:6px" src="counsel-health-card-src/img/man-sofa-phone.webp" alt="" data-layer="photo" data-depth="0.46">
+                  <h3 class="cooper" style="top:266px">Answers you can act on</h3>
+                  <p style="top:318px">Counsel gives you a clear answer and a next step, whether that means treating it at home, seeing a doctor, or getting care right away.</p>
+                </div>
+                <div class="wcard" style="left:513px" data-layer="card" data-depth="0.26" data-shadow="0,0.2,16,1">
+                  <h3 class="cooper" style="top:36px">Never repeat yourself</h3>
+                  <p style="top:88px">Counsel remembers your conversations and connects to your health records, so every answer starts with your full context.</p>
+                  <img style="top:188px" src="counsel-health-card-src/img/cyclist.webp" alt="" data-layer="photo" data-depth="0.46">
+                </div>
+                <div class="wcard" style="left:947px" data-layer="card" data-depth="0.26" data-shadow="0,0.2,16,1">
+                  <img style="top:6px" src="counsel-health-card-src/img/father-and-baby.webp" alt="" data-layer="photo" data-depth="0.46">
+                  <h3 class="cooper" style="top:266px">Care that keeps going</h3>
+                  <p style="top:318px">Your doctor checks in after your visit, and you can keep messaging as things change, without a new visit.</p>
+                </div>
+                <div class="dots" style="left:481px;top:284px" data-layer="dots" data-depth="0.56"></div>
+                <div class="dots" style="left:915px;top:713px" data-layer="dots" data-depth="0.56"></div>
+              </section>
+
+              <!-- hear from our members -->
+              <section class="sec members" id="s-members" data-tone="light">
+                <h2 class="cooper ctr mem-h" data-layer="headline" data-depth="0.74" data-shadow="0,0.18,14" style="--lab-x:440px">Hear from our members</h2>
+                <div class="mq" data-layer="notes" data-depth="0.34" style="--lab-x:20px;--lab-y:-34px"><div class="mq-track" id="mqTrack"></div></div>
+              </section>
+
+              <!-- the footer -->
+              <section class="sec foot" id="s-foot" data-tone="dark">
+                <h2 class="cooper ctr ft-h" data-layer="headline" data-depth="0.74" data-shadow="0,0.3,14" style="--lab-x:440px">Meet the doctor that’s<br>with you for life.</h2>
+                <div class="ft-ring" data-layer="thread" data-depth="0.4" style="--lab-y:-34px"><svg id="ftRing" viewBox="0 0 644 116" aria-hidden="true"></svg></div>
+                <div class="ft-field" data-layer="ask Counsel" data-depth="0.62" data-shadow="0.4,0.36,12,1">Ask Counsel anything…<i data-icon="arrow"></i></div>
+                <div class="ft-cols" data-layer="links" data-depth="0.28" style="--lab-x:900px">
+                  <div style="left:0"><h4>Who we serve</h4><span>Individuals</span><span>Health systems</span><span>Health plans</span><span>Consumer health</span><span>Employers</span></div>
+                  <div style="left:326px"><h4>Enterprise solutions</h4><span>Counsel Studio</span><span>Request a demo</span></div>
+                  <div style="left:652px"><h4>Get Counsel</h4><span>Get started for free</span><span>Download the app</span><span>Sign in</span></div>
+                  <div style="left:978px"><h4>Company and resources</h4><span>Blog</span><span>Newsroom</span><span>About us</span><span>Clinical leadership</span><span>Careers</span><span>Contact us</span></div>
+                </div>
+                <div class="ft-rule"></div>
+                <div class="ft-bottom" data-layer="legal" data-depth="0.18" style="--lab-x:900px">
+                  <img src="counsel-health-card-src/img/logo.svg" alt="">
+                  <span>2026 © Counsel Inc.</span><span>HIPAA statement</span><span>Informed consent</span><span>Terms</span><span>Privacy policy</span><span>Status</span>
+                  <span class="soc"><i data-icon="in"></i><i data-icon="fb"></i><i data-icon="ig"></i><i data-icon="x"></i></span>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Counsel Health</h3>
+      <p><span>Health</span><span>Web design</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="counsel-health-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the studio's way: defineParams from
+   /shared/params/params.js. Embedded on the site there is no panel and
+   nothing is fetched, so the module is only loaded here, and only when served
+   (opened from disk there is no studio to load it from). */
+const card = window.counselCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const D = card.values;
+    const TOOL = 'counsel health work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.4, 2.5, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        scrub: [D['drag.scrub'], 0, 6, 0.1],               // page px per px of a sideways drag (right = down the page)
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: D['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Tydo work card, 2026-10-24, built on the IngredientAI card's engine (a
+     classic script, tydo-card-src/js/card.js, from the Ethos and Epirus
+     cards') and the Dawn card's architecture, with Hunter's notes built in
+     from the start: the miniature keeps touring while you hover, the light
+     is one soft round bloom under the pointer, you can drag the page like a
+     phone (up and down) or scrub it sideways (right goes further down the
+     page), a notched ruler slides with the scroll, and there is no Case
+     Study pill.
+
+     The site Kinetic built. tydo.com was replaced in 2025 by a new site that
+     is not ours, so this is the version Kinetic shipped, as Hunter's own
+     recording of its footer shows it (iCloud Kinetic/twitter/tydo-footer.mp4:
+     the "Not sure if Tydo is right for you?" call, the tydo marquee, the
+     lavender link columns), rebuilt from its home page as it was published
+     on 2024-03-04 (the archived copy, with the fonts and images it served)
+     at its 1440px design width as HTML/CSS layers, each at its own depth:
+     the banner and nav fixed in the window, Get to know your customers with
+     the illustration panning under the pointer (the site's own mouse move,
+     30px each way at 1.1x), the brands' marquee, Meet Customer Intelligence
+     and its three cards, Quick & tailored setup with the four stacked
+     discs of each step lifting apart, Tydo helps everyone and its open
+     Founders panel, the Madhappy quote, the 200+ integrations marquee, An
+     extension of your ecommerce team with the platform illustration split
+     into its dashboard and five floating tiles, We're flexible, and the
+     footer with the tydo marquee. raw/ keeps the fetched HTML, CSS, fonts
+     and images for reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched from outside it:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=1      the site in a window on the card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Tydo work card</title>
+<script>
+  /* before first paint: embed or not, and the bleed */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="tydo-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Tydo, tydo.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- the hero: the headline, and the illustration panning under the pointer -->
+              <section class="sec hero" data-stop="hero" style="top:160px;height:501px">
+                <h1 class="h1" data-layer="headline" data-depth="0.62" data-shadow="0,0.22,14" style="left:118px;top:40px;--lab-x:300px;--lab-y:60px">Get to know your <span class="purple">customers</span></h1>
+                <p class="body16" data-layer="copy" data-depth="0.42" style="left:118px;top:284px;width:592px;--lab-x:420px;--lab-y:-34px">Tydo's Customer Intelligence Platform is a complete data warehouse<br>built for advanced customer analytics. No engineer required.</p>
+                <span class="btn bx" data-layer="button" data-depth="0.7" data-shadow="0,0.3,10" style="left:118px;top:353px;--lab-y:-30px">Learn more</span>
+                <div class="h-wrap bx" data-layer="illustration" data-depth="0.2" data-shadow="0,0.32,30" style="--lab-x:30px;--lab-y:30px">
+                  <div class="h-pan" id="heroPan"><img src="tydo-card-src/img/hero.svg" alt=""></div>
+                </div>
+              </section>
+
+              <!-- the dark band: the brands, then Meet Customer Intelligence -->
+              <section class="sec dark" data-stop="value props" style="top:661px;height:1266px">
+                <div class="label16" data-layer="label" data-depth="0.4" style="left:108px;top:48px">Brands that love working with us:</div>
+                <div class="marq brands" data-layer="brands" data-depth="0.3" style="top:140px;--lab-x:120px;--lab-y:-34px"><div class="track" id="brandTrack"></div></div>
+                <h2 class="h-meet" data-layer="headline" data-depth="0.62" style="left:108px;top:422px;--lab-x:900px"><span class="sand">Meet</span> Customer Intelligence</h2>
+                <div class="vcard" data-layer="card" data-depth="0.18" style="left:108px;--lab-x:170px;--lab-y:520px">
+                  <div class="vc-copy" data-layer="copy" data-depth="0.44" style="--lab-y:-34px"><h4 class="vc-t" style="letter-spacing:-.72px">Tailored Attributes</h4><p class="vc-d" style="top:34px">Reveal cohort metrics, product paths, and product performance using sources and filters configured to you.</p></div>
+                  <div class="vc-img" data-layer="art" data-depth="0.32" style="left:-30px;top:181px;width:454px;height:321px;--lab-x:60px"><img src="tydo-card-src/img/vp-1.svg" alt=""></div>
+                </div>
+                <div class="vcard" data-layer="card" data-depth="0.18" style="left:533px;--lab-x:170px;--lab-y:520px">
+                  <div class="vc-copy" data-layer="copy" data-depth="0.44" style="--lab-y:-34px"><h4 class="vc-t">Accessible Insights</h4><p class="vc-d" style="top:42px">Our clean app interface is designed for you to get answers. Our modern architecture is built for you to scale.</p></div>
+                  <div class="vc-img" data-layer="art" data-depth="0.32" style="left:-50px;top:200px;width:574px;height:426px;--lab-x:80px"><img src="tydo-card-src/img/vp-2.svg" alt=""></div>
+                </div>
+                <div class="vcard" data-layer="card" data-depth="0.18" style="left:958px;--lab-x:170px;--lab-y:520px">
+                  <div class="vc-copy" data-layer="copy" data-depth="0.44" style="--lab-y:-34px"><h4 class="vc-t">Data-backed Personas</h4><p class="vc-d" style="top:34px">Choose to enrich your customer data with demographics to identify your optimal messaging by segment.</p></div>
+                  <div class="vc-img" data-layer="art" data-depth="0.32" style="left:-160px;top:200px;width:684px;height:395px;--lab-x:190px"><img src="tydo-card-src/img/vp-3.svg" alt=""></div>
+                </div>
+              </section>
+
+              <!-- quick & tailored setup: each step's four discs lift apart -->
+              <section class="sec cream" data-stop="setup" style="top:1927px;height:802px">
+                <h2 class="h-setup" data-layer="headline" data-depth="0.62" data-shadow="0,0.2,14" style="left:108px;top:164px;--lab-x:200px;--lab-y:20px"><span class="o7">Quick &amp; tailored</span> <span>setup</span></h2>
+                <p class="body16" data-layer="copy" data-depth="0.4" style="left:108px;top:472px;width:504px">You have nothing to lose and a whole new world of customer data to gain.</p>
+                <span class="btn bx" data-layer="button" data-depth="0.7" data-shadow="0,0.3,10" style="left:108px;top:549px;--lab-y:-30px">Get started</span>
+                <div class="step" style="top:134px">
+                  <i class="disc" data-layer="disc" data-depth="0.12" style="left:14px;top:9px;--c:var(--lav)"></i>
+                  <i class="disc" data-layer="disc" data-depth="0.2" style="left:9.34px;top:6px;--c:var(--pink)"></i>
+                  <i class="disc" data-layer="disc" data-depth="0.28" style="left:4.62px;top:3px;--c:var(--teal)"></i>
+                  <i class="disc" data-layer="disc" data-depth="0.36" style="left:0;top:0;--c:var(--yellow)"><b class="num">1</b></i>
+                </div>
+                <div class="step-t" data-layer="step" data-depth="0.46" style="top:144px;--lab-x:200px"><h3>Discovery</h3><p>We'll learn about your business challenges and ideal state.</p></div>
+                <div class="step" style="top:270px">
+                  <i class="disc" data-layer="disc" data-depth="0.12" style="left:14px;top:9px;--c:var(--yellow)"></i>
+                  <i class="disc" data-layer="disc" data-depth="0.2" style="left:9.34px;top:6px;--c:var(--lav)"></i>
+                  <i class="disc" data-layer="disc" data-depth="0.28" style="left:4.62px;top:3px;--c:var(--pink)"></i>
+                  <i class="disc" data-layer="disc" data-depth="0.36" style="left:0;top:0;--c:var(--teal)"><b class="num">2</b></i>
+                </div>
+                <div class="step-t" data-layer="step" data-depth="0.46" style="top:280px;--lab-x:200px"><h3>Scoping</h3><p>You will get a taste of what's possible with Tydo.</p></div>
+                <div class="step" style="top:406px">
+                  <i class="disc" data-layer="disc" data-depth="0.12" style="left:14px;top:9px;--c:var(--teal)"></i>
+                  <i class="disc" data-layer="disc" data-depth="0.2" style="left:9.34px;top:6px;--c:var(--yellow)"></i>
+                  <i class="disc" data-layer="disc" data-depth="0.28" style="left:4.62px;top:3px;--c:var(--lav)"></i>
+                  <i class="disc" data-layer="disc" data-depth="0.36" style="left:0;top:0;--c:var(--pink)"><b class="num">3</b></i>
+                </div>
+                <div class="step-t" data-layer="step" data-depth="0.46" style="top:416px;--lab-x:200px"><h3>Proposal</h3><p>We'll finalize how we'll be working together.</p></div>
+                <div class="step" style="top:542px">
+                  <i class="disc" data-layer="disc" data-depth="0.12" style="left:14px;top:9px;--c:var(--pink)"></i>
+                  <i class="disc" data-layer="disc" data-depth="0.2" style="left:9.34px;top:6px;--c:var(--teal)"></i>
+                  <i class="disc" data-layer="disc" data-depth="0.28" style="left:4.62px;top:3px;--c:var(--yellow)"></i>
+                  <i class="disc" data-layer="disc" data-depth="0.36" style="left:0;top:0;--c:var(--lav)"><b class="num">4</b></i>
+                </div>
+                <div class="step-t" data-layer="step" data-depth="0.46" style="top:552px;--lab-x:200px"><h3>Onboarding</h3><p>We will fully setup your platform and configuration.</p></div>
+              </section>
+
+              <!-- tydo helps everyone: the Founders panel open, as the page loads -->
+              <section class="sec cream" data-stop="everyone" style="top:2729px;height:1592px">
+                <h2 class="h-every" data-layer="headline" data-depth="0.62" data-shadow="0,0.2,14" style="left:108px;top:0;--lab-x:340px;--lab-y:110px">Tydo helps everyone</h2>
+                <p class="body20" data-layer="copy" data-depth="0.4" style="left:728px;top:64px;width:604px">These are just a few examples of how we're helping the whole team understand customer behavior.</p>
+                <div class="acc bx" data-layer="panel" data-depth="0.12" data-shadow="0,0.22,22" style="top:240px;height:288px;--c:var(--yellow);--lab-x:420px;--lab-y:240px">
+                  <div class="acc-head" data-layer="title" data-depth="0.46" style="left:30px;top:36px;--lab-x:300px"><div class="acc-eb">Tydo for</div><h3 class="acc-t">Founders</h3></div>
+                  <span class="btn white bx" data-layer="button" data-depth="0.62" data-shadow="0,0.28,10" style="left:30px;top:156px;--lab-x:340px">Learn more about custom for brands</span>
+                  <div class="acc-list" data-layer="list" data-depth="0.34" style="--lab-x:300px;--lab-y:-34px">
+                    <div class="acc-li" style="top:0"><img src="tydo-card-src/img/bullet.webp" alt=""><p><strong>Executive overviews:</strong> Reports of your business performance across multiple Shopify, Amazon, retail, and more.</p></div>
+                    <div class="acc-li" style="top:64px"><img src="tydo-card-src/img/bullet.webp" alt=""><p><strong>Cohort + LTV breakdowns:</strong> We can help you see the full payback picture so that you can make healthy, profit-first decisions.</p></div>
+                    <div class="acc-li" style="top:128px"><img src="tydo-card-src/img/bullet.webp" alt=""><p><strong>Pacing + projections:</strong> See how your actuals stack up against your projections so you can lead with clarity.</p></div>
+                    <div class="acc-li" style="top:192px"><img src="tydo-card-src/img/bullet.webp" alt=""><p><strong>Board reporting:</strong> For when you’re ready to automate your updates.</p></div>
+                  </div>
+                </div>
+                <div class="acc bx" data-layer="panel" data-depth="0.12" data-shadow="0,0.22,22" style="top:536px;height:138px;--c:var(--teal);--lab-x:420px"><h3 class="acc-t" data-layer="title" data-depth="0.46" style="left:30px;top:36px;--lab-x:300px">Marketers</h3></div>
+                <div class="acc bx" data-layer="panel" data-depth="0.12" data-shadow="0,0.22,22" style="top:682px;height:138px;--c:var(--lav);--lab-x:420px"><h3 class="acc-t" data-layer="title" data-depth="0.46" style="left:30px;top:36px;--lab-x:300px">Operators</h3></div>
+                <div class="acc bx" data-layer="panel" data-depth="0.12" data-shadow="0,0.22,22" style="top:828px;height:138px;--c:var(--pink);--lab-x:420px"><h3 class="acc-t" data-layer="title" data-depth="0.46" style="left:30px;top:36px;--lab-x:300px">Analysts</h3></div>
+                <div class="quote bx" data-layer="quote" data-depth="0.16" data-shadow="0,0.2,20" style="top:1136px;--lab-x:520px;--lab-y:290px">
+                  <p class="q-text" data-layer="words" data-depth="0.42" style="--lab-x:560px;--lab-y:-34px">We needed to understand performance across our ecommerce store and our retail locations. <span class="purple">Tydo helped us build that</span>. Now, we get weekly reports with all the data we need to run Madhappy effectively.</p>
+                  <div class="q-who" data-layer="person" data-depth="0.34" style="--lab-x:250px"><img src="tydo-card-src/img/headshot.webp" alt=""><div>Peiman Raf</div><div>Cofounder &amp; Ceo, MadHappy</div></div>
+                </div>
+                <div class="mh bx" data-layer="photo" data-depth="0.24" data-shadow="0,0.2,20" style="top:1136px;--lab-x:150px;--lab-y:30px"><img src="tydo-card-src/img/madhappy.webp" alt=""></div>
+              </section>
+
+              <!-- 200+ integrations, and their marquee -->
+              <section class="sec yellow" data-stop="integrations" style="top:4321px;height:681px">
+                <h2 class="h80" data-layer="headline" data-depth="0.62" data-shadow="0,0.2,14" style="left:325px;top:142px;width:790px;--lab-x:40px">Tydo pulls data from 200+ integrations.</h2>
+                <p class="body20 center" data-layer="copy" data-depth="0.4" style="left:470px;top:347px;width:500px">Wherever you have valuable customer data, we can build it into your platform for tailored attributes.</p>
+                <div class="marq icons" data-layer="integrations" data-depth="0.34" style="top:467px;--lab-x:120px;--lab-y:-34px"><div class="track" id="iconTrack"></div></div>
+              </section>
+
+              <!-- an extension of your ecommerce team: the platform, its tiles floating -->
+              <section class="sec purple-bg" data-stop="extension" style="top:5002px;height:870px">
+                <h2 class="h80 white-t" data-layer="headline" data-depth="0.62" data-shadow="0,0.24,14" style="left:320px;top:132px;width:800px;--lab-x:40px">An extension of your ecommerce team</h2>
+                <p class="body16 center white-t" data-layer="copy" data-depth="0.42" style="left:530px;top:332px;width:380px">No "shelfware" - Our white-glove onboarding gives you confidence in the results + time back.</p>
+                <span class="btn white bx" data-layer="button" data-depth="0.7" data-shadow="0,0.3,10" style="left:656px;top:401px;--lab-y:-30px">Learn more</span>
+                <div class="pf" style="left:490px;top:457px">
+                  <img class="pf-p" data-layer="tile" data-depth="0.12" src="tydo-card-src/img/pf-0.webp" alt="" style="left:0;top:105px;width:90.5px;height:107px">
+                  <img class="pf-p" data-layer="dashboard" data-depth="0.22" src="tydo-card-src/img/pf-1.webp" alt="" style="left:57px;top:69px;width:326.5px;height:345px">
+                  <img class="pf-p" data-layer="tile" data-depth="0.48" src="tydo-card-src/img/pf-2.webp" alt="" style="left:315px;top:71.5px;width:89px;height:105px">
+                  <img class="pf-p" data-layer="tile" data-depth="0.42" src="tydo-card-src/img/pf-5.webp" alt="" style="left:356px;top:191px;width:87.5px;height:103.5px">
+                  <img class="pf-p" data-layer="tile" data-depth="0.54" src="tydo-card-src/img/pf-4.webp" alt="" style="left:8px;top:260px;width:94px;height:111.5px">
+                  <img class="pf-p" data-layer="tile" data-depth="0.64" src="tydo-card-src/img/pf-3.webp" alt="" style="left:191px;top:249px;width:132.5px;height:157.5px">
+                </div>
+              </section>
+
+              <!-- we're flexible: the three plans -->
+              <section class="sec cream" data-stop="flexible" style="top:5872px;height:854px">
+                <h2 class="h80" data-layer="headline" data-depth="0.62" data-shadow="0,0.2,14" style="left:475px;top:132px;width:490px;--lab-x:-40px">We’re flexible</h2>
+                <p class="body20 center lh30" data-layer="copy" data-depth="0.4" style="left:475px;top:328px;width:490px">Our pricing starts at $2,000 per month.<br>Our volume + support scales with your needs.</p>
+                <div class="plan bx" data-layer="plan" data-depth="0.18" data-shadow="0,0.2,18" style="left:108px;--c:var(--pink);--lab-x:180px;--lab-y:200px">
+                  <div class="plan-in" data-layer="copy" data-depth="0.42" style="--lab-x:200px"><h3>Professional</h3><ul><li>Starting at $2,000 per month.</li><li>Includes a white-glove onboarding to setup the Tydo app, your managed data warehouse, and base reporting views.</li></ul></div>
+                </div>
+                <div class="plan bx" data-layer="plan" data-depth="0.18" data-shadow="0,0.2,18" style="left:525px;--c:var(--teal);--lab-x:180px;--lab-y:200px">
+                  <div class="plan-in" data-layer="copy" data-depth="0.42" style="--lab-x:200px"><h3>Advanced</h3><ul><li>Starting at $4,000 per month.</li><li>Includes everything in Professional.</li><li>Includes additional brand tailored data sources and configurations as well as optional enriched customer attributes.</li></ul></div>
+                </div>
+                <div class="plan bx" data-layer="plan" data-depth="0.18" data-shadow="0,0.2,18" style="left:942px;--c:var(--yellow);--lab-x:180px;--lab-y:200px">
+                  <div class="plan-in" data-layer="copy" data-depth="0.42" style="--lab-x:200px"><h3>Strategic</h3><ul><li>Starting $8,000 per month.</li><li>Includes everything in Advanced.</li><li>Includes access to the Tydo Data Science team for ongoing bespoke reporting and tailored attributes.</li></ul></div>
+                </div>
+                <span class="btn bx" data-layer="button" data-depth="0.7" data-shadow="0,0.3,10" style="left:656px;top:742px;--lab-y:-30px">Learn more</span>
+              </section>
+
+              <!-- the footer: the call, the tydo marquee, the links -->
+              <footer class="sec dark foot" data-stop="footer" style="top:6726px;height:1391px">
+                <img class="f-logo" data-layer="logo" data-depth="0.5" src="tydo-card-src/img/logo-yellow.svg" alt="" style="left:683px;top:114px;--lab-x:-60px">
+                <h3 class="h48" data-layer="headline" data-depth="0.62" data-shadow="0,0.28,14" style="left:363px;top:194px;width:714px;--lab-x:20px">Not sure if Tydo is right for you?<br>Let’s chat about it.</h3>
+                <span class="btn bx" data-layer="button" data-depth="0.7" data-shadow="0,0.36,10" style="left:637px;top:357px;--lab-y:-30px">Talk to someone</span>
+                <div class="marq loop" data-layer="tydo marquee" data-depth="0.36" style="top:527px;--lab-x:540px;--lab-y:-34px"><div class="track" id="loopTrack"></div></div>
+                <div class="f-sub" data-layer="subscribe" data-depth="0.3" style="--lab-x:300px;--lab-y:-34px">
+                  <label>Subscribe to stay updated</label>
+                  <span class="f-ph">Enter your email</span>
+                  <i class="f-line"></i>
+                  <svg class="f-arrow" viewBox="0 0 32 32" fill="none"><path d="M7.33398 3.33325H3.33398V11.3333H7.33398V3.33325ZM24.6673 7.33325H28.6673V3.33325H24.6673V7.33325ZM20.6673 24.6666V28.6666H28.6673V24.6666H20.6673ZM4.50556 21.8382L1.67713 24.6666L7.33398 30.3234L10.1624 27.495L4.50556 21.8382ZM7.33398 11.3333H24.6673V3.33325H7.33398V11.3333ZM20.6673 7.33325V24.6666H28.6673V7.33325H20.6673ZM21.8389 4.50482L4.50556 21.8382L10.1624 27.495L27.4957 10.1617L21.8389 4.50482Z" fill="currentColor"/></svg>
+                </div>
+                <div class="f-cols" data-layer="links" data-depth="0.42" style="--lab-x:20px;--lab-y:-34px">
+                  <div class="f-col" style="left:64px"><div class="f-h sm">Solutions</div><div class="f-a" style="top:43px;width:224px">High-Growth + Enterprise</div><div class="f-a" style="top:116px">New + Emerging</div><div class="f-a" style="top:156px">Agencies</div></div>
+                  <div class="f-col" style="left:336px"><div class="f-h">Products</div><div class="f-a" style="top:40px">Custom</div><div class="f-a" style="top:80px">Platform</div><div class="f-a" style="top:120px">Store Overview</div><div class="f-a" style="top:160px">Questions</div></div>
+                  <div class="f-col" style="left:608px"><div class="f-h">Resources</div><div class="f-a" style="top:40px">Case Studies</div><div class="f-a" style="top:80px">Product Guides</div><div class="f-a" style="top:120px">Reports</div><div class="f-a" style="top:160px">Blog</div><div class="f-a" style="top:200px">Glossary</div><div class="f-a" style="top:240px">Friends of Tydo</div><div class="f-a" style="top:280px">FAQ</div></div>
+                  <div class="f-col" style="left:880px"><div class="f-h">Company</div><div class="f-a" style="top:40px">Careers</div><div class="f-a" style="top:80px">Contact Sales</div><div class="f-a" style="top:120px">Contact Support</div></div>
+                  <div class="f-col" style="left:1152px"><div class="f-h">Partners</div><div class="f-a" style="top:40px">Events</div><div class="f-a" style="top:80px">Partner Directory</div><div class="f-a" style="top:120px">Partner With Us</div></div>
+                </div>
+                <div class="f-legal" data-layer="legal" data-depth="0.24" style="--lab-x:540px;--lab-y:-34px">
+                  <span style="left:108px">Terms and Conditions</span><span style="left:277px">Privacy Policy</span><span style="left:393px">©Tydo, Inc. 2023</span>
+                  <img src="tydo-card-src/img/s-youtube.svg" alt="" style="left:1212px"><img src="tydo-card-src/img/s-twitter.svg" alt="" style="left:1260px"><img src="tydo-card-src/img/s-linkedin.svg" alt="" style="left:1308px">
+                </div>
+              </footer>
+            </div>
+
+            <!-- the banner and nav, fixed in the window -->
+            <nav class="fixed nav" id="nav">
+              <div class="nav-band" data-layer="nav" data-depth="0.3" style="--lab-x:880px;--lab-y:110px">
+                <div class="banner"><span class="banner-t" data-layer="banner" data-depth="0.4" style="--lab-x:540px;--lab-y:-6px">Learn how New Era used Tydo Custom to 2x ecommerce revenue -&gt;</span></div>
+                <img class="n-logo" data-layer="logo" data-depth="0.52" src="tydo-card-src/img/logo.svg" alt="" style="--lab-x:80px">
+                <div class="n-links" data-layer="links" data-depth="0.42" style="--lab-x:700px;--lab-y:-8px">
+                  <span style="left:209px">For Brands<svg viewBox="0 0 12 8"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>
+                  <span style="left:344px">For Agencies</span>
+                  <span style="left:476px">Resources<svg viewBox="0 0 12 8"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>
+                  <span style="left:609px">Partners<svg viewBox="0 0 12 8"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>
+                  <span style="left:726px">Pricing</span>
+                  <span style="left:1131px">Login</span>
+                </div>
+                <span class="btn bx n-btn" data-layer="button" data-depth="0.66" data-shadow="0.3,0.3,10" style="--lab-x:-120px;--lab-y:10px">Get started</span>
+              </div>
+            </nav>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>TYDO</h3>
+      <p><span>Consumer</span><span>Web design, Product, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="tydo-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the Dawn card's way: the studio's own Params,
+   defineParams from /shared/params/params.js. Embedded on the site there is
+   no panel and nothing is fetched, so the module is only loaded here, and
+   only when served (opened from disk there is no studio to load it from). */
+const card = window.tydoCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'tydo work card';
+    const D = card.values;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        marquees: [D['motion.marquees'], 0, 3, 0.05],      // the brands, integrations and tydo marquees
+        heroPan: [D['motion.heroPan'], 0, 2, 0.05],        // the hero illustration's pan under the pointer (1 = the site's 30px)
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        scrub: [D['drag.scrub'], 0.5, 6, 0.1],             // page px per px of a sideways drag (right = down the page)
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

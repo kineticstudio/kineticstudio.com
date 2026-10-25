@@ -1,0 +1,116 @@
+/* moses, round two "Everything sheds" (Kinetic's homepage redesign, not yet on
+   moses.com), rebuilt at its own 1440px width from the Studio page
+   clients/moses/designs/round-two/01-Everything-sheds.html and its shared
+   home-src/moses.css. Every size, colour and position here was read off that
+   page at 1440 x 900 on 2026-10-24 (computed styles and boxes).
+
+   The type: the page sets everything in moses's one face, Univers Pro 45 Light,
+   loaded from moses.com's own CDN under moses's licence ("never ship it from
+   another domain", clients/moses/brand/fonts/fonts.css), so the card does not
+   carry it. It uses the page's own fallback, Inter at 300 (bundled, subset),
+   the same single light face. Every element inherits the page's computed
+   tracking (-0.32px), as on the page. */
+
+@font-face { font-family: "MO Inter"; src: url("../fonts/Inter-300-moses.woff2") format("woff2"); font-weight: 300; font-display: block; }
+
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  --off-black: #181818; --black: #000; --white: #fff; --charcoal: #050606; --grey-500: #6a7282; --off-grey: #57525a;
+  background: var(--black);
+  color: var(--white);
+  font: 300 16px/1.4 "MO Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  letter-spacing: -0.32px;
+  text-rendering: geometricPrecision;
+  font-optical-sizing: auto;
+}
+.vp p, .vp h1, .vp h2, .vp h3, .vp ul, .vp blockquote, .vp figure { margin: 0; padding: 0; font-weight: 300; }
+.vp ul { list-style: none; }
+.vp img { display: block; }
+.page { position: absolute; left: 0; top: 0; width: 1440px; height: 3519px; will-change: transform; }
+.sec, .sec > *, .abs { position: absolute; }
+.sec { left: 0; width: 1440px; }
+[data-depth] { will-change: transform; }
+/* Inter's glyphs sit .144em lower in a line than Univers Pro 45 Light's (ascent .97 + descent .24 against
+   .72 + .28), so a block of running text comes up by that much to put its lines where the page's are.
+   Boxed labels stay put: Inter's capitals already sit on a box's centre, where the page needed --optical. */
+.vp :is(.hero-h, .hero-p, .trust, .count, .count-p, .fell .lead, .fell-links, .sources, .sol-h, .sol-p, .rev-h) { margin-top: -0.144em; }
+.center { left: 0; width: 1440px; text-align: center; }
+.nw { white-space: nowrap; }
+
+/* buttons: moses's hairline box, 16 x 12, 14px; solid is the ground's ink filled */
+.btns { display: flex; justify-content: center; }
+.btn {
+  display: inline-flex; align-items: center; height: 46px; padding: 0 16px;
+  font-size: 14px; line-height: 20px;
+  border: 1px solid var(--fg, #fff); color: var(--fg, #fff); background: transparent; white-space: nowrap;
+}
+.btn.solid { background: var(--fg, #fff); color: var(--bg, #050606); }
+.btn + .btn { margin-left: -1px; }   /* a pair touches, sharing the hairline */
+.link-arrow { display: inline-flex; gap: .4em; border-bottom: 1px solid currentColor; padding-bottom: 1px; }
+
+/* ---------- the header: the wordmark in a hairline box, plain links, the one filled button ---------- */
+.nav { left: 0; top: 0; width: 1440px; height: 66px; font-size: 12px; line-height: 16.8px; color: #fff; --hf: #fff; --hb: #000; }
+.nav.on-light { color: #000; --hf: #000; --hb: #fff; }
+.nav .bar, .nav .tabs { top: 16px; height: 34px; display: flex; }
+.nav .bar { left: 16px; }
+.nav .tabs { right: 16px; }
+.nav .bar > *, .nav .tabs > * { display: flex; align-items: center; padding: 0 12px; color: var(--hf); transition: color .2s cubic-bezier(.4, 0, .2, 1), background-color .2s cubic-bezier(.4, 0, .2, 1), border-color .2s cubic-bezier(.4, 0, .2, 1); }
+.nav .logo { padding: 0 16px; margin-right: 12px; border: 1px solid var(--hf); }
+.nav .logo svg { display: block; width: 43px; height: 9px; }
+.nav .cta { margin-left: 8px; background: var(--hf); color: var(--hb); border: 1px solid var(--hf); }
+
+/* ---------- 1 the hero: the sweep, the worn retainer, the pile ---------- */
+.hero { top: 0; height: 1785px; --fg: #fff; --bg: #050606;
+  /* moses's shelf photo, top to its sixth tenth, as neutral greys (the page's own sweep) */
+  background: linear-gradient(180deg, #000000 0%, #090909 16%, #1c1c1c 32%, #282828 48%, #333333 64%, #444444 82%, #5d5d5d 100%); }
+.hero-h { top: 171px; font-size: 35.1px; line-height: 42.12px; }
+.hero-p { top: 233px; font-size: 16px; line-height: 22.4px; color: rgba(255, 255, 255, .72); }
+.hero-btns { top: 310px; left: 0; width: 1440px; }
+.trust { top: 376px; display: flex; justify-content: center; font-size: 12px; line-height: 16.8px; color: rgba(255, 255, 255, .55); }
+.trust span + span::before { content: '·'; margin: 0 10px; }
+/* the photo, and over it the same photo through the holes as they wear wider (the page's wear shader, js/card.js);
+   the image keeps the layout, and shows alone where there is no WebGL */
+.fig { left: 340px; top: 336px; width: 760px; height: 760px; }
+.fig img, .fig canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.floor { left: 170px; top: 1312px; width: 1100px; height: 414px; }
+.floor > * { position: absolute; }
+.count { left: 0; top: 60px; width: 458px; font-size: 80.64px; line-height: 80.64px; letter-spacing: -2.42px; font-variant-numeric: tabular-nums; }
+.count-p { left: 0; top: 237px; width: 352px; font-size: 16px; line-height: 22.4px; }
+.fell { left: 596px; top: 60px; width: 504px; font-size: 14px; line-height: 19.6px; }
+.fell .lead { font-size: 12px; line-height: 16.8px; color: rgba(255, 255, 255, .55); }
+.fell ul { margin-top: 16px; border-top: 1px solid #fff; }
+.fell li { display: flex; justify-content: space-between; gap: 20px; padding: 10px 0 14px;   /* the text up .144em, the row as tall */
+  border-bottom: 1px solid #fff; }
+.fell li span:last-child { color: rgba(255, 255, 255, .62); text-align: right; }
+.fell-links { left: 596px; top: 288px; display: flex; gap: 24px; font-size: 14px; line-height: 19.6px; }
+.sources { left: 0; top: 349px; width: 379px; font-size: 11px; line-height: 15.95px; color: rgba(255, 255, 255, .5); }
+/* the particles: one canvas, the size of the screen, drawn in page coordinates */
+.shed { left: 0; top: 0; width: 1440px; height: var(--vh, 900px); pointer-events: none; }
+
+/* ---------- 2 the solution, on black: a hard stop under the pile ---------- */
+.solution { top: 1785px; height: 1140px; background: #000; --fg: #fff; --bg: #000; }
+.sol-h { left: 16px; top: 361px; font-size: 40px; line-height: 48px; }
+.sol-p { left: 16px; top: 433px; width: 469px; font-size: 16px; line-height: 22.4px; color: rgba(255, 255, 255, .62); }
+.facts { left: 16px; top: 546px; width: 469px; font-size: 14px; line-height: 19.6px; border-top: 1px solid #fff; }
+.facts li { padding: 8px 0 12px; border-bottom: 1px solid #fff; }
+.sol-btns { left: 16px; top: 734px; justify-content: flex-start; }
+/* the live 3D retainer, as a still: our own render on black acrylic (home-src/img/retainer-night-1920.webp, its ground taken to the section's black) */
+.sol-still { left: 589px; top: 395px; width: 792px; height: 449px; }
+.sol-still img { width: 100%; height: 100%; }
+
+/* ---------- 3 customers, in their words ---------- */
+.reviews-sec { top: 2925px; height: 594px; background: #fff; color: var(--off-black); --fg: #181818; --bg: #fff; }
+.rev-h { left: 16px; top: 120px; width: 640px; font-size: 40px; line-height: 48px; }
+.reviews { left: 16px; top: 256px; width: 1408px; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid #000; }
+.reviews figure { display: grid; gap: 16px; align-content: start; padding: 24px 24px 40px 0; border-bottom: 1px solid #000; }
+.reviews figure + figure { padding-left: 24px; border-left: 1px solid #000; }
+.stars { font-size: 12px; line-height: 16.8px; letter-spacing: 1.2px; }
+.reviews blockquote { font-size: 16px; line-height: 21.6px; }
+.reviews figcaption { font-size: 12px; line-height: 16.8px; color: var(--grey-500); }
+
+/* shadow twins: a darkened, blurred copy of a lifted layer, left on the surface below it */
+.twin { filter: brightness(0) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; }
+.twin * { will-change: auto !important; }

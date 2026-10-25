@@ -115,7 +115,7 @@ const href = (w: (typeof WORK)[number]) => (w.case ? `/work/${w.slug}` : w.url);
             if (!v.src) v.src = v.dataset.src!;
             v.play().then(() => v.classList.add("is-on")).catch(() => {});
           }
-          window.dispatchEvent(new CustomEvent("ks:sound", { detail: "hover" }));
+          window.dispatchEvent(new CustomEvent("ks:sound", { detail: { name: "hover", gain: 0.25 } }));
         }
       }
     };

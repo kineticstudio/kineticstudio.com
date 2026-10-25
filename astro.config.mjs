@@ -6,6 +6,8 @@ import { isNoindexRoute } from "./src/utils/seo.ts";
 
 export default defineConfig({
   site: SITE_URL,
+  // no Astro toolbar over the pages, in the Studio frame or on localhost
+  devToolbar: { enabled: false },
   integrations: [
     sitemap({
       filter: (page) => !isNoindexRoute(new URL(page).pathname),
@@ -35,15 +37,22 @@ export default defineConfig({
         ],
       },
     },
-    {
-      name: "Neue Montreal Mono",
-      cssVariable: "--font-neue-montreal-mono",
-      provider: fontProviders.local(),
-      fallbacks: ["ui-monospace", "monospace"],
-      options: {
-        variants: [{ weight: 400, style: "normal", src: ["./src/assets/fonts/PPNeueMontrealMono-Book.woff2"] }],
-      },
-    },
   ],
-  vite: { build: { cssTarget: "safari15.4" } },
+  // The Creative Studio's build (npm run build:studio) is served from a
+  // folder, where Vite's preload helper would ask for /_astro/ at the root.
+  vite: {
+    build: { cssTarget: "safari15.4", ...(process.env.KS_STUDIO_BUILD ? { modulePreload: false } : {}) },
+    // bundled up front, so the first experiment to load three.js does not
+    // make the dev server re-optimize mid-request
+    optimizeDeps: {
+      include: [
+        "gsap",
+        "gsap/ScrollTrigger",
+        "three",
+        "three/addons/controls/OrbitControls.js",
+        "three/addons/environments/RoomEnvironment.js",
+        "three/addons/utils/BufferGeometryUtils.js",
+      ],
+    },
+  },
 });

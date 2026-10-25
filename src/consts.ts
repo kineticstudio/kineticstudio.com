@@ -11,3 +11,5 @@ export const SITE_LOCALE = "en-US";
 export const NOINDEX_ROUTES: string[] = ["/404", "/lab/*", "/lab-laurels", "/directions/*"];
 /** Where every Contact button sends people. */
 export const CONTACT_EMAIL = "hunter@kineticstudio.com";
+/** The contact form's Web3Forms access key (it is meant to be public: it only lets the form send to CONTACT_EMAIL). */
+export const WEB3FORMS_KEY = "5ee14a91-6389-4831-9646-5d077182d4e5";

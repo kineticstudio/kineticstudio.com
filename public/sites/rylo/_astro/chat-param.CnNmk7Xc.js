@@ -1,0 +1,1 @@
+function e(e=window.location.search){return new URLSearchParams(e).get(`chat`)===`true`}export{e as t};

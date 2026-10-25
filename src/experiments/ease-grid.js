@@ -36,6 +36,9 @@ const EASE = {
   Linear: (t) => t,
 };
 
+// the site's text face for the labels (no monospace anywhere, Hunter, Oct 25)
+const TEXT_FACE = (typeof document !== "undefined" && getComputedStyle(document.documentElement).getPropertyValue("--primary-family").trim()) || "sans-serif";
+
 export const params = {
   timing: {
     easing: { type: "select", options: Object.keys(EASE) },
@@ -276,7 +279,7 @@ export function mount(host, values, ctx = {}) {
     g.arc(X(pr), Y(ease(pr)), 3.5, 0, Math.PI * 2);
     g.fill();
 
-    g.font = `${fs}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+    g.font = `${fs}px ${TEXT_FACE}`;
     g.textBaseline = "top";
     g.textAlign = "left";
     g.fillStyle = mixCss(ground, ink, 0.85);

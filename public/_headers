@@ -1,0 +1,14 @@
+# Response headers for the built site (Cloudflare serves dist/ as static assets
+# and reads this file).
+
+# The client site copies the 3D work cards show live (Hunter's rule: trackers
+# must never run from kineticstudio.com copies). Everything a copy needs was
+# saved beside it, so nothing may leave the site: no analytics, pixels or
+# beacons, no form posts, and only our own pages may frame them.
+/sites/*
+  Content-Security-Policy: default-src 'self' data: blob: 'unsafe-inline' 'unsafe-eval'; frame-ancestors 'self'; form-action 'none'; base-uri 'self'
+  X-Robots-Tag: noindex, nofollow
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

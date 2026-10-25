@@ -2,7 +2,8 @@
 
    cover     media id (public/media/<id>.mp4 + .jpg, cut by scripts/build-media.mjs)
    gallery   more media ids for the case study page
-   case      a case study page at /work/<slug>; without one, the card links out
+   case      a case study page at /work/<slug>; without one, the card links out.
+             Off for now (CASE_STUDIES below): every project opens its live site
    does      what Kinetic did: Brand, Web design, Development, Product
    industry  one per project; the Work filter folds any industry with a single
              project into "Other"
@@ -107,6 +108,13 @@ export const WORK = [
     ],
   },
 
+  // Hunter, Oct 24: on the homepage (his own recordings; 3D cards to follow)
+  { slug: "anthropic-community", name: "Anthropic", client: "Anthropic", industry: "AI", does: ["Web design", "Development"], cover: "claude-community", url: "https://claude.com/community" },
+  { slug: "superinterviews", name: "Superinterviews", industry: "AI", does: ["Product", "Web design", "Development"], cover: "superinterviews", url: "https://superinterviews.com/" },
+  { slug: "rylo", name: "Rylo", industry: "Health", does: ["Web design", "Development"], cover: "rylo", url: "https://rylo.com/" },
+  { slug: "elio", name: "Elio", industry: "Fintech & web3", does: ["Brand", "Web design", "Development"], cover: "elio", url: "https://elio-site.kineticstudio.com/" }, // elio.com is for sale now (Oct 24): Kinetic's own share of the site
+  { slug: "dorm-room-fund", name: "Dorm Room Fund", industry: "Venture", does: ["Web design", "Development"], cover: "dorm-room-fund", url: "https://www.dormroomfund.com/" },
+  { slug: "moses", name: "moses", client: "moses", industry: "Health", does: ["Web design"], cover: "moses", url: "https://moses.kineticstudio.com/" },
   { slug: "heygen", name: "HeyGen", industry: "AI", does: ["Web design", "Development"], cover: "heygen", url: "https://www.heygen.com/" },
   { slug: "ethos", name: "Ethos", industry: "Fintech & web3", does: ["Brand", "Web design", "Development"], cover: "ethos", url: "https://www.ethos.network/" },
   { slug: "happy-droid", name: "Happy Droid", industry: "AI", does: ["Web design", "Development"], cover: "happy-droid", url: "https://www.happydroid.ai/" },
@@ -129,6 +137,36 @@ export const WORK = [
   { slug: "cird", name: "CIRD", industry: "Civic", does: ["Web design", "Development"], cover: "cird", url: "https://www.rural-design.org/" },
 ];
 
+/* Hunter, Oct 24: "I don't want to have detail pages for projects right now.
+   Eventually I'll get to it, but for now let's just go to the actual website."
+   The case study words above stay for then; with this off no /work/<slug>
+   page is built and every card, row and tile links to the live site. */
+const CASE_STUDIES = false;
+if (!CASE_STUDIES) for (const w of WORK) w.case = false;
+
+/* Hunter, Oct 24: the homepage features exactly these, in this order (the
+   wheel and Selected work); the Work page still shows everything. */
+export const HOME = [
+  // Hunter, Oct 24: "remove superinterviews from home"; Elio and Dorm Room Fund added.
+  // Oct 25: Anthropic before Moses; Ethos with Rime, August with Rylo, Roam with Dorm Room Fund (rows of two)
+  "wispr-flow", "dawn",
+  "anthropic-community", "moses",
+  "ethos", "rime",
+  "august-health", "rylo",
+  "cambium", "venus-aerospace",
+  "epirus", "new-era",
+  "happy-droid", "metamag",
+  "roam-robotics", "dorm-room-fund",
+  // Oct 25: "we also need to add counsel-health to the work on homepage", beside Elio
+  "elio", "counsel-health",
+];
+
+/* Hunter, Oct 23: these four lead the site, each shown with its code-powered
+   3D card (src/data/cards.js) instead of a video loop. */
+export const FEATURED = ["dawn", "superorganism", "ethos", "wispr-flow"];
+const lead = (w) => (FEATURED.includes(w.slug) ? FEATURED.indexOf(w.slug) : FEATURED.length);
+WORK.sort((a, b) => lead(a) - lead(b));
+
 /* The client wall: everyone above plus the names that only appear in the
    proposal decks' client slide. */
 export const CLIENTS = [
@@ -144,8 +182,14 @@ export const STATS = [
   { value: "60+", label: "World-class clients" },
 ];
 
+/* The short lines the homepage's particles spell between the sets of work,
+   one gap in two (src/scripts/hero-particles.js; Hunter, Oct 24: "between
+   those sets, particles come back in and then assemble to create some sort
+   of small headline"). The stats, so far; any line can go here. */
+export const INTERLUDES = [STATS[1], STATS[2], STATS[0]].map((s) => `${s.value} ${s.label}`);
+
 export const AWARDS = [
   { name: "Webby", line: "1 win, 2 nominations", logo: "/images/awards/webby.svg", width: 4.25 },
-  { name: "Awwwards", line: "Site of the Day, 2 Honorable Mentions", logo: "/images/awards/awwwards.svg", width: 6 },
+  { name: "Awwwards", line: "Site of the Day, 2\u00a0Honorable Mentions", logo: "/images/awards/awwwards.svg", width: 6 },
   { name: "SXSW", line: "Interactive Innovation Award", logo: "/images/awards/sxsw.svg", width: 5 },
 ];

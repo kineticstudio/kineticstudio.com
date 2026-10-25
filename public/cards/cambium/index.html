@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Cambium work card, 2026-10-23. A code-powered work card on the Dawn
+     card's architecture (01-Code-powered-work-card.html) with the Ethos and
+     Wispr Flow engine: the miniature tours the page and keeps touring while
+     you hover, the light is one soft round bloom under the pointer, you can
+     drag the page like a phone (up and down) or scrub it sideways (right is
+     further down, about 2.5x), a notched ruler slides with the scroll, and
+     there is no Case Study pill.
+
+     Cambium (www.cambium.com, ours) is rebuilt here at its 1440px design
+     width as HTML/CSS layers, each at its own depth: the dark wood floor,
+     the desk, the window shade, the plant, the blueprint, booklet, polaroid
+     and wood samples that change with the species, the glass tooltips, the
+     headline and its button, the iPad that rises off the desk and grows
+     into the supply chain dashboard (its globe is a WebGL embed on the live
+     site, here two stills from it crossfading), the customer belt, the
+     growth-ring textures, the projects, the impact collage, the stippled
+     lumber and the footer wordmark. Fonts and images are the site's own, in
+     cambium-card-src/. raw/ keeps the fetched HTML, CSS, fonts and images
+     for reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched. Like the Dawn card:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in screen px (default 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=full   the site edge to edge instead of on the card ground
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), {type: "ks-card", at:
+     seconds} puts the tour and its ambient motion at that time (the tile's
+     resting loop hands over to the live card), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Cambium work card</title>
+<script>
+  /* before first paint: embed or not, and the studio's own type for the label row
+     (served by the studio; opened from disk the label falls back to system type) */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+      // &radius=N: the card's corner radius in screen px, to match the tile
+      var r = parseFloat(q.get('radius'));
+      if (r >= 0) document.documentElement.style.setProperty('--card-r', r + 'px');
+    } else if (location.protocol !== 'file:') {
+      var l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = '/fonts/kinetic/fonts.css';
+      document.head.appendChild(l);
+    }
+  })();
+</script>
+<link rel="stylesheet" href="cambium-card-src/css/card.css">
+</head>
+
+<body>
+<!-- the site's own marks, inline: the wordmark, the tree, its arrows and icons -->
+<svg class="sprite" width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="cb-logo" viewBox="0 0 218 32" fill="currentColor"><path d="M99.3212 30.94C97.8804 30.94 96.4814 30.9814 95.2536 31.0642C95.5084 28.493 95.5543 26.1412 95.3789 23.45L94.5771 10.7886C94.5311 9.94393 94.4518 8.68525 94.4518 7.67913L92.8481 11.5504L86.5421 26.104C85.8155 27.8305 85.2726 29.5115 84.9719 31.4037C84.3413 31.3623 83.4893 31.3623 82.7335 31.3623C82.0527 31.3623 81.418 31.4037 80.6621 31.4492C80.495 30.3065 80.0315 28.878 79.4343 27.4951L72.7065 11.8113C72.1928 10.6395 71.5622 9.12413 71.2657 8.19254C71.2198 9.07859 71.1488 10.4201 71.0527 11.3475L70.1632 23.922C70.0379 25.9839 70.0755 29.0105 70.6309 31.0725C69.875 31.0269 68.8143 31.0269 67.716 31.0269C66.7471 31.0269 65.7699 31.0269 65.014 31.0725C65.5569 29.0934 65.9828 26.369 66.1958 23.806L67.4236 9.30217C67.5447 6.8676 67.6784 4.34195 67.2983 1.82458C68.2672 1.87012 70.3511 1.87012 71.4119 1.87012C73.1074 1.87012 74.4229 1.82458 75.8553 1.74591C76.1936 3.30271 76.7949 4.81396 77.4255 6.32521L83.0508 20.1169L84.1074 23.0608C84.4457 22.1292 84.8341 21.2555 85.2517 20.237L91.0106 6.78066C91.6913 5.1866 92.0254 4.20946 92.6644 1.73349C94.268 1.82044 95.4916 1.8577 96.9909 1.8577C98.3064 1.8577 99.9059 1.8577 100.921 1.8163C100.708 3.79542 100.795 5.34807 100.875 7.28579L101.718 23.1767C101.885 26.4104 102.261 28.9443 103.076 31.0766C102.019 30.9897 100.662 30.9524 99.3504 30.9524H99.317L99.3212 30.94Z"/><path d="M143.237 1.76669C142.899 4.76021 142.811 7.02502 142.811 9.63762V23.1395C142.811 26.9694 143.112 29.4951 143.655 31.085C142.715 30.998 141.116 30.9608 139.842 30.9608C138.401 30.9608 136.969 31.0022 135.862 31.085C136.288 28.7249 136.405 25.9509 136.405 23.0981V9.89433C136.405 7.74545 136.318 3.67542 135.562 1.78326C137.002 1.8702 137.725 1.8702 139.203 1.8702C140.899 1.8702 142.043 1.8702 143.221 1.78326V1.77083H143.233L143.237 1.76669Z"/><path d="M156.785 1.76669C156.447 4.92169 156.405 7.44734 156.405 9.63762V17.9184C156.405 21.7028 156.493 22.9201 156.998 24.4355C157.842 26.8369 160.126 28.3068 163.304 28.3068C166.482 28.3068 168.855 27.135 170.032 24.4355C170.621 23.0815 170.788 20.44 170.788 17.4092V9.42232C170.788 6.47848 170.575 3.99838 169.773 1.8081C170.575 1.8495 171.59 1.89505 172.647 1.89505C173.791 1.89505 175.019 1.85364 176.033 1.8081C175.607 4.45382 175.49 6.17623 175.49 9.75355V21.3674C175.49 27.843 170.834 32 162.582 32C156.276 32 150.003 30.0623 150.003 21.7401V9.88605C150.003 7.73717 149.916 3.66714 149.16 1.77497C150.6 1.86192 151.361 1.86192 152.847 1.86192C154.589 1.86192 155.645 1.86192 156.777 1.77497H156.79L156.785 1.76669Z"/><path d="M214.246 30.94C212.805 30.94 211.418 30.9814 210.178 31.0642C210.433 28.493 210.479 26.1412 210.303 23.45L209.501 10.7886C209.456 9.94393 209.376 8.68525 209.376 7.67913L207.773 11.5504L201.467 26.104C200.74 27.8305 200.197 29.5115 199.896 31.4037C199.266 31.3623 198.414 31.3623 197.658 31.3623C196.977 31.3623 196.342 31.4037 195.586 31.4492C195.419 30.3065 194.956 28.878 194.359 27.4951L187.631 11.8113C187.117 10.6395 186.487 9.12413 186.19 8.19254C186.144 9.07859 186.065 10.4201 185.977 11.3475L185.088 23.922C184.971 25.9839 185 29.0105 185.555 31.0725C184.799 31.0269 183.743 31.0269 182.64 31.0269C181.671 31.0269 180.69 31.0269 179.938 31.0725C180.481 29.0934 180.907 26.369 181.12 23.806L182.348 9.30217C182.473 6.8676 182.603 4.34195 182.223 1.82458C183.192 1.87012 185.276 1.87012 186.336 1.87012C188.032 1.87012 189.347 1.82458 190.78 1.74591C191.118 3.30271 191.719 4.81396 192.35 6.32521L197.975 20.1169L199.032 23.0608C199.37 22.1292 199.758 21.2555 200.176 20.237L205.935 6.78066C206.616 5.1866 206.95 4.20946 207.589 1.73349C209.192 1.82044 210.429 1.8577 211.911 1.8577C213.227 1.8577 214.826 1.8577 215.841 1.8163C215.628 3.79542 215.716 5.34807 215.799 7.28579L216.643 23.1767C216.81 26.4104 217.186 28.9443 218 31.0766C216.943 30.9897 215.586 30.9524 214.275 30.9524H214.241L214.246 30.94Z"/><path d="M58.8379 23.6738L57.0714 18.7757C58.2532 18.7509 59.4852 18.7674 60.7589 18.8254L59.74 16.1383C58.4746 16.0762 57.2677 16.0637 56.1025 16.0844L52.1518 5.12476C51.5212 3.26157 51.2247 2.38794 50.97 0.831146C48.8986 1.20792 45.7247 1.49361 44.0292 1.58056C43.5155 3.55968 43.2608 4.35464 42.246 6.83889L35.3803 23.8726C34.3989 26.3941 33.263 28.6754 32.1146 30.6877L32.2858 31.0645C33.5136 30.9775 34.7456 30.9775 35.9274 30.9775C36.9422 30.9775 37.9654 31.0231 38.9384 31.0645C38.7255 30.2695 38.6378 29.723 38.6378 29.0025C38.6378 27.7852 38.9259 26.4023 39.2308 25.4708L39.3936 24.9987C41.9954 22.2122 45.6913 20.3573 50.4271 19.4299L51.1329 21.7402L52.1393 24.8497C52.9537 27.2843 53.2836 28.7086 53.4966 31.0686C54.9791 30.9816 56.683 30.9816 58.1948 30.9816C59.7065 30.9816 61.281 31.0272 62.1245 31.0686C61.3687 29.7147 59.9279 26.7005 58.8254 23.6655V23.678L58.8379 23.6738ZM41.9745 17.6412L46.1716 5.928L49.5752 16.6682C46.3637 17.2437 43.6241 18.2457 41.2604 19.6535L41.8158 18.076L41.9745 17.6371V17.6412Z"/><path d="M8.54445 30.0056C5.90928 28.6889 3.82537 26.8216 2.29689 24.3953C0.768415 21.969 0 19.1701 0 15.9903C0 13.0423 0.755888 10.3469 2.27184 7.90819C3.78779 5.46949 5.91346 3.54006 8.64885 2.12403C11.3884 0.708011 14.5205 0 18.0411 0C19.8452 0 21.8163 0.223582 23.9378 0.670747C26.0676 1.11791 27.9302 1.73069 29.5339 2.51323L30.4526 10.5332H27.83C27.3915 8.82736 26.7024 7.40306 25.7503 6.26445C24.8064 5.12169 23.6538 4.27291 22.3007 3.70567C20.9477 3.14258 19.4234 2.86103 17.7404 2.86103C15.7024 2.86103 13.8774 3.33717 12.2779 4.28947C10.6743 5.24591 9.43814 6.60396 8.56532 8.38434C7.68833 10.1606 7.25818 12.1894 7.25818 14.4749C7.25818 17.1082 7.77603 19.3647 8.81172 21.261C9.84323 23.1532 11.2715 24.6023 13.0923 25.5919C14.9131 26.5897 16.9845 27.0866 19.319 27.0866C21.6534 27.0866 23.8752 26.4283 25.7377 25.1116C27.6045 23.795 28.9283 22.027 29.7093 19.8036L32.3319 20.2798C31.718 22.6191 30.7115 24.681 29.2958 26.4573C27.8801 28.2335 26.1428 29.5998 24.0756 30.5521C22.0084 31.5086 19.7783 31.9806 17.3937 31.9806C14.1322 31.9806 11.1796 31.3222 8.54445 30.0056Z"/><path d="M113.057 31.0889C111.117 31.0889 109.264 31.0889 108.122 31.1339C108.455 28.7718 108.708 27.0429 108.708 23.1291V9.89879C108.708 7.74677 108.621 3.66784 107.866 1.77094C109.297 1.86098 110.44 1.86098 111.914 1.86098C115.375 1.86098 117.559 1.77094 121.474 1.77094C123.917 1.77094 125.601 2.19113 126.867 3.15759C128.253 4.25611 129.02 5.89789 129.02 7.95987C129.02 11.4535 126.792 13.3144 123.375 14.7461V15.0012C123.796 14.9562 124.217 14.9562 124.551 14.9562C128.557 14.9562 131.339 17.4414 131.339 21.7424C131.339 27.4301 126.446 31.1789 120.169 31.1789C117.851 31.1789 115.787 31.0889 113.048 31.0889H113.06H113.057ZM122.497 9.14544C122.497 6.15001 120.723 4.46621 117.649 4.46621C117.105 4.46621 116.007 4.51124 115.21 4.58927C115.21 5.34263 115.087 7.53967 115.087 9.68869V14.0678C115.676 14.1578 116.563 14.1578 117.15 14.1578C120.145 14.1578 122.509 12.6391 122.509 9.14544H122.497ZM124.605 22.3307C124.605 18.1617 122.286 16.73 118.705 16.73C117.529 16.73 115.92 16.7751 115.078 16.8951V23.2161C115.078 25.7013 115.201 26.8418 115.799 27.5172C116.389 28.1505 117.276 28.4476 118.84 28.4476C122.422 28.4476 124.62 26.1755 124.62 22.3367L124.608 22.3247L124.605 22.3307Z"/></symbol>
+<symbol id="cb-tree" viewBox="0 0 55 64"><path d="M47.4373 0H7.56274C3.39189 0 0 3.40075 0 7.58249V56.4175C0 60.5993 3.39189 64 7.56274 64H47.4373C51.6081 64 55 60.5993 55 56.4175V7.58249C55 3.40075 51.6081 0 47.4373 0ZM18.3207 26.2278C19.1413 25.6781 19.9997 25.2307 20.9979 25.1966C22.242 25.1549 22.6466 26.4212 23.747 26.8117C24.4314 27.0543 25.1801 26.9937 25.9024 26.933L27.8384 36.5097C28.122 37.9162 28.2657 39.3569 28.2657 40.79V60.5045H25.8154V40.5625C25.8154 32.199 21.6067 28.131 18.3169 26.224L18.3207 26.2278ZM36.7625 31.2361C37.3145 31.2209 37.8704 31.1754 38.4225 31.1716C38.6947 31.1716 38.9746 31.1792 39.2619 31.1944L36.2179 34.3752L36.7662 31.2361H36.7625ZM33.1891 35.8652C32.879 36.7599 32.5046 37.6319 32.1152 38.5266C32.0131 38.7579 31.408 39.7209 31.4875 39.9673L30.6745 37.4347C30.6064 36.9495 30.5308 36.468 30.4325 35.9865L28.5834 26.8382C29.8236 26.9103 30.9997 27.2477 31.8089 28.3396C32.3534 29.0751 32.8336 29.6817 33.5937 30.1973C33.6504 30.239 33.9 30.3717 34.1949 30.5309C34.3197 30.5953 33.847 33.2985 33.8092 33.507C33.6655 34.3297 33.4462 35.1031 33.1853 35.8614L33.1891 35.8652ZM37.1217 37.2641C37.9536 36.3959 38.7855 35.524 39.6174 34.6558C40.7518 33.4691 41.7009 32.0133 43.1152 31.1337C44.1021 30.5195 45.4558 30.1631 46.4163 29.4011C47.6074 28.4571 47.5734 27.096 48.6133 26.1217C49.7099 25.0905 50.2279 25.3558 51.5211 24.7038V28.8969C51.1884 28.8552 50.8292 28.9234 50.5191 29.0561C50.0086 29.276 49.5775 29.6437 49.1275 29.9698C47.7171 30.9972 46.2234 31.2171 44.6731 31.8616C43.342 32.4151 42.5706 33.6852 41.7879 34.8302C40.5325 36.6727 37.1557 38.1551 36.1763 38.5115C36.4562 38.0641 36.77 37.6395 37.1217 37.2604V37.2641ZM7.56274 3.49174H47.4373C49.6872 3.49174 51.5174 5.3267 51.5174 7.58249V16.6322C49.517 15.309 47.1499 14.6911 45.0739 13.5044C41.3984 11.4079 38.7326 7.4043 34.5428 6.3655C28.0351 4.75043 22.7147 6.26314 17.8443 10.5548C15.7721 12.3784 13.9495 13.0533 11.3479 13.9632C9.30595 14.6759 7.23754 15.5365 5.74012 17.0985C0.695772 22.357 8.47026 28.3092 13.7339 28.423C15.4847 28.4609 16.0822 27.8391 17.6855 28.8893C19.2888 29.9395 20.6311 31.4863 21.5122 33.1923C22.2344 34.5875 23.1609 37.5447 22.3214 39.0157C21.0358 37.8745 19.4892 37.0708 17.7573 36.9153C17.7497 36.9153 17.7422 36.9153 17.7346 36.9116C15.2578 36.2443 11.934 31.1868 9.03369 32.7601C8.80302 32.8853 8.59127 33.0521 8.35682 33.1696C7.19216 33.7572 5.08594 33.3819 3.4902 33.5411V7.58249C3.4902 5.3267 5.32039 3.49174 7.5703 3.49174H7.56274ZM3.48264 56.4175V39.7398C3.48264 40.2024 5.7439 40.7748 6.09557 40.8545C7.15435 41.0971 8.22826 41.1502 9.30973 41.1274C11.3063 41.0857 13.3823 40.7066 15.1784 39.7967C17.2014 38.7731 18.4342 39.5124 20.2265 40.7407C24.1516 43.2998 22.8622 55.2877 23.1079 60.5083H7.56274C5.31282 60.5083 3.48264 58.6733 3.48264 56.4175ZM47.4373 60.5083H34.7054V45.8854C35.0117 44.0618 35.5978 42.2307 36.8267 40.8203C38.0065 39.4669 41.4211 37.4651 43.153 38.7693C43.4593 39.0005 43.6559 39.3493 43.9319 39.6147C45.4785 41.0971 48.8628 39.41 50.5645 38.9588C50.8783 38.8754 51.2224 38.7958 51.5136 38.9399V56.4137C51.5136 58.6695 49.6834 60.5045 47.4335 60.5045L47.4373 60.5083Z" fill="currentColor"/></symbol>
+<symbol id="cb-chev" viewBox="0 0 24 24"><path d="M8.6709 4.66504C9.77277 6.86859 11.4363 8.53812 12.8438 9.66406C13.5448 10.2249 14.1754 10.6453 14.6279 10.9238C14.8538 11.0628 15.0347 11.1668 15.1572 11.2344C15.2184 11.2681 15.2657 11.2927 15.2959 11.3086C15.3106 11.3163 15.3214 11.3218 15.3281 11.3252C15.3313 11.3268 15.3337 11.3285 15.335 11.3291L16.6768 12L15.335 12.6699L15.3359 12.6709H15.335C15.3337 12.6715 15.3313 12.6732 15.3281 12.6748C15.3214 12.6782 15.3106 12.6837 15.2959 12.6914C15.2657 12.7073 15.2184 12.7319 15.1572 12.7656C15.0347 12.8332 14.8538 12.9372 14.6279 13.0762C14.1754 13.3547 13.5448 13.7751 12.8438 14.3359C11.4363 15.4619 9.77277 17.1314 8.6709 19.335L7.3291 18.665C8.56056 16.2021 10.3971 14.3714 11.9062 13.1641C12.5123 12.6793 13.0708 12.292 13.5234 12C13.0708 11.708 12.5123 11.3207 11.9062 10.8359C10.3971 9.62861 8.56056 7.79788 7.3291 5.33496L8.6709 4.66504Z" fill="currentColor"/></symbol>
+<symbol id="cb-arrow" viewBox="0 0 24 24"><path d="M13.6709 4.66504C14.7728 6.86859 16.4363 8.53812 17.8438 9.66406C18.5448 10.2249 19.1754 10.6453 19.6279 10.9238C19.8538 11.0628 20.0347 11.1668 20.1572 11.2344C20.2184 11.2681 20.2657 11.2927 20.2959 11.3086C20.3106 11.3163 20.3214 11.3218 20.3281 11.3252C20.3313 11.3268 20.3337 11.3285 20.335 11.3291L21.6768 12L20.335 12.6699L20.3359 12.6709H20.335C20.3337 12.6715 20.3313 12.6732 20.3281 12.6748C20.3214 12.6782 20.3106 12.6837 20.2959 12.6914C20.2657 12.7073 20.2184 12.7319 20.1572 12.7656C20.0347 12.8332 19.8538 12.9372 19.6279 13.0762C19.1754 13.3547 18.5448 13.7751 17.8438 14.3359C16.4363 15.4619 14.7728 17.1314 13.6709 19.335L12.3291 18.665C13.5606 16.2021 15.3971 14.3714 16.9062 13.1641C17.0903 13.0168 17.2706 12.8793 17.4443 12.75H4V11.25H17.4443C17.2706 11.1207 17.0903 10.9832 16.9062 10.8359C15.3971 9.62861 13.5606 7.79788 12.3291 5.33496L13.6709 4.66504Z" fill="currentColor"/></symbol>
+<symbol id="cb-fb" viewBox="0 0 24 24"><path d="M12 2C17.5228 2 22 6.47722 22 12C22 17.112 18.1632 21.3279 13.2119 21.9277V15.0557H15.916L16.4766 12H13.208V10.9189C13.2081 9.30321 13.8406 8.68359 15.4805 8.68359C15.9881 8.6836 16.4006 8.69585 16.6367 8.71973V5.95117C16.1883 5.82728 15.0962 5.70312 14.4639 5.70312C11.124 5.70317 9.58398 7.27978 9.58398 10.6836V12H7.52051V15.0557H9.58398V21.7061C5.22809 20.6253 2 16.6899 2 12C2 6.47722 6.47722 2 12 2Z" fill="currentColor"/></symbol>
+<symbol id="cb-li" viewBox="0 0 24 24"><path d="M19.6504 3C20.0082 3.0001 20.3514 3.14242 20.6045 3.39551C20.8576 3.64859 20.9999 3.99171 21 4.34961V19.6504C20.9999 20.0082 20.8576 20.3514 20.6045 20.6045C20.3514 20.8576 20.0082 20.9999 19.6504 21H4.34961C3.99171 20.9999 3.64859 20.8576 3.39551 20.6045C3.14242 20.3514 3.0001 20.0082 3 19.6504V4.34961C3.0001 3.99171 3.14242 3.64859 3.39551 3.39551C3.64859 3.14242 3.99171 3.0001 4.34961 3H19.6504ZM5.7002 10.2002V18.2998H8.40039V10.2002H5.7002ZM15.2402 10.1104C14.7612 10.0948 14.2859 10.2023 13.8604 10.4229C13.4349 10.6435 13.0728 10.9697 12.8096 11.3701V10.2002H10.2002V18.2998H12.9004V13.9707C12.8857 13.7651 12.9113 13.5587 12.9766 13.3633C13.042 13.1677 13.1459 12.9867 13.2812 12.8311C13.4167 12.6756 13.5818 12.5486 13.7666 12.457C13.9514 12.3654 14.1526 12.3106 14.3584 12.2969C15.0602 12.297 15.5996 12.7564 15.5996 14.0342V18.2998H18.2998L18.2637 13.4043C18.2637 10.8844 16.6352 10.1104 15.2402 10.1104ZM7.70801 5.59961C7.42283 5.47919 7.10794 5.44571 6.80371 5.50293C6.49967 5.56015 6.21894 5.70528 5.99707 5.9209C5.77516 6.13664 5.62144 6.4134 5.55566 6.71582C5.48992 7.01823 5.5147 7.33368 5.62695 7.62207C5.73927 7.9105 5.93452 8.15955 6.1875 8.33789C6.44047 8.5162 6.74043 8.61612 7.0498 8.625C7.47303 8.62982 7.88104 8.46683 8.18457 8.17188C8.48812 7.87674 8.66281 7.47311 8.66992 7.0498C8.66975 6.74031 8.57835 6.43758 8.40723 6.17969C8.23614 5.92191 7.99301 5.72001 7.70801 5.59961Z" fill="currentColor"/></symbol>
+<symbol id="cb-ig" viewBox="0 0 24 24"><path d="M12 2.5C14.5797 2.5 14.9039 2.51012 15.917 2.55762C16.7049 2.57311 17.4846 2.72201 18.2227 2.99805C18.8564 3.23668 19.4308 3.61143 19.9053 4.09473C20.3888 4.56922 20.7632 5.14335 21.002 5.77734C21.2783 6.51539 21.4276 7.29508 21.4434 8.08301C21.4892 9.09605 21.5 9.42032 21.5 12C21.5 14.5797 21.4899 14.9039 21.4424 15.917C21.4269 16.7049 21.278 17.4846 21.002 18.2227C20.7579 18.8539 20.3839 19.4267 19.9053 19.9053C19.4267 20.3839 18.8539 20.7579 18.2227 21.002C17.4846 21.2783 16.7049 21.4276 15.917 21.4434C14.9039 21.4892 14.5797 21.5 12 21.5C9.42032 21.5 9.09605 21.4899 8.08301 21.4424C7.29513 21.4269 6.51544 21.278 5.77734 21.002C5.14355 20.7633 4.56913 20.3886 4.09473 19.9053C3.61121 19.4308 3.23676 18.8567 2.99805 18.2227C2.72171 17.4846 2.5724 16.7049 2.55664 15.917C2.51087 14.9039 2.5 14.5797 2.5 12C2.5 9.42032 2.51012 9.09605 2.55762 8.08301C2.57311 7.29513 2.72201 6.51544 2.99805 5.77734C3.23668 5.14355 3.61143 4.56913 4.09473 4.09473C4.56922 3.61122 5.14335 3.23676 5.77734 2.99805C6.51539 2.72171 7.29508 2.5724 8.08301 2.55664C9.09605 2.51087 9.42032 2.5 12 2.5ZM12 4.21191C9.46351 4.21191 9.16293 4.22083 8.16113 4.2666C7.55887 4.27387 6.96222 4.3854 6.39746 4.59473C5.98485 4.74703 5.6111 4.98916 5.30469 5.30469C4.98916 5.6111 4.74703 5.98485 4.59473 6.39746C4.3854 6.96222 4.27387 7.55887 4.2666 8.16113C4.22083 9.16293 4.21191 9.46351 4.21191 12C4.21191 14.5365 4.22083 14.837 4.2666 15.8389C4.27387 16.4411 4.3854 17.0378 4.59473 17.6025C4.74703 18.0151 4.98916 18.3889 5.30469 18.6953C5.61083 19.0107 5.98423 19.2529 6.39648 19.4053C6.96151 19.6147 7.55858 19.7262 8.16113 19.7334C9.16293 19.7792 9.46351 19.7881 12 19.7881C14.5365 19.7881 14.837 19.7792 15.8389 19.7334C16.4411 19.7261 17.0378 19.6146 17.6025 19.4053C18.0122 19.2472 18.3849 19.0058 18.6953 18.6953C19.0058 18.3849 19.2472 18.0122 19.4053 17.6025C19.6146 17.0378 19.7261 16.4411 19.7334 15.8389C19.7792 14.837 19.7881 14.5365 19.7881 12C19.7881 9.46351 19.7792 9.16293 19.7334 8.16113C19.7261 7.55887 19.6146 6.96222 19.4053 6.39746C19.253 5.98486 19.0108 5.61109 18.6953 5.30469C18.3889 4.98916 18.0151 4.74703 17.6025 4.59473C17.0378 4.3854 16.4411 4.27387 15.8389 4.2666C14.837 4.22083 14.5365 4.21191 12 4.21191ZM12 7.12109C13.2937 7.12109 14.5344 7.63516 15.4492 8.5498C16.3642 9.46473 16.8789 10.7061 16.8789 12C16.8789 12.9649 16.5927 13.9086 16.0566 14.7109C15.5206 15.5129 14.7585 16.1377 13.8672 16.5068C12.9757 16.8761 11.9943 16.9735 11.0479 16.7852C10.1016 16.5969 9.23204 16.1315 8.5498 15.4492C7.86784 14.7672 7.40309 13.8982 7.21484 12.9521C7.0266 12.0057 7.1239 11.0243 7.49316 10.1328C7.86239 9.2416 8.48699 8.47936 9.28906 7.94336C10.0913 7.40729 11.0351 7.12109 12 7.12109ZM13.2119 9.07422C12.6333 8.83452 11.9961 8.77135 11.3818 8.89355C10.7675 9.01579 10.2035 9.3179 9.76074 9.76074C9.3179 10.2035 9.01579 10.7675 8.89355 11.3818C8.77135 11.9961 8.83452 12.6333 9.07422 13.2119C9.31387 13.7905 9.71965 14.2848 10.2402 14.6328C10.761 14.9808 11.3736 15.167 12 15.167C12.8399 15.167 13.6454 14.8332 14.2393 14.2393C14.8332 13.6454 15.167 12.8399 15.167 12C15.167 11.3736 14.9808 10.761 14.6328 10.2402C14.2848 9.71965 13.7905 9.31387 13.2119 9.07422ZM17.0713 5.78906C17.3736 5.78906 17.6632 5.90926 17.877 6.12305C18.0907 6.33683 18.2109 6.62637 18.2109 6.92871C18.2109 7.15418 18.1448 7.37503 18.0195 7.5625C17.8944 7.7499 17.716 7.89615 17.5078 7.98242C17.2995 8.0687 17.0697 8.09087 16.8486 8.04688C16.6275 8.00286 16.425 7.89375 16.2656 7.73438C16.1062 7.575 15.9972 7.37242 15.9531 7.15137C15.9091 6.93023 15.9323 6.7005 16.0186 6.49219C16.1048 6.28409 16.2503 6.10565 16.4375 5.98047C16.625 5.85521 16.8458 5.78906 17.0713 5.78906Z" fill="currentColor"/></symbol>
+<symbol id="cb-loader" viewBox="0 0 18 18" fill="none"><path d="M16.6032 8.5394C16.5411 6.66981 15.8327 4.8796 14.5986 3.4738C13.3645 2.06799 11.6811 1.13358 9.83536 0.829775C7.98957 0.525968 6.09554 0.871561 4.476 1.80767C2.85645 2.74378 1.61159 4.21248 0.953525 5.96354C0.295459 7.71459 0.264905 9.63964 0.867069 11.4107C1.46923 13.1817 2.66686 14.6892 4.25588 15.6763C5.8449 16.6633 7.72701 17.0688 9.58151 16.8237C11.436 16.5787 13.1482 15.6981 14.4262 14.3322" stroke="#B9E4F8" stroke-linecap="round"/></symbol>
+<symbol id="cb-down" viewBox="0 0 16 16"><path d="M4 6.2l4 4 4-4" stroke="currentColor" stroke-width="1.3" fill="none"/></symbol>
+<symbol id="cb-check" viewBox="0 0 12 12"><path d="M2.2 6.4l2.4 2.4 5.2-5.6" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card is-framed" id="card" role="img" aria-label="Cambium, cambium.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0.1">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- the hero: the desk from above, the objects changing with the species -->
+              <section class="sec hero" data-tone="dark">
+                <div class="h-floor" data-layer="floor" data-depth="-0.3" style="--lab-x:80px;--lab-y:1000px"><img src="cambium-card-src/img/floor.jpg" alt=""></div>
+                <div class="h-desk-pin" data-pin="desk">
+                  <div class="h-desk" data-layer="desk" data-depth="-0.04" style="--lab-x:1180px;--lab-y:930px">
+                    <img class="wood" src="cambium-card-src/img/desk.webp" alt="">
+                    <img class="woodmark" src="cambium-card-src/img/woodmark.avif" alt="">
+                  </div>
+                </div>
+                <div class="h-obj-pin" data-pin="hero">
+                  <div class="o-polaroid" data-layer="polaroid" data-depth="0.12" style="--lab-y:90px">
+                    <div class="o-rot"><img data-sp="0" src="cambium-card-src/img/polaroid-1.webp" alt=""><img data-sp="1" src="cambium-card-src/img/polaroid-2.webp" alt=""><img data-sp="2" src="cambium-card-src/img/polaroid-3.webp" alt=""></div>
+                  </div>
+                  <div class="o-paper" data-layer="blueprint" data-depth="0.16" style="--lab-y:-30px">
+                    <div class="o-rot"><img data-sp="0" src="cambium-card-src/img/blueprint-1.webp" alt=""><img data-sp="1" src="cambium-card-src/img/blueprint-2.webp" alt=""><img data-sp="2" src="cambium-card-src/img/blueprint-3.webp" alt=""></div>
+                  </div>
+                  <div class="o-booklet" data-layer="booklet" data-depth="0.24" data-shadow="0,0.28,10" style="--lab-x:20px;--lab-y:240px">
+                    <div class="o-rot"><img data-sp="0" src="cambium-card-src/img/mag-1.webp" alt=""><img data-sp="1" src="cambium-card-src/img/mag-2.webp" alt=""><img data-sp="2" src="cambium-card-src/img/mag-3.webp" alt=""></div>
+                  </div>
+                  <div class="o-samples" id="samples" data-layer="samples" data-depth="0.28" style="--lab-x:10px;--lab-y:190px">
+                    <div class="smp" data-smp="walnut"><img src="cambium-card-src/img/sample-walnut.webp" alt=""></div>
+                    <div class="smp" data-smp="ash"><img src="cambium-card-src/img/sample-ash.webp" alt=""></div>
+                    <div class="smp" data-smp="pine"><img src="cambium-card-src/img/sample-pine.webp" alt=""></div>
+                  </div>
+                  <div class="o-outline" data-layer="selection" data-depth="0.36" style="--lab-x:150px;--lab-y:40px"></div>
+                </div>
+                <div class="h-plant" data-layer="plant" data-depth="0.44" data-shadow="-0.04,0.42,16" style="--lab-x:300px;--lab-y:300px"><img id="plant" src="cambium-card-src/img/plant.avif" alt=""></div>
+                <div class="h-shade-pin" data-pin="shade"><div class="h-shade"><i></i></div></div>
+                <div class="h-info-pin" data-pin="hero">
+                  <svg class="h-links" data-layer="connectors" data-depth="0.4" style="--lab-x:600px;--lab-y:420px" viewBox="0 0 1440 1100" width="1440" height="1100" fill="none">
+                    <defs>
+                      <linearGradient id="cbConn0" gradientUnits="userSpaceOnUse" x1="330" y1="414" x2="583" y2="501"><stop offset="0" stop-color="#fffcf6" stop-opacity="0"/><stop offset=".55" stop-color="#fffcf6" stop-opacity=".75"/><stop offset=".8" stop-color="#fffcf6" stop-opacity="0"/></linearGradient>
+                    </defs>
+                    <path d="M330 414L583 501M865 501L1065 455M1194 515L1163 546" stroke="#fffcf6" stroke-opacity=".2"/>
+                    <path d="M330 414L583 501" stroke="url(#cbConn0)" stroke-width="1.5"/>
+                  </svg>
+                  <div class="tip tip-pill" data-layer="industry" data-depth="0.54" data-shadow="0,0.2,10" style="--lab-y:-30px">
+                    <div class="bob" style="position:absolute;inset:0;display:grid;place-items:center">
+                      <div class="glass mono" data-sp="0" style="grid-area:1/1;position:relative;padding:0 15.4px;line-height:39px">Manufacturing</div>
+                      <div class="glass mono" data-sp="1" style="grid-area:1/1;position:relative;padding:0 15.4px;line-height:39px">Commercial</div>
+                      <div class="glass mono" data-sp="2" style="grid-area:1/1;position:relative;padding:0 15.4px;line-height:39px">Residential</div>
+                    </div>
+                  </div>
+                  <div class="tip tip-src" data-layer="sourcing" data-depth="0.58" data-shadow="0,0.2,10" style="--lab-y:52px">
+                    <div class="glass bob mono"><svg class="spin" id="spin"><use href="#cb-loader"/></svg>Evaluating 380+ sources</div>
+                  </div>
+                  <div class="tip tip-card" data-layer="species" data-depth="0.62" data-shadow="0,0.22,12" style="--lab-y:128px">
+                    <div class="glass bob">
+                      <div class="sp" data-sp="0"><b class="mono">English walnut</b><ul><li><svg><use href="#cb-check"/></svg>Salvaged from CA Orchards</li><li><svg><use href="#cb-check"/></svg>Figured Grain</li><li><svg><use href="#cb-check"/></svg>Furniture &amp; Lumber</li></ul></div>
+                      <div class="sp" data-sp="1"><b class="mono">Southern Yellow pine</b><ul><li><svg><use href="#cb-check"/></svg>Salvage from North Carolina</li><li><svg><use href="#cb-check"/></svg>High Strength</li><li><svg><use href="#cb-check"/></svg>Mass Timber</li></ul></div>
+                      <div class="sp" data-sp="2"><b class="mono">Thermal ash</b><ul><li><svg><use href="#cb-check"/></svg>Manufactured in Indiana</li><li><svg><use href="#cb-check"/></svg>Fire-Retardant, WUI compliant</li><li><svg><use href="#cb-check"/></svg>Cladding &amp; Decking</li></ul></div>
+                    </div>
+                  </div>
+                  <p class="h-sub t-l" data-layer="subline" data-depth="0.66" style="--lab-x:820px">Curated, sustainable, domestically sourced.</p>
+                  <h1 class="h-title h1" data-layer="headline" data-depth="0.78" data-shadow="0,0.3,14" style="--lab-x:920px;--lab-y:10px"><span class="ln">The modern</span><span class="ln">market for wood</span></h1>
+                  <div class="h-btn btn" data-layer="button" data-depth="0.9" data-shadow="0,0.42,12" style="--lab-y:62px">Explore Materials<svg><use href="#cb-chev"/></svg></div>
+                </div>
+              </section>
+
+              <!-- AI-powered supply chains: the iPad arrives from the desk (it lives after this section, above it) -->
+              <section class="sec supply" data-tone="dark">
+                <h2 class="s-title h1" data-layer="headline" data-depth="0.7" data-shadow="0,0.3,14" style="--lab-x:520px"><span class="ln">AI-Powered supply</span><span class="ln">chains <em>for wood</em></span></h2>
+                <p class="s-copy t-m" data-layer="body copy" data-depth="0.44" style="--lab-x:500px"><span class="ln">We work with forest managers, truckers, arborists, sawmills,</span><span class="ln">and landowners to connect and modernize the industry.</span></p>
+                <div class="s-logos" data-layer="clients" data-depth="0.26" style="--lab-x:580px;--lab-y:60px">
+                  <div style="left:0;top:0" data-layer="logo" data-depth="0.38"><img src="cambium-card-src/img/logo-room-board.svg" alt=""></div>
+                  <div style="left:189px;top:0" data-layer="logo" data-depth="0.38"><img src="cambium-card-src/img/logo-lowes.png" alt=""></div>
+                  <div style="left:378px;top:0" data-layer="logo" data-depth="0.38"><img src="cambium-card-src/img/logo-patagonia.svg" alt=""></div>
+                  <div style="left:0;top:81px" data-layer="logo" data-depth="0.38"><img src="cambium-card-src/img/logo-equinox.svg" alt=""></div>
+                  <div style="left:189px;top:81px" data-layer="logo" data-depth="0.38"><img src="cambium-card-src/img/logo-goldman.png" alt=""></div>
+                  <div style="left:378px;top:81px" data-layer="logo" data-depth="0.38"><img src="cambium-card-src/img/logo-natgeo.svg" alt=""></div>
+                </div>
+              </section>
+
+              <!-- the iPad and its dashboard, placed where it lands; the engine flies it in from the desk -->
+              <div class="abs ipad-pin" data-pin="ipad">
+                <div class="ipad-shadow abs" data-layer="iPad shadow" data-depth="0.02" style="--lab-y:-40px"></div>
+                <div class="ipad" data-layer="iPad" data-depth="0.32" style="--lab-x:60px;--lab-y:500px">
+                  <img class="ipad-frame" src="cambium-card-src/img/ipad.avif" alt="">
+                  <div class="screen">
+                    <img class="globe" id="globeA" src="cambium-card-src/img/globe-a.webp" alt="">
+                    <img class="globe" id="globeB" src="cambium-card-src/img/globe-b.webp" alt="" style="opacity:0">
+                    <div class="d-rv d-side-rv" id="dSide">
+                      <div class="d-side" data-layer="sidebar" data-depth="0.4" style="--lab-y:380px">
+                        <div class="d-logo"><i></i>Cambium</div>
+                        <div class="d-eye" style="top:52px">Workspace</div>
+                        <div class="d-item" style="top:78px"><i></i>Home</div>
+                        <div class="d-active"><div class="d-item"><i></i><span>Supply<br>Chain</span></div><span class="d-live">Live</span></div>
+                        <div class="d-item" style="top:144px"><i></i>Materials</div>
+                        <div class="d-item" style="top:168px"><i></i>Brands</div>
+                        <div class="d-item" style="top:194px"><i></i>Applications</div>
+                        <div class="d-item" style="top:218px"><i></i>Inventory</div>
+                        <div class="d-eye" style="top:257px">Workspace</div>
+                        <div class="d-item" style="top:281px"><i></i>Carbon impact</div>
+                        <div class="d-item" style="top:305px"><i></i>Reports</div>
+                        <div class="d-rule"></div>
+                        <div class="d-item" style="top:425px"><i></i>Settings</div>
+                        <div class="d-item d-me" style="top:446px;left:18px"><i></i>Mel K</div>
+                      </div>
+                    </div>
+                    <div class="d-rv d-top-rv" id="dTop">
+                      <div class="d-head" data-layer="header" data-depth="0.44" style="--lab-x:240px">
+                        <h4>Supply Chain</h4>
+                        <div class="subs"><span data-tab="0">Carbon Smart Wood · live network, 9 nodes across 4 routes</span><span data-tab="1" style="opacity:0">Cambium Smart Wood · live network, 9 nodes across 4 routes</span><span data-tab="2" style="opacity:0">Arbor Wood · live network, 9 nodes across 4 routes</span></div>
+                      </div>
+                      <div class="d-pill">Cambium · World</div>
+                      <div class="d-cards" data-layer="products" data-depth="0.52" style="--lab-y:108px">
+                        <div class="d-card" style="left:0"><i class="on" data-tab="0" style="opacity:1"></i><small>Product</small><b>Carbon Smart<br>Wood</b><span>SYP - Hurricane Salvage</span></div>
+                        <div class="d-card" style="left:145px"><i class="on" data-tab="1"></i><small>Product</small><b>Cambium Smart<br>Wood</b><span>Thermal Oak - California</span></div>
+                        <div class="d-card" style="left:289px"><i class="on" data-tab="2"></i><small>Product</small><b>Arbor Wood</b><span>Thermal Ash - Indiana</span></div>
+                        <div class="d-card d-plus">+</div>
+                      </div>
+                    </div>
+                    <div class="d-rv d-leg-rv" id="dLeg">
+                      <div class="d-leg" data-layer="legend" data-depth="0.56" style="--lab-x:-80px">
+                        <span class="d-eye">Legend</span>
+                        <p><i></i>Supply node</p>
+                        <p><i class="line"></i>Active Route</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- browse by brand -->
+              <section class="sec brands" data-tone="light">
+                <div class="b-eye mono eyebrow" data-layer="eyebrow" data-depth="0.3">Browse by brand</div>
+                <div class="b-arrows arrows" data-layer="arrows" data-depth="0.36" style="--lab-x:-120px"><svg><use href="#cb-chev"/></svg><svg><use href="#cb-chev"/></svg></div>
+                <div class="b-card" style="left:22px" data-layer="brand" data-depth="0.18"><img src="cambium-card-src/img/brand-csw.svg" alt="" style="left:49px;top:75px;width:232px;height:36px" data-layer="logo" data-depth="0.38"></div>
+                <div class="b-card" style="left:377px" data-layer="brand" data-depth="0.18"><img src="cambium-card-src/img/brand-arbor.avif" alt="" style="left:63px;top:52px;width:206px;height:84px" data-layer="logo" data-depth="0.38"></div>
+                <div class="b-card" style="left:732px" data-layer="brand" data-depth="0.18"><img src="cambium-card-src/img/brand-zena.avif" alt="" style="left:124px;top:52px;width:84px;height:84px" data-layer="logo" data-depth="0.38"></div>
+                <div class="b-card" style="left:1087px" data-layer="brand" data-depth="0.18"><img src="cambium-card-src/img/brand-mataverde.webp" alt="" style="left:58px;top:52px;width:216px;height:84px" data-layer="logo" data-depth="0.38"></div>
+                <div class="b-name h4" style="left:22px" data-layer="name" data-depth="0.3">Carbon Smart Wood<svg><use href="#cb-arrow"/></svg></div>
+                <div class="b-name h4" style="left:377px" data-layer="name" data-depth="0.3">Arbor Wood Co.<svg><use href="#cb-arrow"/></svg></div>
+                <div class="b-name h4" style="left:732px" data-layer="name" data-depth="0.3">Zena Forest Products<svg><use href="#cb-arrow"/></svg></div>
+                <div class="b-name h4" style="left:1087px" data-layer="name" data-depth="0.3">Mataverde<svg><use href="#cb-arrow"/></svg></div>
+              </section>
+
+              <!-- we stand up supply chains: who Cambium works with, on a slow belt -->
+              <section class="sec custom" data-tone="light">
+                <div class="c-box" data-layer="panel" data-depth="0" style="--lab-x:20px;--lab-y:20px"></div>
+                <h2 class="c-title h2" data-layer="headline" data-depth="0.6" data-shadow="0,0.14,12" style="--lab-x:1120px"><span class="ln">We stand up supply chains to deliver</span><span class="ln">better wood at any scale</span></h2>
+                <div class="c-belt" data-layer="customers" data-depth="0.3" data-shadow="0,0.2,16" style="--lab-x:30px;--lab-y:-34px">
+                  <div class="c-track" id="belt"></div>
+                </div>
+              </section>
+
+              <!-- the world's oldest industry, framed in growth rings -->
+              <section class="sec ai" data-tone="light">
+                <h2 class="a-title h-xl" data-layer="headline" data-depth="0.62" data-shadow="0,0.14,14" style="--lab-x:620px"><span class="ln">The world’s oldest</span><span class="ln">industry meets its</span><span class="ln">newest technology</span></h2>
+                <p class="a-copy t-l" data-layer="body copy" data-depth="0.4" style="--lab-x:420px"><span class="ln">Cambium uses AI to connect the fragmented</span><span class="ln">wood industry from standing tree to final sale,</span><span class="ln">unlocking better materials, pricing, and</span><span class="ln">transparency for everyone involved.</span></p>
+                <div class="a-cta" data-layer="link" data-depth="0.46" style="--lab-x:420px;--lab-y:10px"><div class="lnk t-m">Explore materials<svg><use href="#cb-arrow"/></svg></div></div>
+                <div class="a-back" data-layer="panel" data-depth="0.04" style="--lab-y:700px"></div>
+                <div class="a-grain" data-layer="growth rings" data-depth="0.1" style="--lab-x:520px;--lab-y:40px"><img src="cambium-card-src/img/wood-grain.avif" alt=""></div>
+                <div class="a-forest" data-layer="forest" data-depth="0.22" data-shadow="0.1,0.22,16" style="--lab-x:300px;--lab-y:120px"><img src="cambium-card-src/img/ai-forest.webp" alt=""></div>
+                <div class="a-founders" data-layer="founders" data-depth="0.42" data-shadow="0.22,0.34,18" style="--lab-y:480px"><img src="cambium-card-src/img/ai-founders.webp" alt=""></div>
+              </section>
+
+              <!-- featured projects -->
+              <section class="sec projects" data-tone="light">
+                <h2 class="p-head h3" data-layer="heading" data-depth="0.4">Featured projects</h2>
+                <div class="p-strip" data-layer="growth rings" data-depth="0.14" style="--lab-x:400px"><img src="cambium-card-src/img/wood-grain.avif" alt=""></div>
+                <div class="p-arrows arrows" data-layer="arrows" data-depth="0.36" style="--lab-x:-120px"><svg><use href="#cb-chev"/></svg><svg><use href="#cb-chev"/></svg></div>
+                <div class="p-band"><img src="cambium-card-src/img/wood-grain.avif" alt=""></div>
+                <div class="p-img" style="left:22px" data-layer="project" data-depth="0.22" data-shadow="0,0.2,14"><img src="cambium-card-src/img/proj-grey-duck.webp" alt=""></div>
+                <div class="p-img" style="left:495px" data-layer="project" data-depth="0.22" data-shadow="0,0.2,14"><img src="cambium-card-src/img/proj-driftless.webp" alt=""></div>
+                <div class="p-img" style="left:969px" data-layer="project" data-depth="0.22" data-shadow="0,0.2,14"><img src="cambium-card-src/img/proj-fairview.webp" alt=""></div>
+                <div class="p-body" style="left:22px" data-layer="caption" data-depth="0.36"><div class="h3">Grey Duck Cabin</div><div class="meta-l">Exterior Cladding, Decking, Interior Cladding · Finland, MN</div><svg><use href="#cb-arrow"/></svg></div>
+                <div class="p-body" style="left:495px" data-layer="caption" data-depth="0.36"><div class="h3">Driftless Longhouse</div><div class="meta-l">Exterior Cladding · Bay City, WI</div><svg><use href="#cb-arrow"/></svg></div>
+                <div class="p-body" style="left:969px" data-layer="caption" data-depth="0.36"><div class="h3">Fairview</div><div class="meta-l">Flooring · Portland, OR</div><svg><use href="#cb-arrow"/></svg></div>
+              </section>
+
+              <!-- environmental impact -->
+              <section class="sec impact" data-tone="light">
+                <div class="i-eye mono eyebrow" data-layer="eyebrow" data-depth="0.34">Environmental impact</div>
+                <h2 class="i-title h-xl" data-layer="headline" data-depth="0.62" data-shadow="0,0.14,14" style="--lab-x:720px"><span class="ln">Making modern wood</span><span class="ln">work for everyone</span></h2>
+                <div class="i-grain" data-layer="growth rings" data-depth="0.06" style="--lab-x:20px;--lab-y:20px"><img src="cambium-card-src/img/wood-grain.avif" alt=""></div>
+                <div class="i-photo i-center" data-layer="table" data-depth="0.28" data-shadow="0.06,0.24,16" style="--lab-y:-34px"><img src="cambium-card-src/img/impact-table.avif" alt=""></div>
+                <div class="i-photo i-right" data-layer="lumber" data-depth="0.4" data-shadow="0.06,0.3,16" style="--lab-y:470px"><img src="cambium-card-src/img/impact-right.webp" alt=""></div>
+                <div class="i-photo i-left" data-layer="stack" data-depth="0.46" data-shadow="0.06,0.32,16" style="--lab-x:20px;--lab-y:-34px"><img src="cambium-card-src/img/impact-left.webp" alt=""></div>
+                <p class="i-copy t-l" data-layer="body copy" data-depth="0.36" style="--lab-x:540px"><span class="ln">The American wood industry is broken. Sawmills across America</span><span class="ln">are closing, carbon emissions are at an all-time high, and buyers</span><span class="ln">are paying a premium for opaque, commodity lumber. We know</span><span class="ln">there’s a better way. So we’re building it.</span></p>
+                <div class="i-rule"></div>
+                <div class="i-link h4" data-layer="link" data-depth="0.46" style="--lab-x:150px">Our Company<svg class="i24"><use href="#cb-arrow"/></svg></div>
+              </section>
+
+              <!-- talk to an expert, over the stippled lumber -->
+              <section class="sec cta" data-tone="light">
+                <div class="k-stipple" data-layer="stippled lumber" data-depth="0.12" style="--lab-x:300px;--lab-y:30px"><img src="cambium-card-src/img/stipple-lumber.avif" alt=""></div>
+                <h2 class="k-title h1" data-layer="headline" data-depth="0.62" data-shadow="0,0.14,14" style="--lab-x:420px">Talk to an expert</h2>
+                <p class="k-copy t-l" data-layer="body copy" data-depth="0.4" style="--lab-x:540px"><span class="ln">The right material makes all the difference.</span><span class="ln">From product selection to final delivery, we’re here to help.</span></p>
+                <div class="k-btn btn" data-layer="button" data-depth="0.86" data-shadow="0,0.36,12" style="--lab-x:160px">Get in Touch</div>
+              </section>
+
+              <!-- the footer -->
+              <section class="sec foot" data-tone="dark">
+                <div class="f-pin" data-pin="foot">
+                <svg class="f-mark" data-layer="mark" data-depth="0.4" style="--lab-x:80px"><use href="#cb-tree"/></svg>
+                <div class="f-cols" data-layer="links" data-depth="0.3" style="--lab-x:920px">
+                  <div style="left:0"><div class="mono">Materials</div><a class="h4" style="top:34.7px">Materials overview</a><a class="h4" style="top:65.7px">Carbon Smart Wood</a><a class="h4" style="top:96.7px">Arbor Wood</a><a class="h4" style="top:127.7px">Zena Floor Products</a></div>
+                  <div style="left:236px"><div class="mono">Technology</div><a class="h4" style="top:34.7px">How it works</a><div class="mono" style="position:absolute;top:96px">Resources</div><a class="h4" style="top:130.7px">Projects</a><a class="h4" style="top:161.7px">Blog</a></div>
+                  <div style="left:473px"><div class="mono">Supply chains</div><a class="h4" style="top:34.7px">For Enterprise</a><a class="h4" style="top:65.7px">For General Contractors</a><a class="h4" style="top:96.7px">For Architects</a><a class="h4" style="top:127.7px">For Sawmills</a><a class="h4" style="top:157.7px">For Manufacturers</a></div>
+                  <div style="left:709px"><div class="mono">About us</div><a class="h4" style="top:34.7px">Company</a><a class="h4" style="top:65.7px">Careers</a><a class="h4" style="top:96.7px">Impact</a><a class="h4" style="top:127.7px">Contact us</a></div>
+                </div>
+                <div class="f-btn btn" data-layer="button" data-depth="0.7" data-shadow="0,0.3,12" style="--lab-y:62px">Get a Quote</div>
+                <div class="f-rule"></div>
+                <div class="f-news mono" data-layer="newsletter" data-depth="0.34" style="--lab-y:52px"><span class="ln">Subscribe to</span><span class="ln">our newsletter</span></div>
+                <div class="f-form" data-layer="form" data-depth="0.4" style="--lab-x:460px"><div class="in">Email address</div><div class="go"><svg><use href="#cb-arrow"/></svg></div></div>
+                <div class="f-social" data-layer="social" data-depth="0.36" style="--lab-x:-160px"><svg><use href="#cb-fb"/></svg><svg><use href="#cb-li"/></svg><svg><use href="#cb-ig"/></svg></div>
+                <svg class="f-word" data-layer="wordmark" data-depth="0.2" data-shadow="0,0.3,16" style="--lab-x:1180px;--lab-y:-30px"><use href="#cb-logo"/></svg>
+                <div class="f-copy mono">© 2026 Cambium</div>
+                <div class="f-priv h4">Privacy Policy</div>
+                </div>
+                <div class="f-shade" id="footShade"></div>
+              </section>
+            </div>
+
+            <!-- the nav, docked at the top of the window the whole way down -->
+            <nav class="abs nav" id="nav">
+              <div class="abs nav-band" data-layer="nav" data-depth="0.46" data-shadow="0,0.24,10" style="--lab-x:360px;--lab-y:74px">
+                <div class="box" style="left:0;width:206px"></div>
+                <div class="box" style="left:209px;width:800px"></div>
+                <svg class="logo"><use href="#cb-logo"/></svg>
+                <div class="lk mono" style="left:235px">Materials<svg><use href="#cb-down"/></svg></div>
+                <div class="lk mono" style="left:378px">Technology</div>
+                <div class="lk mono" style="left:507px">Customers<svg><use href="#cb-down"/></svg></div>
+                <div class="lk mono" style="left:649px">Resources<svg><use href="#cb-down"/></svg></div>
+                <div class="lk mono" style="left:791px">About us<svg><use href="#cb-down"/></svg></div>
+                <div class="lk mono" style="left:923px">Log In</div>
+              </div>
+              <div class="abs nav-btn mono" data-layer="nav button" data-depth="0.62" data-shadow="0,0.3,10" style="--lab-y:74px">Contact Us</div>
+            </nav>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Cambium</h3>
+      <p><span>Climate &amp; industry</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="cambium-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the Dawn card's way: the studio's own Params,
+   defineParams from /shared/params/params.js. Embedded on the site there is
+   no panel and nothing is fetched, so the module is only loaded here, and
+   only when served (opened from disk there is no studio to load it from). */
+const card = window.cambiumCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'cambium work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [1, 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [1, 0, 3, 0.01],         // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [0.4, 0, 1, 0.01],         // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [5, 0, 20, 0.5],         // degrees
+        perspective: [2.4, 1, 6, 0.05],    // eye distance, in card widths
+        hoverScale: [1.012, 1, 1.12, 0.001],
+      },
+      light: {
+        bloom: [0.7, 0, 1.5, 0.01],        // the round bloom under the pointer
+        bloomSize: [1.3, 0.6, 2.4, 0.01],  // its diameter, in card widths
+        rim: [0.45, 0, 1, 0.01],           // the edge nearest the pointer
+        shadow: [0.7, 0, 1, 0.01],         // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [1, 0, 3, 0.05],
+        stiffness: [110, 40, 500, 1],
+        damping: [21, 4, 60, 0.5],
+        ambient: [1, 0, 2, 0.05],          // the species swap, the plant, the belt, the globe
+      },
+      drag: {
+        momentum: [1, 0, 2, 0.05],         // how far a flick carries
+        friction: [0.32, 0.08, 1, 0.01],   // seconds for a flick to lose most of its speed
+        scrub: [2.5, 0.5, 6, 0.1],         // sideways drag: px of page per px of drag
+        resumeAfter: [1.2, 0.2, 5, 0.1],   // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [40, 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: true },
+        frameColor: '#3e271f',
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: true },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

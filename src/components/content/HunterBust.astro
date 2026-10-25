@@ -1,0 +1,185 @@
+---
+/* Hunter, spinning, in 3D (Hunter, Oct 24: "Let's see if we can make a 3D
+   version of myself that's spinning").
+
+   A model of him, /models/hunter.glb, turns on the stage once there is one
+   (made from his photos; see the About notes in the repo README). Until then
+   the stand-in is his portrait as a solid plate, chrome round its edge, that
+   turns all the way round: his signature on the back, a pause each time his
+   face comes round. It leans toward the pointer, runs only on screen, and
+   holds still, face on, with reduced motion. */
+
+interface Props {
+  /** Utility classes. */
+  class?: string;
+}
+
+import { existsSync } from "node:fs";
+
+const { class: className } = Astro.props;
+// the model, once there is one (so the page never asks for a file that isn't there)
+const model = existsSync("public/models/hunter.glb") ? "/models/hunter.glb" : "";
+---
+
+<div class:list={["bust_wrap", className]} data-bust data-model={model}>
+  <img class="bust_still" src="/images/hunter.jpg" alt="Hunter Thompson" width="720" height="720" loading="lazy" />
+  <canvas class="bust_canvas" aria-hidden="true"></canvas>
+</div>
+
+<script>
+  import * as THREE from "three";
+  import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+  import { createChromeWorld, createChrome } from "@/scripts/chrome.js";
+  import signatureRaw from "@/assets/brand/signature.svg?raw";
+
+  const TURN = 9; // seconds a whole turn takes, the pause included
+
+  document.querySelectorAll<HTMLElement>("[data-bust]").forEach(async (root) => {
+    const canvas = root.querySelector<HTMLCanvasElement>(".bust_canvas")!;
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    } catch {
+      return; // the photo stays
+    }
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x000000, 0);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    const scene = new THREE.Scene();
+    const env = createChromeWorld(renderer, { look: "polished", tilt: 12 });
+    scene.environment = env.texture;
+    const camera = new THREE.PerspectiveCamera(26, 1, 0.1, 50);
+    camera.position.set(0, 0, 4.6);
+    const spin = new THREE.Group();
+    scene.add(spin);
+
+    // a model of him, if there is one yet
+    let model: THREE.Object3D | null = null;
+    try {
+      if (root.dataset.model) {
+        const { GLTFLoader } = await import("three/addons/loaders/GLTFLoader.js");
+        const gltf = await new GLTFLoader().loadAsync(root.dataset.model);
+        model = gltf.scene;
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3()), mid = box.getCenter(new THREE.Vector3());
+        const s = 1.9 / Math.max(size.x, size.y, size.z);
+        model.position.sub(mid).multiplyScalar(s);
+        model.scale.setScalar(s);
+        spin.add(model);
+      }
+    } catch {}
+
+    // the stand-in: his portrait as a plate, chrome round the edge, his signature on the back
+    if (!model) {
+      const photo = await new THREE.TextureLoader().loadAsync("/images/hunter.jpg");
+      photo.colorSpace = THREE.SRGBColorSpace;
+      photo.anisotropy = 8;
+      // the back: the signature in ink on paper
+      const paper = document.createElement("canvas");
+      paper.width = paper.height = 1024;
+      const ctx = paper.getContext("2d")!;
+      ctx.fillStyle = "#f4f6f1";
+      ctx.fillRect(0, 0, 1024, 1024);
+      const sig = new Image();
+      sig.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(signatureRaw.replace(/currentColor/g, "#191919"))}`;
+      await sig.decode().catch(() => {});
+      const w = 760, h = (w * 197) / 602;
+      ctx.translate(512, 512);
+      ctx.rotate(-0.05);
+      ctx.drawImage(sig, -w / 2, -h / 2, w, h);
+      const back = new THREE.CanvasTexture(paper);
+      back.colorSpace = THREE.SRGBColorSpace;
+      const edge = createChrome({ roughness: 0.08, envMapIntensity: 1.2 });
+      edge.envMap = env.texture;
+      const face = (map: THREE.Texture) => new THREE.MeshStandardMaterial({ map, roughness: 0.55, metalness: 0, envMapIntensity: 0.25 });
+      // box faces: +x, -x, +y, -y, front, back
+      const plate = new THREE.Mesh(new RoundedBoxGeometry(1.9, 1.9, 0.09, 6, 0.045), [edge, edge, edge, edge, face(photo), face(back)]);
+      spin.add(plate);
+    }
+    const key = new THREE.DirectionalLight(0xffffff, 1.4);
+    key.position.set(-2, 2.5, 4);
+    scene.add(key, new THREE.AmbientLight(0xffffff, 0.6));
+
+    const fit = () => {
+      const r = canvas.getBoundingClientRect();
+      if (!r.width) return;
+      renderer.setSize(r.width, r.height, false);
+      camera.aspect = r.width / r.height;
+      camera.updateProjectionMatrix();
+    };
+    new ResizeObserver(fit).observe(canvas);
+    fit();
+
+    // a whole turn, slowing as his face comes round and holding there a moment
+    const turnAt = (t: number) => {
+      const u = (t % TURN) / TURN;
+      const hold = 0.28; // the share of a turn spent face on
+      if (u < hold) return 0;
+      const v = (u - hold) / (1 - hold);
+      return Math.PI * 2 * (v < 0.5 ? 4 * v * v * v : 1 - (-2 * v + 2) ** 3 / 2);
+    };
+    const lean = { x: 0, y: 0, tx: 0, ty: 0 };
+    addEventListener("pointermove", (e) => {
+      const r = root.getBoundingClientRect();
+      lean.tx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / innerWidth)) * 0.35;
+      lean.ty = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / innerHeight)) * 0.2;
+    }, { passive: true });
+
+    let raf = 0, on = false, t = TURN * 0.2, last = 0;
+    const draw = (now: number) => {
+      raf = 0;
+      const dt = Math.min(0.05, last ? (now - last) / 1000 : 0);
+      last = now;
+      t += dt;
+      lean.x += (lean.tx - lean.x) * (1 - Math.exp(-dt * 3));
+      lean.y += (lean.ty - lean.y) * (1 - Math.exp(-dt * 3));
+      spin.rotation.set(lean.y, turnAt(t) + lean.x, 0);
+      renderer.render(scene, camera);
+      if (on && !reduced) raf = requestAnimationFrame(draw);
+    };
+    new IntersectionObserver(([e]) => {
+      on = e.isIntersecting;
+      if (on && !raf) {
+        last = 0;
+        raf = requestAnimationFrame(draw);
+      }
+    }).observe(root);
+    renderer.render(scene, camera);
+    root.classList.add("is-3d");
+    // for checks from a console
+    Object.assign(root, { __bust: { spin, get t() { return t; } } });
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .bust_wrap {
+      position: relative;
+      aspect-ratio: 1;
+      width: 100%;
+    }
+    .bust_still,
+    .bust_canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+    }
+    /* where the plate sits face on (1.9 of the camera's 2.12 units), so the photo hands over to it in place */
+    /* an img takes its own size with auto width, even with every inset set: give it the box */
+    .bust_still {
+      inset: 5.2%;
+      width: 89.6%;
+      height: 89.6%;
+      object-fit: cover;
+      border-radius: 2.4%;
+      transition: opacity 0.6s ease;
+    }
+    .bust_wrap.is-3d .bust_still {
+      opacity: 0;
+    }
+  }
+</style>

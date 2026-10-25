@@ -1,0 +1,209 @@
+/* Rime (www.rime.ai), rebuilt at its own 1440px design width.
+   Colours, type sizes, line heights and positions were read off the live
+   site on 2026-10-23 (computed styles and captures at 1440 x 900, with every
+   reveal settled). The live page's canvases (the hero waveform, the voices
+   venn, the call ring, the globe, the circle snake) are rebuilt here as
+   sprites, DOM circles and one still; see js/card.js. */
+
+@font-face { font-family: "Rime Condensed"; src: url("../fonts/NaNHoloX-Condensed-Bold.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+@font-face { font-family: "Rime Narrow"; src: url("../fonts/NaNHoloNarrow-Regular.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+@font-face { font-family: "Rime Mono"; src: url("../fonts/NaNHoloMono-Medium.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  --paper: #f0e9dd; --white: #f8f3ea; --ink: #24211d; --grey: #ddd6c9;
+  --yellow: #ffd46f; --pink: #ffa0ff; --aqua: #2cc3e9; --green: #8be89a; --venn-green: #6fdc8c;
+  --sea: #12a3be; --sea-deep: #108fa7; --dots: #87817a;
+  background: var(--paper);
+  font-family: "Rime Narrow", Arial, sans-serif; font-weight: 400;
+  color: var(--ink);
+  text-rendering: geometricPrecision;
+}
+.vp p, .vp h1, .vp h2, .vp h3, .vp blockquote { margin: 0; font-weight: inherit; }
+.vp img, .vp svg { display: block; }
+.page { position: absolute; left: 0; top: 0; width: 1440px; height: 6823px; will-change: transform; }
+.page .sec, .sec > *, .abs, .in > * { position: absolute; }
+.sec { left: 0; width: 1440px; }
+[data-depth] { will-change: transform; }
+
+/* type */
+.cond { font-family: "Rime Condensed", Arial, sans-serif; font-weight: 700; }
+.mono { font-family: "Rime Mono", Arial, sans-serif; text-transform: uppercase; }
+.h1 { font-family: "Rime Condensed", Arial, sans-serif; font-weight: 700; font-size: 96px; line-height: 96px; letter-spacing: -0.96px; white-space: nowrap; }
+.h2 { font-family: "Rime Condensed", Arial, sans-serif; font-weight: 700; font-size: 68px; line-height: 54.4px; letter-spacing: -0.408px; padding-bottom: 12.8px; }
+.body18 { font-size: 18px; line-height: 21.6px; }
+.center { text-align: center; }
+.full { left: 0; width: 1440px; }
+
+.btn {
+  display: flex; align-items: center; justify-content: center;
+  height: 52px; padding: 0 24px; border-radius: 1440px;
+  font-size: 18px; line-height: 18px; white-space: nowrap;
+}
+.btn.light { background: var(--grey); color: var(--ink); }
+.btn.dark { background: var(--ink); color: var(--paper); }
+.eyebrow {
+  display: flex; align-items: center; justify-content: center;
+  height: 32px; padding: 0 16px; border-radius: 1440px;
+  font-family: "Rime Mono", Arial, sans-serif; font-size: 14px; line-height: 16.8px; text-transform: uppercase;
+}
+.divider {
+  left: -120px; width: 1680px; height: 3px;
+  background: radial-gradient(circle at 1.5px 1.5px, var(--dots) 1.25px, transparent 1.6px) 7px 0 / 12px 3px repeat-x;
+}
+
+/* ---------- the nav, fixed in the viewport ---------- */
+.nav { left: 0; top: 0; width: 1440px; height: 110px; }
+.nav-shift { position: absolute; inset: 0; will-change: transform; }
+.banner { left: 0; width: 1440px; height: 38px; background: var(--pink); }
+/* bars that run edge to edge carry on past it, so a tilt never shows where they end */
+.banner::before, .nav-bar::before { content: ''; position: absolute; left: -120px; right: -120px; top: 0; bottom: 0; background: inherit; z-index: -1; }
+.banner-txt { left: 0; top: 12px; width: 1440px; text-align: center; font-family: "Rime Mono", Arial, sans-serif; font-size: 12px; line-height: 14.4px; letter-spacing: 0.6px; text-transform: uppercase; white-space: nowrap; }
+.nav-bar { left: 0; top: 38px; width: 1440px; height: 72px; background: var(--paper); }
+.nav-bar > * { position: absolute; }
+.nav-logo { left: 80px; top: 20px; width: 64px; height: 32px; }
+.nav-links { left: 0; top: 0; width: 1440px; height: 72px; }
+.nav-links > * { position: absolute; top: 26px; font-size: 18px; line-height: 21.6px; white-space: nowrap; }
+.nav-links svg { top: 33px; width: 10px; height: 6px; }
+.nav-btn { top: 10px; }
+
+/* ---------- hero ---------- */
+.hero { top: 112px; height: 1001px; }
+.wave { left: 0; top: 100px; width: 1440px; height: 280px; }
+.wave .col { position: absolute; top: 0; width: 32px; height: 280px; overflow: hidden; }
+.wave .col img { position: absolute; left: 0; top: 0; width: 3872px; height: 280px; max-width: none; }
+.hero-h { left: 80px; top: 474px; }
+.hero-p { left: 80px; top: 690px; width: 420px; font-size: 21.2px; line-height: 25.44px; }
+.logos { left: -120px; top: 889px; width: 1680px; height: 40px; overflow: hidden; }
+.logos-track { position: absolute; left: 120px; top: 0; height: 40px; display: flex; align-items: center; gap: 80px; will-change: transform; }
+.logos-track img { flex: none; opacity: 0.3; object-fit: contain; }
+
+/* ---------- voices that keep customers on the line ---------- */
+.player { top: 1113px; height: 636px; }
+.pcard { left: 80px; top: 0; width: 1280px; height: 540px; border-radius: 40px; background: var(--ink); color: var(--paper); }
+.pcard-h { left: 0; top: 52px; width: 1280px; color: var(--paper); white-space: nowrap; }
+.ptabs { left: 381px; top: 147px; width: 518px; height: 40px; border-radius: 1440px; background: rgba(240, 233, 221, .12); }
+.ptabs > * { position: absolute; }
+.ptab-on { left: 4px; top: 4px; width: 166px; height: 32px; border-radius: 1440px; background: var(--green); }
+.ptabs span { top: 11px; font-family: "Rime Mono", Arial, sans-serif; font-size: 14px; line-height: 16.8px; text-transform: uppercase; color: var(--white); white-space: nowrap; }
+.ptabs .on { color: var(--ink); }
+.vline { top: 235px; width: 3px; height: 240px; background: radial-gradient(circle at 1.5px 1.5px, rgba(240, 233, 221, .38) 1px, transparent 1.35px) 0 0 / 3px 6px repeat-y; }
+.voice { top: 0; width: 1px; height: 1px; }
+.voice > * { position: absolute; }
+.vbtn { left: -32px; top: 291px; width: 64px; height: 64px; border-radius: 1440px; }
+.vbtn svg { position: absolute; left: 25px; top: 24px; width: 14px; height: 16px; color: var(--ink); }
+.vbtn .pause { opacity: 0; left: 25px; top: 24px; width: 14px; height: 16px; }
+.orbit { left: -80px; top: 243px; width: 160px; height: 160px; opacity: 0; }
+.orbit i { position: absolute; left: 48px; top: 48px; width: 64px; height: 64px; border-radius: 50%; mix-blend-mode: multiply; will-change: transform; }
+.vtype { top: 419px; font-family: "Rime Mono", Arial, sans-serif; font-size: 12px; line-height: 14.4px; text-transform: uppercase; color: var(--paper); opacity: .7; white-space: nowrap; }
+.vname { top: 433px; font-family: "Rime Condensed", Arial, sans-serif; font-weight: 700; font-size: 22px; line-height: 26.4px; white-space: nowrap; }
+
+/* ---------- reliability: the call ring ---------- */
+.feature { top: 1752px; height: 423px; }
+.ring { left: 821px; top: 124px; width: 260px; height: 260px; }
+.rotor { position: absolute; left: 130px; top: 130px; width: 0; height: 0; will-change: transform; }
+.rotor i { position: absolute; left: -10.5px; top: -10.5px; width: 21px; height: 21px; border-radius: 50%; will-change: transform, opacity; }
+.rcenter { left: 916px; top: 219px; width: 70px; height: 70px; border-radius: 50%; background: var(--ink); }
+.timer { position: absolute; left: 0; top: 27px; width: 70px; height: 15px; display: flex; justify-content: center; font-family: "Rime Mono", ui-monospace, monospace; font-size: 12.5px; line-height: 15px; color: var(--paper); }
+.timer > span { display: block; width: 8.3px; text-align: center; }
+.timer .odo { height: 15px; overflow: hidden; position: relative; }
+.timer .odo b { position: absolute; left: 0; top: 0; width: 100%; font-weight: 400; display: flex; flex-direction: column; will-change: transform; }
+.timer .odo b i { font-style: normal; height: 15px; }
+.rpill { left: 1050px; top: 244px; width: 1px; height: 21px; }
+.rpill > * { position: absolute; top: 0; height: 21px; }
+.rpill .cap { width: 21px; border-radius: 50%; background: var(--c, var(--pink)); will-change: transform; }
+.rpill .mid { left: 10.5px; width: 100px; background: var(--c, var(--pink)); transform-origin: 0 0; will-change: transform; }
+.rpill .msg { left: 7px; top: 4.5px; height: 13px; font-size: 12.5px; line-height: 12.5px; letter-spacing: .625px; text-transform: uppercase; white-space: nowrap; opacity: 0; will-change: opacity; }
+
+/* ---------- a voice for every conversation: the venn ---------- */
+.voices { top: 2178px; height: 601px; }
+.vtabs { left: 224px; top: 104px; width: 336px; height: 48px; border-radius: 1440px; background: var(--grey); }
+.vtabs > * { position: absolute; }
+.vind { top: 6px; height: 36px; border-radius: 1440px; overflow: hidden; background: rgba(248, 243, 234, .45); opacity: 0; }
+.vind i { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: var(--white); will-change: transform; }
+.vtabs span { top: 6px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: "Rime Mono", Arial, sans-serif; font-size: 12px; line-height: 12px; text-transform: uppercase; color: rgba(36, 33, 29, .75); white-space: nowrap; }
+.venn, .venn-labels { left: 160px; top: 104px; width: 464px; height: 480px; }
+.venn { isolation: isolate; }
+.venn i { position: absolute; left: -124px; top: -124px; width: 248px; height: 248px; border-radius: 50%; mix-blend-mode: multiply; will-change: transform; }
+.venn-labels b { position: absolute; left: 0; top: 0; font-weight: 400; font-family: "Rime Mono", Arial, sans-serif; font-size: 12px; line-height: 14.4px; text-transform: uppercase; white-space: nowrap; will-change: transform; }
+
+/* ---------- built by linguists: the word search ---------- */
+.ling { top: 2782px; height: 551px; }
+.ws { left: 847px; top: 104px; width: 434px; height: 429px; }
+.ws-pills { background: var(--paper); isolation: isolate; }
+.ws-pills i { position: absolute; height: 25px; border-radius: 1440px; mix-blend-mode: multiply; }
+.ws-pills .yellow { background: var(--yellow); } .ws-pills .blue { background: var(--aqua); } .ws-pills .pink { background: var(--pink); }
+.ws-grid, .ws-lit { font-family: "Courier New", Courier, monospace; font-size: 13px; line-height: 15px; }
+.ws-grid span, .ws-lit span { position: absolute; width: 15px; height: 15px; text-align: center; }
+.ws-grid { color: #958a7a; }
+.ws-lit { color: var(--ink); }
+
+/* ---------- spoken like a local ---------- */
+.langs { top: 3336px; height: 801px; }
+.lcard { left: 80px; top: 104px; width: 1280px; height: 691px; border-radius: 43.2px; background: var(--sea); overflow: hidden; }
+.globe { left: -4px; top: -4px; width: 1288px; height: 699px; }
+.globe img { width: 100%; height: 100%; }
+.lcard-h { left: 0; top: 41px; width: 1280px; color: var(--paper); }
+.chip { top: 544px; width: 383px; height: 99px; border-radius: 16px; background: var(--sea-deep); color: var(--paper); }
+.chip > * { position: absolute; }
+.chip .check { left: 28px; top: 33px; width: 32px; height: 32px; border-radius: 50%; background: var(--sea); }
+.chip .check svg { width: 32px; height: 32px; }
+.chip p { left: 76px; top: 50%; transform: translateY(-50%); width: 290px; font-size: 18px; line-height: 21.6px; }
+
+/* ---------- from the teams that put us on the line ---------- */
+.reviews { top: 4100px; height: 716px; }
+.rev-h { top: 37px; white-space: nowrap; }
+.rev-row { left: 0; top: 156px; width: 1440px; height: 416px; }
+.rev-track { position: absolute; left: 0; top: 0; height: 416px; will-change: transform; }
+.rev { position: absolute; top: 0; width: 656px; height: 416px; border-radius: 28px; }
+.rev > * { position: absolute; }
+.rev .logo { left: 32px; top: 32px; height: 28px; }
+.rev blockquote { left: 32px; top: 76px; width: 272px; font-family: "Rime Condensed", Arial, sans-serif; font-weight: 700; font-size: 28px; line-height: 30.8px; }
+.rev .name { left: 32px; top: 346px; font-size: 16px; line-height: 19.2px; }
+.rev .title { left: 32px; top: 369px; width: 272px; font-family: "Rime Mono", Arial, sans-serif; font-size: 12px; line-height: 14.4px; text-transform: uppercase; opacity: .6; }
+.rev .title.two { top: 355px; }
+.rev .name.two { top: 332px; }
+.pcard > *, .lcard > *, .faq-box > *, .banner > *, .rpill .msg > * { position: absolute; }
+.rev .portrait { left: 352px; top: 16px; width: 288px; height: 384px; border-radius: 16px; overflow: hidden; }
+.rev .portrait img { width: 100%; height: 100%; }
+
+/* ---------- questions, answered ---------- */
+.faq { top: 4816px; height: 667px; }
+.faq-box { left: 16px; top: 0; width: 1408px; height: 667px; border-radius: 40px; background: var(--white); }
+.faq-h { left: 0; top: 36px; width: 1408px; }
+.faq-item { left: 308px; width: 792px; height: 80px; border-radius: 24px; background: var(--paper); }
+.faq-item > * { position: absolute; }
+.faq-item h3 { left: 32px; top: 24px; font-family: "Rime Condensed", Arial, sans-serif; font-weight: 700; font-size: 32px; line-height: 32px; white-space: nowrap; }
+.faq-item .tog { left: 728px; top: 24px; width: 32px; height: 32px; border-radius: 50%; }
+.faq-item .tog svg { position: absolute; left: 8px; top: 8px; width: 16px; height: 16px; }
+
+/* ---------- start the conversation ---------- */
+.foot-ground { left: 0; top: 6160px; width: 1440px; height: 663px; background: var(--ink); }
+.pre { top: 5483px; height: 720px; background: var(--paper); border-radius: 0 0 40px 40px; overflow: hidden; }
+.snake { left: 80px; top: 0; width: 1280px; height: 720px; background: var(--paper); isolation: isolate; overflow: hidden; }
+.snake i { position: absolute; left: -88.5px; top: -88.5px; width: 177px; height: 177px; border-radius: 50%; mix-blend-mode: multiply; will-change: transform; }
+.pre-h { left: 0; top: 271px; width: 1440px; }
+.pre-h .lens { position: absolute; left: 0; top: 0; width: 177px; height: 177px; border-radius: 50%; overflow: hidden; transform-origin: 0 0; will-change: transform; }
+.pre-h .lens span { position: absolute; left: 0; top: 0; width: 1440px; text-align: center; color: var(--paper); transform-origin: 0 0; will-change: transform; }
+.pre-btns { top: 390px; }
+
+/* ---------- the footer ---------- */
+.foot { top: 6160px; height: 663px; color: var(--paper); }
+.wordmark { left: 40px; top: 265px; width: 599px; height: 324px; }
+.wordmark svg { width: 599px; height: 324px; color: var(--paper); }
+.wordmark i { position: absolute; left: 111.1px; top: 0; width: 80.6px; height: 80.6px; border-radius: 50%; opacity: 0; will-change: opacity; }
+.flinks { left: 687px; top: 181px; width: 640px; height: 400px; }
+.flinks > div { position: absolute; display: flex; flex-direction: column; gap: 8px; }
+.flinks b { font-weight: 400; font-family: "Rime Mono", Arial, sans-serif; font-size: 12px; line-height: 14.4px; text-transform: uppercase; color: var(--white); opacity: .7; margin-bottom: 8px; }
+.flinks span { font-size: 16px; line-height: 19.2px; }
+.badges { left: 1205px; top: 525px; width: 140px; height: 64px; }
+.badges svg { position: absolute; top: 0; width: 64px; height: 64px; color: var(--white); }
+.banner.bottom { top: 6785px; }
+
+/* the shadow a lifted layer leaves on the surface under it */
+.twin { filter: brightness(0) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; }
+.twin * { will-change: auto !important; }
+.twin .lens, .twin .orbit { display: none; }

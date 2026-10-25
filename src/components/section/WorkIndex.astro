@@ -2,6 +2,7 @@
 import type { ComponentProps } from "astro/types";
 import Section from "@/components/wrapper/Section.astro";
 import WorkCard from "@/components/content/WorkCard.astro";
+import SizeSlider from "@/components/interactive/SizeSlider.astro";
 import { WORK, INDUSTRIES, DISCIPLINES } from "@/data/work.js";
 
 type Props = Pick<ComponentProps<typeof Section>, "render" | "theme" | "paddingTop" | "paddingBottom"> & {
@@ -11,12 +12,19 @@ type Props = Pick<ComponentProps<typeof Section>, "render" | "theme" | "paddingT
   filter?: boolean;
   /** Only the first this many projects. */
   limit?: number;
+  /** Exactly these projects (slugs), in this order. */
+  only?: string[];
   /** Link under a limited grid. */
   moreHref?: string;
+  /** Show the heading row (off when a hero above already says it). */
+  head?: boolean;
+  /** Hold the cards back until the homepage intro says "ks:intro-done", then bring them in. */
+  intro?: boolean;
 };
 
-const { render = true, heading = "Work", filter = true, limit, moreHref, paddingTop = "large", ...rest } = Astro.props;
-const items = limit ? WORK.slice(0, limit) : WORK;
+const { render = true, heading = "Work", filter = true, limit, only, moreHref, head = true, intro = false, paddingTop = "large", ...rest } = Astro.props;
+const picked = only ? only.map((slug) => WORK.find((w) => w.slug === slug)).filter((w): w is (typeof WORK)[number] => Boolean(w)) : WORK;
+const items = limit ? picked.slice(0, limit) : picked;
 const industryOf = (w: (typeof WORK)[number]) => (INDUSTRIES.includes(w.industry) ? w.industry : "Other");
 const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry === i)), ...(items.some((w) => !INDUSTRIES.includes(w.industry)) ? ["Other"] : [])];
 ---
@@ -24,8 +32,8 @@ const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry ===
 {
   render && (
     <Section paddingTop={paddingTop} {...rest}>
-      <div class="work-index_wrap" data-work-index>
-        <div class="work-index_head">
+      <div class:list={["work-index_wrap", intro && "is-intro"]} data-work-index>
+        <div class="work-index_head" hidden={!head}>
           <h2 class="work-index_title text-style-h1">{heading}</h2>
           <p class="work-index_count text-style-label">
             <span data-count>{items.length}</span> / {items.length} projects
@@ -34,7 +42,7 @@ const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry ===
 
         <ul class="work-index_grid" data-view="grid">
           {items.map((w, i) => (
-            <li class="work-index_item" data-industry={industryOf(w)} data-does={w.does.join("|")} style={`view-transition-name: work-${w.slug}; --i:${i}`}>
+            <li class="work-index_item" data-industry={industryOf(w)} data-does={w.does.join("|")} style={`--vt: work-${w.slug}; --i:${i}`}>
               <WorkCard work={w} eager={i < 3} />
               <a class="work-index_row" href={w.case ? `/work/${w.slug}` : w.url} target={w.case ? undefined : "_blank"} rel={w.case ? undefined : "noopener"} data-preview={`/media/${w.cover}`} tabindex="-1">
                 <span class="work-index_row-name text-style-h3">{w.name}</span>
@@ -56,31 +64,32 @@ const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry ===
         {filter && (
           <div class="work-index_bar" role="toolbar" aria-label="Filter the work">
             <div class="work-index_menu">
-              <button class="work-index_trigger text-style-label" type="button" aria-expanded="false" data-menu="industry">
+              <button class="work-index_trigger pill is-tab" type="button" aria-expanded="false" data-menu="industry">
                 Industry <b data-label="industry">All</b>
               </button>
               <div class="work-index_pop" data-pop="industry" hidden>
-                <button class="work-index_chip" type="button" data-set="industry" data-value="All" aria-pressed="true">All</button>
+                <button class="work-index_chip pill is-chip" type="button" data-set="industry" data-value="All" aria-pressed="true">All</button>
                 {industries.map((i) => (
-                  <button class="work-index_chip" type="button" data-set="industry" data-value={i} aria-pressed="false">{i}</button>
+                  <button class="work-index_chip pill is-chip" type="button" data-set="industry" data-value={i} aria-pressed="false">{i}</button>
                 ))}
               </div>
             </div>
             <div class="work-index_menu">
-              <button class="work-index_trigger text-style-label" type="button" aria-expanded="false" data-menu="does">
+              <button class="work-index_trigger pill is-tab" type="button" aria-expanded="false" data-menu="does">
                 Discipline <b data-label="does">All</b>
               </button>
               <div class="work-index_pop" data-pop="does" hidden>
-                <button class="work-index_chip" type="button" data-set="does" data-value="All" aria-pressed="true">All</button>
+                <button class="work-index_chip pill is-chip" type="button" data-set="does" data-value="All" aria-pressed="true">All</button>
                 {DISCIPLINES.map((d) => (
-                  <button class="work-index_chip" type="button" data-set="does" data-value={d} aria-pressed="false">{d}</button>
+                  <button class="work-index_chip pill is-chip" type="button" data-set="does" data-value={d} aria-pressed="false">{d}</button>
                 ))}
               </div>
             </div>
             <div class="work-index_views">
-              <button class="work-index_view text-style-label" type="button" data-view-set="grid" aria-pressed="true">Grid</button>
-              <button class="work-index_view text-style-label" type="button" data-view-set="list" aria-pressed="false">List</button>
+              <button class="work-index_view pill is-tab" type="button" data-view-set="grid" aria-pressed="true">Grid</button>
+              <button class="work-index_view pill is-tab" type="button" data-view-set="list" aria-pressed="false">List</button>
             </div>
+            <SizeSlider name="work" min={1} max={5} value={3} class="work-index_size" />
           </div>
         )}
 
@@ -94,14 +103,21 @@ const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry ===
   import { watchLoops } from "@/scripts/site.js";
 
   document.querySelectorAll<HTMLElement>("[data-work-index]").forEach((root) => {
+    if (root.classList.contains("is-intro")) {
+      if (document.documentElement.dataset.intro === "done") root.classList.add("is-in");
+      else addEventListener("ks:intro-done", () => root.classList.add("is-in"), { once: true });
+    }
     const grid = root.querySelector<HTMLElement>(".work-index_grid")!;
     const items = [...root.querySelectorAll<HTMLElement>(".work-index_item")];
     const count = root.querySelector("[data-count]");
     const state: Record<string, string> = { industry: "All", does: "All" };
 
+    // the cards carry their transition names only while the filter animates,
+    // so a page change doesn't try to fly them from page to page
     const transition = (fn: () => void) => {
-      if (typeof document.startViewTransition === "function" && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(fn);
-      else fn();
+      if (typeof document.startViewTransition !== "function" || matchMedia("(prefers-reduced-motion: reduce)").matches) return fn();
+      root.classList.add("is-filtering");
+      document.startViewTransition(fn).finished.finally(() => root.classList.remove("is-filtering"));
     };
 
     const apply = () => {
@@ -158,6 +174,38 @@ const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry ===
     root.querySelectorAll<HTMLButtonElement>("[data-view-set]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.viewSet!)));
     window.addEventListener("ks:view-toggle", () => setView(grid.dataset.view === "grid" ? "list" : "grid"));
 
+    // Size: how big the work is, from one huge card across to five small ones,
+    // never more across than the screen has room for; remembered here
+    const size = root.querySelector<HTMLInputElement>('[data-size="work"]');
+    if (size) {
+      try {
+        size.value = localStorage.getItem("ks-work-size") ?? size.value;
+      } catch {}
+      const cols = () => {
+        const room = innerWidth < 640 ? 2 : innerWidth < 992 ? 3 : 5;
+        return Math.max(1, Math.min(room, 6 - Number(size.value)));
+      };
+      let shown = cols();
+      const apply = (animate: boolean) => {
+        const n = cols();
+        if (n === shown && animate) return;
+        shown = n;
+        const set = () => {
+          grid.style.setProperty("--cols", String(n));
+          grid.dataset.cols = String(n);
+        };
+        animate ? transition(set) : set();
+      };
+      apply(false);
+      size.addEventListener("input", () => {
+        try {
+          localStorage.setItem("ks-work-size", size.value);
+        } catch {}
+        apply(true);
+      });
+      addEventListener("resize", () => apply(false));
+    }
+
     // List view: the hovered row's loop follows the pointer.
     const preview = root.querySelector<HTMLElement>(".work-index_preview")!;
     const pv = preview.querySelector("video")!;
@@ -193,6 +241,11 @@ const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry ===
 <style is:global>
   @layer components {
     .work-index_wrap {
+      /* a 3D card's tilt room may reach past the page edge on a phone; wider
+         screens have the margin for it, so a tilted card isn't cut there */
+      @media (width < 48rem) {
+        overflow-x: clip;
+      }
       position: relative;
       width: 100%;
     }
@@ -208,6 +261,38 @@ const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry ===
     .work-index_title {
       margin: 0;
     }
+    .work-index_head[hidden] {
+      display: none;
+    }
+    /* the homepage intro: cards wait, then rise in from depth one by one */
+    .work-index_wrap.is-intro {
+      .work-index_item {
+        opacity: 0;
+        transform: perspective(75rem) translateY(7rem) rotateX(18deg) scale(0.92);
+        filter: blur(0.6rem);
+        transition:
+          opacity 0.9s ease,
+          transform 1.3s cubic-bezier(0.16, 1, 0.3, 1),
+          filter 0.9s ease;
+        transition-delay: calc(min(var(--i), 11) * 0.075s);
+      }
+      .work-index_bar,
+      .work-index_more {
+        opacity: 0;
+        transition: opacity 0.8s ease 1s;
+      }
+      &.is-in {
+        .work-index_item {
+          opacity: 1;
+          transform: none;
+          filter: none;
+        }
+        .work-index_bar,
+        .work-index_more {
+          opacity: 1;
+        }
+      }
+    }
     .work-index_count {
       margin: 0;
       color: color-mix(in srgb, var(--text) 55%, transparent);
@@ -215,7 +300,7 @@ const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry ===
     .work-index_grid {
       margin: 0;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(var(--cols, 3), 1fr);
       gap: var(--space-8) var(--site-gutter);
       &[data-view="grid"] .work-index_row {
         display: none;
@@ -227,16 +312,34 @@ const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry ===
         }
       }
       @media (width < 62rem) {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(var(--cols, 2), 1fr);
       }
       @media (width < 40rem) {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(var(--cols, 1), 1fr);
       }
+    }
+    /* small cards: the name over its labels, not beside them */
+    .work-index_grid:is([data-cols="4"], [data-cols="5"]) {
+      column-gap: var(--space-4);
+      & .work-card_meta {
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      & .work-card_info {
+        align-items: flex-start;
+        text-align: left;
+      }
+    }
+    /* the size slider only means something in the grid */
+    .work-index_grid[data-view="list"] ~ .work-index_bar .work-index_size {
+      opacity: 0.35;
+      pointer-events: none;
     }
     .work-index_item[hidden] {
       display: none;
     }
-    .work-index_grid[data-view="grid"] .work-index_item:nth-child(3n + 2) {
+    /* three across, the middle column steps down; other sizes sit square */
+    .work-index_grid[data-view="grid"]:is(:not([data-cols]), [data-cols="3"]) .work-index_item:nth-child(3n + 2) {
       @media (width >= 62rem) {
         translate: 0 var(--space-8);
       }
@@ -337,32 +440,16 @@ const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry ===
     .work-index_menu {
       position: relative;
     }
-    .work-index_trigger,
-    .work-index_view {
-      display: flex;
-      gap: 0.5rem;
-      padding: 0.7rem 0.95rem;
-      border-radius: var(--radius-round);
-      color: color-mix(in srgb, var(--text) 60%, transparent);
-      white-space: nowrap;
-      & b {
-        font-weight: inherit;
-        color: var(--text);
-      }
-      &:hover,
-      &[aria-expanded="true"] {
-        background: color-mix(in srgb, var(--text) 8%, transparent);
-      }
+    /* the tabs and chips are pills (src/styles/pill.css) */
+    .work-index_trigger b {
+      font-weight: inherit;
+      color: var(--text);
     }
     .work-index_views {
       display: flex;
       margin-left: 0.25rem;
       padding-left: 0.25rem;
       border-left: var(--border-width) solid color-mix(in srgb, var(--text) 12%, transparent);
-    }
-    .work-index_view[aria-pressed="true"] {
-      background: var(--brand-500);
-      color: var(--brand-text);
     }
     .work-index_pop {
       position: absolute;
@@ -382,25 +469,7 @@ const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry ===
         display: none;
       }
     }
-    .work-index_chip {
-      padding: 0.5rem 0.75rem 0.4rem;
-      border-radius: var(--radius-round);
-      background: color-mix(in srgb, var(--text) 7%, transparent);
-      color: var(--text);
-      font-family: var(--display-family);
-      font-size: 1rem;
-      line-height: 1;
-      text-transform: uppercase;
-      &[aria-pressed="true"] {
-        background: var(--brand-500);
-        color: var(--brand-text);
-      }
-    }
     @media (width < 40rem) {
-      .work-index_trigger,
-      .work-index_view {
-        padding: 0.65rem 0.6rem;
-      }
       .work-index_pop {
         width: min(20rem, calc(100vw - 2rem));
       }
@@ -409,6 +478,9 @@ const industries = [...INDUSTRIES.filter((i) => items.some((w) => w.industry ===
         right: -6rem;
       }
     }
+  }
+  .work-index_wrap.is-filtering .work-index_item {
+    view-transition-name: var(--vt);
   }
   ::view-transition-group(*) {
     animation-duration: 0.45s;

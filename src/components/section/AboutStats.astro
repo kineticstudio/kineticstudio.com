@@ -1,0 +1,68 @@
+---
+import { STATS } from "@/data/work.js";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+/* The studio's numbers, a row of their own under Hunter's (Hunter, Oct 25:
+   "Let's have the stats in a different section"): three big figures across
+   the page, each over its line. */
+---
+
+{
+  render && (
+    <section class="stats_wrap" aria-label="The studio in numbers">
+      <ul class="stats_list">
+        {STATS.map((s, i) => (
+          <li class="stats_item" data-reveal style={`--reveal-delay:${0.08 * i}s`}>
+            <span class="stats_num text-style-figure">{s.value}</span>
+            <span class="stats_label text-style-label">{s.label}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .stats_wrap {
+      padding: 0 var(--site-margin) var(--section-space-large);
+    }
+    .stats_list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: var(--border-width) solid var(--border);
+      @media (width < 40rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .stats_item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      padding: var(--space-6) var(--space-4) 0 0;
+      & + .stats_item {
+        padding-left: var(--space-5);
+        border-left: var(--border-width) solid var(--border);
+      }
+      @media (width < 40rem) {
+        padding: var(--space-5) 0;
+        & + .stats_item {
+          padding-left: 0;
+          border-left: 0;
+          border-top: var(--border-width) solid var(--border);
+        }
+      }
+    }
+    .stats_label {
+      color: color-mix(in srgb, var(--text) 60%, transparent);
+    }
+  }
+</style>

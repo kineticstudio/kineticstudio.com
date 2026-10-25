@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Roam Robotics work card, 2026-10-23, built on the Ethos engine as the
+     Cambium, Counsel Health and Happy Droid cards carry it (07, 08, 13):
+     - the miniature is roamrobotics.com's homepage rebuilt in HTML and CSS
+       layers at its own 1440px width, laid out K times larger than the card
+       and scaled back, so tilted text stays sharp; one spring-driven loop,
+       transforms and opacity only
+     - idle, it tours the site on a 20.25 s loop of eased stops: the hero with
+       its cycling headers, the Forge riding down over Protecting Those Going
+       and into Do More, Go Farther, A Modular System, Dual-Use Technology,
+       the three components, Unlock Your Potential, Enhanced Mission
+       Assurance, Contact us and the footer (the loop is 4.5 of the hero's
+       4.5 s header beats, so every pass sees the headers turn over)
+     - hover tilts it toward the pointer (10 degrees) and the layers separate
+       by depth with soft shadows that grow with height; one round bloom of
+       light follows the pointer; the tour keeps running under the hover
+     - press and drag scrolls it either way: vertical like a phone (drag up,
+       page down, 1:1), horizontal as a scrub (drag right, further down the
+       page, about 2.5x); whichever axis moves more wins; momentum, clamped
+       ends, and the tour picks up from where it was let go
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge
+       at the frame's aspect (cropped, never letterboxed), on a transparent
+       page, nothing fetched. &bleed=N keeps N px of clear frame round the card
+       (the site's iframe overhangs the tile by that much, room for the tilt),
+       &radius=N rounds its corners, &touchdrag=1 lets a finger drag it (off by
+       default, so a swipe over the tile scrolls the site; a tap still opens).
+       It pauses when hidden or when the parent posts
+       {type: "ks-card", visible: false} (true resumes), and a click that is
+       not a drag posts {type: "ks-card-open"} to the parent.
+
+     Everything Roam-side was taken from the live site on 2026-10-23 and lives
+     in roam-robotics-card-src/: its ABC Monument Grotesk and Monument
+     Grotesk Mono files, its logo, icons, renders and photography, its copy
+     (word for word, its own spelling kept), colours and spacing measured at
+     1440x900. The site's three videos (2x Human Strength, Unlock Your
+     Potential, the contact loop) are rebuilt as stills pulled from its own
+     files with ffmpeg, cross-fading; its scroll scripting (the Forge sticky
+     and turning from 20 to -22 degrees, the nav that hides on the way down,
+     the cycling headers, the photo carousel, the parallax photos, the
+     fade-and-rise reveals, the knee render turning in) is redone with
+     transforms and opacity. raw/ keeps the fetched HTML, CSS, scripts (as
+     .txt), videos and images for reference; nothing in it is executed or
+     loaded. -->
+<title>Roam Robotics work card</title>
+<script>
+  /* before first paint: embed or not, and the studio's own type for the label row
+     (served by the studio; opened from disk the label uses the bundled copies) */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    var h = document.documentElement;
+    if (embed) {
+      h.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    } else if (location.protocol !== 'file:') {
+      var l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = '/fonts/kinetic/fonts.css';
+      document.head.appendChild(l);
+    }
+  })();
+</script>
+<link rel="stylesheet" href="roam-robotics-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Roam Robotics, roamrobotics.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- the nav: held at the top of the window, it slides away on the way down and back on the way up -->
+              <div class="nav" data-pin="nav">
+                <img class="nav-logo" src="roam-robotics-card-src/img/logo.svg" alt="" data-layer="logo" data-depth="0.4" style="--lab-y:30px">
+                <span class="nav-contact" data-layer="nav link" data-depth="0.46" style="--lab-x:-120px;--lab-y:30px">Contact</span>
+              </div>
+
+              <!-- the hero: the black panel, the cycling headers on the dashed rule, the Forge riding over it all -->
+              <section class="sec hero" id="s-hero" data-tone="dark">
+                <div class="h-panel" data-layer="panel" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"></div>
+                <div class="h-rule rule" data-layer="rule" data-depth="0.16" style="--lab-x:300px;--lab-y:10px"><i class="dash"></i></div>
+                <div class="h-slot h-left" id="hLeft" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,16" style="--lab-y:-34px">
+                  <div class="w"><span class="t">Extending</span></div>
+                  <div class="w"><span class="t">Reinventing</span></div>
+                  <div class="w"><span class="t">Expanding</span></div>
+                  <div class="w"><span class="t">Reimagining</span></div>
+                </div>
+                <div class="h-slot h-right" id="hRight" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,16" style="--lab-y:-34px">
+                  <div class="w"><span class="t">Human Performance</span></div>
+                  <div class="w"><span class="t">Human Possibilities</span></div>
+                  <div class="w"><span class="t">Human Mobility</span></div>
+                </div>
+                <div class="thumb" data-layer="video" data-depth="0.36" data-shadow="0.03,0.5,14,1" style="--lab-y:-34px">
+                  <img class="still" data-slide="thumb" src="roam-robotics-card-src/img/strength-a.webp" alt="">
+                  <img class="still" data-slide="thumb" src="roam-robotics-card-src/img/strength-b.webp" alt="" style="opacity:0">
+                  <div class="thumb-cta" data-layer="play" data-depth="0.62" style="--lab-y:40px"><span class="round" data-icon="play"></span><span>2x Human Strength</span></div>
+                </div>
+                <div class="forge-pin" data-pin="forge">
+                  <div class="forge" data-layer="Forge" data-depth="0.92" data-shadow="0.08,0.55,22" style="--lab-x:200px;--lab-y:120px">
+                    <img class="forge-rot" data-turn="forge" src="roam-robotics-card-src/img/forge.webp" alt="">
+                  </div>
+                </div>
+              </section>
+
+              <!-- protecting those going into harm's way: the photo carousel under its dark veil -->
+              <section class="sec prot" id="s-prot" data-tone="dark">
+                <div class="p-photos" data-layer="photos" data-depth="0.04" style="--lab-x:20px;--lab-y:300px">
+                  <img class="p2" data-slide="prot" src="roam-robotics-card-src/img/protecting-2.webp" alt="">
+                  <img class="p3" data-slide="prot" src="roam-robotics-card-src/img/protecting-3.webp" alt="" style="opacity:0">
+                  <img class="p1" data-slide="prot" src="roam-robotics-card-src/img/protecting-1.webp" alt="" style="opacity:0">
+                  <img class="p4" data-slide="prot" src="roam-robotics-card-src/img/protecting-4.webp" alt="" style="opacity:0">
+                  <i class="veil"></i>
+                </div>
+                <h2 class="p-h1" data-layer="headline" data-depth="0.62" data-shadow="0.04,0.3,12" data-rv="0" style="--lab-y:60px">Protecting Those Going</h2>
+                <h2 class="p-h2" data-layer="headline" data-depth="0.62" data-shadow="0.04,0.3,12" data-rv="0" style="--lab-y:-34px">Into Harm's Way</h2>
+              </section>
+
+              <!-- do more, go farther: the copy and the numbers either side of the Forge -->
+              <section class="sec more" id="s-more" data-tone="dark">
+                <div class="m-copy" data-rv="0">
+                  <h1 class="m-h" data-layer="headline" data-depth="0.72" style="--lab-y:-34px">Do More,<br>Go Farther</h1>
+                  <p class="m-p" data-layer="body copy" data-depth="0.48" style="--lab-x:300px">Augment strength and endurance.<br>Reduce pain and potenial injury.</p>
+                </div>
+                <div class="stats" data-layer="stats" data-depth="0.3" data-rv="1" style="--lab-y:-34px">
+                  <div class="stat"><span>Squat reps at 75% bodyweight</span><h3 data-layer="value" data-depth="0.56">2x increase</h3></div>
+                  <div class="stat"><span>Deadlift reps at 150% bodyweight</span><h3 data-layer="value" data-depth="0.56">2x increase</h3></div>
+                  <div class="stat"><span>Max time wall sit holding 55 lbs</span><h3 data-layer="value" data-depth="0.56">3.5x increase</h3></div>
+                  <div class="stat"><span>Reduction in exertion during 3000lb pallet pushing</span><h3 data-layer="value" data-depth="0.56">30%</h3></div>
+                  <div class="stat"><span>Reduction in knee pain</span><h3 data-layer="value" data-depth="0.56">50%</h3></div>
+                </div>
+              </section>
+
+              <!-- a modular system: the power pack and the knee brace, joined by the dashed line -->
+              <section class="sec mod" id="s-mod" data-tone="dark">
+                <div class="mod-panel" data-layer="panel" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"></div>
+                <h1 class="ctr mod-h" data-layer="headline" data-depth="0.74" data-shadow="0.03,0.2,14" data-rv="0">A <span class="orange">Modular</span> System</h1>
+                <div class="volts rule" data-layer="rule" data-depth="0.2" data-rv="0" style="--lab-y:-34px"><i class="dash"></i></div>
+                <img class="pack" src="roam-robotics-card-src/img/pack.webp" alt="" data-layer="power pack" data-depth="0.38" style="--lab-y:-34px">
+                <img class="knee" src="roam-robotics-card-src/img/knee.webp" alt="" data-layer="knee brace" data-depth="0.42" style="--lab-y:-34px">
+                <span class="lab tail" style="left:198px;top:374.5px;width:110.2px" data-layer="label" data-depth="0.56" data-rv="0">Adjustable Power<hr></span>
+                <span class="lab lead" style="left:524.1px;top:390.5px;width:131.8px" data-layer="label" data-depth="0.56" data-rv="0"><hr>Lower Weight &amp; Profile</span>
+                <span class="lab tail" style="left:226.8px;top:554px;width:164.2px" data-layer="label" data-depth="0.56" data-rv="0">Rechargeable MIL-STD Battery<hr></span>
+                <span class="lab lead" style="left:466.5px;top:562px;width:138.2px" data-layer="label" data-depth="0.56" data-rv="0"><hr>Ergonomic Back Support</span>
+                <span class="lab tail" style="left:839.6px;top:362.7px;width:129.6px" data-layer="label" data-depth="0.56" data-rv="0">3D Printed Aluminum<hr></span>
+                <span class="lab lead" style="left:1051.3px;top:419.8px;width:142.5px" data-layer="label" data-depth="0.56" data-rv="0"><hr>Ruggedized Actuators</span>
+                <span class="lab tail" style="left:844px;top:521.3px;width:151.2px" data-layer="label" data-depth="0.56" data-rv="0">Reduced Profile &amp; Weight<hr></span>
+                <span class="lab lead" style="left:1075.1px;top:575.2px;width:135px" data-layer="label" data-depth="0.56" data-rv="0"><hr>Improved Sizing &amp; Fit</span>
+                <div class="pcopy" style="left:156.9px;top:663.2px;width:540px" data-rv="0">
+                  <h2 data-layer="headline" data-depth="0.66" style="--lab-x:120px;--lab-y:-34px">Power&nbsp;Pack</h2>
+                  <span data-layer="body copy" data-depth="0.46">Smart power algorithm gives you assistance when you need it and stays out of the way when you don't</span>
+                </div>
+                <div class="pcopy" style="left:861.2px;top:661.4px;width:324px" data-rv="1">
+                  <h2 data-layer="headline" data-depth="0.66" style="--lab-x:40px;--lab-y:-34px">Robotic Knee Brace</h2>
+                  <span data-layer="body copy" data-depth="0.46">Forge generates torque by forcing air through lightweight actuators to add power without the weight or bulk</span>
+                </div>
+              </section>
+
+              <!-- dual-use technology: the copy and two photos drifting at their own pace -->
+              <section class="sec dual" id="s-dual" data-tone="dark">
+                <div class="d-copy" data-rv="0">
+                  <h1 data-layer="headline" data-depth="0.74" data-shadow="0,0.16,14" style="--lab-x:300px">Dual-Use Technology</h1>
+                  <p data-layer="body copy" data-depth="0.5" style="--lab-x:260px;--lab-y:60px">A technology platform ruggedized for the military but flexible enough for commercial applications. Currently being tested for reducing pain and increasing mobility for patients with advanced knee osteoarthritis.</p>
+                </div>
+                <div class="d-ph d-ph1" data-layer="photo" data-depth="0.22" data-shadow="0,0.4,20,1"><img data-par="dual" src="roam-robotics-card-src/img/uphill.webp" alt=""></div>
+                <div class="d-ph d-ph2" data-layer="photo" data-depth="0.26" data-shadow="0,0.4,20,1"><img data-par="dual" src="roam-robotics-card-src/img/woman-in-field.webp" alt=""></div>
+              </section>
+
+              <!-- the three components -->
+              <section class="sec three" id="s-three" data-tone="dark">
+                <div class="tu" style="left:24px;--lab-x:20px;--lab-y:20px" data-layer="card" data-depth="0.16">
+                  <div class="tu-ph"><div class="tu-r" data-layer="render" data-depth="0.36" data-rv="0"><img data-par="three" src="roam-robotics-card-src/img/threeup-1.webp" alt=""></div></div>
+                  <div class="tu-copy" data-rv="0"><h3 data-layer="label" data-depth="0.52">Novel compliant air actuator</h3><p style="width:290.6px" data-layer="body copy" data-depth="0.42">High strength polymers, carbon fiber and 3D printed metals are tough enough for various mission environments</p></div>
+                </div>
+                <div class="tu" style="left:496px" data-layer="card" data-depth="0.16">
+                  <div class="tu-ph"><div class="tu-r" data-layer="render" data-depth="0.36" data-rv="1"><img data-par="three" src="roam-robotics-card-src/img/threeup-2.webp" alt=""></div></div>
+                  <div class="tu-copy" data-rv="1"><h3 data-layer="label" data-depth="0.52">Light Weight Structure</h3><p style="width:264.1px" data-layer="body copy" data-depth="0.42">Assistive power with full range of motion without additional bulk or weight</p></div>
+                </div>
+                <div class="tu" style="left:968px" data-layer="card" data-depth="0.16">
+                  <div class="tu-ph"><div class="tu-r" data-layer="render" data-depth="0.36" data-rv="2"><img data-par="three" src="roam-robotics-card-src/img/threeup-3.webp" alt=""></div></div>
+                  <div class="tu-copy" data-rv="2"><h3 data-layer="label" data-depth="0.52">Enhanced Fit and Comfort</h3><p style="width:228.9px" data-layer="body copy" data-depth="0.42">Designed to easily fit anyone and provide maximum all-day comfort at maximum all-out performance</p></div>
+                </div>
+              </section>
+
+              <!-- unlock your potential: the film held still behind its window as the page passes over it -->
+              <section class="sec vid" id="s-vid" data-tone="dark">
+                <div class="v-pin" data-pin="video">
+                  <div class="v-film" data-layer="film" data-depth="0.04" style="--lab-x:280px;--lab-y:150px">
+                    <img data-slide="film" src="roam-robotics-card-src/img/unlock-a.webp" alt="">
+                    <img data-slide="film" src="roam-robotics-card-src/img/unlock-b.webp" alt="" style="opacity:0">
+                    <img data-slide="film" src="roam-robotics-card-src/img/unlock-c.webp" alt="" style="opacity:0">
+                  </div>
+                  <span class="round xl v-btn" data-icon="play" data-layer="play" data-depth="0.8" data-shadow="0.04,0.45,10,1" style="--lab-x:64px"></span>
+                  <h2 class="ctr v-h" data-layer="headline" data-depth="0.68" data-shadow="0.04,0.3,12" style="--lab-x:820px">Unlock Your Potential</h2>
+                </div>
+              </section>
+
+              <!-- enhanced mission assurance: the list on its dashed rules, the knee render turning in -->
+              <section class="sec mis" id="s-mis" data-tone="dark">
+                <h1 class="mis-h" data-layer="headline" data-depth="0.74" data-shadow="0,0.16,14" data-rv="0" style="--lab-x:300px">Enhanced<br>Mission<br>Assurance</h1>
+                <div class="rule mis-r" style="top:462px" data-layer="rule" data-depth="0.18"><i class="dash"></i></div>
+                <h2 class="mis-li" style="top:493px" data-layer="line" data-depth="0.56" data-rv="0">Augment Your Strength</h2>
+                <div class="rule mis-r" style="top:571.8px" data-layer="rule" data-depth="0.18"><i class="dash"></i></div>
+                <h2 class="mis-li" style="top:602.8px" data-layer="line" data-depth="0.56" data-rv="0">2x Your Endurance</h2>
+                <div class="rule mis-r" style="top:681.5px" data-layer="rule" data-depth="0.18"><i class="dash"></i></div>
+                <h2 class="mis-li" style="top:712.5px" data-layer="line" data-depth="0.56" data-rv="0">Protect Your Operators</h2>
+                <div class="rule mis-r" style="top:791.3px" data-layer="rule" data-depth="0.18"><i class="dash"></i></div>
+                <div class="kside" data-layer="knee render" data-depth="0.9" data-shadow="0.06,0.55,22" style="--lab-x:220px;--lab-y:100px">
+                  <img class="kside-rot" data-turn="knee" src="roam-robotics-card-src/img/knee-side.webp" alt="">
+                </div>
+              </section>
+
+              <!-- contact us: the form and the treadmill loop -->
+              <section class="sec con" id="s-con" data-tone="dark">
+                <div class="c-film" data-layer="film" data-depth="0.1" style="--lab-x:20px;--lab-y:20px">
+                  <img data-slide="contact" src="roam-robotics-card-src/img/contact-a.webp" alt="">
+                  <img data-slide="contact" src="roam-robotics-card-src/img/contact-b.webp" alt="" style="opacity:0">
+                </div>
+                <div class="form" data-layer="form" data-depth="0.2" data-shadow="0,0.5,24,1" style="--lab-x:420px;--lab-y:20px">
+                  <div class="f-head" data-rv="0">
+                    <h1 data-layer="headline" data-depth="0.74" data-shadow="0.2,0.22,12" style="--lab-x:330px">Contact us</h1>
+                    <span data-layer="body copy" data-depth="0.5" style="--lab-x:360px;--lab-y:-4px">Sign up to request a demo or to learn more about Forge.</span>
+                  </div>
+                  <div class="f-in" data-layer="fields" data-depth="0.4" data-rv="1" style="--lab-x:380px;--lab-y:-34px">
+                    <div class="fld" style="left:48px;top:204px;width:290px"><span>First Name</span></div>
+                    <div class="fld" style="left:358px;top:204px;width:290px"><span>Last Name</span></div>
+                    <div class="fld" style="left:48px;top:265px;width:600px"><span>Email (required)</span></div>
+                    <div class="fld" style="left:48px;top:326px;width:600px"><span>Phone Number</span></div>
+                    <div class="fld" style="left:48px;top:387px;width:600px"><span>Message</span></div>
+                    <h3 class="f-q">Which application are you interested in?</h3>
+                    <span class="radio" style="top:495px"><i></i>Military</span>
+                    <span class="radio" style="top:528px"><i></i>Medical</span>
+                  </div>
+                  <span class="send" data-layer="button" data-depth="0.64" data-shadow="0.4,0.3,8,1" data-rv="1" style="--lab-x:20px">Send</span>
+                </div>
+              </section>
+
+              <!-- the footer -->
+              <section class="sec foot" id="s-foot" data-tone="dark">
+                <i class="ft-rule"></i>
+                <img class="ft-logo" src="roam-robotics-card-src/img/logo.svg" alt="" data-layer="logo" data-depth="0.42" style="--lab-x:130px">
+                <span class="ft-c" data-layer="legal" data-depth="0.3" style="--lab-x:250px">Roam Robotics © 2024</span>
+                <span class="ft-d" data-layer="legal" data-depth="0.24" style="--lab-x:250px">The appearance of U.S. Department of Defense (DoD) visual information does not imply or constitute DoD endorsement.</span>
+                <div class="ft-soc" data-layer="social" data-depth="0.46" style="--lab-x:-120px;--lab-y:30px">
+                  <img src="roam-robotics-card-src/img/icon-facebook.svg" alt=""><img src="roam-robotics-card-src/img/icon-instagram.svg" alt=""><img src="roam-robotics-card-src/img/icon-linkedin.svg" alt=""><img src="roam-robotics-card-src/img/icon-twitter.svg" alt=""><img src="roam-robotics-card-src/img/icon-youtube.svg" alt="">
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Roam Robotics</h3>
+      <p><span>Health</span><span>Web design</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="roam-robotics-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the studio's way: defineParams from
+   /shared/params/params.js. Embedded on the site there is no panel and
+   nothing is fetched, so the module is only loaded here, and only when served
+   (opened from disk there is no studio to load it from). */
+const card = window.roamCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const D = card.values;
+    const TOOL = 'roam robotics work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.4, 2.5, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        scrub: [D['drag.scrub'], 0, 6, 0.1],               // page px per px of a sideways drag (right = down the page)
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: D['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

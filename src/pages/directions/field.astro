@@ -1,0 +1,27 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import Section from "@/components/wrapper/Section.astro";
+import HeroLines from "@/components/section/HeroLines.astro";
+import WorkField from "@/components/section/WorkField.astro";
+import WorkIndex from "@/components/section/WorkIndex.astro";
+import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
+import ClientWall from "@/components/content/ClientWall.astro";
+import Statement from "@/components/content/Statement.astro";
+---
+
+<Layout title="Field" logoHidden noindex>
+  {/* Round two home: the Lines intro, then the work comes at you (the flythrough); kept as a direction now the wheel leads */}
+  <HeroLines heading="" />
+  <WorkField />
+  {/* Straight after the work: the awards, in the 3D chrome laurels, and the top clients */}
+  <Section paddingTop="large">
+    <AwardsLaurels />
+  </Section>
+  <Section paddingTop="medium">
+    <ClientWall heading="Top clients" />
+  </Section>
+  <WorkIndex heading="Selected work" limit={12} paddingTop="large" />
+  <Section paddingTop="large" paddingBottom="large">
+    <Statement />
+  </Section>
+</Layout>

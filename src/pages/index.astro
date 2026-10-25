@@ -1,26 +1,29 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
 import Section from "@/components/wrapper/Section.astro";
-import HeroPortal from "@/components/section/HeroPortal.astro";
+import HeroLines from "@/components/section/HeroLines.astro";
+import WorkWheel from "@/components/section/WorkWheel.astro";
 import WorkIndex from "@/components/section/WorkIndex.astro";
-import Statement from "@/components/content/Statement.astro";
-import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
 import ClientWall from "@/components/content/ClientWall.astro";
-import DirectionSwitch from "@/components/global/DirectionSwitch.astro";
+import Statement from "@/components/content/Statement.astro";
+import { HOME } from "@/data/work.js";
 ---
 
 <Layout logoHidden>
-  {/* Direction one, Portal: the mark is a window, and the scroll goes through it */}
-  <HeroPortal />
-  <WorkIndex heading="Selected work" filter={false} limit={12} moreHref="/work" paddingTop="medium" />
+  {/* Round four (Hunter, Oct 23: "make sure the hero is the new one"): the Lines intro, then the
+      wheel hero (the headline, the laurels, the clients' logos) with the work coming up from below */}
+  <HeroLines heading="" />
+  <WorkWheel only={HOME} />
   <Section paddingTop="large">
+    <ClientWall heading="Top clients" />
+  </Section>
+  <WorkIndex heading="Selected work" only={HOME} paddingTop="large" />
+  <Section paddingTop="large" paddingBottom="large">
     <Statement />
   </Section>
-  <Section paddingTop="medium">
-    <AwardsLaurels />
-  </Section>
-  <Section paddingTop="medium" paddingBottom="large">
-    <ClientWall />
-  </Section>
-  <DirectionSwitch slot="after" />
 </Layout>
+
+<script>
+  // the homepage's Params: the intro, the hover, the wheel, the laurels (src/data/home-look.js)
+  import "@/scripts/home-params.js";
+</script>

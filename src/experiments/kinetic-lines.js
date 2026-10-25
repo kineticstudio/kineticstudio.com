@@ -1,7 +1,7 @@
 /* Kinetic lines.
 
    The mark is five strokes: a straight bar, then four arcs that bow further
-   and further to the left. Measured off src/assets/brand/mark-ink.svg, each
+   and further to the left. Measured off src/assets/brand/mark.svg, each
    arc is a band between two concentric circles, cut flat at the top and the
    bottom, 101 units thick on a 1148-unit height. The five sit 189.5 apart at
    their middles and their left edges bow by 0, 53.7, 103, 170 and 265.6.

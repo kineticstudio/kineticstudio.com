@@ -125,6 +125,54 @@
     "ground": "#eed3fe",
     "video": true
   },
+  "claude-community": {
+    "w": 1280,
+    "h": 780,
+    "ground": "#cc7057",
+    "video": true
+  },
+  "superinterviews": {
+    "w": 1272,
+    "h": 800,
+    "ground": "#262626",
+    "video": true
+  },
+  "rylo": {
+    "w": 1280,
+    "h": 782,
+    "ground": "#eee7e1",
+    "video": true
+  },
+  "elio": {
+    "w": 1280,
+    "h": 768,
+    "ground": "#271211",
+    "video": true
+  },
+  "dorm-room-fund": {
+    "w": 1280,
+    "h": 790,
+    "ground": "#3c324b",
+    "video": true
+  },
+  "client-buck-mason": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#d1cdc2",
+    "video": true
+  },
+  "client-superhuman": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#374541",
+    "video": true
+  },
+  "moses": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#101010",
+    "video": true
+  },
   "flow-hero": {
     "w": 1280,
     "h": 720,

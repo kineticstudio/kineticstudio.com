@@ -1,0 +1,226 @@
+---
+// The clients' real logos, from the proposals (kinetic-contracts
+// template/assets/logos), recoloured to the text colour so they sit on any theme.
+const files = import.meta.glob<string>("../../assets/clients/*.svg", { query: "?raw", import: "default", eager: true });
+// Oct 25: Baseten added ("let's also add Baseten")
+const ORDER = ["anthropic", "a16z", "google", "superhuman", "baseten", "wispr-flow", "new-era", "buck-mason"];
+const NAMES: Record<string, string> = {
+  anthropic: "Anthropic", a16z: "Andreessen Horowitz", google: "Google", superhuman: "Superhuman",
+  "wispr-flow": "Wispr Flow", "new-era": "New Era", "buck-mason": "Buck Mason", baseten: "Baseten",
+};
+// Hunter, Oct 24: "If I hover on any of these logos, let's show a little
+// floating loop video of the work that I did for them." The loop for each
+// (public/media, cut by scripts/build-media.mjs); a16z and Google have no
+// recording of the work yet, so they stay plain.
+const PREVIEW: Record<string, string> = {
+  anthropic: "claude", "wispr-flow": "wispr-flow", "new-era": "new-era", "buck-mason": "client-buck-mason", superhuman: "client-superhuman",
+};
+// cap height of each mark, so a wordmark and a monogram read the same size
+const HEIGHT: Record<string, number> = { a16z: 1.5, google: 1.7, superhuman: 1.45, "wispr-flow": 1.7, "buck-mason": 1.2, "new-era": 1.25, anthropic: 1, baseten: 1.45 };
+const logos = ORDER.map((id) => {
+  const raw = files[`../../assets/clients/${id}.svg`] ?? "";
+  // drop comments and clip paths (their ids would repeat in the marquee's second copy)
+  const svg = raw
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<defs>[\s\S]*?<\/defs>/g, "")
+    .replace(/\sclip-path="[^"]*"/g, "")
+    .replace(/<svg /, `<svg role="img" aria-label="${NAMES[id]}" `);
+  return { id, name: NAMES[id], svg };
+});
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Label over the logos; empty for none. */
+  heading?: string;
+  /** Run as a marquee (true) or sit still in one row (false). */
+  marquee?: boolean;
+  /** Utility classes. */
+  class?: string;
+}
+
+const { render = true, heading = "", marquee = true, class: className } = Astro.props;
+---
+
+{
+  render && (
+    <div class:list={["logos_wrap", marquee && "is-marquee", className]}>
+      {heading && <p class="logos_label text-style-label">{heading}</p>}
+      {/* the logos fade in and out at the edges, the label stays clear of it */}
+      <div class="logos_window">
+        <div class="logos_row">
+          {(marquee ? [0, 1] : [0]).map((copy) => (
+            <ul class="logos_track" aria-hidden={copy ? "true" : undefined}>
+              {logos.map((l) => (
+                <li class="logos_item" style={`--h:${HEIGHT[l.id]}rem`} data-preview={PREVIEW[l.id] ? `/media/${PREVIEW[l.id]}` : undefined} set:html={l.svg} />
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+<script>
+  /* The floating loop: one small player for the page, eased toward the
+     pointer while it is over a logo with work behind it, and the strip holds
+     still under the pointer meanwhile. Pointers that can hover only. */
+  if (matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    const items = document.querySelectorAll<HTMLElement>(".logos_item[data-preview]");
+    if (items.length) {
+      const float = document.createElement("div");
+      float.className = "logos_float";
+      float.setAttribute("aria-hidden", "true");
+      const video = document.createElement("video");
+      Object.assign(video, { muted: true, loop: true, playsInline: true, preload: "none" });
+      float.append(video);
+      document.body.append(float);
+      const at = { x: 0, y: 0 }, to = { x: 0, y: 0 };
+      let raf = 0, on = false;
+      const follow = () => {
+        at.x += (to.x - at.x) * 0.18;
+        at.y += (to.y - at.y) * 0.18;
+        float.style.transform = `translate3d(${at.x.toFixed(1)}px, ${at.y.toFixed(1)}px, 0)`;
+        raf = on || Math.abs(to.x - at.x) + Math.abs(to.y - at.y) > 0.5 ? requestAnimationFrame(follow) : 0;
+      };
+      // above and to the right of the pointer, kept inside the window
+      const aim = (e: PointerEvent) => {
+        const w = float.offsetWidth, h = float.offsetHeight;
+        to.x = Math.min(innerWidth - w - 12, Math.max(12, e.clientX + 18));
+        to.y = Math.max(12, e.clientY - h - 18);
+      };
+      for (const item of items) {
+        item.addEventListener("pointerenter", (e) => {
+          const src = `${item.dataset.preview}.mp4`;
+          if (!video.src.endsWith(src)) {
+            video.poster = `${item.dataset.preview}.jpg`;
+            video.src = src;
+          }
+          video.play().catch(() => {});
+          aim(e);
+          if (!on) Object.assign(at, to);
+          on = true;
+          float.classList.add("is-on");
+          item.closest(".logos_wrap")?.classList.add("is-held");
+          if (!raf) raf = requestAnimationFrame(follow);
+        });
+        item.addEventListener("pointermove", aim);
+        item.addEventListener("pointerleave", () => {
+          on = false;
+          float.classList.remove("is-on");
+          item.closest(".logos_wrap")?.classList.remove("is-held");
+          video.pause();
+        });
+      }
+    }
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .logos_wrap {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      width: 100%;
+      min-width: 0;
+      &.is-marquee .logos_window {
+        overflow: hidden;
+        mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+      }
+    }
+    .logos_window {
+      min-width: 0;
+    }
+    .logos_label {
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .logos_row {
+      display: flex;
+      justify-content: center;
+    }
+    .logos_wrap.is-marquee .logos_row {
+      justify-content: flex-start;
+      width: max-content;
+    }
+    .logos_track {
+      display: flex;
+      align-items: center;
+      gap: clamp(2.5rem, 5vw, 4.5rem);
+      margin: 0;
+      padding-right: clamp(2.5rem, 5vw, 4.5rem);
+      color: var(--text);
+    }
+    .logos_wrap:not(.is-marquee) .logos_track {
+      flex-wrap: wrap;
+      justify-content: center;
+      padding-right: 0;
+      row-gap: var(--space-4);
+    }
+    .logos_wrap.is-marquee .logos_track {
+      animation: logos-run 40s linear infinite;
+    }
+    /* the strip holds still while a logo shows its work */
+    .logos_wrap.is-held .logos_track {
+      animation-play-state: paused;
+    }
+    .logos_item[data-preview] {
+      cursor: pointer;
+      transition: opacity 0.25s ease;
+    }
+    .logos_wrap.is-held .logos_item[data-preview]:hover {
+      opacity: 1 !important;
+    }
+    .logos_float {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 60;
+      width: 17rem;
+      aspect-ratio: 16 / 10;
+      overflow: hidden;
+      border-radius: var(--radius-media);
+      background: var(--dark-800);
+      box-shadow: 0 1.5rem 3rem -1.25rem rgb(0 0 0 / 0.7);
+      pointer-events: none;
+      opacity: 0;
+      scale: 0.86;
+      transform-origin: 0 100%;
+      transition: opacity 0.25s ease, scale 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+      &.is-on {
+        opacity: 1;
+        scale: 1;
+      }
+      & video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+    .logos_item {
+      display: flex;
+      align-items: center;
+      flex: none;
+      height: var(--h);
+      opacity: 0.85;
+      & svg {
+        display: block;
+        width: auto;
+        height: 100%;
+      }
+    }
+    @keyframes logos-run {
+      to {
+        translate: -100% 0;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .logos_wrap.is-marquee .logos_track {
+        animation: none;
+      }
+    }
+  }
+</style>

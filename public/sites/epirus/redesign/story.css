@@ -1,0 +1,1675 @@
+/* Epirus homepage, round two: the storytelling components in the medium and
+   deep versions. Each is assembled from Epirus's existing Webflow classes;
+   these are the few new classes they need on top. Nothing here restyles an
+   existing class, so the rest of their site is untouched. Loaded by the
+   medium, full-bleed and deep pages only. */
+
+/* ---------- 3D stage (both versions) ---------- */
+
+.r2-stage { position: absolute; inset: 0; overflow: hidden; background: #f3f3f1; }
+.r2-stage canvas { display: block; width: 100%; height: 100%; }
+.r2-still { display: none; width: 100%; height: auto; background: #f3f3f1; }
+
+/* ---------- medium and full bleed: the architecture in one view ---------- */
+
+.r2-layers { --r2-gap: 2rem; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3rem var(--r2-gap); }
+.r2-iso.r2-iso-large { width: 6rem; }
+@media screen and (max-width: 991px) { .r2-layers { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media screen and (max-width: 479px) { .r2-layers { grid-template-columns: minmax(0, 1fr); } }
+
+/* an animated icon from the Epirus icon system, at their icons' size */
+.r2-iso { width: 3rem; flex: none; }
+/* round two draws the threat grid's icons at twice the family's size, so
+   their half-pixel lines land on whole pixels and they read (Hunter's rule:
+   icons crisp, their family drawn at twice the size); :where keeps the Point
+   Defense cards' own size */
+:where(html[data-round="two"]) .benefits_icon-wrapper .r2-iso { width: 6rem; }
+
+/* how the layers work together: a dashed hand-off from each icon to the
+   next, named, with a yellow signal running through them in order */
+.r2-layer { display: flex; flex-direction: column; }
+.r2-layer-art { display: flex; align-items: center; }
+/* every dashed line: square 2px dashes with a 2px gap, gold when it runs
+   from one piece to another (the island draws its own the same way) */
+:root { --r2-dash: 2px; --r2-route: #b8900a; }
+.r2-flow {
+  position: relative;
+  flex: 1;
+  height: var(--r2-dash);
+  margin: 0 calc(0.75rem - var(--r2-gap)) 0 1rem;
+  background: linear-gradient(90deg, var(--r2-route) 50%, transparent 0) 0 0 / calc(var(--r2-dash) * 2) var(--r2-dash) repeat-x;
+}
+.r2-flow::after {
+  content: "";
+  position: absolute;
+  right: 1px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border: solid var(--r2-route);
+  border-width: var(--r2-dash) var(--r2-dash) 0 0;
+  transform: translateY(-50%) rotate(45deg);
+}
+.r2-flow-label {
+  position: absolute;
+  left: 50%;
+  bottom: 0.75rem;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  color: rgba(15, 14, 18, 0.62);
+  font: 500 0.6875rem/1 Inter, Arial, sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.r2-flow-packet {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 7px;
+  height: 7px;
+  background: var(--background-color--background-alternate);
+  box-shadow: 0 0 0 1px #0f0e12;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  animation: r2-packet 6s linear calc(var(--i) * 1.6s) infinite;
+}
+@keyframes r2-packet {
+  0% { left: 0; opacity: 0; }
+  4% { left: 0; opacity: 1; animation-timing-function: cubic-bezier(0.45, 0, 0.3, 1); }
+  22% { left: 100%; opacity: 1; }
+  26%, 100% { left: 100%; opacity: 0; }
+}
+@keyframes r2-packet-down {
+  0% { top: 0; opacity: 0; }
+  4% { top: 0; opacity: 1; animation-timing-function: cubic-bezier(0.45, 0, 0.3, 1); }
+  22% { top: 100%; opacity: 1; }
+  26%, 100% { top: 100%; opacity: 0; }
+}
+/* two columns: the hand-off from the second layer would point off the row */
+@media screen and (max-width: 991px) {
+  .r2-layer:nth-child(2n) .r2-flow { visibility: hidden; }
+}
+/* one column: each hand-off runs down from its layer's copy to the next */
+@media screen and (max-width: 479px) {
+  .r2-layer-art { display: contents; }
+  .r2-layers .r2-layer .r2-flow {
+    order: 1;
+    flex: none;
+    visibility: visible;
+    width: var(--r2-dash);
+    height: 2.5rem;
+    margin: 1.5rem 0 0 3rem;
+    background: linear-gradient(180deg, var(--r2-route) 50%, transparent 0) 0 0 / var(--r2-dash) calc(var(--r2-dash) * 2) repeat-y;
+  }
+  .r2-flow::after { right: auto; top: auto; left: 0; bottom: 1px; transform: translateX(-50%) rotate(135deg); }
+  .r2-flow-label { left: 1rem; bottom: auto; top: 50%; transform: translateY(-50%); }
+  .r2-flow-packet { top: 0; left: 0; animation-name: r2-packet-down; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .r2-flow-packet { animation: none; }
+}
+html[data-motion="still"] .r2-flow-packet { animation: none; }
+
+/* ---------- medium and full bleed: the platforms, three doors ---------- */
+
+.r2-platforms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.r2-platform {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius--card);
+  background: var(--background-color--background-white);
+  color: inherit;
+  text-decoration: none;
+}
+.r2-platform-media { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: var(--background-color--background-secondary); }
+.r2-platform-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.r2-platform-body { display: flex; flex: 1; flex-direction: column; align-items: flex-start; padding: 1.5rem 1.5rem 1.75rem; }
+.r2-platform-body p { color: var(--text-color--text-secondary); }
+.r2-platform-action { margin-top: auto; }
+.r2-platform:hover .r2-platform-video { transform: scale(1.04); }
+.r2-platform:hover .r2-platform-action { background-color: var(--background-color--background-primary); color: var(--text-color--text-alternate); }
+.r2-platform:focus-visible { outline: 1px solid #0f0e12; outline-offset: 4px; }
+@media screen and (max-width: 991px) {
+  .r2-platforms { grid-template-columns: minmax(0, 1fr); }
+  .r2-platform { flex-direction: row; }
+  .r2-platform-media { flex: 0 0 50%; aspect-ratio: auto; min-height: 15rem; }
+  .r2-platform-body { justify-content: center; }
+  .r2-platform-action { margin-top: 0; }
+}
+@media screen and (max-width: 479px) {
+  .r2-platform { flex-direction: column; }
+  .r2-platform-media { flex: none; aspect-ratio: 16 / 9; min-height: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .r2-platform-video { transition: none; }
+}
+
+/* ---------- isometric: the system, assembled piece by piece ---------- */
+
+/* the drawing: a canvas from iso-world.js, with its labels and number
+   badges laid over it as text */
+.r2-sys-art { position: relative; aspect-ratio: var(--r2-sys-aspect, 1.1); overflow: hidden; }
+.r2-sys-art canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.r2-sys-overlay { position: absolute; inset: 0; pointer-events: none; }
+.r2-sys-still { display: block; width: 100%; height: auto; aspect-ratio: var(--r2-sys-aspect, 1.1); }
+/* the pinned drawing drifts in toward each piece, so its edges fade rather
+   than cut */
+.r2-sys-main .r2-sys-art {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent), linear-gradient(180deg, transparent, #000 5%, #000 95%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent), linear-gradient(180deg, transparent, #000 5%, #000 95%, transparent);
+  mask-composite: intersect;
+}
+.r2-sys-label {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 0.45rem));
+  padding: 0.25rem 0.375rem;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.86);
+  color: rgba(15, 14, 18, 0.7);
+  font: 500 0.6875rem/1 Inter, Arial, sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.r2-sys-badge {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  transform: translate(-50%, -50%);
+  background: #0f0e12;
+  color: #fff;
+  font: 600 0.6875rem/1 Inter, Arial, sans-serif;
+}
+
+/* the step list: a number in a square, the layer, its copy under it while
+   it is the one landing, and a dotted line down to the next layer, on the
+   squares' centre line */
+.r2-sys { --r2-chip: 1.625rem; position: relative; background: var(--background-color--background-white); }
+.r2-sys-grid { display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.5fr); gap: 2rem 3.5rem; align-items: center; }
+.r2-sys-steps { margin: 0; padding: 0; list-style: none; }
+.r2-sys-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0.42;
+  transition: opacity 0.3s ease;
+}
+.r2-sys-tab:focus { outline: none; }
+.r2-sys-tab:focus-visible { outline: 1px solid #0f0e12; outline-offset: 4px; }
+.r2-sys-step.is-active .r2-sys-tab, .r2-sys-step.is-done .r2-sys-tab { opacity: 1; }
+.r2-sys-num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--r2-chip);
+  height: var(--r2-chip);
+  background: #0f0e12;
+  color: #fff;
+  font: 600 0.8125rem/1 Inter, Arial, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+/* a layer turns yellow in the list as its piece lands in the drawing */
+.r2-sys-step.is-active .r2-sys-num, .r2-sys-step.is-done .r2-sys-num { background: var(--background-color--background-alternate); color: #0f0e12; }
+.r2-sys-title { font-size: 1.5rem; font-weight: 500; line-height: 1.2; }
+.r2-sys-copy { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.5s cubic-bezier(0.3, 1, 0.4, 1); }
+.r2-sys-copy > div { overflow: hidden; }
+.r2-sys-copy p { max-width: 26rem; padding: 0.75rem 0 0.25rem calc(var(--r2-chip) + 0.875rem); color: var(--text-color--text-secondary); }
+.r2-sys-step.is-active .r2-sys-copy { grid-template-rows: 1fr; }
+.r2-sys-handoff { position: relative; height: 2.5rem; }
+.r2-sys-handoff::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--r2-chip) / 2 - var(--r2-dash) / 2);
+  top: 0.45rem;
+  bottom: 0.45rem;
+  width: var(--r2-dash);
+  background: linear-gradient(180deg, var(--r2-route) 50%, transparent 0) 0 0 / var(--r2-dash) calc(var(--r2-dash) * 2) repeat-y;
+}
+.r2-sys-main { display: flex; justify-content: center; }
+.r2-sys-main .r2-sys-art { width: 100%; }
+.r2-sys-step-art { display: none; }
+
+/* live: one pinned screen while the system assembles */
+.r2-sys.is-live { height: 100vh; height: 100svh; }
+.r2-sys.is-live > .padding-global, .r2-sys.is-live .container-large, .r2-sys.is-live .r2-sys-grid { height: 100%; }
+.r2-sys.is-live .r2-sys-main .r2-sys-art { width: min(100%, calc((100svh - 5rem) * var(--r2-sys-aspect-n, 1.1))); }
+
+/* stacked (reduced motion): each step is a row with its own still drawing */
+.r2-sys:not(.is-live) .r2-sys-grid { display: block; padding: 2rem 0 6rem; }
+.r2-sys:not(.is-live) .r2-sys-main { display: none; }
+.r2-sys:not(.is-live) .r2-sys-step { display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.5fr); grid-template-rows: auto auto 1fr; column-gap: 3.5rem; align-items: start; }
+.r2-sys:not(.is-live) .r2-sys-step-art { display: block; grid-column: 2; grid-row: 1 / span 3; }
+.r2-sys:not(.is-live) .r2-sys-tab { cursor: default; }
+.r2-sys:not(.is-live) .r2-sys-handoff { grid-column: 1; height: 3rem; }
+.r2-sys:not(.is-live) .r2-sys-step + .r2-sys-step { margin-top: 1rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .r2-sys-copy, .r2-sys-tab, .r2-sys-num { transition: none; }
+}
+@media screen and (max-width: 991px) {
+  .r2-sys-grid { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr); gap: 1.5rem 2rem; }
+  .r2-sys-title { font-size: 1.25rem; }
+}
+/* phones: the drawing on top, the list under it */
+@media screen and (max-width: 767px) {
+  .r2-sys.is-live .r2-sys-grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; align-content: start; gap: 0.75rem; padding-top: 4.75rem; }
+  .r2-sys.is-live .r2-sys-main { order: -1; }
+  .r2-sys.is-live .r2-sys-main .r2-sys-art { width: min(100%, calc(46svh * var(--r2-sys-aspect-n, 1.1))); }
+  .r2-sys { --r2-chip: 1.375rem; }
+  .r2-sys.is-live .r2-sys-handoff { height: 1.25rem; }
+  .r2-sys.is-live .r2-sys-handoff::before { top: 0.15rem; bottom: 0.15rem; }
+  .r2-sys-title { font-size: 1.125rem; }
+  .r2-sys-copy p { padding: 0.5rem 0 0.25rem calc(var(--r2-chip) + 0.875rem); font-size: 0.9375rem; }
+  .r2-sys-label { padding: 0.1875rem 0.25rem; font-size: 0.5625rem; }
+  .r2-sys-badge { width: 1rem; height: 1rem; font-size: 0.5625rem; }
+  .r2-sys:not(.is-live) .r2-sys-step { display: block; }
+  .r2-sys:not(.is-live) .r2-sys-step-art { margin-top: 1rem; }
+}
+
+/* ---------- point defense: the hero ---------- */
+
+/* light, so their navigation shows its black bar from the start (their script
+   does that on any page without a dark hero); the line on the left, the
+   network of critical points on the right */
+.r2-pd-hero { position: relative; padding-top: 4.5rem; background: var(--background-color--background-white); }
+.r2-pd-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.4fr);
+  gap: 2rem 3rem;
+  align-items: center;
+  min-height: calc(100svh - 4.5rem);
+  padding: 2.5rem 0 3.5rem;
+}
+.r2-pd-hero-copy { max-width: 32rem; }
+.r2-pd-hero-art { position: relative; }
+.r2-net-art { width: 100%; }
+@media screen and (max-width: 991px) {
+  .r2-pd-hero-grid { grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 3rem 0 2.5rem; }
+}
+@media screen and (max-width: 767px) {
+  .r2-pd-hero-grid { padding-top: 2rem; }
+  .r2-net-art .r2-sys-label { font-size: 0.5625rem; padding: 0.1875rem 0.25rem; }
+}
+
+/* ---------- deep: the film ---------- */
+
+.r2-film { position: relative; z-index: 1; background: #f3f3f1; }
+.r2-film-stage { position: absolute; inset: 0; }
+.r2-film-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(243, 243, 241, 0.82), rgba(243, 243, 241, 0.42) 36%, rgba(243, 243, 241, 0) 60%);
+}
+
+/* live: one viewport, pinned while the chapters play */
+.r2-film.is-live { height: 100vh; height: 100svh; overflow: hidden; }
+.r2-film.is-live .r2-chapters { position: absolute; inset: 0; }
+.r2-film.is-live .r2-chapter { position: absolute; inset: 0; opacity: 0; }
+.r2-film.is-live .r2-chapter.is-hero { opacity: 1; }
+.r2-film.is-live .r2-chapter:not(.is-active) { pointer-events: none; }
+
+/* stacked (reduced motion): each chapter is its own full-height frame */
+.r2-film:not(.is-live) .r2-film-stage { display: none; }
+.r2-film:not(.is-live) .r2-chapter { position: relative; min-height: 100vh; min-height: 100svh; display: flex; align-items: center; overflow: hidden; }
+.r2-film:not(.is-live) .r2-chapter > .r2-still { display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.r2-film:not(.is-live) .r2-chapter::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(243, 243, 241, 0.82), rgba(243, 243, 241, 0.42) 36%, rgba(243, 243, 241, 0) 60%); }
+.r2-film:not(.is-live) .r2-chapter > .padding-global { width: 100%; }
+.r2-film .r2-chapter > .padding-global { position: relative; z-index: 1; } /* above the scrims */
+
+/* the opening frame's headline runs the full width along the bottom */
+.r2-chapter.is-hero::before {
+  content: "";
+  position: absolute;
+  inset: 45% 0 0 0;
+  pointer-events: none;
+  background: linear-gradient(0deg, rgba(243, 243, 241, 0.86), rgba(243, 243, 241, 0.5) 55%, rgba(243, 243, 241, 0));
+}
+
+/* the chapter rail: their table-of-contents link style on a light backing */
+.r2-film-rail {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: 2.5rem;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem 1rem 0.75rem 0.25rem;
+  border-radius: var(--radius--card);
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transform: translateY(-50%);
+}
+.r2-film-rail .home-content_link {
+  margin-left: 0;
+  border-width: 0 0 0 2px;
+  background: none;
+  color: var(--link-color--link-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.r2-film-rail { transition: opacity 0.4s ease, visibility 0s linear 0s; }
+.r2-film[data-chapter="0"] .r2-film-rail { opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0s linear 0.4s; }
+.r2-film:not(.is-live) .r2-film-rail { display: none; }
+
+@media screen and (max-width: 991px) {
+  .r2-film-rail { display: none; }
+}
+@media screen and (max-width: 767px) {
+  /* phones: copy sits at the top, the scene below it */
+  .r2-film-scrim,
+  .r2-film:not(.is-live) .r2-chapter::after {
+    background: linear-gradient(180deg, rgba(243, 243, 241, 0.9), rgba(243, 243, 241, 0.55) 42%, rgba(243, 243, 241, 0) 64%);
+  }
+  .r2-film .r2-chapter:not(.is-hero) .hero_content { align-items: flex-start; height: auto; padding-top: 6.5rem; }
+  .r2-film:not(.is-live) .r2-chapter { align-items: flex-start; }
+}
+
+/* ---------- full bleed: the architecture story across the viewport ---------- */
+
+.r2-arch { position: relative; z-index: 1; background: #f3f3f1; }
+.r2-arch-stage { position: absolute; inset: 0; }
+/* the scene rises out of the white section above it and settles into the
+   light brown one below; full-bleed.js eases the top edge back once the scene
+   fills the screen and brings the bottom in as it leaves */
+.r2-arch-stage::before,
+.r2-arch-stage::after { content: ""; position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; }
+.r2-arch-stage::before {
+  top: 0;
+  height: 34%;
+  opacity: var(--r2-edge-top, 1);
+  background: linear-gradient(180deg, #fff, rgba(255, 255, 255, 0.84) 20%, rgba(255, 255, 255, 0.5) 46%, rgba(255, 255, 255, 0.16) 74%, rgba(255, 255, 255, 0));
+}
+.r2-arch-stage::after {
+  bottom: 0;
+  height: 22%;
+  opacity: var(--r2-edge-bottom, 1);
+  background: linear-gradient(0deg, var(--background-color--light-brown), rgba(244, 243, 239, 0.55) 45%, rgba(244, 243, 239, 0));
+}
+.r2-arch-item { max-width: 25rem; }
+/* their sidebar heading, as a button */
+.r2-arch-tab {
+  display: block;
+  width: 100%;
+  margin: 0;
+  border-width: 0 0 0 2px;
+  background: none;
+  color: var(--link-color--link-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.r2-arch-tab .home-content_sidebar-heading-text { display: block; }
+.r2-arch-tab:focus { outline: none; }
+.r2-arch-tab:focus-visible { outline: 1px solid #0f0e12; outline-offset: 4px; }
+/* a firmer wash behind the tabs than the film needs, since copy sits over the scene longer here */
+.r2-arch .r2-film-scrim { background: linear-gradient(90deg, rgba(243, 243, 241, 0.94), rgba(243, 243, 241, 0.74) 32%, rgba(243, 243, 241, 0) 56%); }
+/* a layer's copy opens under its tab */
+.r2-arch-copy { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.5s cubic-bezier(0.3, 1, 0.4, 1); }
+.r2-arch-copy > div { overflow: hidden; }
+.r2-arch-copy p { padding: 0.625rem 0 0.375rem 0.625rem; color: var(--link-color--link-secondary); }
+.r2-arch-step.is-active .r2-arch-copy { grid-template-rows: 1fr; }
+
+/* live: one pinned viewport, the four layers as tabs over the scene */
+.r2-arch.is-live { height: 100vh; height: 100svh; overflow: hidden; }
+.r2-arch.is-live .r2-arch-steps { position: absolute; z-index: 2; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 1.125rem; }
+
+/* stacked (reduced motion): each layer is its own full-height frame */
+.r2-arch:not(.is-live) .r2-arch-stage { display: none; }
+.r2-arch:not(.is-live) .r2-arch-step { position: relative; min-height: 100vh; min-height: 100svh; display: flex; align-items: center; overflow: hidden; }
+.r2-arch:not(.is-live) .r2-arch-step > .r2-still { display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.r2-arch:not(.is-live) .r2-arch-step::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(243, 243, 241, 0.82), rgba(243, 243, 241, 0.42) 36%, rgba(243, 243, 241, 0) 60%); }
+.r2-arch:not(.is-live) .r2-arch-step > .padding-global { position: relative; z-index: 1; width: 100%; }
+.r2-arch:not(.is-live) .r2-arch-step:first-child::before,
+.r2-arch:not(.is-live) .r2-arch-step:last-child::before { content: ""; position: absolute; inset: 0 0 auto; z-index: 1; height: 34%; pointer-events: none; background: linear-gradient(180deg, #fff, rgba(255, 255, 255, 0.5) 46%, rgba(255, 255, 255, 0)); }
+.r2-arch:not(.is-live) .r2-arch-step:last-child::before { inset: auto 0 0; height: 22%; background: linear-gradient(0deg, var(--background-color--light-brown), rgba(244, 243, 239, 0)); }
+.r2-arch:not(.is-live) .r2-arch-copy { grid-template-rows: 1fr; }
+.r2-arch:not(.is-live) .r2-arch-tab { opacity: 1; border-left-color: var(--background-color--background-alternate); cursor: default; }
+
+@media (prefers-reduced-motion: reduce) {
+  .r2-arch-copy { transition: none; }
+}
+@media screen and (max-width: 767px) {
+  .r2-arch.is-live .r2-arch-steps { justify-content: flex-start; gap: 0.5rem; padding-top: 6rem; }
+  .r2-arch .r2-film-scrim,
+  .r2-arch:not(.is-live) .r2-arch-step::after {
+    background: linear-gradient(180deg, rgba(243, 243, 241, 0.9), rgba(243, 243, 241, 0.55) 45%, rgba(243, 243, 241, 0) 66%);
+  }
+  .r2-arch:not(.is-live) .r2-arch-step { align-items: flex-start; padding-top: 5rem; }
+}
+
+/* ---------- deep: platforms and proof, a stack of mega cards ---------- */
+
+/* a quiet dot grid and a few yellow pixels behind the stack */
+.r2-stack-section {
+  position: relative;
+  background-color: #f3f3f1;
+  background-image: radial-gradient(circle, rgba(15, 14, 18, 0.13) 1px, transparent 1.3px);
+  background-size: 14px 14px;
+}
+.r2-pixels { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.r2-pixel { position: absolute; width: 7px; height: 7px; background: var(--background-color--background-alternate); animation: r2-pixel 7s ease-in-out var(--d) infinite alternate; }
+@keyframes r2-pixel { to { transform: translate(10px, -14px); opacity: 0.35; } }
+
+.r2-stack { --card-h: min(50rem, calc(100svh - 3rem)); }
+.r2-mega + .r2-mega { margin-top: 2rem; }
+.r2-stack-section.is-stacking .r2-mega { position: sticky; top: calc((100svh - var(--card-h)) / 2); height: var(--card-h); }
+.r2-stack-section.is-stacking .r2-mega + .r2-mega { margin-top: 22vh; }
+.r2-mega-card {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.3fr);
+  gap: 2.5rem;
+  height: 100%;
+  padding: 2.5rem;
+  border-radius: var(--radius--card);
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(15, 14, 18, 0.06), 0 30px 60px -40px rgba(15, 14, 18, 0.35);
+  transform-origin: 50% 0%;
+  position: relative;
+}
+/* settling back: the card washes into the page rather than turning see-through */
+.r2-mega-card::after { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; background: #f3f3f1; opacity: var(--settle, 0); pointer-events: none; }
+.r2-mega-copy { display: flex; flex-direction: column; min-width: 0; }
+.r2-mega-eyebrow { display: flex; align-items: center; gap: 0.625rem; }
+.r2-glyph { width: 12px; height: 6px; background: linear-gradient(90deg, var(--background-color--background-alternate) 0 6px, #0f0e12 6px 12px); flex: none; }
+.r2-mega-list { margin: auto 0 0; padding: 2rem 0 0; list-style: none; display: grid; gap: 0.625rem; }
+.r2-mega-list li { display: flex; align-items: center; gap: 0.75rem; opacity: 0.45; transition: opacity 0.3s ease; }
+.r2-mega-list li::before { content: ""; width: 7px; height: 7px; background: currentColor; flex: none; }
+.r2-mega-list li.is-active { opacity: 1; }
+.r2-mega-list li.is-active::before { background: var(--background-color--background-alternate); box-shadow: 0 0 0 1px #0f0e12; }
+
+/* the gradient panel: soft blurred blobs, a film of grain */
+.r2-mega-art { position: relative; overflow: hidden; border-radius: calc(var(--radius--card) - 2px); background: var(--r2-base, #f6f2e6); isolation: isolate; }
+.r2-grad-energy { --r2-base: #ffe59b; }
+.r2-grad-signal { --r2-base: #e7eaec; }
+.r2-grad-ground { --r2-base: #f3eee2; }
+.r2-grad-proof { --r2-base: #1b1c1b; }
+.r2-blobs { position: absolute; inset: -10%; }
+.r2-blob { position: absolute; left: var(--x); top: var(--y); width: var(--s); aspect-ratio: 1; border-radius: 50%; background: var(--c); filter: blur(46px); animation: r2-drift 18s ease-in-out var(--d) infinite alternate; }
+@keyframes r2-drift { 50% { transform: translate(8%, 6%) scale(1.12); } 100% { transform: translate(-6%, 10%) scale(0.94); } }
+.r2-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.38;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1.6 -0.3'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>");
+}
+
+/* their Leonidas render, turned frame by frame */
+.r2-turntable { position: absolute; left: 3%; bottom: 3%; width: 68%; }
+.r2-ui-engage { top: 7%; bottom: auto; }
+.r2-turntable img { display: block; width: 100%; height: auto; }
+
+/* the small live interfaces */
+.r2-ui {
+  position: absolute;
+  right: 6%;
+  bottom: 8%;
+  width: min(88%, 23rem);
+  padding: 1rem 1.125rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: 0 24px 48px -28px rgba(15, 14, 18, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  color: #0f0e12;
+  font: 400 0.8125rem/1.35 Inter, Arial, sans-serif;
+}
+.r2-ui-tracks, .r2-ui-plan, .r2-ui-record { left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); }
+.r2-ui-head { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; font: 500 0.6875rem/1 Inter, Arial, sans-serif; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.7; }
+.r2-ui-head span:first-child { display: flex; align-items: center; gap: 0.4rem; }
+.r2-live { width: 6px; height: 6px; border-radius: 50%; background: #e0422f; animation: r2-live 1.2s ease-in-out infinite alternate; }
+@keyframes r2-live { to { opacity: 0.25; } }
+.r2-ui-row { display: grid; grid-template-columns: 4.25rem 1fr auto auto; align-items: center; gap: 0.625rem; padding: 0.5rem 0; border-top: 1px solid rgba(15, 14, 18, 0.08); }
+.r2-ui-dim { opacity: 0.55; }
+.r2-ui-foot { display: flex; justify-content: space-between; gap: 1rem; margin-top: 0.5rem; padding-top: 0.625rem; border-top: 1px solid rgba(15, 14, 18, 0.14); }
+.r2-chip { padding: 0.25rem 0.5rem; border-radius: 999px; font: 500 0.6875rem/1 Inter, Arial, sans-serif; background: rgba(15, 14, 18, 0.06); transition: background 0.25s ease, color 0.25s ease; }
+.r2-chip[data-state="tracking"] { background: #fff3c4; }
+.r2-chip[data-state="engaging"] { background: var(--background-color--background-alternate); animation: r2-live 0.5s ease-in-out infinite alternate; }
+.r2-chip[data-state="defeated"] { background: #0f0e12; color: #fff; }
+.r2-mag { display: flex; align-items: center; gap: 0.5rem; }
+.r2-mag i { position: relative; width: 4.5rem; height: 6px; border-radius: 3px; background: #0f0e12; overflow: hidden; }
+.r2-mag i::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 215, 72, 0.9), transparent); animation: r2-shimmer 1.8s linear infinite; }
+@keyframes r2-shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.r2-scope { width: 9rem; margin: 0 auto 0.5rem; }
+.r2-scope svg { display: block; width: 100%; height: auto; overflow: visible; }
+.r2-scope circle, .r2-scope path { fill: none; stroke: rgba(15, 14, 18, 0.22); stroke-width: 0.8; }
+.r2-sweep path { fill: rgba(255, 215, 72, 0.45); stroke: none; }
+.r2-blip { fill: #0f0e12; stroke: #ffd748; stroke-width: 1.2; }
+.r2-bar { width: 5rem; height: 6px; border-radius: 3px; background: rgba(15, 14, 18, 0.08); overflow: hidden; }
+.r2-bar i { display: block; height: 100%; background: #0f0e12; }
+.r2-map svg { display: block; width: 100%; height: auto; border-radius: 6px; background: #fbfaf6; }
+.r2-map-grid { fill: url(#r2g); }
+#r2g path { stroke: rgba(15, 14, 18, 0.08); stroke-width: 1; }
+.r2-route { fill: none; stroke: #0f0e12; stroke-width: 1.4; stroke-linecap: round; }
+.r2-cover { fill: rgba(255, 215, 72, 0.22); stroke: #e8b800; stroke-width: 1.2; stroke-dasharray: 3 3; }
+.r2-site { fill: #0f0e12; }
+.r2-pin { fill: #9a9c98; }
+.r2-pin.is-chosen { fill: #ffd748; stroke: #0f0e12; stroke-width: 1; }
+.r2-tally { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.5rem; }
+.r2-tally b { font: 500 2.75rem/1 Inter, Arial, sans-serif; letter-spacing: -0.02em; }
+.r2-check { width: 14px; height: 14px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(15, 14, 18, 0.3); transition: background 0.2s ease; }
+.r2-ui-row.is-done .r2-check { background: #0f0e12 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'><path d='M3.5 7.2l2.3 2.3 4.7-5' fill='none' stroke='%23ffd748' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / 14px no-repeat; box-shadow: none; }
+.r2-ui-record .r2-ui-row { grid-template-columns: 1fr auto auto; }
+
+/* progress squares on the right while the stack is on screen */
+.r2-stack-dots { position: fixed; right: 1.25rem; top: 50%; z-index: 5; display: grid; gap: 0.5rem; transform: translateY(-50%); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+.r2-stack-section.is-stacking .r2-stack-dots.is-on { opacity: 1; pointer-events: auto; }
+.r2-stack-dots button { width: 8px; height: 8px; padding: 0; border: 0; background: rgba(15, 14, 18, 0.18); cursor: pointer; }
+.r2-stack-dots button.is-active { background: #0f0e12; }
+
+@media screen and (max-width: 991px) {
+  .r2-mega-card { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 1.5rem; padding: 1.75rem; }
+  .r2-mega-list { display: none; }
+}
+@media screen and (max-width: 767px) {
+  .r2-mega-art { aspect-ratio: 4 / 5; }
+  .r2-ui { width: 90%; right: 5%; font-size: 0.75rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .r2-blob, .r2-pixel, .r2-live, .r2-mag i::after, .r2-chip[data-state="engaging"] { animation: none; }
+}
+
+/* ---------- island hero: the isometric system where the film was ---------- */
+/* Light: the island on their fog green, dark copy, and their navigation's
+   black bar from the start. hero-island.js draws the island (transparent) to
+   the right of the headline, with a line under it that says what is
+   happening. The lockup sits on the island's centre line; below 992 pixels
+   the island sits above it. */
+.section_hero.r2-island-hero { background-color: var(--base-color-brand--green); color: var(--text-color--text-primary); }
+.r2-island-hero .hero_background-image-wrapper.r2-hero-stage {
+  background: radial-gradient(56% 64% at 70% 50%, #e4ebe5 0%, var(--base-color-brand--green) 72%);
+}
+.r2-island-hero .hero_content.is-home { align-items: center; padding-top: 4.5rem; padding-bottom: 0; }
+.r2-island-hero .hero_content.is-home > div { position: relative; z-index: 1; max-width: 34rem; }
+.r2-island-hero .heading-style-h1.is-home { font-size: 5rem; line-height: 1.05; }
+.r2-island-hero .hero_sub-heading, .r2-island-hero .r2b-hero-line { margin-top: 0.75rem; }
+.r2b-hero-line { max-width: 30rem; }
+.r2-island-hero .button-group { margin-top: 0.75rem; }
+/* clear of the headline at every width: the page margin, the centred
+   container's offset, the headline's longest line and a gap */
+.r2-hero-art {
+  position: absolute; top: 0; right: 2vw; bottom: 0;
+  left: max(40%, calc(37rem + max(0px, (100% - 87.1875rem) / 2)));
+}
+.r2-hero-art canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  /* the swarm comes into view below the navigation bar, not at an edge */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 4.5rem, #000 7.5rem);
+  mask-image: linear-gradient(to bottom, transparent 4.5rem, #000 7.5rem);
+}
+/* the line under the island: a numbered square while a layer acts */
+.r2-hero-caption {
+  position: absolute; left: 0; right: 0; bottom: 2.25rem; z-index: 1;
+  display: flex; justify-content: center; align-items: center; gap: 0.75rem;
+  margin: 0; font-size: 1rem; line-height: 1.3; text-align: center;
+  transition: opacity 0.25s ease;
+}
+.r2-hero-caption.is-changing { opacity: 0; }
+.r2-hero-num {
+  flex: none; display: grid; place-items: center; width: 1.5rem; height: 1.5rem;
+  background: var(--background-color--background-alternate); color: #0f0e12;
+  font: 600 0.75rem/1 Inter, Arial, sans-serif;
+}
+.r2-hero-num:empty { display: none; }
+@media screen and (max-width: 991px) {
+  .r2-island-hero .hero_background-image-wrapper.r2-hero-stage {
+    background: radial-gradient(85% 46% at 50% 30%, #e4ebe5 0%, var(--base-color-brand--green) 72%);
+  }
+  .r2-island-hero .hero_content.is-home { align-items: flex-end; padding-bottom: 12vh; }
+  .r2-island-hero .heading-style-h1.is-home { font-size: 2.6rem; }
+  .r2-hero-art { left: 0; right: 0; bottom: 46%; }
+  .r2-hero-caption { bottom: 0.25rem; padding: 0 1.25rem; font-size: 0.9375rem; }
+}
+@media screen and (max-width: 479px) {
+  .r2-hero-art { bottom: 50%; }
+  .r2-island-hero .hero_content.is-home { padding-bottom: 9vh; }
+}
+
+/* ========== round two: the homepage and the Point Defense page ========== */
+/* The island explains; real footage and the public record prove. Every clip
+   below is Epirus's own footage of its hardware, and every record line links
+   to its release. */
+
+/* the hero's proof: one real clip and the result it shows, no box. The clip
+   is 16:9, with a playhead along its foot: a thin track, the part played in
+   yellow and a yellow square at the play position (r2.js sets --played) */
+.r2b-proof { display: inline-flex; align-items: center; gap: 0.875rem; margin-top: 2rem; color: inherit; text-decoration: none; }
+.r2b-proof-media { position: relative; flex: none; width: 8rem; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius--button); }
+.r2b-proof-media::after { content: ""; position: absolute; inset: 55% 0 0; background: linear-gradient(180deg, rgba(15, 14, 18, 0), rgba(15, 14, 18, 0.5)); pointer-events: none; }
+.r2b-playhead { position: absolute; z-index: 1; left: 0.5rem; right: 0.5rem; bottom: 0.5rem; height: 2px; background: rgba(255, 255, 255, 0.4); }
+.r2b-playhead > span { position: absolute; top: 0; bottom: 0; left: 0; width: calc(var(--played, 0) * 100%); background: var(--background-color--background-alternate); }
+.r2b-playhead > span::after { content: ""; position: absolute; top: 50%; right: -3px; width: 6px; height: 6px; transform: translateY(-50%); background: var(--background-color--background-alternate); }
+.r2b-proof-video, .r2b-step-video, .r2b-mission-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.r2b-proof-text { display: grid; gap: 0.125rem; font-size: 0.9375rem; line-height: 1.3; }
+.r2b-proof-text span { color: var(--text-color--text-secondary); font-size: 0.875rem; }
+.r2b-proof:hover b, .r2b-proof:focus-visible b { text-decoration: underline; text-underline-offset: 3px; }
+
+/* the four layers at a glance, on their black: each layer's number in a
+   yellow square with its name beside it, its island drawn live, then the
+   product and what it does */
+.r2b-glance-head { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem 2rem; align-items: start; }
+.r2b-glance-head h2 { grid-column: 1 / span 2; margin: 0; }
+.r2b-glance-intro { grid-column: 3 / span 2; display: grid; gap: 1.5rem; justify-items: start; }
+.r2b-glance-intro p { margin: 0; }
+.r2b-glance .product_tag-wrapper { gap: 1rem; }
+.r2b-glance.r2b-dark .border-bottom { background-color: rgba(255, 255, 255, 0.24); }
+.r2b-layer-tag { display: flex; align-items: center; gap: 0.75rem; font: 500 1.25rem/1.2 Inter, Arial, sans-serif; letter-spacing: 0; text-transform: none; }
+.r2b-chip { flex: none; display: grid; place-items: center; width: 1.625rem; height: 1.625rem; background: var(--background-color--background-alternate); color: #0f0e12; font: 600 0.8125rem/1 Inter, Arial, sans-serif; }
+.r2b-glance.r2b-dark .r2-layer h3 { color: #fff; }
+.r2b-glance.r2b-dark .r2-layer p { color: rgba(255, 255, 255, 0.68); }
+/* each layer's island, drawn live (r2-pieces.js), in the frame's own shape */
+.r2b-piece { position: relative; aspect-ratio: var(--r2-piece-aspect, 1.1); margin: 1.25rem 0 1rem; }
+.r2b-piece canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+
+/* the record: date, what happened, a way to the release */
+.r2b-record { margin: 0; padding: 0; list-style: none; border-top: 1px solid rgba(15, 14, 18, 0.15); }
+.r2b-record li { border-bottom: 1px solid rgba(15, 14, 18, 0.15); }
+/* on hover a row turns their yellow, held clear of the lines above and below
+   it (Hunter, 4 October) */
+.r2b-record a { position: relative; display: grid; grid-template-columns: 5.25rem minmax(0, 1fr) auto; gap: 1rem; align-items: baseline; padding: 1.25rem 0; color: inherit; text-decoration: none; }
+.r2b-record a::before { content: ""; position: absolute; inset: 0.375rem -0.875rem; border-radius: var(--radius--button); background: var(--background-color--background-alternate); opacity: 0; transition: opacity 0.2s ease; }
+.r2b-record a > * { position: relative; }
+.r2b-record a:hover::before, .r2b-record a:focus-visible::before { opacity: 1; }
+.r2b-record a:focus-visible { outline: none; }
+.r2b-record a:hover, .r2b-record a:focus-visible, .r2b-record a:hover .r2b-record-date, .r2b-record a:focus-visible .r2b-record-date { color: #0f0e12; }
+.r2b-record-date { color: var(--text-color--text-secondary); font: 500 0.9375rem/1.4 Inter, Arial, sans-serif; white-space: nowrap; }
+.r2b-record-text { line-height: 1.4; }
+.r2b-record-go { font-size: 1.125rem; line-height: 1; opacity: 0.45; transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.r2b-record a:hover .r2b-record-go, .r2b-record a:focus-visible .r2b-record-go { opacity: 1; transform: translateX(0.3rem); }
+.r2b-proof-section .partner_content { max-width: 34rem; }
+/* the record's footage runs the section's full height beside the list; on
+   one column it takes a 4:3 frame */
+.r2b-proof-section .partner_image-wrapper { position: relative; min-height: 36.25rem; }
+.r2b-proof-section .r2b-proof-film { position: absolute; inset: 0; height: 100%; max-height: none; }
+@media screen and (max-width: 991px) {
+  .r2b-proof-section .partner_image-wrapper { min-height: 0; height: auto; aspect-ratio: 4 / 3; }
+}
+
+/* the Point Defense hero is their own full-bleed video hero: one line under
+   the headline as plain body copy */
+.r2b-pd-hero .r2b-hero-line { max-width: 34rem; margin-top: 0.75rem; }
+
+/* the Point Defense capabilities' icons at twice their size: their half-pixel
+   lines land on whole pixels */
+.r2b-what .benefits_icon-wrapper .r2-iso { width: 8rem; }
+
+/* the footer without its Markets list (round six; Jeff Morgan, 9 October):
+   Webflow's grid for the footer's lists has four columns spaced to the
+   edges, so with three the fourth sat empty at the right. Three columns
+   wherever the footer has three lists (earlier rounds keep their four); the
+   launch site's stylesheet carries the same rule */
+@media screen and (min-width: 768px) {
+  .footer_menu-wrapper:not(:has(> :nth-child(4))) { grid-template-columns: max-content max-content max-content; }
+}
+
+/* One-to-Many Defense with four cards (round six, Jeff Morgan, 9 October):
+   four in a row on wide screens, two by two on tablets; phones keep their
+   single column */
+.benefits_list.r6-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media screen and (max-width: 991px) { .benefits_list.r6-four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media screen and (max-width: 767px) { .benefits_list.r6-four { grid-template-columns: 1fr; } }
+/* their site-wide code draws the cards' edges for three to a row (the right
+   edge on every third, no top edge from the fourth on): the same for four
+   to a row, and for two */
+@media screen and (min-width: 992px) {
+  .benefits_list.r6-four .benefits_item:nth-child(3n) { border-right: none; }
+  .benefits_list.r6-four .benefits_item:nth-child(4n) { border-right: 1px solid var(--background-color--background-primary); }
+  .benefits_list.r6-four .benefits_item:nth-child(4) { border-top: 1px solid var(--background-color--background-primary); }
+}
+@media screen and (min-width: 768px) and (max-width: 991px) {
+  .benefits_list.r6-four .benefits_item:nth-child(3n) { border-right: none; }
+  .benefits_list.r6-four .benefits_item:nth-child(2n) { border-right: 1px solid var(--background-color--background-primary); }
+  .benefits_list.r6-four .benefits_item:nth-child(n+3) { border-top: none; }
+}
+
+/* the public record's two columns */
+.r2b-what-grid { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 2rem 4rem; align-items: start; }
+
+/* proof under a layer in the step list: a real clip, or the record */
+.r2b-step-proof { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 0.875rem; align-items: center; max-width: 26rem; margin: 0.375rem 0 0.5rem calc(var(--r2-chip) + 0.875rem); color: inherit; text-decoration: none; }
+.r2b-step-media { position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: var(--radius--button); }
+.r2b-step-caption { color: var(--text-color--text-secondary); font-size: 0.875rem; line-height: 1.35; }
+a.r2b-step-proof[href]:hover .r2b-step-caption { color: var(--text-color--text-primary); text-decoration: underline; text-underline-offset: 3px; }
+.r2b-step-links { display: grid; gap: 0.5rem; max-width: 26rem; margin: 0.375rem 0 0.5rem calc(var(--r2-chip) + 0.875rem); padding: 0; list-style: none; }
+.r2b-step-links a { display: flex; justify-content: space-between; gap: 1rem; color: inherit; font-size: 0.875rem; line-height: 1.35; text-decoration: underline; text-decoration-color: rgba(15, 14, 18, 0.3); text-underline-offset: 3px; }
+.r2b-step-links a:hover { text-decoration-color: currentColor; }
+
+/* the five missions, each on real footage */
+.r2b-missions { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1.5rem 1rem; }
+.r2b-mission-media { position: relative; aspect-ratio: 3 / 4; margin-bottom: 1rem; overflow: hidden; border-radius: var(--radius--card); background: var(--background-color--background-secondary); }
+.r2b-mission h3 { margin: 0 0 0.375rem; }
+.r2b-mission p { margin: 0; color: var(--text-color--text-secondary); font-size: 0.9375rem; }
+
+/* one site, then a network */
+.r2b-network .r2-net-art { width: 100%; }
+
+@media screen and (max-width: 991px) {
+  .r2b-missions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .r2b-glance-head { grid-template-columns: minmax(0, 1fr); }
+  .r2b-glance-head h2, .r2b-glance-intro { grid-column: 1; }
+}
+@media screen and (max-width: 767px) {
+  .r2b-what-grid { grid-template-columns: minmax(0, 1fr); }
+  .r2b-missions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .r2b-record a { grid-template-columns: minmax(0, 1fr) auto; }
+  .r2b-record-date { grid-column: 1 / -1; }
+}
+
+/* round two's dark bands: anywhere the system is drawn, it is drawn dark,
+   on their black (Hunter, 4 October). The walkthrough on the Point Defense
+   page opens with a centred chapter heading and runs straight into the
+   pinned drawing; the network sits on the same black. */
+.r2b-dark { --r2-route: #ffd748; background-color: #0f0e12; color: #fff; }
+.section_home-content.r2b-dark, .r2-sys.r2b-dark { background-color: #0f0e12; }
+.r2b-dark .text-size-medium { color: rgba(255, 255, 255, 0.76); }
+.r2b-chapter-inner { display: grid; justify-items: center; gap: 1.5rem; padding: 7rem 0 3rem; text-align: center; }
+.r2b-chapter-inner h2 { max-width: 14em; margin: 0; }
+.r2b-chapter-inner p { max-width: 38rem; margin: 0; }
+.r2b-dark .r2-sys-num { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.r2b-dark .r2-sys-step.is-active .r2-sys-num, .r2b-dark .r2-sys-step.is-done .r2-sys-num { background: var(--background-color--background-alternate); color: #0f0e12; }
+.r2b-dark .r2-sys-tab:focus-visible { outline-color: #fff; }
+.r2b-dark .r2-sys-copy p { color: rgba(255, 255, 255, 0.68); }
+.r2b-dark .r2-sys-copy p b { color: #fff; font-weight: 500; }
+.r2b-dark .r2b-step-caption { color: rgba(255, 255, 255, 0.6); }
+.r2b-dark a.r2b-step-proof[href]:hover .r2b-step-caption { color: #fff; }
+.r2b-dark .r2b-step-links a { text-decoration-color: rgba(255, 255, 255, 0.32); }
+.r2b-dark .r2b-step-links .r2b-record-date { color: rgba(255, 255, 255, 0.5); }
+/* dark drawings dash three widths apart (DARK in iso-kit.js), so the list's
+   dotted line does too */
+.r2b-dark .r2-sys-handoff::before { background: linear-gradient(180deg, var(--r2-route) 25%, transparent 0) 0 0 / var(--r2-dash) calc(var(--r2-dash) * 4) repeat-y; }
+.r2b-dark .r2-sys-badge { background: var(--background-color--background-alternate); color: #0f0e12; }
+.r2b-dark .r2-sys-label { background: rgba(15, 14, 18, 0.8); color: rgba(255, 255, 255, 0.8); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16); }
+/* never all caps in round two: the drawings' labels are sentence case */
+html[data-round="two"] .r2-sys-label { padding: 0.3125rem 0.5rem; font-size: 0.75rem; letter-spacing: 0; text-transform: none; }
+@media screen and (max-width: 767px) {
+  .r2b-chapter-inner { padding: 4.5rem 0 1.5rem; }
+}
+
+/* round two's homepage hero leads in dark: their black, the island's dark
+   set (hero-island.js), their yellow for the main button */
+.section_hero.r2-island-hero.is-dark { background-color: #0f0e12; color: var(--text-color--text-alternate); }
+/* a flat colour behind the island, never a glow (Hunter, 4 October) */
+.r2-island-hero.is-dark .hero_background-image-wrapper.r2-hero-stage { background: none; }
+:is(.r2-island-hero.is-dark, .r2b-pd-hero, .r2b-dark, .r2v-hero) .button.is-secondary { border-color: var(--background-color--background-alternate); background-color: var(--background-color--background-alternate); color: #0f0e12; }
+:is(.r2-island-hero.is-dark, .r2b-pd-hero, .r2b-dark, .r2v-hero) .button:not(.is-secondary) { border-color: rgba(255, 255, 255, 0.72); background-color: transparent; color: #fff; }
+:is(.r2-island-hero.is-dark, .r2b-pd-hero, .r2b-dark, .r2v-hero) .button:focus-visible { outline: 2px solid var(--background-color--background-alternate); outline-offset: 3px; }
+.r2-island-hero.is-dark .r2b-proof-text span { color: rgba(255, 255, 255, 0.62); }
+/* the longer headline (one system, Hunter, 4 October) a size down, in a
+   column wide enough for three lines */
+/* below 992 pixels the island holds the top half and the copy starts under
+   it, the hero growing if the copy needs the room */
+@media screen and (max-width: 991px) {
+  .r2-island-hero.is-dark .hero_content.is-home { height: auto; min-height: 100vh; min-height: 100svh; align-items: flex-start; padding-top: 52svh; padding-bottom: 3.5rem; }
+  .r2-island-hero.is-dark .r2-hero-art { top: 0; bottom: auto; height: 52svh; }
+}
+@media screen and (min-width: 992px) {
+  .r2-island-hero.is-dark .heading-style-h1.is-home { font-size: 4.25rem; }
+  .r2-island-hero.is-dark .hero_content.is-home > div { max-width: 38rem; }
+  .r2-island-hero.is-dark .r2b-hero-line { max-width: 34rem; }
+}
+
+/* round two's buttons (html[data-round="two"]): a size smaller, and on hover
+   a small yellow square comes in ahead of the label and blinks, like a
+   cursor, instead of a change of fill (Hunter, 4 October); the square is
+   black where the button or its section is already yellow */
+html[data-round="two"] .button { display: inline-flex; align-items: center; justify-content: center; padding: 0.625rem 1rem; font-size: 0.875rem; transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease; }
+html[data-round="two"] .button::before { content: ""; flex: none; width: 0; height: 0.4375rem; margin-right: 0; background: var(--background-color--background-alternate); transition: width 0.22s cubic-bezier(0.2, 0.7, 0.2, 1), margin-right 0.22s cubic-bezier(0.2, 0.7, 0.2, 1); }
+html[data-round="two"] .button:hover::before, html[data-round="two"] .button:focus-visible::before,
+html[data-round="two"] .r2-platform:hover .r2-platform-action::before { width: 0.4375rem; margin-right: 0.5rem; animation: r2-blink 1s steps(1, end) 0.22s infinite; }
+@keyframes r2-blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  html[data-round="two"] .button::before, html[data-round="two"] .r2-platform-action::before { animation: none !important; }
+}
+html[data-round="two"][data-motion="still"] .button::before, html[data-round="two"][data-motion="still"] .r2-platform-action::before { animation: none !important; }
+html[data-round="two"] .button:not(.is-secondary):hover, html[data-round="two"] .r2-platform:hover .r2-platform-action { background-color: transparent; color: var(--text-color--text-primary); }
+html[data-round="two"] .button.is-secondary:hover { background-color: var(--background-color--background-primary); color: var(--text-color--text-alternate); }
+html[data-round="two"] :is(.r2-island-hero.is-dark, .r2b-pd-hero, .r2b-dark, .r2v-hero) .button.is-secondary:hover { background-color: var(--background-color--background-alternate); color: #0f0e12; }
+html[data-round="two"] :is(.r2-island-hero.is-dark, .r2b-pd-hero, .r2b-dark, .r2v-hero) .button:not(.is-secondary):hover { border-color: #fff; color: #fff; }
+/* the navigation's button sits on their black bar wherever the page is, so
+   its label stays white on hover, its outline turns their yellow (Hunter,
+   7 October: the label was going black on black) */
+html[data-round="two"] .button.is-nav:hover, html[data-round="two"] .button.is-nav:focus-visible { background-color: transparent; border-color: var(--background-color--background-alternate); color: #fff; }
+html[data-round="two"] :is(.r2-island-hero.is-dark, .r2b-pd-hero, .r2b-dark, .r2v-hero) .button.is-secondary::before,
+html[data-round="two"] .section_cta .button::before { background: #0f0e12; }
+
+/* ---------- Homepage V2: the islands hero, then into the film ---------- */
+/* Their black, flat. The islands (hero-v2.js) fill the stage round the
+   centred headline; the routes fade where they pass behind the type. The
+   film is the next section, full bleed. */
+.r2v-hero { position: relative; background-color: #0f0e12; color: #fff; }
+.r2v-stage { position: relative; height: 100vh; height: calc(100svh - var(--r2-topbar-h, 0px)); min-height: 40rem; overflow: hidden; }
+/* the space the islands leave (--r2v-hole-x/y, --r2v-unit from hero-v2.js) */
+.r2v-hero { --r2v-hole-x: 50%; --r2v-hole-y: 52%; --r2v-unit: 11px; }
+.r2v-art { position: absolute; inset: 0;
+  -webkit-mask-image: radial-gradient(calc(var(--r2v-unit) * 36) calc(var(--r2v-unit) * 17) at var(--r2v-hole-x) var(--r2v-hole-y), transparent 58%, #000 100%);
+  mask-image: radial-gradient(calc(var(--r2v-unit) * 36) calc(var(--r2v-unit) * 17) at var(--r2v-hole-x) var(--r2v-hole-y), transparent 58%, #000 100%); }
+.r2v-art canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.r2v-copy-wrap { position: absolute; left: 0; right: 0; top: var(--r2v-hole-y); z-index: 1; display: grid; justify-items: center; padding: 0 1.25rem; transform: translateY(-50%); pointer-events: none; }
+.r2v-copy { display: grid; justify-items: center; max-width: 46rem; text-align: center; pointer-events: auto; }
+/* the headline a size down, so the islands have the room (Hunter, 4 October) */
+.r2v-hero .heading-style-h1.is-home.r2v-title { margin: 0; font-size: clamp(2.5rem, 5.6vh, 3.25rem); line-height: 1.08; text-wrap: balance; }
+.r2v-copy .r2b-hero-line { max-width: 34rem; margin: 1rem 0 0; }
+.r2v-buttons { justify-content: center; }
+/* under the buttons and exactly as wide as the pair, the hero's proof as on
+   01: hung below them, so the headline and buttons keep their place between
+   the islands (Hunter, 4 October) */
+.r2v-actions { position: relative; width: max-content; max-width: 100%; margin-top: 1.5rem; }
+.r2v-actions .r2b-proof { position: absolute; top: calc(100% + 1rem); left: 0; right: 0; display: flex; gap: 0.75rem; margin: 0; padding: 0.5rem 0.75rem 0.5rem 0.5rem; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: var(--radius--card); text-align: left; transition: border-color 0.2s ease; }
+.r2v-actions .r2b-proof:hover, .r2v-actions .r2b-proof:focus-visible { border-color: var(--background-color--background-alternate); color: #fff; }
+.r2v-actions .r2b-proof:focus-visible { outline: 2px solid var(--background-color--background-alternate); outline-offset: 3px; }
+.r2v-actions .r2b-proof-media { width: 5.5rem; }
+.r2v-actions .r2b-proof-text { font-size: 0.875rem; }
+.r2v-actions .r2b-proof-text b, .r2v-actions .r2b-proof-text span { text-wrap: balance; }
+.r2v-actions .r2b-proof-text span { color: rgba(255, 255, 255, 0.6); font-size: 0.8125rem; }
+@media screen and (max-width: 767px) {
+  .r2v-stage { display: flex; flex-direction: column; height: auto; min-height: 0; overflow: visible; }
+  .r2v-art { position: relative; height: auto; aspect-ratio: 1.6; margin-top: 4rem; -webkit-mask-image: none; mask-image: none; }
+  .r2v-copy-wrap { position: relative; top: auto; padding: 0 1.25rem 3.5rem; transform: none; }
+  .r2v-hero .heading-style-h1.is-home.r2v-title { font-size: 2.4rem; }
+  /* on phones the buttons stack, each the column's width, and the proof
+     under them matches */
+  .r2v-actions { width: 100%; max-width: 22rem; }
+  .r2v-actions .r2v-buttons { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+  .r2v-actions .r2b-proof { position: static; margin-top: 0.75rem; }
+}
+/* their sixth-domain banner at the top of the page, on their yellow
+   (Homepage V2, Hunter, 4 October); the whole bar is one link, and r2.js
+   keeps the fixed navigation under it until it scrolls away */
+.r2-topbar { position: relative; z-index: 11; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.25rem 0.75rem; padding: 0.625rem 5%; background-color: var(--background-color--background-alternate); color: #0f0e12; font: 600 0.875rem/1.3 Inter, Arial, sans-serif; letter-spacing: 0; text-align: center; text-transform: none; text-decoration: none; }
+.r2-topbar:hover, .r2-topbar:focus-visible { color: #0f0e12; }
+.r2-topbar:focus-visible { outline: 2px solid #0f0e12; outline-offset: -4px; }
+.r2-topbar-square { flex: none; width: 0.4375rem; height: 0.4375rem; background-color: #0f0e12; }
+.r2-topbar:hover .r2-topbar-square, .r2-topbar:focus-visible .r2-topbar-square { animation: r2-blink 1s steps(1, end) infinite; }
+.r2-topbar-link { font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+.r2-topbar:hover .r2-topbar-link { text-decoration-thickness: 2px; }
+@media (prefers-reduced-motion: reduce) { .r2-topbar-square { animation: none !important; } }
+html[data-motion="still"] .r2-topbar-square { animation: none !important; }
+
+
+/* ---------- round three (6 October): homepage B's hero, the operator's view ---------- */
+
+/* homepage B: their doctrine's headline beside one-to-many drawn (hero-swarm.js) */
+.r3s-hero { position: relative; background-color: #0f0e12; color: #fff; }
+.r3s-stage { position: relative; height: 100vh; height: 100svh; min-height: 42rem; overflow: hidden; }
+.r3s-art { position: absolute; inset: 0; }
+.r3s-art canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.r3s-copy-wrap { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; pointer-events: none; }
+.r3s-copy-wrap > .padding-global { width: 100%; }
+.r3s-copy { max-width: 33rem; padding-top: 4.5rem; pointer-events: auto; }
+.r3s-hero .heading-style-h1.is-home.r3s-title { margin: 0; font-size: clamp(2.5rem, 5.6vh, 3.5rem); line-height: 1.08; text-wrap: balance; }
+.r3s-copy .r2b-hero-line { max-width: 31rem; margin: 1rem 0 0; color: rgba(255, 255, 255, 0.76); }
+.r3s-buttons { margin-top: 1.75rem; }
+.r3s-copy .r2b-proof { display: flex; width: max-content; max-width: 100%; gap: 0.75rem; margin-top: 1.25rem; padding: 0.5rem 0.75rem 0.5rem 0.5rem; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: var(--radius--card); transition: border-color 0.2s ease; }
+.r3s-copy .r2b-proof:hover, .r3s-copy .r2b-proof:focus-visible { border-color: var(--background-color--background-alternate); color: #fff; }
+.r3s-copy .r2b-proof-text span { color: rgba(255, 255, 255, 0.62); }
+@media (max-width: 991px) {
+  .r3s-stage { height: auto; min-height: 0; }
+  .r3s-art { position: relative; height: 56svh; }
+  .r3s-copy-wrap { position: relative; inset: auto; display: block; padding-bottom: 4rem; }
+  .r3s-copy { padding-top: 0; }
+}
+
+/* the operator's view: Point Defense C2's three panels (c2.js), on their black
+   with hairlines; the authorize control blinks the yellow square the buttons do */
+.r3-c2 { display: grid; grid-template-columns: 1.5fr 1fr 1fr; border-top: 1px solid rgba(255, 255, 255, 0.14); border-bottom: 1px solid rgba(255, 255, 255, 0.14); }
+.r3-c2-panel { display: grid; align-content: start; gap: 1.25rem; min-width: 0; padding: 1.5rem 1.5rem 1.75rem; }
+.r3-c2-panel:first-child { padding-left: 0; }
+.r3-c2-panel:last-child { padding-right: 0; }
+.r3-c2-panel + .r3-c2-panel { border-left: 1px solid rgba(255, 255, 255, 0.14); }
+.r3-c2-head { display: flex; align-items: center; gap: 0.625rem; color: #fff; font: 500 0.9375rem/1.2 Inter, Arial, sans-serif; }
+.r3-c2-map { display: block; width: 100%; height: auto; max-height: 21rem; overflow: visible; }
+.r3-c2-ring, .r3-c2-bearing { fill: none; stroke: rgba(255, 255, 255, 0.16); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.r3-c2-wedge { opacity: 0.55; transform-box: view-box; transform-origin: 200px 262px; transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.4s ease; }
+.r3-c2-wedge.is-open { opacity: 1; }
+.r3-c2-arc { fill: none; stroke: #ffd748; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.r3-c2-site { fill: none; stroke: rgba(255, 255, 255, 0.5); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
+.r3-c2-node { fill: #ffd748; }
+.r3-c2-drone { fill: #a7aaae; }
+.r3-c2-bracket { fill: none; stroke: #fff; stroke-width: 1.2; vector-effect: non-scaling-stroke; opacity: 0; transition: opacity 0.3s ease; }
+.r3-c2-tag { fill: rgba(255, 255, 255, 0.7); font: 500 9px Inter, Arial, sans-serif; opacity: 0; transition: opacity 0.3s ease; }
+.r3-c2-group.is-locked .r3-c2-bracket { opacity: 0.9; }
+.r3-c2-group.is-locked .r3-c2-tag { opacity: 1; }
+.r3-c2-rows { display: grid; margin: 0; padding: 0; list-style: none; }
+.r3-c2-row { display: grid; grid-template-columns: 3rem 1fr auto; column-gap: 0.75rem; row-gap: 0.25rem; padding: 0.875rem 0; border-top: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.32); font: 400 0.875rem/1.3 Inter, Arial, sans-serif; font-variant-numeric: tabular-nums; transition: color 0.3s ease; }
+.r3-c2-row:last-child { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.r3-c2-state { grid-column: 2 / -1; min-height: 1.3em; }
+.r3-c2-id { position: relative; padding-left: 0.875rem; }
+.r3-c2-id::before { content: ""; position: absolute; left: 0; top: 50%; width: 0.375rem; height: 0.375rem; margin-top: -0.1875rem; background: rgba(255, 255, 255, 0.24); }
+.r3-c2-row.is-live { color: rgba(255, 255, 255, 0.82); }
+.r3-c2-row.is-priority .r3-c2-id::before { background: #ffd748; }
+.r3-c2-row.is-priority .r3-c2-state { color: #ffd748; }
+.r3-c2-row.is-done { color: rgba(255, 255, 255, 0.45); }
+.r3-c2-stats { display: grid; gap: 0.75rem; margin: 0; }
+.r3-c2-stats > div { display: grid; grid-template-columns: 4.5rem 1fr; gap: 0.75rem; align-items: center; font: 400 0.875rem/1.3 Inter, Arial, sans-serif; }
+.r3-c2-stats dt { color: rgba(255, 255, 255, 0.5); }
+.r3-c2-stats dd { display: flex; align-items: center; gap: 0.5rem; margin: 0; color: rgba(255, 255, 255, 0.85); }
+.r3-c2-stats [data-status].is-active { color: #ffd748; }
+.r3-c2-bar { display: inline-block; width: 4rem; height: 0.375rem; background: rgba(255, 255, 255, 0.12); }
+.r3-c2-bar i { display: block; width: 92%; height: 100%; background: #ffd748; }
+.r3-c2-authorize { display: inline-flex; align-items: center; justify-self: start; gap: 0.625rem; margin-top: 0.5rem; padding: 0.75rem 1rem; border: 1px solid rgba(255, 255, 255, 0.24); border-radius: var(--radius--button); color: rgba(255, 255, 255, 0.7); font: 500 0.875rem/1 Inter, Arial, sans-serif; transition: border-color 0.3s ease, color 0.3s ease, background-color 0.3s ease; }
+.r3-c2-key { width: 0.5rem; height: 0.5rem; background: rgba(255, 255, 255, 0.3); }
+.r3-c2-authorize.is-lit { border-color: #ffd748; color: #fff; }
+.r3-c2-authorize.is-lit .r3-c2-key { background: #ffd748; animation: r3-blink 0.9s steps(2, start) infinite; }
+.r3-c2-authorize.is-on { border-color: #ffd748; background-color: #ffd748; color: #0f0e12; }
+.r3-c2-authorize.is-on .r3-c2-key { background: #0f0e12; animation: none; }
+@keyframes r3-blink { to { visibility: hidden; } }
+.r3-c2-log { margin: 0; color: rgba(255, 255, 255, 0.5); font: 400 0.8125rem/1.3 Inter, Arial, sans-serif; }
+@media (max-width: 991px) {
+  .r3-c2 { grid-template-columns: 1fr; }
+  .r3-c2-panel { padding: 1.5rem 0; }
+  .r3-c2-panel + .r3-c2-panel { border-left: 0; border-top: 1px solid rgba(255, 255, 255, 0.14); }
+}
+@media (prefers-reduced-motion: reduce) { .r3-c2-wedge { transition: none; } .r3-c2-authorize.is-lit .r3-c2-key { animation: none; } }
+
+/* ---------- round four: three ways to tell the story (7 October) ---------- */
+
+/* the product's name over a Point Defense page's headline */
+.r4-eyebrow { display: inline-flex; align-items: center; gap: 0.625rem; margin: 0 0 1rem; color: #fff; font: 500 1.125rem/1.2 Inter, Arial, sans-serif; pointer-events: auto; }
+.r4-eyebrow::before { content: ""; flex: none; width: 0.5rem; height: 0.5rem; background: var(--background-color--background-alternate); }
+
+/* the film's still in the corner of a homepage hero (after roamrobotics.com):
+   a still, not a video, since no hero leads with video; it opens the film */
+.r2-island-hero { position: relative; }
+.r4-thumb { --thumb-w: 12rem; position: absolute; right: 1.5rem; top: calc(100svh - var(--r2-topbar-h, 0px) - var(--thumb-w) * 9 / 16 - 1.5rem); z-index: 3; display: block; width: var(--thumb-w); color: #fff; text-decoration: none; }
+.r4-thumb-media { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: #1a191e; }
+.r4-thumb-media video { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.r4-thumb:hover .r4-thumb-media video, .r4-thumb:focus-visible .r4-thumb-media video { transform: scale(1.04); }
+.r4-thumb-media::after { content: ""; position: absolute; inset: 30% 0 0; background: linear-gradient(rgba(15, 14, 18, 0), rgba(15, 14, 18, 0.85)); pointer-events: none; }
+.r4-thumb-label { position: absolute; left: 0.5rem; right: 0.5rem; bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; color: rgba(255, 255, 255, 0.78); font: 400 0.6875rem/1.25 Inter, Arial, sans-serif; }
+.r4-thumb-label b { display: block; color: #fff; font-weight: 600; font-size: 0.75rem; }
+.r4-thumb-play { position: relative; flex: none; width: 1.5rem; height: 1.5rem; background: var(--background-color--background-alternate); }
+.r4-thumb-play::after { content: ""; position: absolute; left: 0.56rem; top: 0.44rem; border-left: 0.44rem solid #0f0e12; border-top: 0.31rem solid transparent; border-bottom: 0.31rem solid transparent; }
+@media screen and (max-width: 991px) {
+  .r4-thumb { position: relative; right: auto; top: auto; display: block; width: auto; margin: 0 1.25rem 2.5rem; }
+}
+
+/* the full-bleed film: their footage behind its details, the film itself
+   over the page when asked for (r2.js) */
+.r4-film { position: relative; display: flex; align-items: flex-end; min-height: min(100vh, 56rem); overflow: hidden; background-color: #0f0e12; color: #fff; }
+.r4-film-media, .r4-film-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.r4-film-shade { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(15, 14, 18, 0.9) 0%, rgba(15, 14, 18, 0.55) 38%, rgba(15, 14, 18, 0) 72%); }
+.r4-film > .padding-global { position: relative; width: 100%; }
+.r4-film-copy { max-width: 48rem; padding: 7rem 0 5rem; }
+.r4-film-label { display: flex; align-items: center; gap: 0.625rem; margin: 0 0 1.25rem; color: rgba(255, 255, 255, 0.82); font: 500 1rem/1.3 Inter, Arial, sans-serif; }
+.r4-film-label::before { content: ""; flex: none; width: 0.5rem; height: 0.5rem; background: var(--background-color--background-alternate); }
+.r4-film-copy .heading-style-h1 { margin: 0 0 1.25rem; color: #fff; }
+.r4-film-copy .text-size-medium { max-width: 38rem; color: rgba(255, 255, 255, 0.84); }
+.r4-film-facts { display: flex; flex-wrap: wrap; gap: 1.5rem 3.5rem; margin: 2.5rem 0 0; padding: 0; list-style: none; }
+.r4-film-facts li { display: grid; gap: 0.375rem; }
+.r4-film-facts b { font: 400 3.25rem/1 Inter, Arial, sans-serif; letter-spacing: -0.02em; }
+.r4-film-facts span { color: rgba(255, 255, 255, 0.72); font: 500 0.9375rem/1.3 Inter, Arial, sans-serif; }
+.r4-film-buttons { margin-top: 2.5rem; }
+@media screen and (max-width: 767px) {
+  .r4-film { min-height: 46rem; }
+  .r4-film-copy { padding: 5rem 0 3.5rem; }
+  .r4-film-facts b { font-size: 2.5rem; }
+}
+.r4-player { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 4.5rem 1.25rem; background: rgba(15, 14, 18, 0); transition: background-color 0.55s ease; }
+.r4-player.is-open { background: rgba(15, 14, 18, 0.94); }
+/* the frame grows from the corner clip (r2.js sets its transform) */
+.r4-player-frame { position: relative; overflow: hidden; width: min(100%, 72rem); aspect-ratio: 16 / 9; background: #000; transform-origin: 0 0; transition: transform 0.6s cubic-bezier(0.22, 0.8, 0.22, 1), opacity 0.45s ease; will-change: transform; }
+.r4-player-frame.is-low { opacity: 0; transform: translateY(1.5rem) scale(0.96); transform-origin: 50% 50%; }
+.r4-player-stand, .r4-player-stand video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.r4-player-stand { transition: opacity 0.45s ease; }
+.r4-player.is-playing .r4-player-stand { opacity: 0; }
+.r4-player-frame :is(iframe, video.r4-player-video) { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; background: #000; opacity: 0; transition: opacity 0.45s ease; }
+.r4-player.is-playing .r4-player-frame :is(iframe, video.r4-player-video) { opacity: 1; }
+.r4-thumb.is-lifted { visibility: hidden; }
+.r4-player-close { position: absolute; top: 1.25rem; right: 1.25rem; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 1px solid rgba(255, 255, 255, 0.4); background: transparent; color: #fff; cursor: pointer; opacity: 0; transition: opacity 0.3s ease, border-color 0.2s ease; }
+.r4-player.is-open .r4-player-close { opacity: 1; transition-delay: 0.25s, 0s; }
+.r4-player-close:hover, .r4-player-close:focus-visible { border-color: #fff; }
+.r4-player-close span, .r4-player-close span::after { content: ""; display: block; width: 1.1rem; height: 1.5px; background: currentColor; transform: rotate(45deg); }
+.r4-player-close span::after { transform: rotate(90deg); }
+html.r4-has-player { overflow: hidden; }
+
+/* set A's one-to-many: the swarm drawing as a section, the type on its left */
+.r4-swarm .r3s-stage { height: min(86vh, 54rem); min-height: 36rem; }
+.r4-swarm-copy { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; pointer-events: none; }
+.r4-swarm-copy > .padding-global { width: 100%; }
+.r4-swarm-text { max-width: 30rem; pointer-events: auto; }
+.r4-swarm-text .heading-style-h1 { margin: 0; color: #fff; }
+.r4-swarm-text .text-size-medium { margin-top: 1.25rem; color: rgba(255, 255, 255, 0.78); }
+@media screen and (max-width: 991px) {
+  .r4-swarm .r3s-stage { height: auto; min-height: 0; }
+  .r4-swarm .r3s-art { position: relative; height: 56svh; }
+  .r4-swarm-copy { position: relative; inset: auto; display: block; padding-bottom: 4rem; }
+}
+
+/* ---- the operator's view, after Epirus's own software ---- */
+/* On light ground, apart from the dark 3D above it. The window keeps their
+   software's look: near black, hairline panes, the product's name in spaced
+   capitals, light blue friendly units and coverage, red hostiles, their
+   yellow for what is chosen. */
+.r4-op { background-color: var(--base-color-brand--green); color: var(--text-color--text-primary); }
+.r4-op-window { --op-bg: #101113; --op-pane: #17181b; --op-line: rgba(255, 255, 255, 0.1); --op-text: #e9e9e6; --op-dim: #8e9095; --op-blue: #9cd2f0; --op-blue-deep: #3f8fc6; --op-red: #e8485f; --op-yellow: #ffd748;
+  overflow: hidden; border: 1px solid #0f0e12; border-radius: 0.375rem; background: var(--op-bg); color: var(--op-text); font: 400 0.8125rem/1.3 Inter, Arial, sans-serif; }
+.r4-op-bar-head { display: grid; grid-template-columns: auto auto 1fr auto auto; align-items: center; gap: 1.25rem; padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--op-line); }
+.r4-op-burger { display: grid; gap: 0.25rem; width: 1.125rem; }
+.r4-op-burger i, .r4-op-burger::before, .r4-op-burger::after { content: ""; display: block; height: 1.5px; background: #c8c9cc; }
+.r4-op-app { color: #d9dadd; font: 300 1.25rem/1 Inter, Arial, sans-serif; letter-spacing: 0.14em; white-space: nowrap; }
+.r4-op-app b { font-weight: 700; letter-spacing: 0.1em; }
+.r4-op-scenario { justify-self: center; color: #b9bbbf; font-weight: 600; font-size: 0.9375rem; white-space: nowrap; }
+.r4-op-logo { width: 5.5rem; opacity: 0.45; }
+.r4-op-body { display: grid; grid-template-columns: minmax(0, 1.78fr) minmax(0, 1fr); min-height: 31rem; }
+.r4-op-map { position: relative; overflow: hidden; border: 1px solid #6f6223; border-width: 1px 1px 1px 0; background: #121315; }
+.r4-op-map-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.r4-op-roads path { fill: none; stroke: #34363a; stroke-width: 6; stroke-linecap: round; }
+.r4-op-streets path { fill: none; stroke: #2a2c31; stroke-width: 2.5; }
+.r4-op-blocks { fill: #1b1c1f; stroke: #26282c; stroke-width: 0.8; }
+.r4-op-runway { fill: #2a2c30; stroke: #3a3c41; stroke-width: 1; }
+.r4-op-centre { fill: none; stroke: #6b6d72; stroke-width: 1.2; stroke-dasharray: 8 7; }
+.r4-op-taxi { fill: none; stroke: #2d2f33; stroke-width: 5; }
+.r4-op-apron { fill: #232529; stroke: #34363b; }
+.r4-op-hangars { fill: #2c2e33; stroke: #45474c; }
+.r4-op-cover { fill: none; stroke: rgba(156, 210, 240, 0.28); stroke-width: 1; stroke-dasharray: 3 5; }
+.r4-op-fan { transform-box: view-box; transform-origin: 372px 228px; }
+.r4-op-sector { fill: rgba(63, 143, 198, 0.3); stroke: rgba(156, 210, 240, 0.6); stroke-width: 1; }
+.r4-op-range { fill: none; stroke: rgba(156, 210, 240, 0.22); stroke-width: 1; }
+.r4-op-ring { fill: none; stroke: #dff1fc; stroke-width: 1.4; opacity: 0; }
+.r4-op-assign { stroke: rgba(233, 233, 230, 0.8); stroke-width: 1; opacity: 0; }
+.r4-op-asset rect { fill: rgba(63, 143, 198, 0.55); stroke: var(--op-blue); stroke-width: 1.2; }
+.r4-op-crown { fill: #d7eefb; }
+.r4-op-unit-box { fill: var(--op-blue); stroke: var(--op-blue-deep); stroke-width: 1; transition: fill 0.2s ease; }
+.r4-op-unit.is-selected .r4-op-unit-box { fill: var(--op-yellow); stroke: #b3951e; }
+.r4-op-stem { stroke: var(--op-blue); stroke-width: 1.2; }
+.r4-op-stem-dot { fill: var(--op-blue); }
+.r4-op-glyph path, .r4-op-glyph rect { fill: none; stroke: #0d2433; stroke-width: 1.5; stroke-linecap: round; }
+.r4-op-unit-label { fill: var(--op-blue); font: 700 10px/1 Inter, Arial, sans-serif; letter-spacing: 0.04em; text-anchor: middle; }
+.r4-op-track { opacity: 0; }
+.r4-op-diamond { fill: var(--op-red); stroke: #ff8a9b; stroke-width: 1; }
+.r4-op-chevron { fill: none; stroke: #fff2f4; stroke-width: 1.6; }
+.r4-op-cross { fill: none; stroke: #fff; stroke-width: 2.2; opacity: 0; }
+.r4-op-brackets { fill: none; stroke: var(--op-red); stroke-width: 1.4; opacity: 0; transition: opacity 0.25s ease; }
+.r4-op-track.is-locked .r4-op-brackets { opacity: 1; }
+.r4-op-vector { stroke: rgba(255, 255, 255, 0.55); stroke-width: 1; }
+.r4-op-track-id { fill: #f27386; font: 700 10.5px/1 Inter, Arial, sans-serif; }
+.r4-op-track-size { fill: #f27386; font: 700 10.5px/1 Inter, Arial, sans-serif; text-anchor: middle; }
+.r4-op-strike { stroke: #f27386; stroke-width: 1.2; opacity: 0; }
+.r4-op-track.is-defeated .r4-op-cross, .r4-op-track.is-defeated .r4-op-strike { opacity: 1; }
+.r4-op-track.is-defeated .r4-op-chevron { opacity: 0; }
+.r4-op-menu { display: flex; flex-direction: column; padding: 4px 0; border: 1px solid rgba(255, 255, 255, 0.12); background: #1d1e21; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45); color: #e9e9e6; font: 400 10.5px/1 Inter, Arial, sans-serif; opacity: 0; transform: translateY(-4px); transition: opacity 0.18s ease, transform 0.18s ease; }
+.r4-op-menu.is-open { opacity: 1; transform: none; }
+.r4-op-menu span { display: flex; justify-content: space-between; padding: 6px 10px; }
+.r4-op-menu span.is-on { background: #ffd748; color: #0f0e12; }
+.r4-op-menu i { font-style: normal; }
+.r4-op-tools { position: absolute; top: 0.75rem; left: 0.75rem; display: flex; gap: 2px; padding: 3px; background: rgba(16, 17, 19, 0.85); }
+.r4-op-chip { display: grid; place-items: center; width: 1.625rem; height: 1.625rem; background: #222327; }
+.r4-op-chip svg { width: 0.875rem; height: 0.875rem; fill: none; stroke: #c9cacd; stroke-width: 1.4; }
+.r4-op-chip svg .is-fill { fill: #ffd748; stroke: none; }
+.r4-op-coords { position: absolute; top: 0.95rem; left: 50%; transform: translateX(-50%); color: #b3b5b9; font: 500 0.6875rem/1 "SFMono-Regular", Menlo, Consolas, monospace; letter-spacing: 0.04em; white-space: nowrap; }
+.r4-op-side { display: grid; grid-template-rows: minmax(0, 0.9fr) minmax(0, 1.1fr); min-width: 0; }
+.r4-op-pane { position: relative; min-width: 0; border-bottom: 1px solid var(--op-line); }
+.r4-op-profile svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.r4-op-elev { fill: rgba(63, 143, 198, 0.24); transition: fill 0.3s ease; }
+.r4-op-profile.is-firing .r4-op-elev { fill: rgba(63, 143, 198, 0.42); }
+.r4-op-elev-edge { fill: none; stroke: rgba(156, 210, 240, 0.65); stroke-width: 1; }
+.r4-op-terrain { fill: #26282c; stroke: #4a4c51; stroke-width: 1; }
+.r4-op-profile-unit rect { fill: var(--op-blue); stroke: var(--op-blue-deep); }
+.r4-op-profile-track rect { fill: var(--op-red); stroke: #ff8a9b; }
+.r4-op-heading { fill: #d9dadd; font: 600 10px/1 Inter, Arial, sans-serif; text-anchor: middle; }
+.r4-op-heading-bar { stroke: #5b5e63; stroke-width: 1; }
+.r4-op-heading-knob { fill: #d9dadd; }
+.r4-op-tracks { display: flex; flex-direction: column; padding: 2.25rem 1rem 1rem; border-bottom: 0; }
+.r4-op-table { font-size: 0.75rem; }
+.r4-op-thead, .r4-op-row { display: grid; grid-template-columns: 1fr 1.1fr 0.8fr 1.2fr; gap: 0.5rem; align-items: center; }
+.r4-op-thead { padding-bottom: 0.5rem; border-bottom: 1px solid var(--op-line); color: var(--op-dim); font: 600 0.625rem/1 Inter, Arial, sans-serif; letter-spacing: 0.08em; }
+.r4-op-table ol { margin: 0; padding: 0; list-style: none; }
+.r4-op-row { min-height: 2.25rem; border-bottom: 1px solid var(--op-line); color: rgba(233, 233, 230, 0.32); transition: color 0.25s ease; }
+.r4-op-row.is-live { color: var(--op-text); }
+.r4-op-row-id { display: flex; align-items: center; gap: 0.45rem; font-weight: 600; }
+.r4-op-row-id i { width: 0.45rem; height: 0.45rem; background: currentColor; transform: rotate(45deg); }
+.r4-op-row.is-live .r4-op-row-id i { background: var(--op-red); }
+.r4-op-row.is-priority [data-state] { color: var(--op-yellow); }
+.r4-op-row.is-done { color: var(--op-dim); }
+.r4-op-row.is-done .r4-op-row-id i { background: var(--op-dim); }
+.r4-op-card { margin-top: auto; padding-top: 1rem; }
+.r4-op-card-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.625rem; font-weight: 700; letter-spacing: 0.04em; }
+.r4-op-card-num { display: grid; place-items: center; width: 1.375rem; height: 1.375rem; background: #e9e9e6; color: #0f0e12; font-size: 0.6875rem; }
+.r4-op-card-kind { color: var(--op-dim); font-weight: 500; }
+.r4-op-card dl { display: grid; gap: 0.375rem; margin: 0; }
+.r4-op-card dl > div { display: grid; grid-template-columns: 5.5rem 1fr; }
+.r4-op-card dt { color: var(--op-dim); }
+.r4-op-card dd { display: flex; align-items: center; gap: 0.5rem; margin: 0; }
+.r4-op-card [data-status].is-active { color: var(--op-yellow); }
+.r4-op-bar { width: 3.5rem; height: 0.3rem; background: #2b2d31; }
+.r4-op-bar i { display: block; width: 92%; height: 100%; background: #7fca85; }
+.r4-op-log { margin: 0.75rem 0 0; color: var(--op-dim); font-size: 0.75rem; }
+@media screen and (max-width: 991px) {
+  .r4-op-body { grid-template-columns: 1fr; }
+  .r4-op-map { aspect-ratio: 720 / 440; border-width: 1px 0; }
+  .r4-op-side { grid-template-rows: auto auto; }
+  .r4-op-bar-head { grid-template-columns: auto 1fr auto; }
+  .r4-op-scenario, .r4-op-clock { display: none; }
+}
+@media screen and (max-width: 479px) {
+  .r4-op-app { font-size: 0.9375rem; }
+  .r4-op-coords { display: none; }
+}
+
+/* the operator's window, refined (Hunter, 7 October: better designed): one
+   header bar, the map's controls gathered, every side pane under the same
+   left-aligned header, one small type scale, numbers in tabular figures */
+.r4-op-window { font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+.r4-op-bar-head { grid-template-columns: auto auto 1fr auto auto auto; gap: 1.25rem; padding: 0.75rem 1.25rem; background: #0c0d0e; }
+.r4-op-app { font-size: 1.0625rem; }
+.r4-op-scenario { font-size: 0.8125rem; font-weight: 500; color: #c8c9cc; }
+.r4-op-live { display: flex; align-items: center; gap: 0.4rem; color: #c8c9cc; font: 600 0.625rem/1 Inter, Arial, sans-serif; letter-spacing: 0.12em; }
+.r4-op-live i { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: #7fca85; box-shadow: 0 0 0 3px rgba(127, 202, 133, 0.18); }
+.r4-op-clock { color: var(--op-dim); font: 500 0.6875rem/1 "SFMono-Regular", Menlo, Consolas, monospace; }
+.r4-op-logo { width: 4.75rem; opacity: 0.5; }
+.r4-op-body { min-height: 30rem; }
+.r4-op-map { border: 0; border-right: 1px solid var(--op-line); }
+.r4-op-tools { top: 0.75rem; left: 0.75rem; flex-direction: column; gap: 1px; padding: 0; background: var(--op-line); }
+.r4-op-chip { width: 1.75rem; height: 1.75rem; background: #17181b; }
+.r4-op-layer { position: absolute; top: 0.75rem; right: 0.75rem; padding: 0.4rem 0.6rem; background: #17181b; color: #d9dadd; font: 600 0.625rem/1 Inter, Arial, sans-serif; letter-spacing: 0.1em; }
+.r4-op-layer i { margin-left: 0.3rem; font-style: normal; color: var(--op-dim); }
+.r4-op-strip { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 1.25rem; padding: 0.5rem 0.75rem; background: rgba(12, 13, 14, 0.82); border-top: 1px solid var(--op-line); color: var(--op-dim); font: 500 0.625rem/1 "SFMono-Regular", Menlo, Consolas, monospace; letter-spacing: 0.04em; }
+.r4-op-strip .r4-op-coords { position: static; transform: none; color: #b3b5b9; font: inherit; letter-spacing: inherit; }
+.r4-op-north { margin-left: auto; color: #d9dadd; }
+.r4-op-north i { font-style: normal; }
+.r4-op-scale { display: flex; align-items: center; gap: 0.5rem; }
+.r4-op-scale i { width: 3.5rem; height: 0.3rem; border: 1px solid var(--op-dim); border-top: 0; }
+.r4-op-side { display: flex; flex-direction: column; background: #121315; }
+.r4-op-pane { border-bottom: 1px solid var(--op-line); }
+.r4-op-pane-head { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem 0.625rem; color: var(--op-dim); font: 600 0.625rem/1 Inter, Arial, sans-serif; letter-spacing: 0.12em; }
+.r4-op-pane-head span:first-child { color: #d9dadd; }
+.r4-op-profile-art { position: relative; height: 8.5rem; margin: 0 1rem 0.75rem; }
+.r4-op-profile-art svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.r4-op-tracks { padding: 0 0 0.25rem; }
+.r4-op-table { padding: 0 1rem; font-size: 0.75rem; }
+.r4-op-thead { padding: 0.25rem 0 0.5rem; font-size: 0.5625rem; letter-spacing: 0.12em; }
+.r4-op-row { min-height: 2.125rem; }
+.r4-op-row:last-child { border-bottom: 0; }
+.r4-op-card { margin: 0; padding: 0 1rem 0.875rem; }
+.r4-op-card .r4-op-pane-head { padding-left: 0; padding-right: 0; }
+.r4-op-card-head { gap: 0.5rem; margin-bottom: 0.625rem; font-size: 0.9375rem; font-weight: 600; letter-spacing: 0; }
+.r4-op-card-kind { padding: 0.15rem 0.35rem; border: 1px solid var(--op-line); color: var(--op-blue); font: 600 0.5625rem/1 Inter, Arial, sans-serif; letter-spacing: 0.1em; }
+.r4-op-card dl { gap: 0.4rem; font-size: 0.75rem; }
+.r4-op-card dl > div { grid-template-columns: 4.5rem 1fr; }
+.r4-op-log { margin: auto 0 0; padding: 0.625rem 1rem; border-top: 1px solid var(--op-line); color: var(--op-dim); font-size: 0.6875rem; }
+/* round six: the operator's seat (data-interactive; operator.js). Live tracks
+   take a click, their brackets showing on hover; each track's name in the
+   list is a button; Fire in the effector card wakes, in their yellow, once a
+   track is assigned */
+.r4-op-menu { pointer-events: none; }
+.r4-op-menu.is-open { pointer-events: auto; }
+.r4-op[data-interactive] .r4-op-hit { fill: transparent; }
+.r4-op[data-interactive] .r4-op-track.is-live { cursor: pointer; }
+.r4-op[data-interactive] .r4-op-track.is-live:hover .r4-op-brackets { opacity: 0.6; }
+.r4-op[data-interactive] .r4-op-menu.is-open [data-item="fire"] { cursor: pointer; }
+.r4-op[data-interactive] .r4-op-row.is-live { cursor: pointer; }
+.r4-op[data-interactive] .r4-op-row.is-live:hover { background: rgba(255, 255, 255, 0.035); }
+button.r4-op-row-id { appearance: none; margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-align: left; cursor: inherit; }
+button.r4-op-row-id:focus-visible { outline: 1px solid var(--op-yellow); outline-offset: 3px; }
+.r4-op-fire { display: block; width: 100%; margin-top: 0.75rem; padding: 0.55rem 0.75rem; border: 1px solid var(--op-line); background: transparent; color: var(--op-dim); font: 600 0.75rem/1 Inter, Arial, sans-serif; text-align: left; transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
+.r4-op-fire.is-on { border-color: var(--op-yellow); background: var(--op-yellow); color: #0f0e12; }
+.r4-op-fire:not(:disabled) { cursor: pointer; }
+.r4-op-fire:focus-visible { outline: 1px solid var(--op-yellow); outline-offset: 2px; }
+.r4-op-try { display: flex; align-items: center; gap: 0.625rem; margin: 1rem 0 0; color: var(--text-color--text-primary); font-size: 0.9375rem; }
+.r4-op-try-mark { flex: none; width: 0.5rem; height: 0.5rem; background: #ffd748; }
+@media screen and (max-width: 991px) {
+  .r4-op-map { border-right: 0; border-bottom: 1px solid var(--op-line); }
+  .r4-op-bar-head { grid-template-columns: auto 1fr auto auto; }
+}
+
+/* round six: the Zeus window in a MacBook's shape (Hunter, 8 October: it
+   read super horizontal), 16 by 10; the map's ground runs taller to fill it
+   (build.mjs) and the profile takes the side's extra height. Stacked on
+   smaller screens, as before. */
+@media screen and (min-width: 992px) {
+  .r6-op-mac .r4-op-window { display: flex; flex-direction: column; aspect-ratio: 16 / 10; }
+  .r6-op-mac .r4-op-body { flex: 1 1 auto; min-height: 0; }
+  .r6-op-mac .r4-op-profile { flex: 1 1 auto; display: flex; flex-direction: column; }
+  .r6-op-mac .r4-op-profile-art { flex: 1 1 auto; height: auto; min-height: 8.5rem; }
+}
+
+/* ---- one site, then a network: a scrolling picture ---- */
+/* Tall, its stage pinned while the view pulls back from one site to twelve
+   (network-scroll.js); on their taupe. */
+.r4-net { position: relative; background-color: #fff; } /* white: the sections either side are taupe (Hunter, 7 October) */
+.r4-net-grid { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.5fr); gap: 3rem; align-items: center; padding: 6rem 0; }
+.r4-net-text { display: grid; gap: 1.25rem; }
+.r4-net-text .heading-style-h1 { margin: 0; }
+.r4-net-text .text-size-medium { max-width: 30rem; }
+/* the drawing fades out toward every edge */
+.r4-net-art { position: relative; aspect-ratio: 5 / 4; }
+.r4-net-art canvas {
+  position: absolute; inset: 0; display: block; width: 100%; height: 100%;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent), linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent), linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
+  mask-composite: intersect;
+}
+@media screen and (max-width: 991px) {
+  .r4-net-grid { grid-template-columns: minmax(0, 1fr); gap: 2rem; padding: 4.5rem 0 3.5rem; }
+  .r4-net-art { aspect-ratio: 1 / 1; }
+}
+/* round six: the whole network framed with room round it, so only a soft
+   edge is needed, and on phones nothing runs off the side (Hunter,
+   8 October) */
+.r4-net[data-layout="scatter"] .r4-net-art canvas {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+}
+@media screen and (max-width: 991px) { .r4-net[data-layout="scatter"] .r4-net-art { aspect-ratio: 4 / 3; } }
+
+/* ---- the news: a visual for each release ---- */
+.r4-press-art { display: grid; place-items: center; width: 100%; aspect-ratio: 3 / 2; }
+.r4-press-art.is-yellow { background: var(--background-color--background-alternate); }
+.r4-press-art.is-fog { background: var(--base-color-brand--green); }
+.r4-press-art.is-sand { background: var(--base-color-brand--brown); }
+.r4-press-art.is-sage { background: #b9c6bb; }
+.r4-press-icon { width: 40%; max-width: 9rem; aspect-ratio: 48 / 56; }
+.r4-press-icon svg { width: 100%; height: 100%; display: block; }
+.blog_image.r4-press-photo { width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
+
+/* ---- the overview ---- */
+body.ov { margin: 0; background: #f4f3ef; color: #0f0e12; font: 400 1rem/1.5 Inter, Arial, sans-serif; }
+.ov-main { max-width: 80rem; margin: 0 auto; padding: 4.5rem 2.5rem 6rem; }
+.ov-label { display: flex; align-items: center; gap: 0.625rem; margin: 0 0 1.5rem; color: rgba(15, 14, 18, 0.66); font-weight: 500; }
+.ov-label span { width: 0.5rem; height: 0.5rem; background: #ffd748; }
+.ov h1 { margin: 0; font: 400 4.5rem/1.02 Inter, Arial, sans-serif; letter-spacing: -0.02em; }
+.ov-lead { max-width: 44rem; margin: 1.5rem 0 0; font-size: 1.375rem; line-height: 1.45; color: rgba(15, 14, 18, 0.78); }
+.ov h2 { margin: 0; font: 500 1.75rem/1.15 Inter, Arial, sans-serif; letter-spacing: -0.01em; }
+.ov h3 { margin: 0 0 0.75rem; font: 600 0.9375rem/1.2 Inter, Arial, sans-serif; }
+.ov ol { margin: 0; padding: 0; list-style: none; counter-reset: ov; }
+.ov ol li { counter-increment: ov; position: relative; padding: 0.55rem 0 0.55rem 2rem; border-top: 1px solid rgba(15, 14, 18, 0.12); }
+.ov ol li::before { content: counter(ov); position: absolute; left: 0; top: 0.6rem; display: grid; place-items: center; width: 1.25rem; height: 1.25rem; background: rgba(15, 14, 18, 0.07); font: 600 0.6875rem/1 Inter, Arial, sans-serif; }
+.ov-constants { display: grid; grid-template-columns: 0.4fr 1fr; gap: 2.5rem; margin-top: 4.5rem; padding-top: 2rem; border-top: 1px solid #0f0e12; }
+.ov-constants ol li::before { background: #ffd748; }
+.ov-sets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; margin-top: 4.5rem; }
+.ov-set { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.75rem; background: #fff; }
+.ov-set.is-pick { outline: 2px solid #0f0e12; outline-offset: -2px; }
+.ov-set-head { display: flex; align-items: center; gap: 0.875rem; flex-wrap: wrap; }
+.ov-set-key { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; background: #0f0e12; color: #fff; font: 600 1rem/1 Inter, Arial, sans-serif; }
+.ov-pick { padding: 0.3rem 0.55rem; background: #ffd748; font: 600 0.75rem/1 Inter, Arial, sans-serif; }
+.ov-thesis { margin: 0; font-size: 1.125rem; line-height: 1.45; }
+.ov-pages { display: grid; gap: 1.5rem; }
+.ov-pages ol { font-size: 0.875rem; line-height: 1.4; }
+.ov-open { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; color: #0f0e12; font-weight: 600; font-size: 0.875rem; text-decoration: none; }
+.ov-open::after { content: "\2192"; }
+.ov-open:hover { text-decoration: underline; }
+.ov-set dl { display: grid; gap: 0.75rem; margin: auto 0 0; padding-top: 1.25rem; border-top: 1px solid #0f0e12; font-size: 0.875rem; }
+.ov-set dt { font-weight: 600; }
+.ov-set dd { margin: 0.2rem 0 0; color: rgba(15, 14, 18, 0.74); }
+.ov-why { display: grid; grid-template-columns: 0.4fr 1fr; gap: 2.5rem; margin-top: 4.5rem; padding-top: 2rem; border-top: 1px solid #0f0e12; }
+.ov-why ol li::before { background: #0f0e12; color: #fff; }
+@media screen and (max-width: 991px) {
+  .ov h1 { font-size: 3rem; }
+  .ov-sets, .ov-constants, .ov-why { grid-template-columns: 1fr; }
+}
+@media screen and (max-width: 479px) {
+  .ov-main { padding: 3rem 1.25rem 4rem; }
+  .ov h1 { font-size: 2.5rem; }
+}
+
+/* round four's buttons: square corners, title case in Inter (Hunter,
+   7 October), over their build's capitals */
+html[data-round4] .button, html[data-round4] .r2-platform-action { border-radius: 0; font-family: Inter, Arial, sans-serif; font-weight: 500; font-size: 0.9375rem; letter-spacing: 0; text-transform: none; }
+
+/* round four hero study: the fly-in (hero-flyin.js). The drawing runs under
+   the whole hero, on every screen, with no fade under the navigation; the
+   headline and the film's corner come in as the camera settles */
+.r2-island-hero.is-dark.r4-fly .r2-hero-art { top: 0; right: 0; bottom: 0; left: 0; height: auto; }
+.r4-fly .r2-hero-art canvas { -webkit-mask-image: none; mask-image: none; }
+.r4-fly .hero_content.is-home > div, .r4-fly .r4-thumb { transition: opacity 1.1s ease, transform 1.3s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.r4-fly.is-intro .hero_content.is-home > div, .r4-fly.is-intro .r4-thumb {
+  opacity: 0; transform: translateY(1.25rem); visibility: hidden;
+  /* if the drawing never runs, the copy still comes */
+  animation: r4-fly-show 0.8s ease 10s forwards;
+}
+.r4-fly .hero_content.is-home > div, .r4-fly .r4-thumb { visibility: visible; }
+@keyframes r4-fly-show { to { opacity: 1; transform: none; visibility: visible; } }
+@media (prefers-reduced-motion: reduce) {
+  .r4-fly.is-intro .hero_content.is-home > div, .r4-fly.is-intro .r4-thumb { opacity: 1; transform: none; visibility: visible; animation: none; }
+}
+html[data-motion="still"] .r4-fly.is-intro .hero_content.is-home > div, html[data-motion="still"] .r4-fly.is-intro .r4-thumb { opacity: 1; transform: none; visibility: visible; animation: none; }
+/* the headline in the same weight and tracking as the page's section
+   headings (their hero style is a light weight; Hunter, 7 October) */
+.r2-island-hero.is-dark.r4-fly .heading-style-h1.is-home { font-weight: 500; letter-spacing: -0.03em; }
+/* after the move the scene can be spun by hand, a grab cursor its only cue
+   (hero-flyin.js) */
+.r4-fly { touch-action: pan-y; }
+.r4-fly.is-spinnable { cursor: grab; }
+.r4-fly.is-spinning { cursor: grabbing; user-select: none; }
+/* as the camera circles the site, the base swings round behind the copy:
+   their black eases in under the type's corner so it always reads */
+.r4-fly .r2-hero-art::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(70% 75% at 0% 100%, rgba(15, 14, 18, 0.9) 0%, rgba(15, 14, 18, 0.62) 42%, rgba(15, 14, 18, 0) 72%);
+}
+/* the copy in the bottom left corner, the film's thumbnail in the other
+   (Hunter, 7 October) */
+@media screen and (min-width: 992px) {
+  .r4-fly .hero_content.is-home { align-items: flex-end; padding-bottom: calc(1.5rem + var(--r2-topbar-h, 0px)); }
+  /* the type a size down, so the drawing leads (Hunter, 7 October) */
+  .r2-island-hero.is-dark.r4-fly .hero_content.is-home > div { max-width: 34rem; }
+  .r2-island-hero.is-dark.r4-fly .heading-style-h1.is-home { font-size: 3.5rem; line-height: 1.05; }
+  .r2-island-hero.is-dark.r4-fly .r2b-hero-line { max-width: 32rem; line-height: 1.5; }
+}
+@media screen and (max-width: 991px) {
+  .r2-island-hero.is-dark.r4-fly .heading-style-h1.is-home { font-size: 2.25rem; }
+  .r2-island-hero.is-dark.r4-fly .r2b-hero-line { font-size: 1rem; }
+}
+.ov-studies .ov-thesis { margin-bottom: 1rem; }
+
+/* round four: square corners on every button and card, across the board
+   (Hunter, 7 October) */
+html[data-round4] { --radius--button: 0; --radius--card: 0; }
+html[data-round4] :is(.button, .w-button, [class*="card"], [class*="-media"], .r2-mega-art, .r2-map svg, .r4-thumb, .r4-player, .r4-press-art, .r4-op-window) { border-radius: 0; }
+
+/* round four's briefing: full bleed on their yellow, the copy to the left
+   and the platform set out on the grid to the right (cta-plan.js) */
+html[data-round4] .section_cta.r4-cta { background-color: var(--background-color--background-alternate); color: var(--text-color--text-primary); }
+.r4-cta .padding-section-medium { padding-top: 0; padding-bottom: 0; }
+.r4-cta .cta_component { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: stretch; gap: 2rem; background: none; overflow: visible; }
+.r4-cta .cta_card { padding: 7rem 0; }
+.r4-cta-art { position: relative; min-height: 30rem; }
+.r4-cta-art canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+@media screen and (max-width: 991px) {
+  .r4-cta .cta_component { grid-template-columns: 1fr; gap: 0; }
+  .r4-cta .cta_card { padding: 4.5rem 0 0; }
+  .r4-cta-art { min-height: 22rem; }
+}
+
+/* round four: the news's arrows and dots up in its heading's row */
+.r4-press .blog_heading-wrapper { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; }
+.r4-press .blog_heading-wrapper .blog_slider-control-wrapper { flex: none; margin: 0 0 0.5rem; }
+@media screen and (max-width: 767px) {
+  .r4-press .blog_heading-wrapper { flex-direction: column; align-items: flex-start; gap: 1rem; }
+}
+/* round four: the navigation's dropdown on their yellow, so it reads apart
+   from a dark hero (Hunter, 7 October) */
+@media screen and (min-width: 992px) {
+  html[data-round4] .navbar_dropdown-list { background-color: var(--background-color--background-alternate); padding: 0.5rem 0; }
+  html[data-round4] .navbar_dropdown-link { color: #0f0e12; padding: 0.55rem 1.25rem; }
+  html[data-round4] .navbar_dropdown-link:hover, html[data-round4] .navbar_dropdown-link:focus-visible { color: #0f0e12; background-color: rgba(15, 14, 18, 0.08); }
+}
+/* round six: the dropdown on a light grey card (Hunter, 12 October). The
+   item under the pointer becomes a yellow card inside it, held off the
+   card's edges by its padding, and its label moves over for the small square
+   that grows in ahead of it and blinks, as on the buttons (black, as the
+   square is wherever it sits on their yellow). Keyboard focus does the same */
+@media screen and (min-width: 992px) {
+  html[data-r6] .navbar_dropdown-list { display: grid; gap: 0.125rem; padding: 0.375rem; background-color: var(--base-color-neutral--neutral-lightest); }
+  /* the square's room (its width and gap, 1.0625rem) waits at the right and
+     moves to the left on hover, so the card never changes width */
+  html[data-r6] .navbar_dropdown-link { display: flex; align-items: center; justify-self: stretch; margin: 0; padding: 0.625rem 1.9375rem 0.625rem 0.875rem; text-align: left; color: #0f0e12; background-color: transparent; transform: none; transition: background-color 0.2s ease, color 0.2s ease, padding-right 0.26s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  html[data-r6] .navbar_dropdown-link::before { content: ""; flex: none; width: 0; height: 0.4375rem; margin-right: 0; background: #0f0e12; transition: width 0.26s cubic-bezier(0.2, 0.7, 0.2, 1), margin-right 0.26s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  html[data-r6] .navbar_dropdown-link:hover, html[data-r6] .navbar_dropdown-link:focus-visible { color: #0f0e12; background-color: var(--background-color--background-alternate); transform: none; outline: none; padding-right: 0.875rem; }
+  html[data-r6] .navbar_dropdown-link:hover::before, html[data-r6] .navbar_dropdown-link:focus-visible::before { width: 0.4375rem; margin-right: 0.625rem; animation: r2-blink 1s steps(1, end) 0.26s infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-r6] .navbar_dropdown-link, html[data-r6] .navbar_dropdown-link::before { transition: none; }
+  html[data-r6] .navbar_dropdown-link::before { animation: none !important; }
+}
+
+/* round four's type, audited (Hunter, 7 October): every hero headline in
+   the section headings' weight and tracking (their light hero style made
+   the two read differently), one size for every intro and hero line, and a
+   heading row's intro set on the heading's last line */
+html[data-round4] .heading-style-h1.is-home { font-weight: 500; letter-spacing: -0.03em; }
+@media screen and (min-width: 480px) {
+  html[data-round4] .text-size-medium { font-size: 1.125rem; }
+}
+@media screen and (min-width: 768px) {
+  html[data-round4] .r2v-hero .heading-style-h1.is-home.r2v-title { font-size: clamp(3rem, 6vh, 3.5rem); }
+}
+/* no section heading is ever bigger than the page's hero headline (Hunter,
+   7 October): 48 pixels on wide screens, 36 on tablets, their own 32 on
+   phones, under every hero */
+@media screen and (min-width: 992px) {
+  html[data-round4] .heading-style-h1:not(.is-home) { font-size: 3rem; }
+}
+@media screen and (min-width: 768px) and (max-width: 991px) {
+  html[data-round4] .heading-style-h1:not(.is-home) { font-size: 2.25rem; }
+}
+html[data-round4] :is(.bento-grid_heading-wrapper, .r4-net-text, .r2b-glance-head) { align-items: end; align-items: last baseline; }
+
+/* round four's walkthrough steps (Hunter, 7 October): the step's text at
+   full strength, not muted, with no words picked out in bold, and its clip
+   in 16:9 like every video on the page */
+html[data-round4] .r2-sys-copy p { color: var(--text-color--text-primary); }
+html[data-round4] .r2b-dark .r2-sys-copy p { color: #fff; }
+html[data-round4] .r2-sys-copy p b { font-weight: inherit; color: inherit; }
+html[data-round4] .r2b-step-proof { grid-template-columns: 9rem minmax(0, 1fr); }
+html[data-round4] .r2b-step-media { aspect-ratio: 16 / 9; }
+
+/* on a phone the islands sit in a band above the type: the grid under them
+   fades out at the band's edges instead of stopping (Hunter, 7 October) */
+@media screen and (max-width: 767px) {
+  .r2v-art[data-ground="grid"] canvas {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14%, #000 72%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 14%, #000 72%, transparent 100%);
+  }
+}
+
+/* ---- round six: Point Defense from sim to real (hero-simreal.js) ----
+   Light where the homepage is dark: the modeled landscape, pinned while the
+   page scrolls, lifting to straight down as Epirus's aerial footage takes
+   over (--real, 0 to 1, set by the script); the copy turns white over it */
+.r6-sim { --real: 0; position: relative; height: 230vh; background-color: #e3e9e3; color: #0f0e12; }
+.r6-sim-pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
+.r6-sim-real, .r6-sim-art, .r6-sim-shade { position: absolute; inset: 0; }
+.r6-sim-real { opacity: var(--real); background: #0f0e12; }
+/* the photograph settles as it takes over, as if the view lands on it */
+.r6-sim-photo { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(calc(1.14 - var(--real) * 0.14)); transform-origin: 60% 50%; }
+.r6-sim-art canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.r6-sim-shade { pointer-events: none; opacity: var(--real); background: linear-gradient(90deg, rgba(15, 14, 18, 0.8) 0%, rgba(15, 14, 18, 0.45) 42%, rgba(15, 14, 18, 0) 72%), linear-gradient(0deg, rgba(15, 14, 18, 0.5) 0%, rgba(15, 14, 18, 0) 45%); }
+.r6-sim-copy { position: absolute; left: 0; right: 0; bottom: 3rem; z-index: 1; }
+.r6-sim-text { max-width: 34rem; }
+.r6-sim-text, .r6-sim-text .heading-style-h1, .r6-sim-text .r2b-hero-line { color: color-mix(in srgb, #ffffff calc(var(--real) * 100%), #0f0e12); }
+.r6-sim-text .heading-style-h1 { margin: 0; font-size: 3.5rem; line-height: 1.05; }
+.r6-sim-text .r2b-hero-line { max-width: 32rem; margin-top: 0.875rem; }
+.r6-sim-text .button-group { margin-top: 1.5rem; }
+.r6-sim.is-real .r6-sim-text .button:not(.is-secondary) { border-color: rgba(255, 255, 255, 0.72); color: #fff; }
+@media screen and (max-width: 991px) {
+  .r6-sim { height: 200vh; }
+  .r6-sim-copy { bottom: 2rem; }
+  .r6-sim-text .heading-style-h1 { font-size: 2.25rem; }
+}
+
+/* ---- round six: the scenarios, Epirus's set drawn as isometric icons ----
+   no cards (Hunter, 8 October): the icons sit on the section's own green,
+   divided by hairline grid lines, six across, two rows of six (Hunter,
+   8 October, after trying three rows of four); three across on tablets,
+   two on phones */
+.r6-scenarios { background-color: var(--base-color-brand--green); }
+.r6-scenario-grid { --line: rgba(15, 14, 18, 0.16); display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.r6-scenario { display: flex; flex-direction: column; gap: 0.75rem; margin: 0; padding: 1.25rem 1.25rem 1.5rem; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
+.r6-scenario:nth-child(6n) { border-right: 0; }
+.r6-scenario-icon { width: 82%; align-self: center; aspect-ratio: 4 / 3; } /* a touch smaller (Hunter, 8 October) */
+.r6-scenario span { font: 500 0.9375rem/1.3 Inter, Arial, sans-serif; }
+@media screen and (max-width: 991px) {
+  .r6-scenario-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .r6-scenario:nth-child(6n) { border-right: 1px solid var(--line); }
+  .r6-scenario:nth-child(3n) { border-right: 0; }
+}
+@media screen and (max-width: 479px) {
+  .r6-scenario-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .r6-scenario:nth-child(3n) { border-right: 1px solid var(--line); }
+  .r6-scenario:nth-child(2n) { border-right: 0; }
+  .r6-scenario { padding: 0.75rem; }
+  .r6-scenario span { font-size: 0.8125rem; }
+}
+
+/* their yellow main button once the footage is behind the copy */
+.r6-sim.is-real .r6-sim-text .button.is-secondary { border-color: var(--background-color--background-alternate); background-color: var(--background-color--background-alternate); color: #0f0e12; }
+
+/* round six, Epirus's new footage (8 October): the photograph at the end of
+   the Point Defense hero, kept on Leonidas as it settles; the play mark on
+   the films (their yellow, a dark triangle); the Point Defense film over the
+   proof's footage, the whole picture a way in */
+.r6-sim-photo { object-position: 45% 50%; transform-origin: 45.5% 45%; }
+@media screen and (max-width: 991px) { .r6-sim-photo { object-position: 25% 50%; transform-origin: 30% 40%; } }
+/* with the drawing running (hero-simreal.js), the photograph is laid in its
+   scene: drawn at its own size and taken to the screen by one perspective
+   transform the script sets each frame; a soft copy of it fills any edge
+   the card has not reached yet */
+.r6-sim.is-mapped .r6-sim-photo { position: absolute; left: 0; top: 0; width: 2800px; height: 1868px; max-width: none; object-fit: fill; transform-origin: 0 0; }
+.r6-sim.is-mapped .r6-sim-real::before { content: ""; position: absolute; inset: -4%; background: url("media/leonidas-field.jpg") 45% 50% / cover no-repeat; filter: blur(22px) brightness(0.85); }
+/* the copy turns from ink to white in one short step (--flip, set with
+   --real), where the picture behind it turns dark */
+.r6-sim { --flip: 0; }
+.r6-sim-text, .r6-sim-text .heading-style-h1, .r6-sim-text .r2b-hero-line { color: color-mix(in srgb, #ffffff calc(var(--flip) * 100%), #0f0e12); }
+.r6-play { position: relative; flex: none; display: block; width: 2.75rem; height: 2.75rem; background: var(--background-color--background-alternate); transition: background-color 0.2s ease; }
+.r6-play::after { content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-35%, -50%); border-left: 0.75rem solid #0f0e12; border-top: 0.5rem solid transparent; border-bottom: 0.5rem solid transparent; }
+.r2b-step-media .r6-play { position: absolute; left: 0.5rem; bottom: 0.5rem; width: 1.75rem; height: 1.75rem; }
+.r2b-step-media .r6-play::after { border-left-width: 0.5rem; border-top-width: 0.34rem; border-bottom-width: 0.34rem; }
+.r6-step-film { cursor: pointer; }
+.r6-step-film .r2b-step-video { transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.r6-step-film:hover .r2b-step-video, .r6-step-film:focus-visible .r2b-step-video { transform: scale(1.04); }
+.r6-step-film:hover .r6-play, .r6-film:hover .r6-play, .r6-film:focus-visible .r6-play { background-color: #fff; }
+.r6-proof .partner_image-wrapper { position: relative; overflow: hidden; }
+.r6-film { position: absolute; inset: 0; z-index: 2; display: flex; align-items: flex-end; gap: 0.875rem; width: 100%; padding: 1.5rem; border: 0; background: linear-gradient(rgba(15, 14, 18, 0) 55%, rgba(15, 14, 18, 0.72)); color: rgba(255, 255, 255, 0.78); font: 400 0.875rem/1.35 Inter, Arial, sans-serif; text-align: left; cursor: pointer; }
+.r6-film b { display: block; color: #fff; font-weight: 600; font-size: 1rem; }
+.r6-film:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
+
+/* round six: a light navigation over the Point Defense page's light hero
+   (Hunter, 8 October: the dark bar looked off over it). hero-simreal.js
+   sets html.r6-nav-light while the hero is light; once the photograph has
+   taken over, and for the rest of the page, it is the site's dark bar. The
+   logo is their own white file, drawn dark. With the menu open it stays
+   dark, like the menu. */
+.navbar_bg, .navbar_container, .navbar_logo, .navbar_link, .button.is-nav, [class^="menu-icon"] { transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease, filter 0.35s ease; }
+html.r6-nav-light .navbar_component:not(:has(.w--open)) .navbar_bg { background-color: #e3e9e3; }
+html.r6-nav-light .navbar_component:not(:has(.w--open)) :is(.navbar_container, .navbar_link, .navbar_link.w--current, .navbar_dropdown-toggle) { color: #0f0e12; }
+html.r6-nav-light .navbar_component:not(:has(.w--open)) .navbar_link:hover { color: #55575c; }
+html.r6-nav-light .navbar_component:not(:has(.w--open)) .navbar_logo { filter: brightness(0); }
+html.r6-nav-light .navbar_component:not(:has(.w--open)) .button.is-nav:not(:hover) { border-color: #0f0e12; color: #0f0e12; }
+html.r6-nav-light .navbar_component:not(:has(.w--open)) :is(.menu-icon4_line-top, .menu-icon4_line-bottom, .menu-icon_line-middle-top, .menu-icon_line-middle-base) { background-color: #0f0e12; }
+
+/* ---- round six: the platform pages (hero-platform.js) ----
+   A light hero on the pale grid, full height, nothing pinned; the copy
+   bottom left, as on Point Defense. Then the page's sections: alternating
+   rows beside 16 by 9 footage, the Mission Suite's four stages, a film band. */
+.r6-plat { position: relative; height: 100vh; height: 100svh; min-height: 38rem; overflow: hidden; background-color: #e3e9e3; color: #0f0e12; }
+.r6-plat-art { position: absolute; inset: 0; }
+.r6-plat-art canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.r6-plat-copy { position: absolute; left: 0; right: 0; bottom: 3rem; z-index: 1; }
+.r6-plat-text { max-width: 34rem; }
+.r6-plat-text .r4-eyebrow { margin: 0; color: #0f0e12; }
+.r6-plat-text .heading-style-h1 { margin: 0.5rem 0 0; font-size: 3.5rem; line-height: 1.05; color: #0f0e12; }
+.r6-plat-text .r2b-hero-line { max-width: 32rem; margin-top: 0.875rem; color: #0f0e12; }
+.r6-plat-text .button-group { margin-top: 1.5rem; }
+.r6-plat-text .button:not(.is-secondary) { border-color: #0f0e12; color: #0f0e12; }
+/* each product its own ground (Jeff Morgan, 10 October; hero-platform.js,
+   LOOK): Manta at night, Kosmos a cool blue plan */
+.r6-plat[data-platform="sense"] { background-color: #0f141c; color: #fff; }
+.r6-plat[data-platform="sense"] .r6-plat-text :is(.r4-eyebrow, .heading-style-h1, .r2b-hero-line) { color: #fff; }
+.r6-plat[data-platform="sense"] .r6-plat-text .button.is-secondary { border-color: var(--background-color--background-alternate); background-color: var(--background-color--background-alternate); color: #0f0e12; }
+.r6-plat[data-platform="sense"] .r6-plat-text .button:not(.is-secondary) { border-color: rgba(255, 255, 255, 0.72); background-color: transparent; color: #fff; }
+.r6-plat[data-platform="sense"] .r6-plat-text .button:not(.is-secondary):hover { border-color: #fff; color: #fff; }
+.r6-plat[data-platform="mission"] { background-color: #e5edf3; }
+@media screen and (max-width: 991px) {
+  .r6-plat-copy { bottom: 2rem; }
+  .r6-plat-text .heading-style-h1 { font-size: 2.25rem; }
+}
+/* round six, the Manta page as their one-pager has it (Jeff Morgan, 10
+   October): the overview beside its five points, their three-screen render
+   under them; Platform Integration & Performance as labelled rows; Manta's
+   own view at the top of the Zeus window's side panel */
+.r6-core { background-color: #fff; }
+.r6-core .heading-style-h1 { margin: 0; max-width: 48rem; }
+.r6-core-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 3rem; align-items: start; }
+.r6-core-grid .text-size-medium { margin: 0; }
+.r6-core-points { margin: 0; padding: 0; list-style: none; border-top: 1px solid rgba(15, 14, 18, 0.14); }
+.r6-core-points li { position: relative; margin: 0; padding: 0.875rem 0 0.875rem 1.375rem; border-bottom: 1px solid rgba(15, 14, 18, 0.14); }
+.r6-core-points li::before { content: ""; position: absolute; left: 0; top: 1.3rem; width: 0.4375rem; height: 0.4375rem; background: #ffd748; }
+.r6-core-media { margin: 0; }
+.r6-core-media img { display: block; width: 100%; height: auto; }
+/* Epirus's laptop image (12 October): square, so it sits centred at a
+   reading size rather than across the section */
+.r6-core-media.is-laptop { max-width: 40rem; margin-left: auto; margin-right: auto; }
+.r6-rows-grid { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 3rem; align-items: start; }
+.r6-rows-grid .heading-style-h1 { margin: 0; }
+.r6-rows-list { margin: 0; border-top: 1px solid rgba(15, 14, 18, 0.14); }
+.r6-rows-list > div { display: grid; grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr); gap: 1.5rem; padding: 1.125rem 0; border-bottom: 1px solid rgba(15, 14, 18, 0.14); }
+.r6-rows-list dt { font-weight: 600; }
+.r6-rows-list dd { margin: 0; }
+/* Over the map's lower right where the window sits side by side, as their
+   Zeus mock-up has it: in the map's own cell of the window's grid, so it
+   keeps to the map. Where the window stacks it is its own pane under the
+   map, clear of Leonidas's menu, at a size the drones can be read */
+.r4-op-body.has-manta > .r4-op-map { grid-area: 1 / 1; }
+.r4-op-body.has-manta > .r4-op-side { grid-area: 1 / 2; }
+.r6-op-manta { grid-area: 1 / 1; align-self: end; justify-self: end; position: relative; z-index: 1; width: 34%; max-width: 17rem; margin: 0 0.75rem 2.6rem 0; border: 1px solid rgba(156, 210, 240, 0.55); background: #0d0e10; box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.45); pointer-events: none; }
+.r6-op-manta-bar { display: flex; align-items: center; justify-content: space-between; padding: 0.3rem 0.45rem; color: #d9dadd; font: 600 0.5rem/1 Inter, Arial, sans-serif; letter-spacing: 0.12em; }
+.r6-op-manta-pill { padding: 0.12rem 0.3rem; border: 1px solid rgba(110, 220, 140, 0.5); color: #8ee6a6; letter-spacing: 0.04em; transition: color 0.2s ease, border-color 0.2s ease; }
+.r6-op-manta-name i { margin-left: 0.4rem; padding: 0.12rem 0.25rem; border: 1px solid var(--op-line); color: var(--op-dim); font-style: normal; letter-spacing: 0.04em; }
+/* Manta's view, drawn (12 October; r6MantaView in build.mjs, painted by
+   operator.js): their camera on IR in the window's own colours, the drones
+   white hot on the night sky. Manta's boxes are white while it tracks and
+   the map's red once Leonidas is assigned; the pill reads the group in view
+   as the effector card reads Leonidas: tracking in their UI's green, locked
+   in red, engaging in their yellow */
+.r6-op-manta svg { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+@media screen and (max-width: 991px) {
+  .r4-op-body.has-manta > :is(.r4-op-map, .r4-op-side), .r6-op-manta { grid-area: auto; }
+  .r6-op-manta { justify-self: stretch; width: auto; max-width: none; margin: 0; border: 0; border-bottom: 1px solid var(--op-line); background: none; box-shadow: none; }
+  .r6-op-manta-bar { padding: 0.75rem 1rem 0.625rem; font-size: 0.625rem; }
+  .r6-op-manta svg { width: calc(100% - 2rem); margin: 0 1rem 1rem; aspect-ratio: 424 / 180; outline: 1px solid var(--op-line); }
+}
+.r6-op-manta[data-state="search"] .r6-op-manta-pill, .r6-op-manta[data-state="down"] .r6-op-manta-pill { border-color: rgba(142, 144, 149, 0.45); color: var(--op-dim); }
+.r6-op-manta[data-state="lock"] .r6-op-manta-pill { border-color: rgba(232, 72, 95, 0.6); color: #f27386; }
+.r6-op-manta[data-state="engage"] .r6-op-manta-pill { border-color: rgba(255, 215, 72, 0.6); color: var(--op-yellow); }
+.r6-mv-trees { fill: #26282b; }
+.r6-mv-tape path { fill: none; stroke: rgba(233, 233, 230, 0.32); stroke-width: 1; }
+.r6-mv-tape text { fill: rgba(233, 233, 230, 0.55); font: 500 7.5px/1 "SFMono-Regular", Menlo, Consolas, monospace; text-anchor: middle; }
+.r6-mv-caret { fill: #e9e9e6; }
+.r6-mv-craft .is-hot { fill: #f7f7f4; }
+.r6-mv-craft .is-arm { fill: none; stroke: #d4d5d7; stroke-width: 1.6; stroke-linecap: round; }
+.r6-mv-craft .is-prop { fill: none; stroke: rgba(255, 255, 255, 0.4); stroke-width: 1.2; stroke-linecap: round; }
+.r6-mv-box { fill: none; stroke: rgba(255, 255, 255, 0.85); stroke-width: 1; vector-effect: non-scaling-stroke; transition: stroke 0.2s ease; }
+.r6-mv-fill { fill: rgba(232, 72, 95, 0.3); opacity: 0; }
+.r6-mv-lead { fill: none; stroke: rgba(255, 255, 255, 0.7); stroke-width: 1; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; transition: stroke 0.2s ease; }
+.r6-mv-chip { fill: rgba(16, 17, 19, 0.88); stroke: rgba(255, 255, 255, 0.22); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.r6-mv-tag text { fill: #e9e9e6; font: 700 8px/1 Inter, Arial, sans-serif; letter-spacing: 0.02em; transition: fill 0.2s ease; }
+.r6-mv-strike { stroke: #f27386; stroke-width: 1; opacity: 0; }
+.r6-mv-group:is([data-state="lock"], [data-state="engage"], [data-state="down"]) :is(.r6-mv-box, .r6-mv-lead) { stroke: var(--op-red); }
+.r6-mv-group:is([data-state="lock"], [data-state="engage"], [data-state="down"]) .r6-mv-tag text { fill: #f27386; }
+.r6-mv-group[data-state="down"] .r6-mv-strike { opacity: 1; }
+@media screen and (max-width: 991px) {
+  .r6-core-grid, .r6-rows-grid { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+}
+@media screen and (max-width: 479px) {
+  .r6-rows-list > div { grid-template-columns: minmax(0, 1fr); gap: 0.375rem; }
+}
+.r6-alt-rows { display: grid; gap: 4rem; margin: 0; padding: 0; list-style: none; }
+.r6-alt-row { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 3rem; align-items: center; margin: 0; }
+.r6-alt-row.is-flipped .r6-alt-text { order: 2; }
+.r6-alt-text { display: grid; gap: 0.875rem; }
+.r6-alt-text .heading-style-h3, .r6-alt-text p { margin: 0; }
+.r6-alt-media { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #1a191e; }
+.r6-alt-video, .r6-stage-video, .r6-filmband-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+@media screen and (max-width: 767px) {
+  .r6-alt-row { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+  .r6-alt-row.is-flipped .r6-alt-text { order: 0; }
+  .r6-alt-rows { gap: 3rem; }
+}
+.r6-stage-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2rem 1.5rem; margin: 0; padding: 0; list-style: none; }
+.r6-stage { margin: 0; }
+.r6-stage-media { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #0f0e12; }
+.r6-stage-name { display: flex; align-items: center; gap: 0.5rem; margin: 1rem 0 0.5rem; font: 600 1.125rem/1.2 Inter, Arial, sans-serif; }
+.r6-stage-app { margin-left: auto; color: var(--text-color--text-secondary, #6b6d72); font: 500 0.75rem/1 Inter, Arial, sans-serif; letter-spacing: 0.04em; }
+.r6-stage-body { margin: 0; font-size: 0.9375rem; line-height: 1.45; }
+@media screen and (max-width: 991px) { .r6-stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media screen and (max-width: 479px) { .r6-stage-grid { grid-template-columns: minmax(0, 1fr); } }
+.r6-filmband-media { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #0f0e12; }
+.r6-filmband-media .r6-film { position: absolute; inset: 0; }

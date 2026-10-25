@@ -151,7 +151,7 @@ function quiet(host, text) {
   p.textContent = text;
   p.style.cssText =
     "position:absolute;inset:0;margin:0;display:grid;place-items:center;padding:2rem;text-align:center;" +
-    "color:rgba(217,226,210,.5);font:13px/1.4 ui-monospace,monospace;";
+    "color:rgba(217,226,210,.5);font:13px/1.4 var(--primary-family, sans-serif);";
   host.append(p);
   return { update() {}, action() {}, destroy() { p.remove(); } };
 }

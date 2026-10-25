@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Range work card, 2026-10-23, built on the Epirus and Ethos cards' engine
+     (a classic script, range-card-src/js/card.js) and the Dawn card's
+     architecture, with Hunter's notes built in from the start: the miniature
+     keeps touring while you hover, the light is one soft round bloom under the
+     pointer, you can drag the page like a phone (and scrub it sideways: drag
+     right to go further down), a notched ruler slides with the scroll, and
+     there is no Case Study pill.
+
+     range.energy has been rebuilt by someone else since Kinetic made it (the
+     live page is now a light "A New Era of Fleet Performance" site), so this
+     is Kinetic's Range: the dark "Your trailer, Electrified" site, as Kinetic's
+     cover loop (kineticstudio public/media/range.mp4) shows it and as the web
+     archive's 2025-07-09 capture of range.energy preserves it. That capture
+     was measured at 1440x900 in headless Chromium, and its own fonts (Pilat,
+     Pilat Wide), images and films came from the site's CDN, which still serves
+     them. Everything is rebuilt at its 1440px design width as HTML/CSS layers,
+     each at its own depth: the hero film as two of its frames dissolving with
+     the truck held in place; the metrics rolling in like the site's odometers;
+     A universal system with its three films (Install, Power, Drive) as stills,
+     the tabs stepping on with their progress lines; the snow test drive with
+     70,000 miles rolling up and the testimonials sliding by; All Day Power; the
+     five feature cards; the savings calculator; the FAQs and the footer. raw/
+     keeps the fetched HTML, CSS, fonts and media for reference (the current
+     live page too); nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched from outside it:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=1      the site in a window on the card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Range work card</title>
+<script>
+  /* before first paint: embed or not, and the bleed */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="range-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Range, range.energy, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- hero: the film (two of its frames, the truck held where it is), the headline at its foot -->
+              <header class="sec hero" data-tone="dark" data-stop="hero">
+                <div class="clip">
+                  <div class="h-film" data-layer="the film" data-depth="-0.25" style="--lab-x:120px;--lab-y:160px">
+                    <img class="h-a" id="heroA" src="range-card-src/img/hero-a.webp" alt="">
+                    <img class="h-b" id="heroB" src="range-card-src/img/hero-b.webp" alt="">
+                    <i class="h-fade"></i>
+                  </div>
+                </div>
+                <div class="h1 h-l1" data-layer="headline" data-depth="0.7" data-shadow="-0.25,0.5,16">Your trailer</div>
+                <div class="h1 h-l2" data-layer="headline" data-depth="0.82" data-shadow="-0.25,0.55,16">Electrified</div>
+              </header>
+
+              <!-- the metrics, rolling up like the site's odometers -->
+              <section class="sec metrics" data-tone="dark" data-stop="metrics">
+                <p class="lead m-p" data-layer="body copy" data-depth="0.45">Range&rsquo;s eTrailer System transforms diesel tractor-trailers to hybrid-electric, while providing power for zero-emission refrigeration.</p>
+                <div class="btn m-btn" data-layer="button" data-depth="0.88" data-shadow="0,0.35,10">Contact Us<svg viewBox="0 0 16 16" fill="none"><path d="M2.99985 8L11.5999 8M11.5999 8L7.39985 12.2M11.5999 8L7.39985 3.8" stroke="currentColor"/></svg></div>
+                <div class="m-rules" data-layer="rules" data-depth="0.08" style="--lab-x:420px;--lab-y:-34px"><i style="top:0"></i><i style="top:73px"></i><i style="top:146px"></i><i style="top:219px"></i></div>
+                <div class="m-row" style="top:128px">
+                  <img class="m-icon" src="range-card-src/img/arrow-up.svg" alt="" data-layer="icon" data-depth="0.46">
+                  <div class="m-line" data-layer="figure" data-depth="0.62" data-shadow="0,0.28,8"><span class="m-num"><span class="odo" data-odo="mpg" data-to="67"></span><span class="pc">%</span></span><span class="m-lab">increase in MPG</span></div>
+                </div>
+                <div class="m-row" style="top:201px">
+                  <img class="m-icon" src="range-card-src/img/arrow-down.svg" alt="" data-layer="icon" data-depth="0.46">
+                  <div class="m-line" data-layer="figure" data-depth="0.62" data-shadow="0,0.28,8"><span class="m-num"><span class="odo" data-odo="emissions" data-to="70"></span><span class="pc">%</span></span><span class="m-lab">reduction in emissions</span></div>
+                </div>
+                <div class="m-row" style="top:274px">
+                  <i class="m-icon m-loader" data-layer="icon" data-depth="0.46"></i>
+                  <div class="m-line" data-layer="figure" data-depth="0.62" data-shadow="0,0.28,8"><span class="m-num"><span class="odo" data-odo="tru" data-to="100"></span><span class="pc">%</span></span><span class="m-lab">zero-emission refrigeration</span></div>
+                </div>
+              </section>
+
+              <!-- a universal system: the three films as stills, the tabs stepping on -->
+              <section class="sec process" data-tone="dark" data-stop="process">
+                <h2 class="h2 p-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.2,12">A universal<br>system</h2>
+                <div class="p-media" data-layer="the system" data-depth="0.3" style="--lab-x:220px;--lab-y:90px">
+                  <img class="p-shot" src="range-card-src/img/sys-install.webp" alt="">
+                  <img class="p-shot" src="range-card-src/img/sys-power.webp" alt="">
+                  <img class="p-shot" src="range-card-src/img/sys-drive.webp" alt="">
+                </div>
+                <div class="p-rules" data-layer="progress" data-depth="0.1" style="--lab-y:-34px"><i style="left:104px"><b></b></i><i style="left:520px"><b></b></i><i style="left:936px"><b></b></i></div>
+                <div class="p-tab" style="left:104px" data-layer="step" data-depth="0.46">
+                  <h3 class="p-t"><span>Install</span><span class="on">Install</span></h3>
+                  <p class="p-d">The kit comprises a high-voltage battery, an electrified axle (e-axle), and an advanced sensor suite that can be installed onto existing trailers in just a few hours.</p>
+                </div>
+                <div class="p-tab" style="left:520px" data-layer="step" data-depth="0.46">
+                  <h3 class="p-t"><span>Power</span><span class="on">Power</span></h3>
+                  <p class="p-d">Delivers zero-emission energy for refrigeration, liftgates, and tractor propulsion support.</p>
+                </div>
+                <div class="p-tab" style="left:936px" data-layer="step" data-depth="0.46">
+                  <h3 class="p-t"><span>Drive</span><span class="on">Drive</span></h3>
+                  <p class="p-d">Hitch up and use diesel, EV, and hydrogen tractors. No modifications or new connections are needed.</p>
+                </div>
+              </section>
+
+              <!-- 70,000 miles over the snow test drive, the testimonials sliding by -->
+              <section class="sec proof" data-tone="light" data-stop="miles">
+                <div class="clip">
+                  <div class="t-bg" data-layer="the test drive" data-depth="-0.25" style="--lab-x:120px;--lab-y:120px"><img id="snow" src="range-card-src/img/snow.webp" alt=""><i class="t-shade"></i></div>
+                </div>
+                <div class="t-num" data-layer="figure" data-depth="0.8" data-shadow="0,0.35,16"><span class="odo" data-odo="miles" data-to="70,000"></span></div>
+                <p class="t-sub" data-layer="caption" data-depth="0.55">Miles driven by 14+ fleets</p>
+                <div class="btn black t-btn" data-layer="button" data-depth="0.88" data-shadow="0,0.4,10"><svg class="play" viewBox="0 0 10 14" fill="none"><path d="M10 6.99986L0.357143 12.5672L0.357143 1.43255L10 6.99986Z" fill="currentColor"/></svg>Watch in Action</div>
+                <div class="t-track" id="quoteTrack">
+                  <div class="quote" style="left:36px" data-layer="testimonial" data-depth="0.42"><p>&ldquo;It was almost instant power. You&rsquo;re taking off quicker and getting up to speed faster. I was route-wise probably 20-30 minutes faster drive time.&rdquo;</p><span>Rick Sims<br>Driver, UNFI</span></div>
+                  <div class="quote" style="left:572px" data-layer="testimonial" data-depth="0.42"><p>&ldquo;You don&rsquo;t have to do a lot of special things to operate with it&hellip;it&rsquo;s almost just like a regular trailer&rdquo;</p><span>Scott Naylor<br>Sr. Director, Transportation, UNFI</span></div>
+                  <div class="quote" style="left:1108px" data-layer="testimonial" data-depth="0.42"><p>"We can run all our refrigeration without running diesel, so further reducing our carbon footprint."</p><span>Jordan Mahrt<br>Owner, Petaluma Egg Farm</span></div>
+                  <div class="quote" style="left:1644px" data-layer="testimonial" data-depth="0.42"><p>"It was as if I was driving bobtail...the gas mileage, what normally is eight something, maybe nine. Got up to 15."</p><span>Sherry Stittiam<br>Driver, DB Schenker</span></div>
+                  <div class="quote" style="left:2180px" data-layer="testimonial" data-depth="0.42"><p>&ldquo;It was almost instant power. You&rsquo;re taking off quicker and getting up to speed faster. I was route-wise probably 20-30 minutes faster drive time.&rdquo;</p><span>Rick Sims<br>Driver, UNFI</span></div>
+                  <div class="quote" style="left:2716px" data-layer="testimonial" data-depth="0.42"><p>&ldquo;You don&rsquo;t have to do a lot of special things to operate with it&hellip;it&rsquo;s almost just like a regular trailer&rdquo;</p><span>Scott Naylor<br>Sr. Director, Transportation, UNFI</span></div>
+                  <div class="quote" style="left:3252px" data-layer="testimonial" data-depth="0.42"><p>"We can run all our refrigeration without running diesel, so further reducing our carbon footprint."</p><span>Jordan Mahrt<br>Owner, Petaluma Egg Farm</span></div>
+                </div>
+              </section>
+
+              <!-- all day power: TRU and lift gate on battery power -->
+              <section class="sec power" data-tone="dark" data-stop="power">
+                <div class="clip">
+                  <div class="c-bg" data-layer="on battery power" data-depth="-0.25" style="--lab-x:120px;--lab-y:120px"><img id="adp" src="range-card-src/img/adp.webp" alt=""><i class="c-shade"></i></div>
+                </div>
+                <h2 class="h2 c-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.25,12">All Day<br>Power</h2>
+                <p class="lead c-p" data-layer="body copy" data-depth="0.45">Up to 288 kWh of energy on board saves fuel and reduces TRU and tractor emissions during a full day's operations, with passive towing capabilities even when uncharged.</p>
+              </section>
+
+              <!-- the features: five cards, alternating -->
+              <section class="sec feats" data-tone="dark" data-stop="features">
+                <img class="f-img" style="left:512px;top:80px" src="range-card-src/img/f-charge.webp" alt="" data-layer="image" data-depth="0.22" data-shadow="0,0.35,24">
+                <div class="f-cap" style="left:104px;top:565px" data-layer="caption" data-depth="0.5"><h3 class="f-t">Easy to charge</h3><p class="f-d">Maintain existing operations by using CCS1 and shore power infrastructure to charge during existing trailer dwell time.</p></div>
+
+                <img class="f-img" style="left:104px;top:710px" src="range-card-src/img/f-maint.webp" alt="" data-layer="image" data-depth="0.22" data-shadow="0,0.35,24">
+                <div class="f-cap" style="left:944px;top:1195px" data-layer="caption" data-depth="0.5"><h3 class="f-t">Lower maintenance costs</h3><p class="f-d">Regenerative braking extends brake life by up to 5x and reduces engine load.</p></div>
+
+                <img class="f-img tall" style="left:512px;top:1339px" src="range-card-src/img/f-route.webp" alt="" data-layer="image" data-depth="0.22" data-shadow="0,0.35,24">
+                <div class="f-cap" style="left:104px;top:1866px" data-layer="caption" data-depth="0.5"><h3 class="f-t">Always completes the route</h3><p class="f-d">Tows like a standard trailer even when battery is discharged.</p></div>
+
+                <img class="f-img" style="left:104px;top:1992px" src="range-card-src/img/f-equip.webp" alt="" data-layer="image" data-depth="0.22" data-shadow="0,0.35,24">
+                <div class="f-cap" style="left:944px;top:2475px" data-layer="caption" data-depth="0.5"><h3 class="f-t">Leverage your existing equipment</h3><p class="f-d">Installs onto both new and in-use trailers.</p></div>
+
+                <img class="f-img" style="left:512px;top:2622px" src="range-card-src/img/f-driver.webp" alt="" data-layer="image" data-depth="0.22" data-shadow="0,0.35,24">
+                <div class="f-cap" style="left:104px;top:3107px" data-layer="caption" data-depth="0.5"><h3 class="f-t">Improve driver experience</h3><p class="f-d">Enhances acceleration and braking performance on steep grades, improving driving dynamics.</p></div>
+              </section>
+
+              <!-- the savings calculator, at the values it opens on -->
+              <section class="sec calc" data-tone="dark" data-stop="calculator">
+                <h2 class="h1 k-h" data-layer="headline" data-depth="0.74" data-shadow="0,0.2,14">Savings<br>Calculator</h2>
+                <p class="lead k-p" data-layer="body copy" data-depth="0.45">Potential savings of $25k or more per trailer per year for refrigerated fleets</p>
+                <div class="k-row" style="top:457px">
+                  <div class="k-lab" data-layer="label" data-depth="0.36">Diesel price</div>
+                  <div class="k-val" data-layer="value" data-depth="0.5">$5.00/gal</div>
+                  <i class="k-track" data-layer="slider" data-depth="0.12"></i>
+                  <i class="k-thumb" style="left:310px" data-layer="handle" data-depth="0.64" data-shadow="0,0.35,6"></i>
+                </div>
+                <div class="k-row" style="top:546px">
+                  <div class="k-lab" data-layer="label" data-depth="0.36">Baseline fuel efficiency</div>
+                  <div class="k-val" data-layer="value" data-depth="0.5">6 mpg</div>
+                  <i class="k-track" data-layer="slider" data-depth="0.12"></i>
+                  <i class="k-thumb" style="left:186px" data-layer="handle" data-depth="0.64" data-shadow="0,0.35,6"></i>
+                </div>
+                <div class="k-row" style="top:635px">
+                  <div class="k-lab" data-layer="label" data-depth="0.36">Electricity cost</div>
+                  <div class="k-val" data-layer="value" data-depth="0.5">18 &cent;/kWh</div>
+                  <i class="k-track" data-layer="slider" data-depth="0.12"></i>
+                  <i class="k-thumb" style="left:287px" data-layer="handle" data-depth="0.64" data-shadow="0,0.35,6"></i>
+                </div>
+                <div class="k-row" style="top:723px">
+                  <div class="k-lab" data-layer="label" data-depth="0.36">TRU operating hours</div>
+                  <div class="k-val" data-layer="value" data-depth="0.5">12.00 hours/day</div>
+                  <i class="k-track" data-layer="slider" data-depth="0.12"></i>
+                  <i class="k-thumb" style="left:279px" data-layer="handle" data-depth="0.64" data-shadow="0,0.35,6"></i>
+                </div>
+                <div class="k-row" style="top:812px">
+                  <div class="k-lab" data-layer="label" data-depth="0.36">Average route length</div>
+                  <div class="k-val" data-layer="value" data-depth="0.5">250 miles</div>
+                  <i class="k-track miles" data-layer="slider" data-depth="0.12"></i>
+                  <i class="k-thumb" style="left:232px" data-layer="handle" data-depth="0.64" data-shadow="0,0.35,6"></i>
+                </div>
+                <div class="k-res" data-layer="result" data-depth="0.2" data-shadow="0,0.3,18" style="--lab-x:300px">
+                  <div class="k-head" data-layer="annual savings" data-depth="0.58" style="--lab-x:240px"><div class="k-big"><span class="k-cur">$</span>26,479</div><div class="k-sm">Annual savings</div></div>
+                  <div class="k-cell" style="left:24px" data-layer="saving" data-depth="0.42"><b>$13,822</b><span>Tractor fuel savings</span></div>
+                  <div class="k-cell" style="left:205px" data-layer="saving" data-depth="0.42"><b>$11,457</b><span>TRU fuel savings</span></div>
+                  <div class="k-cell" style="left:385px" data-layer="saving" data-depth="0.42"><b>$1,200</b><span>Maintenance cost savings</span></div>
+                </div>
+                <div class="k-co2" data-layer="result" data-depth="0.2" data-shadow="0,0.3,18" style="--lab-x:300px">
+                  <div class="k-tons" data-layer="tons" data-depth="0.5"><b>96 Tons</b><span>of CO2 savings per year</span></div>
+                </div>
+                <p class="k-note" data-layer="small print" data-depth="0.22">Actual results may vary depending on operations, conditions, and environment. Results are not guaranteed and are for reference only.</p>
+              </section>
+
+              <!-- FAQs over the depot at dusk -->
+              <section class="sec faq" data-tone="dark" data-stop="faq">
+                <div class="clip">
+                  <div class="q-bg" data-layer="the depot" data-depth="-0.25" style="--lab-x:900px;--lab-y:120px"><img src="range-card-src/img/faq-bg.webp" alt=""><i class="q-shade"></i></div>
+                </div>
+                <h2 class="h2 q-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.25,12">FAQs</h2>
+                <div class="q-rules" data-layer="rules" data-depth="0.08" style="--lab-x:380px;--lab-y:-34px"><i style="top:0"></i><i style="top:73px"></i><i style="top:146px"></i><i style="top:219px"></i><i style="top:292px"></i><i style="top:365px"></i></div>
+                <div class="q-row" style="top:224px"><span class="q-q" data-layer="question" data-depth="0.4">How much does the system cost?</span><i class="q-plus" data-layer="open" data-depth="0.6"></i></div>
+                <div class="q-row" style="top:297px"><span class="q-q" data-layer="question" data-depth="0.4">When can I take delivery?</span><i class="q-plus" data-layer="open" data-depth="0.6"></i></div>
+                <div class="q-row" style="top:370px"><span class="q-q" data-layer="question" data-depth="0.4">How much does the system weigh?</span><i class="q-plus" data-layer="open" data-depth="0.6"></i></div>
+                <div class="q-row" style="top:443px"><span class="q-q" data-layer="question" data-depth="0.4">What trailers is the system compatible with?</span><i class="q-plus" data-layer="open" data-depth="0.6"></i></div>
+                <div class="q-row" style="top:516px"><span class="q-q" data-layer="question" data-depth="0.4">How often do I need to charge this?</span><i class="q-plus" data-layer="open" data-depth="0.6"></i></div>
+                <div class="q-row" style="top:589px"><span class="q-q" data-layer="question" data-depth="0.4">How does the system install on my trailer?</span><i class="q-plus" data-layer="open" data-depth="0.6"></i></div>
+              </section>
+
+              <!-- the footer -->
+              <footer class="sec foot" data-tone="dark" data-stop="footer">
+                <img class="o-logo" src="range-card-src/img/logo.svg" alt="" data-layer="logo" data-depth="0.55">
+                <div class="btn o-btn" data-layer="button" data-depth="0.85" data-shadow="0,0.35,10">Contact Us<svg viewBox="0 0 16 16" fill="none"><path d="M2.99985 8L11.5999 8M11.5999 8L7.39985 12.2M11.5999 8L7.39985 3.8" stroke="currentColor"/></svg></div>
+                <div class="o-links" data-layer="links" data-depth="0.45"><span>Team</span><span>Blog</span><span>News</span><span>Careers</span></div>
+                <i class="o-rule" data-layer="rule" data-depth="0.08"></i>
+                <div class="o-legal" data-layer="small print" data-depth="0.25" style="--lab-y:-34px"><span>Range Energy, Inc.&copy; 2025 All rights reserved</span><span style="left:337px">Terms of Use</span><span style="left:455px">Privacy Policy</span></div>
+                <div class="o-social" data-layer="social" data-depth="0.4" style="--lab-y:-34px">
+                  <img src="range-card-src/img/so-youtube.svg" alt=""><img src="range-card-src/img/so-x.svg" alt=""><img src="range-card-src/img/so-facebook.svg" alt=""><img src="range-card-src/img/so-linkedin.svg" alt=""><img src="range-card-src/img/so-instagram.svg" alt="">
+                </div>
+              </footer>
+            </div>
+
+            <!-- the nav, fixed in the window: clear over the hero; it slides away going down and comes back on its own ground going up -->
+            <nav class="abs nav" id="nav">
+              <div class="nav-shift" id="navShift">
+                <div class="nav-band" id="navBand" data-layer="nav" data-depth="0.3" style="--lab-x:300px;--lab-y:96px">
+                  <i class="nav-ground" id="navGround"></i>
+                  <img class="nav-logo" src="range-card-src/img/logo.svg" alt="">
+                  <span class="nav-link" style="left:977px">Team</span>
+                  <span class="nav-link" style="left:1064px">Careers</span>
+                  <span class="nav-link" style="left:1181px">Blog</span>
+                </div>
+                <div class="btn nav-btn" data-layer="nav button" data-depth="0.42">Contact Us<svg viewBox="0 0 16 16" fill="none"><path d="M2.99985 8L11.5999 8M11.5999 8L7.39985 12.2M11.5999 8L7.39985 3.8" stroke="currentColor"/></svg></div>
+              </div>
+            </nav>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Range</h3>
+      <p><span>Climate &amp; industry</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="range-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, the Studio's own Params (defineParams from /shared/params/params.js).
+   Embedded on the site there is no panel and nothing is fetched, so the module
+   is only loaded here, and only when served (opened from disk there is no
+   studio to load it from): the card runs on its defaults without it. */
+const card = window.rangeCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'range work card';
+    const D = card.defaults;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        ambient: [D['motion.ambient'], 0, 3, 0.05],        // the hero film, the tabs, the odometers, the testimonials
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        scrub: [D['drag.scrub'], 0, 6, 0.1],               // page px per px of a sideways drag (right = further down)
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Code-powered work card, 2026-10-23. Hunter: no more screen-recorded
+     videos on the kineticstudio.com work grid; the work is powered by code.
+     This is one work card, the size it sits at on the site, with Dawn
+     (joindawn.com, ours) rebuilt inside it as a live miniature: a 1440px
+     design-width page scaled into the card, split into explicit layers
+     (page ground, sky, clouds, the gradient panel, the portrait cutout,
+     rings, headline type, buttons, nav). Idle, it tours the homepage like
+     the old loop did. Hover and the card tilts toward the pointer while the
+     tour keeps running and the layers come apart in depth: each
+     layer is projected as if it sat at its own height above the card
+     plane, so the parallax matches the real 3D tilt (Apple TV poster),
+     and one soft bloom of light follows the pointer. Press and drag
+     scrolls the miniature (drag up to go down, like a phone), with a
+     little coast on release; the tour picks up from there after a beat.
+     Notches beside the page slide with its scroll. Touch: the same drag;
+     a tap toggles the layered state. Reduced motion: no tour, one still
+     layered pose. ?embed=1 is the site-tile mode (see the module below).
+
+     Everything Dawn-side was taken from the live site on 2026-10-23 and
+     lives in dawn-card-src/: its Figtree + Source Serif 4 files, the
+     portrait cutout, the two ring SVGs, the future-section gradient, the
+     logo, and the sky poster of its cloud video. The clouds are their own
+     layer: un-blended out of that poster (alpha from the red channel), so
+     the sky can sit deeper than the clouds. raw/ keeps the fetched HTML
+     and CSS for reference; nothing in it is executed. -->
+<title>Code-powered work card</title>
+<script>
+  /* ?embed=1: the site frames this card as a work tile (see the module below) */
+  window.__EMBED = /[?&]embed=1(&|$)/.test(location.search);
+  if (window.__EMBED) {
+    document.documentElement.classList.add('embed');
+    const b = parseFloat(new URLSearchParams(location.search).get('bleed'));
+    if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    const r = parseFloat(new URLSearchParams(location.search).get('radius'));
+    if (r >= 0) document.documentElement.style.setProperty('--card-r', r + 'px');
+  } else {
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/fonts/kinetic/fonts.css'; document.head.appendChild(l);
+  }
+</script>
+
+<style>
+@font-face { font-family: "Dawn Figtree"; src: url("dawn-card-src/fonts/figtree-latin.woff2") format("woff2"); font-weight: 300 900; font-display: block; }
+@font-face { font-family: "Dawn Serif"; src: url("dawn-card-src/fonts/source-serif-4-latin.woff2") format("woff2"); font-weight: 200 900; font-display: block; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #0d0d0d;
+  color: #eef1ea;
+  font-family: "Neue Montreal", "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Kinetic: the page and the work card ---------- */
+.stage {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  --size: 40;
+  --card-w: min(calc(var(--size) * 1vw), calc((100vh - 150px) * 4 / 3));
+}
+@media (max-width: 700px) { .stage { --card-w: calc(100vw - 32px); } }
+
+.slot { width: var(--card-w); display: flex; flex-direction: column; gap: clamp(14px, 1.1vw, 16px); }
+
+/* the hit area never moves; only what is inside it does */
+.persp {
+  position: relative;
+  width: 100%; aspect-ratio: 4 / 3;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.card-shadow {
+  position: absolute; inset: 6% 7% -1% 7%;
+  border-radius: 12%;
+  background: rgba(0, 0, 0, .9);
+  filter: blur(30px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+/* The card is laid out k times its size and scaled back down inside its own 3D
+   transform. Chrome rasters a clipped layer under perspective at one texel per
+   layout px, ignoring the screen density, so at k = DPR x 1.25 the tilted card
+   stays as sharp as the flat one. */
+.card {
+  position: absolute; left: 0; top: 0;
+  --k: 1;
+  border-radius: calc(var(--card-r, 6px) * var(--k));
+  background: #321c04; /* Dawn's maroon (Hunter, Oct 24) */
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  isolation: isolate;
+}
+
+/* the site's own browser window: inset on the card ground when framed */
+.win {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  overflow: hidden;
+  background: #321c04;
+  will-change: transform;
+}
+.win-shadow {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  background: #0f0701; /* darker than the maroon ground it falls on */
+  filter: blur(calc(var(--card-px, 576px) * .022));
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.card:not(.is-framed) .win-shadow { display: none; }
+
+/* The light, the way Apple TV does it: one soft round bloom under the pointer,
+   fading to nothing, added on top (screen), and a faint brightening of the rim
+   nearest it. Both move by transform only: the rim is a still ring mask with
+   the same kind of bloom sliding inside it. */
+.bloom, .rim { position: absolute; z-index: 6; pointer-events: none; opacity: 0; will-change: transform, opacity; }
+.bloom {
+  /* a circle 1.25 card widths across, centred on the card's (0, 0) and moved to the pointer */
+  width: calc(var(--card-px, 576px) * 1.25); height: calc(var(--card-px, 576px) * 1.25);
+  left: calc(var(--card-px, 576px) * -.625); top: calc(var(--card-px, 576px) * -.625);
+  background: radial-gradient(circle closest-side, rgba(255, 249, 238, .72), rgba(255, 247, 234, .36) 24%, rgba(255, 246, 232, .13) 50%, rgba(255, 246, 232, .04) 72%, rgba(255, 246, 232, 0) 100%);
+  mix-blend-mode: screen;
+}
+.rim {
+  left: 0; top: 0; width: 100%; height: 100%;
+  border-radius: inherit; overflow: hidden;
+  padding: calc(1.6px * var(--k));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  mix-blend-mode: screen;
+}
+.rim i {
+  position: absolute; display: block;
+  width: calc(var(--card-px, 576px) * .9); height: calc(var(--card-px, 576px) * .9);
+  left: calc(var(--card-px, 576px) * -.45); top: calc(var(--card-px, 576px) * -.45);
+  background: radial-gradient(circle closest-side, rgba(255, 250, 240, .85), rgba(255, 250, 240, .25) 45%, rgba(255, 250, 240, 0) 100%);
+  will-change: transform;
+}
+
+/* Notches: a fine scale beside the page that slides with the miniature's scroll,
+   one brighter mark fixed at the reading position. Framed, it sits in the
+   window's right margin on the card ground; full bleed, just outside the card. */
+.notches { position: absolute; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); }
+.notches .ticks { position: absolute; left: 0; right: 0; top: calc(var(--np) * -2); bottom: calc(var(--np) * -2);
+  background: repeating-linear-gradient(to bottom, var(--tick) 0 var(--nw), transparent var(--nw) var(--np)); will-change: transform; }
+.notches .mark { position: absolute; top: 50%; height: var(--nw); background: var(--mark); }
+.notches-in { --nw: calc(1px * var(--k)); --np: calc(6px * var(--k)); --tick: rgba(251, 243, 235, .2); --mark: rgba(251, 243, 235, .7); /* light, on the maroon ground */
+  width: calc(5px * var(--k)); height: 46%; top: 27%; right: calc(var(--mx) / 2 - 2.5px * var(--k)); }
+.notches-in .mark { left: calc(-2px * var(--k)); right: calc(-2px * var(--k)); }
+.notches-out { --nw: 1px; --np: 6px; --tick: rgba(217, 226, 210, .17); --mark: rgba(217, 226, 210, .7);
+  width: 5px; height: 46%; top: 27%; right: -16px; }
+.notches-out .mark { left: -2px; right: -2px; }
+.card:not(.is-framed) .notches-in, .slot:not(.full) .notches-out { display: none; }
+.slot.no-notches .notches { display: none !important; }
+
+/* embedded as a site tile: the card is the whole page */
+.embed body { background: transparent; }
+.embed .stage { display: block; }
+.embed .slot { position: absolute; inset: 0; width: auto; display: block; }
+.embed .persp { position: absolute; inset: var(--bleed, 0px); width: auto; aspect-ratio: auto; }
+.embed .meta, .embed .notches-out { display: none; }
+.embed .card:not(.is-framed) .notches-in { display: block; right: calc(7px * var(--k)); --tick: rgba(251, 243, 235, .2); --mark: rgba(251, 243, 235, .7); }
+.is-paused *, .is-paused *::before, .is-paused *::after { animation-play-state: paused !important; }
+
+.persp { cursor: grab; }
+.persp.is-dragging { cursor: grabbing; }
+.card, .card * { user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: clamp(14px, 1.1vw, 16px); }
+.meta h3 {
+  margin: 0;
+  font-family: "Panell Condensed", "Arial Narrow", sans-serif; font-weight: 500;
+  font-size: clamp(22px, 1.95vw, 28px); line-height: .94; letter-spacing: -.02em;
+  text-transform: uppercase;
+}
+.meta p {
+  margin: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
+  text-align: right;
+  font-family: "Neue Montreal Mono", ui-monospace, monospace;
+  font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
+  color: rgba(238, 241, 234, .5);
+}
+
+/* ---------- Dawn: the miniature, at its own 1440px design width ---------- */
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 1044px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  --ink: #321c04; --cream: #fbf3eb; --sand: #f6e1ca; --peach: #f9d4a0;
+  --orange: #ff9c31; --yellow: #fbc81c; --burnt: #ed6516;
+  font-family: "Dawn Figtree", Arial, sans-serif;
+  color: var(--ink);
+  text-rendering: geometricPrecision;
+}
+.page { position: absolute; left: 0; top: 0; width: 1440px; height: calc(var(--vh) + 3016px); will-change: transform; }
+.page > *, .vp .abs { position: absolute; }
+[data-depth] { will-change: transform; }
+.serif { font-family: "Dawn Serif", Georgia, serif; font-weight: 400; }
+
+/* hero */
+.hero { left: 0; top: 0; width: 1440px; height: var(--vh); background: var(--ink); }
+.hero > * { position: absolute; }
+.panel { top: 8px; width: 708px; height: calc(var(--vh) - 16px); border-radius: 16px; overflow: hidden; }
+.panel > * { position: absolute; }
+.panel-l { left: 8px; background: radial-gradient(circle farthest-corner at 100% 100%, var(--burnt), var(--orange) 30%, var(--yellow) 46%, var(--sand) 79%); }
+.panel-r { left: 724px; background: #3d6da2; }
+.ring-dots { left: 83px; top: 259px; width: 1236px; height: 1236px; }
+.ring-dots img, .ring-orange img { display: block; width: 100%; height: 100%; }
+/* the rings turn, the clouds sway and the typing dots bounce on the card's own clock (the module below), so a tour is one seamless loop */
+.ring-dots img, .cyc-dots img, .clouds img, .typing i { will-change: transform; }
+/* the sky poster's cover box, 10% oversize so the deep layers never show an edge */
+.sky, .clouds {
+  height: calc((var(--vh) - 16px) * 1.1);
+  width: calc((var(--vh) - 16px) * 1.1 * 1.7778);
+  left: calc(354px - (var(--vh) - 16px) * 1.1 * .8889);
+  top: calc((var(--vh) - 16px) * -.05);
+}
+.sky { background: linear-gradient(94deg, #5289c3, #3d6da2 50%, #2a5283); }
+.clouds img { display: block; width: 100%; height: 100%; transform: translate3d(-1.5%, 0, 0); }
+/* the live site lays a teal wash over its cloud video, under the portrait */
+.tint { inset: 0; background: rgba(7, 116, 96, .3); }
+.ring-orange { left: -612px; top: 280px; width: 1192px; height: 1191px; }
+.woman { left: 0; top: calc(var(--vh) - 16px - 806px); width: 708px; height: 806px; }
+.woman img { display: block; width: 100%; height: 100%; }
+.shade { left: 0; right: 0; bottom: 0; height: 60%; background: linear-gradient(rgba(50, 28, 4, 0), rgba(50, 28, 4, .7)); }
+.h42 { margin: 0; font-size: 42px; line-height: 48px; }
+.h-left { left: 276px; top: calc(var(--vh) - 312px); width: 400px; text-align: right; color: var(--ink); }
+.h-right { left: 764px; top: calc(var(--vh) - 312px); width: 400px; color: var(--cream); }
+.p-right { left: 764px; top: calc(var(--vh) - 184px); width: 400px; margin: 0; font-size: 16px; line-height: 26px; color: var(--cream); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 48px; padding: 0 24px; border-radius: 999px;
+  background-image: radial-gradient(83.67% 348.78% at 100% 0%, var(--orange) 9.07%, #ffbe4a 54.54%, #ffdf62 100%);
+  color: var(--ink); font-weight: 600; font-size: 16px; line-height: 22px; letter-spacing: .2px; white-space: nowrap;
+}
+.btn-hero { left: 764px; top: calc(var(--vh) - 90px); }
+
+/* nav, fixed in the viewport */
+.nav { left: 0; top: 0; width: 1440px; height: 96px; }
+.nav-inner { position: absolute; inset: 0; }   /* it slides away and back on the card's own clock (the module below) */
+.nav-brand { left: 0; top: 0; width: 1290px; height: 96px; }
+.nav-brand > * { position: absolute; }
+.logo { left: 35px; top: 30px; width: 106px; height: 28px; color: var(--ink); }
+.logo svg { display: block; width: 106px; height: 28px; }
+.nav-link { top: 23px; padding: 8px 20px; font-size: 16px; line-height: 26px; color: var(--cream); white-space: nowrap; }
+.btn-nav { left: 1290px; top: 20px; }
+
+/* 24/7 band (the old "Break out of the cycle" slot) */
+.cycle { left: 0; top: var(--vh); width: 1440px; height: 1100px; background: var(--ink); }
+.cycle > * { position: absolute; }
+.cyc-dots { left: 102px; top: 154px; width: 1236px; height: 1236px; }
+.cyc-dots img { display: block; width: 100%; height: 100%; }
+.cyc-arc { left: 70px; top: 120px; width: 1300px; height: 1300px; }
+.cyc-arc svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.cyc-h {
+  left: 400px; top: 300px; width: 640px; margin: 0; text-align: center;
+  font-size: 58px; line-height: 64px; letter-spacing: -.2px;
+  background-image: linear-gradient(#c36500, rgba(195, 101, 0, .5));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.cyc-p { left: 400px; top: 462px; width: 640px; margin: 0; text-align: center; font-size: 18px; line-height: 30px; color: var(--cream); }
+
+/* future gradient, then the steps */
+.future {
+  left: 0; top: calc(var(--vh) + 850px); width: 1440px; height: 1900px;
+  background: linear-gradient(rgba(50, 28, 4, 0), var(--ink) 22%, var(--sand));
+}
+.future img { display: block; width: 100%; height: 100%; }
+.steps-bg { left: 0; top: calc(var(--vh) + 2560px); width: 1440px; height: 900px; background: linear-gradient(var(--sand), var(--cream)); }
+.mid-h { left: 400px; width: 640px; margin: 0; text-align: center; }
+.mid-p { left: 520px; width: 400px; margin: 0; text-align: center; font-size: 18px; line-height: 30px; }
+.fut-h { top: calc(var(--vh) + 1670px); }
+.fut-p { top: calc(var(--vh) + 1800px); }
+.stp-h { top: calc(var(--vh) + 2180px); }
+.stp-p { top: calc(var(--vh) + 2316px); }
+.bubble {
+  left: 472px; top: calc(var(--vh) + 2590px); width: 362px;
+  padding: 22px 20px 23px; border-radius: 16px;
+  background: radial-gradient(130% 190% at 100% 0%, var(--orange) 4%, #ffcb30 38%, #fbd9a6 82%);
+  font-size: 16px; line-height: 21px; font-weight: 600; color: var(--ink);
+}
+.reply {
+  left: 806px; top: calc(var(--vh) + 2742px); width: 300px;
+  padding: 14px 18px; border-radius: 16px;
+  background: var(--cream); box-shadow: inset 0 0 0 1px rgba(255, 156, 49, .3);
+  font-size: 14px; line-height: 19px; color: var(--ink);
+}
+.typing {
+  left: 472px; top: calc(var(--vh) + 2870px); width: 82px; height: 44px; border-radius: 22px;
+  background: rgba(251, 243, 235, .92);
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+}
+.typing i { width: 9px; height: 9px; border-radius: 50%; background: #f8bf7e; }
+
+/* shadow twins: a darkened, blurred copy of a lifted layer, left on the surface below it */
+.twin { filter: brightness(0) invert(11%) sepia(80%) saturate(700%) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; animation: none !important; }
+.twin * { animation: none !important; }
+
+/* debug: layer outlines */
+.show-layers [data-layer] { outline: 3px dashed #a8ff66; outline-offset: -3px; }
+.show-layers [data-layer]::after {
+  content: attr(data-layer) "  z " attr(data-depth);
+  position: absolute; left: var(--lab-x, 6px); top: var(--lab-y, 6px); z-index: 50;
+  padding: 3px 8px 2px; border-radius: 4px;
+  background: #a8ff66; color: #0d0d0d;
+  font: 500 22px/1.15 "Neue Montreal Mono", ui-monospace, monospace;
+  -webkit-text-fill-color: #0d0d0d; text-transform: uppercase; letter-spacing: .02em;
+  white-space: nowrap; text-align: left;
+}
+.card.show-layers > [data-layer] { outline-width: calc(1px * var(--k)); outline-offset: calc(-1px * var(--k)); }
+.card.show-layers > [data-layer]::after { font-size: calc(8px * var(--k)); left: calc(4px * var(--k)); top: calc(4px * var(--k)); padding: calc(2px * var(--k)) calc(4px * var(--k)) calc(1px * var(--k)); border-radius: calc(2px * var(--k)); }
+.card.show-layers > .win::after { left: auto; right: calc(4px * var(--k)); top: auto; bottom: calc(4px * var(--k)); }
+
+</style>
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card is-framed" id="card" role="img" aria-label="Dawn, joindawn.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0.1" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <section class="hero" data-stop="hero">
+                <div class="panel panel-l" data-layer="gradient panel" data-depth="0.12" style="--lab-y:90px;--lab-x:24px">
+                  <div class="ring-dots" data-layer="dotted ring" data-depth="0.3" style="--lab-x:200px;--lab-y:330px"><img src="dawn-card-src/img/circle-1.svg" alt=""></div>
+                </div>
+                <div class="panel panel-r" data-layer="photo panel" data-depth="0.12" style="--lab-y:90px;--lab-x:24px">
+                  <div class="sky" data-layer="sky" data-depth="-0.3" style="--lab-x:1180px;--lab-y:560px"></div>
+                  <div class="clouds" data-layer="clouds" data-depth="-0.1" style="--lab-x:700px;--lab-y:330px"><img src="dawn-card-src/img/clouds.webp" alt=""></div>
+                  <div class="tint"></div>
+                  <div class="ring-orange" data-layer="orange ring" data-depth="0.2" style="--lab-x:740px;--lab-y:-62px"><img src="dawn-card-src/img/circle-2.svg" alt=""></div>
+                  <div class="woman" data-layer="portrait" data-depth="0.46" data-shadow="-0.1,0.32,18" style="--lab-x:330px;--lab-y:60px"><img src="dawn-card-src/img/image-bottom-2.avif" alt=""></div>
+                  <div class="shade"></div>
+                </div>
+                <h2 class="h42 serif h-left" data-layer="headline" data-depth="0.7" data-shadow="0.12,0.1,12">Your mind is <br>always on.</h2>
+                <h1 class="h42 serif h-right" data-layer="headline" data-depth="0.7" data-shadow="0.12,0.34,12">Your support <br>should be, too.</h1>
+                <p class="p-right" data-layer="body copy" data-depth="0.58">Dawn is 24/7 support for your mind. Created by renowned clinicians, it gives you the support you need, right when you need it.</p>
+                <div class="btn btn-hero" data-layer="button" data-depth="0.9" data-shadow="0.12,0.4,12">Start your free trial</div>
+              </section>
+
+              <section class="cycle" data-stop="cycle">
+                <div class="cyc-dots" data-layer="dotted ring" data-depth="0.08"><img src="dawn-card-src/img/circle-1.svg" alt=""></div>
+                <div class="cyc-arc" data-layer="arc" data-depth="0.28">
+                  <svg id="arcSvg" viewBox="0 0 1300 1300" aria-hidden="true">
+                    <defs>
+                      <linearGradient id="arcGrad" x1="0" y1="0.75" x2="1" y2="0.25">
+                        <stop offset="0" stop-color="#f6e1ca"/>
+                        <stop offset="0.5" stop-color="#ffd23a"/>
+                        <stop offset="0.78" stop-color="#ffbe36"/>
+                        <stop offset="1" stop-color="#ff9c31"/>
+                      </linearGradient>
+                    </defs>
+                    <path id="arcMask" fill="none" stroke="#321c04" stroke-width="40" stroke-linecap="round"/>
+                    <path id="arcPath" fill="none" stroke="url(#arcGrad)" stroke-width="7" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <h2 class="serif cyc-h" data-layer="headline" data-depth="0.8">24/7 support for your mind</h2>
+                <p class="cyc-p" data-layer="body copy" data-depth="0.62">Over 99% of life happens between therapy sessions. Dawn meets you in the moments that matter, with proactive check-ins and real-time responses at any time of day.</p>
+              </section>
+
+              <div class="steps-bg"></div>
+              <div class="future"><img src="dawn-card-src/img/gradient.avif" alt=""></div>
+              <h2 class="h42 serif mid-h fut-h" data-stop="future" data-layer="headline" data-depth="0.8" data-shadow="0,0.16,10">The future of mental health is proactive</h2>
+              <p class="mid-p fut-p" data-layer="body copy" data-depth="0.62">For too long, mental health has been something we only focus on when things fall apart. Dawn uses advanced AI to shift from reactive to proactive support. Now, you can resolve stressors before they become crises.</p>
+              <h2 class="h42 serif mid-h stp-h" data-layer="headline" data-depth="0.8" data-shadow="0,0.14,10">Intuitive chat.<br>Total privacy.</h2>
+              <p class="mid-p stp-p" data-layer="body copy" data-depth="0.62">With no human observing your conversations, Dawn is private and judgment free. It sees your patterns and remembers your history to provide personalized support that evolves with you. All in a single thread.</p>
+              <div class="bubble serif" data-layer="chat card" data-depth="1" data-shadow="0,0.36,18">Good morning, Ashley. How are you feeling today? How did your conversation with your mom go yesterday?</div>
+              <div class="reply" data-layer="chat card" data-depth="0.86" data-shadow="0,0.3,16">It went well! The breathing exercises you suggested beforehand really helped.</div>
+              <div class="typing" data-stop="end" data-layer="typing" data-depth="1.1" data-shadow="0,0.3,12"><i></i><i></i><i></i></div>
+            </div>
+
+            <nav class="nav" id="nav">
+              <div class="nav-inner" id="navInner">
+                <div class="nav-brand abs" data-layer="nav" data-depth="0.4" style="--lab-x:160px;--lab-y:30px">
+                  <div class="logo" id="logo"><svg width="181" height="48" preserveAspectRatio="xMinYMid meet" aria-hidden="true" viewBox="0 0 181 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M154.402 40.1131C153.994 40.1131 153.686 39.9707 153.479 39.686C153.279 39.4013 153.236 39.0973 153.352 38.7741C153.467 38.4509 153.736 38.2355 154.16 38.1277C155.106 37.9046 155.756 37.666 156.11 37.4121C156.464 37.1505 156.699 36.6926 156.815 36.0385C156.938 35.3767 157.015 34.1993 157.045 32.5064C157.061 31.5445 157.068 30.5788 157.068 29.6092C157.076 28.6396 157.076 27.6931 157.068 26.7696C157.068 26.3618 157.061 25.7346 157.045 24.8882C157.03 23.8262 156.945 23.0298 156.791 22.4988C156.645 21.9601 156.395 21.5446 156.041 21.2522C155.695 20.9521 155.133 20.6212 154.356 20.2595C154.002 20.0902 153.763 19.8824 153.64 19.6362C153.525 19.3822 153.525 19.136 153.64 18.8974C153.763 18.6512 153.983 18.4588 154.298 18.3203C155.091 17.974 155.803 17.647 156.434 17.3392C157.072 17.0237 157.846 16.6389 158.754 16.1849C158.877 16.1233 159 16.0618 159.123 16.0002C159.793 15.6693 160.304 15.6039 160.658 15.804C161.02 15.9964 161.201 16.4542 161.201 17.1776C161.201 17.6624 161.301 18.0279 161.501 18.2741C161.709 18.5127 161.993 18.6166 162.355 18.5858C162.724 18.555 163.144 18.3857 163.613 18.0779C165.652 16.7159 167.715 15.9733 169.8 15.8501C171.886 15.7193 173.598 16.2388 174.937 17.4084C176.276 18.5704 176.93 20.2749 176.899 22.5219C176.891 23.2068 176.884 23.8916 176.876 24.5765C176.868 25.8616 176.864 27.1775 176.864 28.5241C176.872 29.8631 176.884 31.1905 176.899 32.5064C176.914 34.2378 176.968 35.4152 177.061 36.0385C177.161 36.6618 177.388 37.1081 177.742 37.3775C178.096 37.6391 178.761 37.8892 179.739 38.1277C180.185 38.2355 180.47 38.4509 180.593 38.7741C180.716 39.0973 180.67 39.4013 180.454 39.686C180.246 39.9707 179.931 40.1131 179.508 40.1131C177.922 40.09 176.353 40.0785 174.798 40.0785C173.244 40.0785 171.674 40.09 170.089 40.1131C169.712 40.1131 169.423 39.9746 169.223 39.6976C169.023 39.4128 168.977 39.1127 169.085 38.7972C169.2 38.474 169.473 38.2509 169.904 38.1277C170.851 37.8892 171.497 37.6391 171.843 37.3775C172.197 37.1081 172.428 36.6541 172.536 36.0154C172.644 35.3767 172.713 34.207 172.744 32.5064C172.767 31.0597 172.778 29.6169 172.778 28.1779C172.778 26.7312 172.767 25.2883 172.744 23.8493C172.713 22.2179 172.228 20.9059 171.289 19.9132C170.358 18.9128 169.181 18.3934 167.757 18.3549C166.334 18.3088 164.921 18.8013 163.521 19.8324C162.728 20.4172 162.151 21.1945 161.789 22.1641C161.428 23.126 161.232 24.2725 161.201 25.6038C161.155 27.897 161.155 30.1978 161.201 32.5064C161.201 32.6295 161.205 32.7219 161.212 32.7834C161.243 34.4148 161.309 35.5268 161.409 36.1193C161.516 36.7118 161.743 37.1389 162.09 37.4006C162.436 37.6545 163.086 37.8969 164.04 38.1277C164.487 38.2355 164.771 38.4509 164.895 38.7741C165.018 39.0973 164.971 39.4013 164.756 39.686C164.548 39.9707 164.233 40.1131 163.809 40.1131C160.67 40.0669 157.534 40.0669 154.402 40.1131Z" fill="currentColor"></path><path d="M140.226 39.686C138.325 34.5302 136.386 29.4553 134.409 24.4611C134.278 24.1225 134.07 23.8916 133.785 23.7685C133.501 23.6454 133.216 23.6454 132.931 23.7685C132.654 23.8916 132.45 24.1225 132.319 24.4611C131.95 25.4307 131.404 26.8928 130.68 28.8473C129.849 31.102 129.303 32.5641 129.041 33.2336C128.587 34.4187 128.199 35.4537 127.875 36.3386C127.606 37.0466 127.21 38.1162 126.686 39.5475C126.479 40.1093 126.171 40.4863 125.763 40.6787C125.363 40.8788 124.963 40.8788 124.563 40.6787C124.17 40.4786 123.885 40.117 123.708 39.5937C123.054 37.6853 122.393 35.7884 121.723 33.9031C121.061 32.0178 120.388 30.1401 119.703 28.2702C119.034 26.4233 118.206 24.1917 117.221 21.5754C116.952 20.8597 116.698 20.3249 116.46 19.9709C116.221 19.6092 115.932 19.3322 115.594 19.1398C115.263 18.9398 114.763 18.7281 114.093 18.505C113.655 18.3665 113.366 18.1279 113.228 17.7893C113.097 17.4507 113.147 17.1429 113.378 16.8659C113.616 16.5889 113.997 16.4581 114.52 16.4735C117.529 16.5196 120.588 16.5196 123.697 16.4735C124.159 16.4735 124.482 16.6158 124.666 16.9005C124.851 17.1853 124.855 17.4892 124.678 17.8124C124.509 18.1356 124.197 18.3511 123.743 18.4588C122.95 18.6435 122.377 18.8897 122.023 19.1976C121.669 19.4977 121.488 19.9055 121.481 20.4211C121.473 20.929 121.623 21.6138 121.931 22.4757C123.031 25.5769 124.128 28.6819 125.221 31.7908C125.367 32.1986 125.594 32.4795 125.902 32.6334C126.217 32.7873 126.533 32.7988 126.848 32.668C127.171 32.5295 127.41 32.2679 127.564 31.8831C127.872 31.1213 128.206 30.2594 128.568 29.2975C128.937 28.3279 129.287 27.3968 129.618 26.5041C129.757 26.1271 130.088 25.2306 130.611 23.8147C130.85 23.1837 131.104 22.4834 131.373 21.7139C131.65 20.9367 131.915 20.1864 132.169 19.463C132.377 18.8705 132.585 18.2818 132.793 17.697C132.977 17.1814 133.289 16.8274 133.728 16.6351C134.174 16.4427 134.616 16.4388 135.055 16.6235C135.501 16.8082 135.821 17.1506 136.013 17.6508C136.421 18.7281 136.829 19.8093 137.237 20.8943C137.652 21.9717 138.064 23.049 138.472 24.1263C138.995 25.4961 139.522 26.8658 140.053 28.2356C140.584 29.6053 141.119 30.9751 141.657 32.3448C141.804 32.7219 141.992 32.9835 142.223 33.1297C142.462 33.2682 142.696 33.2682 142.927 33.1297C143.166 32.9912 143.358 32.7142 143.504 32.2986C144.128 30.5364 144.72 28.7627 145.282 26.9774C145.851 25.1921 146.394 23.3953 146.909 21.5869C146.933 21.51 146.948 21.4561 146.956 21.4253C146.963 21.3868 146.979 21.3291 147.002 21.2522C147.148 20.7366 147.21 20.3364 147.186 20.0517C147.163 19.7593 147.013 19.5092 146.736 19.3014C146.467 19.0937 146.001 18.8974 145.34 18.7128C145.332 18.7128 145.128 18.6589 144.728 18.5512C144.235 18.428 143.908 18.1972 143.747 17.8586C143.585 17.5123 143.608 17.193 143.816 16.9005C144.024 16.6004 144.362 16.4581 144.832 16.4735C147.14 16.5196 149.549 16.5196 152.058 16.4735C152.589 16.4581 152.946 16.6004 153.131 16.9005C153.316 17.193 153.312 17.5123 153.119 17.8586C152.935 18.1972 152.631 18.4126 152.208 18.505C151.607 18.6281 151.134 18.7705 150.788 18.9321C150.449 19.0937 150.153 19.3515 149.899 19.7054C149.653 20.0594 149.426 20.575 149.218 21.2522C148.733 22.822 148.275 24.261 147.844 25.5692C147.421 26.8697 147.04 28.0201 146.702 29.0205C146.494 29.6207 146.29 30.2209 146.09 30.8212C145.89 31.4137 145.69 32.0293 145.49 32.668C145.359 33.0912 145.217 33.5337 145.063 33.9954C144.909 34.4571 144.743 34.9419 144.566 35.4498C144.358 36.0654 144.135 36.7234 143.897 37.4236C143.658 38.1239 143.397 38.878 143.112 39.686C142.943 40.1708 142.658 40.4979 142.258 40.6672C141.865 40.8365 141.469 40.8288 141.069 40.6441C140.676 40.4671 140.395 40.1477 140.226 39.686Z" fill="currentColor"></path><path d="M100.204 40.8172C99.0267 40.8172 98.0148 40.6364 97.1683 40.2747C96.3218 39.9207 95.6677 39.3898 95.206 38.6818C94.752 37.9661 94.525 37.0889 94.525 36.05C94.525 35.0804 94.7443 34.2494 95.1829 33.5568C95.6292 32.8642 96.2872 32.2486 97.1567 31.71C99.8061 30.0831 108.154 26.4774 108.376 24.1533C108.598 21.8293 108.36 19.8292 106.379 18.7128C105.664 18.3049 104.71 18.1087 103.517 18.1241C102.763 18.1395 102.086 18.2395 101.485 18.4242C100.893 18.6012 100.42 18.8782 100.066 19.2553C99.7115 19.6323 99.5346 20.1094 99.5346 20.6866C99.5346 20.9713 99.5538 21.3522 99.5923 21.8293C99.6077 22.0294 99.623 22.2295 99.6384 22.4295C99.6923 23.6762 99.3306 24.5765 98.5534 25.1306C97.7762 25.6769 96.9721 25.7885 96.141 25.4653C95.3176 25.1344 94.9059 24.4842 94.9059 23.5146C94.9059 22.4526 95.4561 21.3137 96.5565 20.0979C97.6646 18.8744 99.0536 17.847 100.723 17.016C102.393 16.1849 104.017 15.7693 105.595 15.7693C106.841 15.7693 107.995 16.031 109.057 16.5543C110.119 17.0698 110.97 17.8624 111.608 18.9321C112.247 19.994 112.559 21.3022 112.543 22.8566C112.505 26.5888 112.497 30.0824 112.52 33.3375C112.528 34.1147 112.536 34.8919 112.543 35.6691C112.543 36.3155 112.697 36.8196 113.005 37.1812C113.313 37.5352 113.713 37.7007 114.205 37.6776C114.698 37.6545 115.198 37.4275 115.706 36.9966C115.929 36.7888 116.179 36.6926 116.456 36.708C116.733 36.7234 116.926 36.8542 117.033 37.1004C117.149 37.339 117.103 37.666 116.895 38.0816C116.664 38.5356 116.341 38.9704 115.925 39.3859C115.517 39.7938 115.017 40.1323 114.425 40.4017C113.832 40.6787 113.174 40.8172 112.451 40.8172C111.551 40.8172 110.773 40.6018 110.119 40.1708C109.473 39.7476 108.911 39.1435 108.434 38.3586C108.288 38.1201 108.13 37.9546 107.961 37.8623C107.799 37.7699 107.618 37.7507 107.418 37.8045C107.226 37.8507 107.01 37.9738 106.772 38.1739C106.049 38.7664 105.391 39.2474 104.798 39.6168C104.206 39.9784 103.532 40.267 102.778 40.4825C102.032 40.7056 101.174 40.8172 100.204 40.8172ZM102.709 38.0816C103.855 38.0816 104.86 37.8045 105.722 37.2505C106.583 36.6887 107.241 35.9846 107.695 35.1382C108.149 34.284 108.376 33.4375 108.376 32.5987V31.0405C108.376 30.4787 108.299 29.3393 108.145 29.0623C107.992 28.7776 107.765 28.6121 107.464 28.566C105.753 28.2588 103.725 29.6435 102.358 30.5132C100.992 31.383 100.204 32.5795 99.8808 33.1643C99.5576 33.7415 99.396 34.3417 99.396 34.965C99.396 35.6345 99.523 36.2039 99.777 36.6734C100.039 37.1351 100.416 37.4852 100.908 37.7237C101.401 37.9623 102.001 38.0816 102.709 38.0816Z" fill="currentColor"></path><path d="M59.8476 40.2055C59.4475 40.2208 59.1358 40.0785 58.9127 39.7784C58.6895 39.4783 58.628 39.1551 58.728 38.8088C58.8357 38.4548 59.1128 38.2124 59.5591 38.0816C60.6287 37.7738 61.3598 37.4698 61.7522 37.1697C62.1524 36.8696 62.4101 36.3848 62.5256 35.7153C62.6487 35.0458 62.718 33.8492 62.7333 32.1255V31.9293C62.7641 28.2663 62.7834 25.2075 62.7911 22.7527C62.8064 20.298 62.8026 17.7008 62.7795 14.9613C62.7641 13.2222 62.7026 12.0487 62.5948 11.4408C62.4871 10.8329 62.2409 10.3904 61.8561 10.1134C61.479 9.83634 60.7134 9.49775 59.5591 9.0976C59.1051 8.936 58.8165 8.67821 58.6934 8.32424C58.5702 7.96256 58.628 7.63936 58.8665 7.35464C59.1051 7.06992 59.4629 6.94295 59.94 6.97373C60.8249 7.0122 61.8215 7.03914 62.9296 7.05453C64.0454 7.06992 65.2381 7.07377 66.5078 7.06607C68.3624 7.05068 70.0015 7.0199 71.4251 6.97373C75.6343 6.86599 79.3357 7.46237 82.5292 8.76286C85.7228 10.0634 88.2006 11.9948 89.9628 14.5573C91.725 17.1198 92.6061 20.1864 92.6061 23.757C92.6061 27.2044 91.7789 30.1863 90.1244 32.7026C88.4699 35.219 86.1152 37.1235 83.0602 38.4163C80.0129 39.7014 76.45 40.2824 72.3716 40.1593C71.1327 40.1285 69.9476 40.1054 68.8164 40.09C67.6929 40.0746 66.6194 40.0708 65.596 40.0785C64.5109 40.0862 63.4913 40.0977 62.5371 40.1131C61.5829 40.1362 60.6864 40.167 59.8476 40.2055ZM73.699 38.0816C76.3385 38.0816 78.6739 37.5083 80.7055 36.3617C82.7447 35.2074 84.3415 33.5414 85.4957 31.3637C86.65 29.1782 87.2426 26.5926 87.2733 23.6069C87.3041 20.2672 86.65 17.5046 85.3111 15.3192C83.9798 13.126 82.0983 11.51 79.6666 10.4712C77.2426 9.43234 74.3723 8.91292 71.0557 8.91292C69.7475 8.91292 68.8472 8.95909 68.3547 9.05143C67.8622 9.14377 67.5505 9.34 67.4197 9.64012C67.2889 9.93253 67.2235 10.475 67.2235 11.2677C67.2004 14.692 67.1927 18.0702 67.2004 21.4022C67.2158 24.7266 67.235 27.9278 67.2581 31.0058C67.2658 31.2521 67.2697 31.6253 67.2697 32.1255C67.2851 33.7646 67.4505 34.9958 67.766 35.8192C68.0892 36.6349 68.6971 37.2159 69.5898 37.5622C70.4824 37.9084 71.8522 38.0816 73.699 38.0816Z" fill="currentColor"></path><path d="M32.7357 45.18C33.3724 45.18 33.5425 45.9791 32.9463 46.2023C30.1509 47.2485 26.8844 48.0007 24.0001 48.0007C21.1182 48.0007 17.89 47.2498 15.1127 46.205C14.5168 45.9808 14.6876 45.18 15.3243 45.18H32.7357Z" fill="currentColor"></path><path d="M41.2693 39.2418C41.7763 39.2418 42.0501 39.828 41.7079 40.2021C40.8765 41.1112 40.0028 41.9193 39.0073 42.7063C38.9026 42.7891 38.7727 42.8335 38.6392 42.8335H9.36077C9.22731 42.8335 9.09744 42.7891 8.99275 42.7063C7.9972 41.9193 7.12355 41.1112 6.29218 40.2022C5.95002 39.828 6.22381 39.2418 6.7308 39.2418C18.2874 39.2418 29.7255 39.2418 41.2693 39.2418Z" fill="currentColor"></path><path d="M10.7591 32.8902C10.9564 32.8902 11.1405 32.9877 11.2557 33.1479C11.8508 33.9755 12.5245 34.7427 13.2659 35.4387C13.6873 35.8344 13.4208 36.6018 12.8427 36.6018H3.90502C3.69709 36.6018 3.5035 36.4944 3.39665 36.3161C2.89458 35.4779 2.44222 34.6067 2.04362 33.7063C1.87187 33.3183 2.16144 32.8902 2.5857 32.8902H10.7591Z" fill="currentColor"></path><path d="M45.4144 32.8902C45.8387 32.8902 46.1283 33.3183 45.9565 33.7063C45.5579 34.6067 45.1055 35.4779 44.6035 36.3161C44.4966 36.4944 44.303 36.6018 44.0951 36.6018H35.1574C34.5793 36.6018 34.3128 35.8344 34.7343 35.4388C35.4756 34.7428 36.1493 33.9755 36.7444 33.1479C36.8596 32.9877 37.0437 32.8902 37.241 32.8902H45.4144Z" fill="currentColor"></path><path d="M8.00788 26.5384C8.30206 26.5384 8.55161 26.752 8.60829 27.0406C8.7675 27.8514 8.98913 28.6398 9.26804 29.4006C9.41678 29.8063 9.12506 30.2501 8.69294 30.2501H1.28156C1.01021 30.2501 0.771855 30.0682 0.706447 29.8048C0.49503 28.9536 0.329064 28.0845 0.211249 27.2001C0.164216 26.847 0.442609 26.5384 0.798792 26.5384H8.00788Z" fill="currentColor"></path><path d="M47.2013 26.5384C47.5575 26.5384 47.8359 26.847 47.7889 27.2001C47.671 28.0845 47.505 28.9536 47.2936 29.8048C47.2281 30.0682 46.9898 30.2501 46.7184 30.2501H39.3071C38.8749 30.2501 38.5832 29.8063 38.732 29.4006C39.0109 28.6398 39.2326 27.8514 39.3918 27.0406C39.4485 26.752 39.6981 26.5384 39.9922 26.5384H47.2013Z" fill="currentColor"></path><path d="M24.0001 0C37.0189 2.43056e-05 47.6164 10.3658 47.99 23.2942C47.9996 23.6264 47.7298 23.8983 47.3975 23.8983H40.2819C39.9521 23.8983 39.6852 23.631 39.6708 23.3015C39.3052 14.9624 32.4292 8.31392 24.0001 8.31389C15.5709 8.3139 8.69485 14.9624 8.32921 23.3015C8.31476 23.631 8.04793 23.8983 7.71806 23.8983H0.602504C0.270157 23.8983 0.000379616 23.6264 0.00998004 23.2942C0.383595 10.3658 10.9813 1.02084e-05 24.0001 0Z" fill="currentColor"></path></svg></div>
+                  <span class="nav-link" style="left:1076px">Blog</span>
+                  <span class="nav-link" style="left:1148px">How it works</span>
+                </div>
+                <div class="btn btn-nav abs" data-layer="nav button" data-depth="0.5" data-shadow="0.12,0.26,12">Try Dawn</div>
+              </div>
+            </nav>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Dawn</h3>
+      <p><span>Health</span><span>Brand, Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+/* Embed mode (?embed=1) is how kineticstudio.com frames this card as a work tile:
+   the card alone fills the frame (cropping the miniature to the frame's aspect),
+   transparent page, no meta, no params, no studio files, nothing fetched. The
+   site copies the card folder whole, so every path here is relative.
+     &frame=full    Dawn's page edge to edge instead of on the card ground
+     &bleed=24      px of empty frame kept round the card, room for the tilt
+     &radius=6      the card's corner radius in px (6 by default, the site's tile)
+     &touchdrag=1   let a finger drag the page (off by default inside the site,
+                    so a swipe over the tile still scrolls the site)
+   Messages: the parent posts {type: "ks-card", visible: false | true} to pause
+   and resume, and {type: "ks-card", at: seconds} to put the tour, and everything
+   that moves on its own, at that time (the site's resting loop is this tour
+   recorded, so a hovered tile hands over to the live card without a jump); a
+   click that is not a drag posts
+   {type: "ks-card-open"}. */
+const EMBED = !!window.__EMBED;
+const QS = new URLSearchParams(location.search);
+
+const $ = (s) => document.querySelector(s);
+const stage = $('#stage'), persp = $('#persp'), card = $('#card'), win = $('#win'), vp = $('#vp'), page = $('#page');
+const cshadow = $('#cshadow'), winShadow = $('#winShadow'), bloom = $('#bloom'), rim = $('#rim'), rimLight = $('#rimLight');
+const nav = $('#nav'), navInner = $('#navInner'), logo = $('#logo'), slot = $('.slot');
+const ticksIn = $('.notches-in .ticks'), ticksOut = $('.notches-out .ticks');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+const DW = 1440;                      // Dawn's design width
+const FRAME = { x: 0.045, y: 0.07 };  // framed: window inset, sides as a share of card width, top and bottom of its height (the old loop's framing)
+// the site's border (Hunter, Oct 24: "a border on all screen recordings and whatever we hover over"):
+// &mat=F draws the card framed, its window inset F x the card's width on every side
+const MAT = Math.min(0.3, Math.max(0, parseFloat(new URLSearchParams(location.search).get('mat')) || 0));
+const LIGHT = { x: 0.05, y: 0.2 };    // shadow throw per px of height, light from above and a touch left
+const CLICK = 6;                      // px: a press that moves less than this is a click, more is a drag
+
+/* ---- the cycle arc: drawn in code, rotated by the miniature's own scroll ---- */
+const ARC = { cx: 650, cy: 650, r: 612, from: 253, to: 391 };
+function arcD(a0, a1) {
+  const p = (a) => { const t = (a - 90) * Math.PI / 180; return [ARC.cx + ARC.r * Math.cos(t), ARC.cy + ARC.r * Math.sin(t)]; };
+  const [x0, y0] = p(a0), [x1, y1] = p(a1);
+  return `M${x0.toFixed(1)} ${y0.toFixed(1)} A${ARC.r} ${ARC.r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+}
+$('#arcPath').setAttribute('d', arcD(ARC.from, ARC.to));
+$('#arcMask').setAttribute('d', arcD(ARC.from - 4, ARC.to + 4));
+const arcSvg = $('#arcSvg');
+
+/* ---- shadow twins ---- */
+for (const el of document.querySelectorAll('[data-shadow]')) {
+  const [surface, alpha, blur] = el.dataset.shadow.split(',').map(Number);
+  const tw = el.cloneNode(true);
+  for (const n of [tw, ...tw.querySelectorAll('*')]) { n.removeAttribute('data-layer'); n.removeAttribute('data-depth'); n.removeAttribute('data-shadow'); n.removeAttribute('data-stop'); n.removeAttribute('id'); }
+  tw.classList.add('twin');
+  tw.setAttribute('aria-hidden', 'true');
+  tw.style.setProperty('--blur', blur + 'px');
+  tw.dataset.twin = '1';
+  el.before(tw);
+  el._twin = { el: tw, surface, alpha };
+}
+
+/* ---- layers ---- */
+const layers = [...document.querySelectorAll('[data-depth]')].map((el) => ({
+  el, d: +el.dataset.depth, kind: el.dataset.kind || (nav.contains(el) ? 'vp' : 'page'),
+  twin: el._twin || null, parent: null, cx: 0, cy: 0, A: null, last: '',
+}));
+for (const L of layers) {
+  let p = L.el.parentElement;
+  while (p && !p.hasAttribute('data-depth')) p = p.parentElement;
+  L.parent = p ? layers.find((x) => x.el === p) : null;
+}
+function posIn(el, root) {
+  let x = 0, y = 0, n = el;
+  while (n && n !== root) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+  return [x + el.offsetWidth / 2, y + el.offsetHeight / 2];
+}
+
+/* ---- state ---- */
+// the dials' defaults (the studio's ks-params writes over these; on the site they are the card)
+const DEFAULTS = {
+  'layers.depth': 1, 'layers.parallax': 1, 'layers.spread': 0.4,
+  'tilt.tiltMax': 5, 'tilt.perspective': 2.4, 'tilt.hoverScale': 1.012,
+  'light.bloom': 0.7, 'light.shadow': 0.7,
+  'motion.scrollSpeed': 1, 'motion.stiffness': 110, 'motion.damping': 21,
+  'card.cardSize': 40, 'card.frame': true, 'card.notches': true,
+  'debug.outlines': false, 'debug.hold': false,
+};
+const V = { ...DEFAULTS };
+if (EMBED && QS.get('frame') === 'full') V['card.frame'] = false;
+let cw = 576, ch = 432;               // the card on screen, CSS px
+let K = 2.5, cardW = 1440, cardH = 1080; // the card as laid out (K times bigger, scaled back in its transform)
+let s = 0.36, VH = 1044, maxScroll = 3000;
+let stops = [0, 1100, 2300, 3000];
+const spr = { rx: { x: 0, v: 0 }, ry: { x: 0, v: 0 }, h: { x: 0, v: 0 } };
+// phase: the tour's own time; tt: the motion clock (the rings, the clouds, the typing dots, the nav's
+// slides), which never stops for a drag. The two are one and the same until someone drags.
+let phase = 0, tt = 0, scroll = 0, lastScroll = 0, tourRate = 1, liftNow = 1;
+let hovered = false, touchOn = false, pointer = { x: 0, y: 0 }, pointerLive = false;
+// drag to scroll: the page follows the pointer 1:1, then coasts, then the tour takes over again
+let drag = null, manual = false, mY = 0, mV = 0, resumeAt = 0;
+let lastTick = '', lastTickOut = '';
+
+function layout() {
+  stage.style.setProperty('--size', V['card.cardSize'] ?? 40);
+  const framed = MAT > 0 || (V['card.frame'] ?? true);
+  card.classList.toggle('is-framed', framed);
+  slot.classList.toggle('full', !framed);
+  slot.classList.toggle('no-notches', !(V['card.notches'] ?? true));
+  cw = persp.clientWidth; ch = persp.clientHeight;
+  if (!cw || !ch) return;
+  K = Math.min(4, Math.max(1, (window.devicePixelRatio || 1) * 1.25));
+  cardW = cw * K; cardH = ch * K;
+  card.style.setProperty('--k', K);
+  Object.assign(card.style, { width: cardW + 'px', height: cardH + 'px', left: (cw - cardW) / 2 + 'px', top: (ch - cardH) / 2 + 'px' });
+  const mx = framed ? (MAT ? MAT * cardW : FRAME.x * cardW) : 0, my = framed ? (MAT ? MAT * cardW : FRAME.y * cardH) : 0;
+  card.style.setProperty('--mx', mx + 'px');
+  card.style.setProperty('--my', my + 'px');
+  card.style.setProperty('--win-r', framed ? (cardW * 0.0125) + 'px' : '0px');
+  card.style.setProperty('--card-px', cardW + 'px');
+  const winW = cardW - 2 * mx, winH = cardH - 2 * my;
+  s = winW / DW;
+  VH = Math.round(DW * winH / winW);
+  vp.style.setProperty('--vh', VH + 'px');
+  vp.style.transform = `scale(${s})`;
+  persp.style.perspective = ((V['tilt.perspective'] ?? 2.4) * cw) + 'px';
+  card.style.transform = `scale(${1 / K})`;
+  for (const L of layers) {
+    const root = L.kind === 'card' ? card : L.kind === 'vp' ? vp : page;
+    [L.cx, L.cy] = posIn(L.el, root);
+  }
+  const stopY = (name) => { const el = document.querySelector(`[data-stop="${name}"]`); return el ? posIn(el, page)[1] - el.offsetHeight / 2 : 0; };
+  maxScroll = Math.max(0, page.offsetHeight - VH);
+  stops = [0, VH + 30, stopY('future') - Math.round(VH * 0.36), maxScroll];
+  mY = Math.min(mY, maxScroll);
+}
+
+/* the tour: hold on the hero, glide down through the page, glide home. Seamless: every leg eases in and out. */
+const LEGS = [ // [hold at stop, then move to the next stop] in seconds at speed 1
+  [3.4, 3.2], [1.6, 3.2], [1.4, 2.6], [1.8, 5.2],
+];
+const TOUR = LEGS.reduce((a, [h, m]) => a + h + m, 0);
+const ease = (t) => 0.5 - 0.5 * Math.cos(Math.PI * t);
+function tourAt(t) {
+  t = ((t % TOUR) + TOUR) % TOUR;
+  for (let i = 0; i < LEGS.length; i++) {
+    const [h, m] = LEGS[i];
+    if (t < h) return stops[i];
+    t -= h;
+    if (t < m) return stops[i] + (stops[(i + 1) % stops.length] - stops[i]) * ease(t / m);
+    t -= m;
+  }
+  return 0;
+}
+/* where the tour passes y on its way down, so it can pick up from wherever a drag left the page */
+function phaseFor(y) {
+  let t0 = 0;
+  for (let i = 0; i < LEGS.length - 1; i++) {
+    const [h, m] = LEGS[i], a = stops[i], b = stops[i + 1];
+    if (y <= a + 1) return t0 + h * 0.5;
+    if (y < b) return t0 + h + m * Math.acos(1 - 2 * (y - a) / (b - a)) / Math.PI;
+    t0 += h + m;
+  }
+  return t0 + LEGS[LEGS.length - 1][0] * 0.5;
+}
+const clampY = (y) => Math.min(maxScroll, Math.max(0, y));
+const wrap = (t) => ((t % TOUR) + TOUR) % TOUR;
+
+/* ---- Dawn's own motion, on the motion clock (it used to be CSS, on the browser's clock) so a tour is
+   one seamless loop: the site rests the tile on this tour recorded and hands over to the live card ---- */
+// CSS timing curves
+function bezier(x1, y1, x2, y2) {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const X = (t) => ((ax * t + bx) * t + cx) * t, Y = (t) => ((ay * t + by) * t + cy) * t;
+  return (x) => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    let lo = 0, hi = 1, t = x;
+    for (let i = 0; i < 40 && hi - lo > 1e-7; i++) { if (X(t) > x) hi = t; else lo = t; t = (lo + hi) / 2; }
+    return Y(t);
+  };
+}
+const EASE = bezier(0.25, 0.1, 0.25, 1), EASE_IO = bezier(0.42, 0, 0.58, 1), NAV_EASE = bezier(0.2, 0.7, 0.2, 1);
+// the dotted rings: 227 dots round (circle-1.svg), turning ten dots a tour, near enough the live site's 500 s turn
+const SPIN = 10 * 360 / 227 / TOUR;    // deg/s
+// the clouds sway out and back once a tour at the live site's drift speed (its 4% over 70 s, so a 0.64% sway)
+const SWAY = { x0: -1.5, y0: 0, x1: -1.5 + 4 * (TOUR / 2) / 70, y1: -(TOUR / 2) / 70 };
+// the typing dots bounce every 1.4 s (sixteen a tour), each 0.18 s behind the one before
+const DOT = { per: 1.4, lag: 0.18 };
+const rings = [[$('.ring-dots img'), 1], [$('.cyc-dots img'), -1]].map(([el, dir]) => ({ el, dir, last: '' }));
+const cloudImg = $('.clouds img');
+const dots = [...document.querySelectorAll('.typing:not(.twin) i')].map((el) => ({ el, last: '', op: '' }));
+let lastCloud = '';
+function ambient(still) {
+  for (const R of rings) {
+    const str = still ? '' : `rotate(${(R.dir * ((tt * SPIN) % 360)).toFixed(3)}deg)`;
+    if (str !== R.last) { R.el.style.transform = str; R.last = str; }
+  }
+  const p = tt / (TOUR / 2), e = EASE_IO(p < 1 ? p : 2 - p);
+  const cs = `translate3d(${(SWAY.x0 + (SWAY.x1 - SWAY.x0) * e).toFixed(4)}%, ${(SWAY.y0 + (SWAY.y1 - SWAY.y0) * e).toFixed(4)}%, 0)`;
+  if (cs !== lastCloud) { cloudImg.style.transform = cs; lastCloud = cs; }
+  dots.forEach((D, i) => {
+    let y = 0, op = '';
+    if (!still) {
+      const u = (((tt - i * DOT.lag) % DOT.per) + DOT.per) % DOT.per / DOT.per;   // 0..1 through one bounce
+      const k = u < 0.3 ? EASE_IO(u / 0.3) : u < 0.6 ? 1 - EASE_IO((u - 0.3) / 0.3) : 0;
+      y = -6 * k; op = (0.55 + 0.45 * k).toFixed(3);
+    }
+    const str = y ? `translate3d(0, ${y.toFixed(2)}px, 0)` : '';
+    if (str !== D.last) { D.el.style.transform = str; D.last = str; }
+    if (op !== D.op) { D.el.style.opacity = op; D.op = op; }
+  });
+}
+
+/* the nav slides away as the page goes down and back as it comes up, and its logo turns cream over the
+   dark: CSS-like transitions (from wherever they were when the target changed), on the motion clock */
+const trans = (dur, curve) => ({ from: 0, to: 0, e: dur, dur, curve });
+const trVal = (x) => x.from + (x.to - x.from) * x.curve(Math.min(1, x.e / x.dur));
+const navTr = { y: trans(0.7, NAV_EASE), o: trans(0.5, EASE), ink: trans(0.4, EASE) };
+let navHidden = false, settleNav = true, lastNavT = '', lastNavO = '', lastInk = '';
+function navStep(y, v, dt, still) {
+  if (y < VH * 0.32 || v < -0.4) navHidden = false;
+  else if (v > 0.4) navHidden = true;
+  for (const x of Object.values(navTr)) x.e = still ? x.dur : x.e + dt;
+  for (const [x, to] of [[navTr.y, +navHidden], [navTr.o, +navHidden], [navTr.ink, +(y > VH - 120)]]) {
+    if (to !== x.to) { x.from = trVal(x); x.to = to; x.e = still ? x.dur : 0; }
+  }
+}
+// the nav remembers which way the page last went, so a jump in time (the first frame, or the site's
+// {at}) plays it through the tour before it, and it is just where the loop has it
+function navSettle(t) {
+  const N = Math.round(TOUR * 60);
+  navHidden = false;
+  for (const x of Object.values(navTr)) { x.from = x.to = 0; x.e = x.dur; }
+  let prev = clampY(tourAt(t - (N + 1) / 60));
+  for (let m = N; m >= 1; m--) { const y = clampY(tourAt(t - m / 60)); navStep(y, y - prev, 1 / 60, false); prev = y; }
+  lastScroll = prev;
+}
+const INK = [50, 28, 4], CREAM = [251, 243, 235];
+
+function step(S, target, k, c, dt) {
+  const n = Math.ceil(dt / (1 / 240));
+  const h = dt / n;
+  for (let i = 0; i < n; i++) { S.v += (-k * (S.x - target) - c * S.v) * h; S.x += S.v * h; }
+}
+
+/* ---- the frame ---- */
+let tPrev = performance.now(), clock = 0;
+function frame(now) {
+  const dt = Math.min(0.05, Math.max(0, (now - tPrev) / 1000));
+  tPrev = now; clock += dt;
+  const still = reduced.matches;
+  const k = V['motion.stiffness'] ?? 110, c = V['motion.damping'] ?? 21;
+  const tiltMax = V['tilt.tiltMax'] ?? 5;
+  const hold = V['debug.hold'] ?? false;
+  const dragging = !!(drag && drag.moved);
+
+  // what the hover wants
+  const engaged = hovered || touchOn || hold || still || dragging;
+  let nx = 0, ny = 0;
+  if (still) { nx = -0.38; ny = -0.3; }
+  else if (engaged) {
+    if ((hovered || dragging) && pointerLive) { nx = pointer.x; ny = pointer.y; }
+    else { nx = 0.42 * Math.sin(clock * 0.55); ny = 0.3 * Math.sin(clock * 0.77 + 1.1); }
+  }
+  const hT = engaged ? 1 : 0;
+  if (still) { spr.rx.x = -ny * tiltMax; spr.ry.x = nx * tiltMax; spr.h.x = 1; spr.rx.v = spr.ry.v = spr.h.v = 0; }
+  else {
+    step(spr.rx, -ny * tiltMax, k, c, dt);
+    step(spr.ry, nx * tiltMax, k, c, dt);
+    step(spr.h, hT, k * 0.8, c * 0.95, dt);
+  }
+
+  // the scroll: the tour keeps running under a hover; a drag takes it over, coasts, and hands it back after a beat
+  if (manual) {
+    if (!drag) {
+      if (!still) { mY += mV * dt; mV *= Math.exp(-dt * 3.4); } else mV = 0;
+      if (mY <= 0 || mY >= maxScroll) { mY = clampY(mY); mV = 0; }
+      if (Math.abs(mV) < 6) { mV = 0; if (!resumeAt) resumeAt = clock + 1.1; }
+      if (resumeAt && clock >= resumeAt && !still) { phase = phaseFor(mY); manual = false; resumeAt = 0; tourRate = 0; }
+    }
+    scroll = mY;
+  } else if (still) scroll = 0;
+  else {
+    tourRate = Math.min(1, tourRate + dt / 1.4);          // after a drag, the tour comes back up to speed gently
+    phase += dt * (V['motion.scrollSpeed'] ?? 1) * ease(tourRate);
+    scroll = clampY(tourAt(phase));
+    if (settleNav) { navSettle(phase); settleNav = false; }
+  }
+  if (!still) tt = wrap(tt + dt * (V['motion.scrollSpeed'] ?? 1));
+
+  render(dt, still);
+}
+
+function render(dt, still) {
+  const rx = spr.rx.x, ry = spr.ry.x;
+  const hc = Math.max(-0.2, Math.min(1.2, spr.h.x));
+  const h01 = Math.max(0, Math.min(1, spr.h.x));
+  const depth = V['layers.depth'] ?? 1, par = V['layers.parallax'] ?? 1, spread = V['layers.spread'] ?? 0.4;
+  const tiltMax = V['tilt.tiltMax'] ?? 5;
+  const lift = 1 + ((V['tilt.hoverScale'] ?? 1.012) - 1) * hc;
+  liftNow = lift;
+  const shadowK = V['light.shadow'] ?? 0.7, bloomK = V['light.bloom'] ?? 0.7;
+
+  // page scroll, nav state, the notches
+  page.style.transform = `translate3d(0, ${(-scroll).toFixed(2)}px, 0)`;
+  navStep(scroll, scroll - lastScroll, dt, still); lastScroll = scroll;
+  const hy = trVal(navTr.y), ho = trVal(navTr.o), ink = trVal(navTr.ink);
+  const nt = hy ? `translate3d(0, ${(-120 * hy).toFixed(3)}%, 0)` : '', no = ho ? (1 - ho).toFixed(3) : '';
+  if (nt !== lastNavT) { navInner.style.transform = nt; lastNavT = nt; }
+  if (no !== lastNavO) { navInner.style.opacity = no; lastNavO = no; }
+  const ic = ink ? `rgb(${INK.map((c, i) => Math.round(c + (CREAM[i] - c) * ink)).join(', ')})` : '';
+  if (ic !== lastInk) { logo.style.color = ic; lastInk = ic; }
+  ambient(still);
+  arcSvg.style.transform = `rotate(${((scroll - VH) * 0.022).toFixed(2)}deg)`;
+  const per = 6 * K, off = ((scroll * s) % per + per) % per;   // the ticks move with the page itself
+  const tk = `translate3d(0, ${(-off).toFixed(2)}px, 0)`;
+  if (tk !== lastTick) { ticksIn.style.transform = tk; lastTick = tk; }
+  const offOut = ((scroll * s / K * lift) % 6 + 6) % 6;
+  const tko = `translate3d(0, ${(-offOut).toFixed(2)}px, 0)`;
+  if (tko !== lastTickOut) { ticksOut.style.transform = tko; lastTickOut = tko; }
+
+  // the card tilts toward the pointer
+  card.style.transform = `rotateX(${rx.toFixed(3)}deg) rotateY(${ry.toFixed(3)}deg) scale(${(lift / K).toFixed(5)})`;
+
+  // eye position in card space: perspective P straight in front of the card centre, rotated into the card's frame
+  const P = (V['tilt.perspective'] ?? 2.4) * cardW / lift; // the eye distance in the card's own (laid out) px
+  const a = rx * Math.PI / 180, b = ry * Math.PI / 180;
+  const E = { x: -P * Math.sin(b) * Math.cos(a), y: P * Math.sin(a), z: P * Math.cos(a) * Math.cos(b) };
+  const Zsep = 0.16 * cardW * depth;
+  const quiet = Math.abs(hc) < 0.0005 && Math.abs(rx) < 0.001 && Math.abs(ry) < 0.001;
+
+  for (const L of layers) {
+    const u = L.kind === 'card' ? 1 : s;
+    const Q = L.kind === 'card' ? { x: L.cx - cardW / 2, y: L.cy - cardH / 2 }
+      : { x: (L.cx - DW / 2) * s, y: (L.cy - (L.kind === 'page' ? scroll : 0) - VH / 2) * s };
+    const project = (d, extra) => {
+      const z = d * Zsep * hc;
+      const t = E.z / Math.max(E.z * 0.25, E.z - z);
+      return { Q, z, t, o: { x: (t - 1) * (spread * Q.x - par * E.x) + extra.x, y: (t - 1) * (spread * Q.y - par * E.y) + extra.y } };
+    };
+    L.A = project(L.d, { x: 0, y: 0 });
+    const write = (el, A, cache) => {
+      let o = A.o, sc = A.t;
+      const Pp = L.parent && L.parent.A;
+      if (Pp) {
+        o = { x: (A.Q.x - Pp.Q.x) * (1 / Pp.t - 1) + (A.o.x - Pp.o.x) / Pp.t, y: (A.Q.y - Pp.Q.y) * (1 / Pp.t - 1) + (A.o.y - Pp.o.y) / Pp.t };
+        sc = A.t / Pp.t;
+      }
+      const str = quiet ? '' : `translate3d(${(o.x / u).toFixed(2)}px, ${(o.y / u).toFixed(2)}px, 0) scale(${sc.toFixed(5)})`;
+      if (str !== cache.last) { el.style.transform = str; cache.last = str; }
+    };
+    write(L.el, L.A, L);
+    if (L.twin) {
+      const T = L.twin;
+      const zs = T.surface * Zsep * hc;
+      const throwPx = Math.max(0, L.A.z - zs);
+      const A = project(T.surface, { x: throwPx * LIGHT.x, y: throwPx * LIGHT.y });
+      write(T.el, A, T);
+      const op = (T.alpha * shadowK * h01).toFixed(3);
+      if (op !== T.op) { T.el.style.opacity = op; T.op = op; }
+    }
+  }
+
+  // the framed window's own shadow on the card ground
+  if (card.classList.contains('is-framed')) {
+    const W = layers[0].A; // the window layer
+    const throwPx = Math.max(0, W.z) + cardW * 0.012;
+    winShadow.style.transform = `translate3d(${(W.o.x + throwPx * LIGHT.x * 1.4).toFixed(2)}px, ${(W.o.y + throwPx * LIGHT.y * 1.4).toFixed(2)}px, 0) scale(${(0.985 + 0.01 * h01).toFixed(4)})`;
+    winShadow.style.opacity = (0.42 + 0.28 * h01 * shadowK).toFixed(3);
+  }
+
+  // light: one round bloom under the pointer (it rides the tilt springs, so it glides), the rim nearest it, the card's own shadow
+  const ex = tiltMax ? ry / tiltMax : 0, ey = tiltMax ? -rx / tiltMax : 0; // -1..1, follows the pointer
+  bloom.style.transform = `translate3d(${((0.5 + ex * 0.56) * cardW).toFixed(1)}px, ${((0.5 + ey * 0.56) * cardH).toFixed(1)}px, 0)`;
+  bloom.style.opacity = (bloomK * h01).toFixed(3);
+  rimLight.style.transform = `translate3d(${((0.5 + ex * 0.62) * cardW).toFixed(1)}px, ${((0.5 + ey * 0.62) * cardH).toFixed(1)}px, 0)`;
+  rim.style.opacity = (bloomK * h01 * Math.min(1, 0.3 + Math.hypot(ex, ey))).toFixed(3);
+  cshadow.style.transform = `translate3d(${(-ex * 0.035 * cw).toFixed(1)}px, ${((0.03 + 0.035 * h01 - ey * 0.02) * cw).toFixed(1)}px, 0) scale(${(0.96 + 0.06 * h01).toFixed(3)})`;
+  cshadow.style.opacity = ((0.18 + 0.42 * h01) * (0.4 + shadowK)).toFixed(3);
+}
+
+// the tour and every clock on it to a time in the loop
+function seekTime(t) {
+  phase = tt = wrap(t);
+  manual = false; mV = 0; resumeAt = 0; tourRate = 1;
+  settleNav = true;
+}
+
+/* ---- the loop, which stops when nobody can see the card ---- */
+let rafId = 0, visible = true;
+function loop(now) { rafId = 0; if (!visible || document.hidden) return; frame(now); rafId = requestAnimationFrame(loop); }
+function syncRunning() {
+  const on = visible && !document.hidden;
+  document.documentElement.classList.toggle('is-paused', !on);
+  if (on && !rafId) { tPrev = performance.now(); rafId = requestAnimationFrame(loop); }
+  if (!on && rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+}
+document.addEventListener('visibilitychange', syncRunning);
+window.addEventListener('message', (e) => {
+  const d = e.data;
+  if (e.source !== window.parent || !d || d.type !== 'ks-card') return;
+  if (typeof d.at === 'number' && !(drag && drag.moved)) seekTime(d.at);   // never mid-drag
+  if (typeof d.visible !== 'boolean') return;
+  visible = d.visible;
+  syncRunning();
+});
+
+/* ---- input: hover tilts, press and drag scrolls the page, a plain click opens (embedded) ---- */
+const touchDrag = !EMBED || QS.get('touchdrag') === '1';
+if (!touchDrag) persp.style.touchAction = 'pan-y';
+function setPointer(e) {
+  const r = persp.getBoundingClientRect();
+  pointer.x = Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width) * 2 - 1));
+  pointer.y = Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height) * 2 - 1));
+  pointerLive = true;
+}
+const inside = (e) => { const r = persp.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; };
+persp.addEventListener('pointerenter', (e) => { if (e.pointerType !== 'touch') { hovered = true; setPointer(e); } });
+persp.addEventListener('pointerleave', (e) => { if (e.pointerType !== 'touch' && !drag) { hovered = false; pointerLive = false; } });
+persp.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  drag = { id: e.pointerId, type: e.pointerType, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t: performance.now(), v: 0, moved: false };
+  if (e.pointerType !== 'touch' || touchDrag) { try { persp.setPointerCapture(e.pointerId); } catch { /* fine */ } }
+  if (e.pointerType !== 'touch') e.preventDefault();     // no text selection, no image ghost
+});
+persp.addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'touch') hovered = true;
+  if (drag && e.pointerId === drag.id) {
+    const canDrag = drag.type !== 'touch' || touchDrag;
+    if (!drag.moved && canDrag && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) >= CLICK) {
+      drag.moved = true; manual = true; mY = scroll; mV = 0; resumeAt = 0;
+      drag.x = e.clientX; drag.y = e.clientY; drag.t = performance.now();
+      persp.classList.add('is-dragging');
+    }
+    if (drag.moved) {
+      const now = performance.now();
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      const per = K / (s * liftNow);                    // design px under 1 screen px
+      // whichever axis moved more wins: up = down the page at 1:1 (it sticks to the pointer); right = down the page, scrubbing at 2.5x
+      const delta = Math.abs(dx) > Math.abs(dy) ? dx * 2.5 * per : -dy * per;
+      const before = mY;
+      mY = clampY(mY + delta);
+      drag.v = 0.7 * ((mY - before) / Math.max(0.008, (now - drag.t) / 1000)) + 0.3 * drag.v;
+      drag.x = e.clientX; drag.y = e.clientY; drag.t = now;
+    }
+  }
+  if (e.pointerType !== 'touch' || (drag && drag.moved)) setPointer(e);
+});
+function endDrag(e, cancelled) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag; drag = null;
+  persp.classList.remove('is-dragging');
+  if (d.moved) {
+    // a flick coasts; a drag that stopped before letting go does not
+    mV = !cancelled && performance.now() - d.t < 90 ? Math.max(-6000, Math.min(6000, d.v)) : 0;
+    resumeAt = 0;
+  } else if (!cancelled && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < CLICK) {
+    if (EMBED) window.parent.postMessage({ type: 'ks-card-open' }, '*');
+    else if (d.type === 'touch') touchOn = !touchOn;
+  }
+  if (d.type === 'touch') pointerLive = false;
+  else if (!inside(e)) { hovered = false; pointerLive = false; }
+}
+persp.addEventListener('pointerup', (e) => endDrag(e, false));
+persp.addEventListener('pointercancel', (e) => endDrag(e, true));
+persp.addEventListener('dragstart', (e) => e.preventDefault());
+
+/* ---- dials (the studio's ks-params; never loaded when the site embeds the card) ---- */
+function setValues(values, path) {
+  Object.assign(V, values);
+  card.classList.toggle('show-layers', !!V['debug.outlines']);
+  if (!path || /^card\.|tilt\.perspective/.test(path)) layout();
+}
+const TOOL = 'code-powered work card';
+if (!EMBED) {
+  const { defineParams } = await import('/shared/params/params.js');
+  defineParams(TOOL, {
+    layers: {
+      depth: [1, 0, 2.5, 0.01],          // how far apart the layers sit
+      parallax: [1, 0, 3, 0.01],         // how much they slide as the card tilts (1 = true to the tilt)
+      spread: [0.4, 0, 1, 0.01],         // perspective push away from the centre
+    },
+    tilt: {
+      tiltMax: [5, 0, 20, 0.5],         // degrees
+      perspective: [2.4, 1, 6, 0.05],    // eye distance, in card widths
+      hoverScale: [1.012, 1, 1.12, 0.001],
+    },
+    light: {
+      bloom: [0.7, 0, 1, 0.01],
+      shadow: [0.7, 0, 1, 0.01],
+    },
+    motion: {
+      scrollSpeed: [1, 0, 3, 0.05],
+      stiffness: [110, 40, 500, 1],
+      damping: [21, 4, 60, 0.5],
+    },
+    card: {
+      cardSize: [40, 24, 72, 0.5],       // vw, as on the work grid
+      frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: true },
+      notches: { type: 'toggle', labels: ['No notches', 'Notches'], default: true },
+    },
+    debug: {
+      outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+      hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+    },
+    copyProps: { type: 'action', label: 'Copy props' },
+  }, {
+    onChange(values, path) { setValues(values, path); },
+    onAction(name) {
+      if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...V }, null, 2);
+    },
+  });
+} else layout();
+
+new ResizeObserver(() => layout()).observe(persp);
+// a move to a screen of another density changes K
+const watchDpr = () => matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { layout(); watchDpr(); }, { once: true });
+watchDpr();
+document.fonts.ready.then(layout);
+window.addEventListener('load', layout);
+// the card's handle: its dials (the site's hover dials go through set()), and for the verify scripts, read state, jump the tour
+window.__dawnCard = {
+  values: V,
+  set: setValues,
+  get scroll() { return scroll; }, get h() { return spr.h.x; }, get layers() { return layers.length; },
+  get manual() { return manual; }, get running() { return !!rafId; }, get period() { return TOUR; }, layout,
+  seek(t) { seekTime(t); }, seekTime,
+};
+syncRunning();
+</script>
+</body>
+</html>

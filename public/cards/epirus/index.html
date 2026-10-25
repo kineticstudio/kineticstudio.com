@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Epirus work card, 2026-10-23, built on the Ethos card's engine (a classic
+     script, epirus-card-src/js/card.js) and the Dawn card's architecture,
+     with Hunter's notes built in from the start: the miniature keeps touring
+     while you hover, the light is one soft round bloom under the pointer, you
+     can drag the page like a phone (and scrub it sideways: drag right to go
+     further down), a notched ruler slides with the scroll, and there is no
+     Case Study pill.
+
+     Epirus (www.epirusinc.com, ours) is rebuilt here at its 1440px design
+     width as HTML/CSS layers, each at its own depth: the fly-in hero's
+     WebGL base as a still at rest (the site's own scene held at 9 s, framed
+     at 4:3) with the drone groups, the radar and authorization runs and
+     Leonidas's rings redone in code over it; One-to-Many Defense with the
+     site's own isometric icons; the four layers (live WebGL pieces on the
+     site, stills here); the products (their loops as stills); the press
+     carousel; the briefing with its plan (WebGL, a still); the footer. Fonts
+     (Inter, subset) and images are the site's own, in epirus-card-src/. raw/
+     keeps the fetched HTML, CSS, fonts and media for reference; nothing in
+     it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched from outside it:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=1      the site in a window on the card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Epirus work card</title>
+<script>
+  /* before first paint: embed or not, the bleed, and the studio's own type for the label row */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="epirus-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Epirus, epirusinc.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- hero: the base at rest, the drones coming in, Leonidas's rings, the copy -->
+              <header class="sec hero" data-tone="dark" data-stop="hero">
+                <div class="h-scene sbox" data-layer="the base" data-depth="-0.25" style="--lab-x:520px;--lab-y:380px">
+                  <img src="epirus-card-src/img/hero-scene.webp" alt="">
+                  <svg class="h-links" viewBox="0 0 1440 1080" fill="none" preserveAspectRatio="none">
+                    <path id="linkTrack" d="M858 512L752 604" stroke="#ffd748" stroke-width="2.2" stroke-dasharray="1.6 5.6" stroke-linecap="round"/>
+                    <path id="linkAuth" d="M766 612L948 654" stroke="#ffd748" stroke-width="2.2" stroke-dasharray="1.6 5.6" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div class="h-rings sbox" data-layer="rings" data-depth="0.16" style="--lab-x:900px;--lab-y:440px"><div class="sin" id="rings"></div></div>
+                <div class="h-drones sbox" data-layer="drones" data-depth="0.46" style="--lab-x:1080px;--lab-y:330px"><div class="sin" id="drones"></div></div>
+                <h1 class="h1 h-title" data-layer="headline" data-depth="0.76" data-shadow="-0.25,0.5,16">Built to Stop<br>Autonomous Attacks</h1>
+                <p class="lead h-lead" data-layer="body copy" data-depth="0.55">Cheap, autonomous drones now come in swarms. Epirus Point Defense senses, decides and defeats them many at once, before they cost lives.</p>
+                <div class="btn yellow h-btn1" data-layer="button" data-depth="0.9" data-shadow="-0.25,0.55,12">Request Briefing</div>
+                <div class="btn ghost h-btn2" data-layer="button" data-depth="0.84">How It Works</div>
+                <div class="thumb" data-layer="the film" data-depth="0.62" data-shadow="-0.25,0.6,14" style="--lab-y:-30px">
+                  <div class="thumb-media"><img src="epirus-card-src/img/thumb-a.webp" alt=""><img class="thumb-b" id="thumbB" src="epirus-card-src/img/thumb-b.webp" alt=""></div>
+                  <div class="thumb-label"><i class="play"></i><span><b>Epirus Point Defense</b>The film, 4 min</span></div>
+                </div>
+              </header>
+
+              <!-- one-to-many defense -->
+              <section class="sec what" data-tone="light" data-stop="what">
+                <h2 class="h2 w-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.18,12">One-to-Many Defense</h2>
+                <p class="lead w-p" data-layer="body copy" data-depth="0.45">Leonidas high-power microwave answers a swarm the way a swarm attacks: many at once. It is the center of Epirus Point Defense, the system that plans, senses, decides and defeats around the asset that must survive.</p>
+                <div class="w-grid" data-layer="grid" data-depth="0.1" style="--lab-x:12px;--lab-y:-34px"><i></i><i></i><i></i><i></i></div>
+                <div class="w-cell" style="left:63px">
+                  <img class="w-icon" src="epirus-card-src/img/iso-multi.svg" alt="" data-layer="icon" data-depth="0.5" data-shadow="0.1,0.22,7">
+                  <i class="w-dot" data-layer="mark" data-depth="0.36"></i>
+                  <h3 class="w-t" data-layer="title" data-depth="0.64">One pulse, many drones</h3>
+                  <p class="w-d" data-layer="copy" data-depth="0.32">In live fire at Camp Atterbury, one instant pulse defeated a 49-drone swarm.</p>
+                </div>
+                <div class="w-cell" style="left:391px">
+                  <img class="w-icon" src="epirus-card-src/img/iso-magazine.svg" alt="" data-layer="icon" data-depth="0.5" data-shadow="0.1,0.22,7">
+                  <i class="w-dot" data-layer="mark" data-depth="0.36"></i>
+                  <h3 class="w-t" data-layer="title" data-depth="0.64">A deep<br>electronic magazine</h3>
+                  <p class="w-d" data-layer="copy" data-depth="0.32">It runs on electricity from a standard generator, so it keeps engaging at negligible cost per shot.</p>
+                </div>
+                <div class="w-cell" style="left:720px">
+                  <img class="w-icon" src="epirus-card-src/img/iso-zone.svg" alt="" data-layer="icon" data-depth="0.5" data-shadow="0.1,0.22,7">
+                  <i class="w-dot" data-layer="mark" data-depth="0.36"></i>
+                  <h3 class="w-t" data-layer="title" data-depth="0.64">Low collateral</h3>
+                  <p class="w-d" data-layer="copy" data-depth="0.32">Software sets exactly when and where it defeats drones, so operators can hold designated safety zones.</p>
+                </div>
+                <div class="w-cell" style="left:1049px">
+                  <img class="w-icon" src="epirus-card-src/img/iso-fiber.svg" alt="" data-layer="icon" data-depth="0.5" data-shadow="0.1,0.22,7">
+                  <i class="w-dot" data-layer="mark" data-depth="0.36"></i>
+                  <h3 class="w-t" data-layer="title" data-depth="0.64">Stops dark drones</h3>
+                  <p class="w-d" data-layer="copy" data-depth="0.32">Proven effects against fiber-optic-controlled and autonomous UAVs, with reliable performance against a range of evasive behaviors.</p>
+                </div>
+              </section>
+
+              <!-- one architecture, every layer connected -->
+              <section class="sec glance" data-tone="dark" data-stop="layers">
+                <h2 class="h2 g-h" data-layer="headline" data-depth="0.72">One Architecture. Every<br>Layer Connected.</h2>
+                <p class="lead g-p" data-layer="body copy" data-depth="0.45">Epirus Point Defense is centered on Leonidas high-power microwave and integrates AI-enabled sense, compatible C2, and simulation and mission planning. Each piece is modular, so the architecture is configured for the site.</p>
+                <div class="btn ghost g-btn" data-layer="button" data-depth="0.84">How It Works</div>
+                <div class="g-rules" data-layer="rules" data-depth="0.08" style="--lab-y:-34px"><i style="left:63px"></i><i style="left:399px"></i><i style="left:736px"></i><i style="left:1073px"></i></div>
+                <div class="g-col" style="left:63px">
+                  <div class="g-tag" data-layer="step" data-depth="0.5"><b>1</b>Plan</div>
+                  <img class="g-piece" src="epirus-card-src/img/layer-1.webp" alt="" data-layer="island" data-depth="0.34" data-shadow="0,0.55,18">
+                  <div class="g-txt" data-layer="caption" data-depth="0.44"><h3>Mission Suite</h3><p>Models terrain, coverage and probability of kill before deployment, so each node goes where it does the most good.</p></div>
+                </div>
+                <div class="g-col" style="left:399px">
+                  <div class="g-tag" data-layer="step" data-depth="0.5"><b>2</b>Sense</div>
+                  <img class="g-piece" src="epirus-card-src/img/layer-2.webp" alt="" data-layer="island" data-depth="0.34" data-shadow="0,0.55,18">
+                  <div class="g-txt" data-layer="caption" data-depth="0.44"><h3>AI-Enabled Sense</h3><p>Radar, EO/IR, acoustic and passive RF fused into one confident track picture.</p></div>
+                </div>
+                <div class="g-col" style="left:736px">
+                  <div class="g-tag" data-layer="step" data-depth="0.5"><b>3</b>Decide</div>
+                  <img class="g-piece" src="epirus-card-src/img/layer-3.webp" alt="" data-layer="island" data-depth="0.34" data-shadow="0,0.55,18">
+                  <div class="g-txt" data-layer="caption" data-depth="0.44"><h3>Compatible C2</h3><p>Works with the command and control already in place. Operators authorize every engagement.</p></div>
+                </div>
+                <div class="g-col" style="left:1073px">
+                  <div class="g-tag" data-layer="step" data-depth="0.5"><b>4</b>Effect</div>
+                  <img class="g-piece" src="epirus-card-src/img/layer-4.webp" alt="" data-layer="island" data-depth="0.34" data-shadow="0,0.55,18">
+                  <div class="g-txt" data-layer="caption" data-depth="0.44"><h3>Leonidas HPM</h3><p>A deep electronic magazine and multi-target defeat, at low collateral.</p></div>
+                </div>
+              </section>
+
+              <!-- the products -->
+              <section class="sec plat" data-tone="light" data-stop="products">
+                <h2 class="h2 p-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,12">The Products</h2>
+                <div class="pcard" style="left:63px" data-layer="product" data-depth="0.18" data-shadow="0,0.2,18">
+                  <div class="pc-media" data-layer="footage" data-depth="0.3"><img src="epirus-card-src/img/leo.webp" alt=""></div>
+                  <h3 class="pc-t" data-layer="title" data-depth="0.42">Leonidas HPM</h3>
+                  <p class="pc-d" data-layer="copy" data-depth="0.32">The center of the architecture: many drones defeated at once, from a deep electronic magazine.</p>
+                  <div class="btn ink sm pc-btn" data-layer="button" data-depth="0.62">Explore Leonidas</div>
+                </div>
+                <div class="pcard" style="left:506px" data-layer="product" data-depth="0.18" data-shadow="0,0.2,18">
+                  <div class="pc-media" data-layer="footage" data-depth="0.3"><img src="epirus-card-src/img/manta.webp" alt=""></div>
+                  <h3 class="pc-t" data-layer="title" data-depth="0.42">Manta AI-Enabled Sense</h3>
+                  <p class="pc-d" data-layer="copy" data-depth="0.32">Every sensor fused into one confident track picture.</p>
+                  <div class="btn ink sm pc-btn" data-layer="button" data-depth="0.62">Explore Sensing</div>
+                </div>
+                <div class="pcard" style="left:950px" data-layer="product" data-depth="0.18" data-shadow="0,0.2,18">
+                  <div class="pc-media" data-layer="footage" data-depth="0.3"><img src="epirus-card-src/img/mission.webp" alt=""></div>
+                  <h3 class="pc-t" data-layer="title" data-depth="0.42">Kosmos Mission Suite</h3>
+                  <p class="pc-d" data-layer="copy" data-depth="0.32">Simulation and mission planning: model, rehearse and review every engagement.</p>
+                  <div class="btn ink sm pc-btn" data-layer="button" data-depth="0.62">Explore Mission Suite</div>
+                </div>
+              </section>
+
+              <!-- press releases, the carousel stepping on by itself -->
+              <section class="sec press" data-tone="light" data-stop="press">
+                <h2 class="h2 r-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.14,12">Press Releases</h2>
+                <div class="r-nav" data-layer="carousel" data-depth="0.5">
+                  <svg class="r-arrow" style="left:0" viewBox="0 0 28 37" fill="none"><path d="M18 10.0059L10 18.3073C12.6667 21.2062 18 26.6087 18 26.6087" stroke="currentColor" stroke-width="2"/></svg>
+                  <i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+                  <svg class="r-arrow" style="left:192px" viewBox="0 0 28 37" fill="none"><path d="M10 26.6025L18 18.3011C15.3333 15.4022 10 9.99975 10 9.99975" stroke="currentColor" stroke-width="2"/></svg>
+                </div>
+                <div class="r-track" id="pressTrack">
+                  <div class="rcard" style="left:0" data-layer="release" data-depth="0.24" data-shadow="0,0.16,14">
+                    <div class="rc-art sage" data-layer="image" data-depth="0.36"><img src="epirus-card-src/img/press-p1.webp" alt=""></div>
+                    <div class="rc-body"><h3>Epirus and U.S. Army DEVCOM GVSC Announce CRADA to Enable Mobile HPM System Development</h3><span>October 13, 2026</span></div>
+                  </div>
+                  <div class="rcard" style="left:361px" data-layer="release" data-depth="0.24" data-shadow="0,0.16,14">
+                    <div class="rc-art sage" data-layer="image" data-depth="0.36"><img src="epirus-card-src/img/press-p2.webp" alt=""></div>
+                    <div class="rc-body"><h3>Epirus&rsquo; Leonidas Selected for Department of War Directed Energy Pilot Program</h3><span>October 9, 2026</span></div>
+                  </div>
+                  <div class="rcard" style="left:722px" data-layer="release" data-depth="0.24" data-shadow="0,0.16,14">
+                    <div class="rc-art sage" data-layer="image" data-depth="0.36"><img src="epirus-card-src/img/press-p3.webp" alt=""></div>
+                    <div class="rc-body"><h3>U.S. Marine Corps Awards Epirus $11 Million Contract for HAVOC Program</h3><span>August 10, 2026</span></div>
+                  </div>
+                  <div class="rcard" style="left:1083px" data-layer="release" data-depth="0.24" data-shadow="0,0.16,14">
+                    <div class="rc-art bone" data-layer="image" data-depth="0.36"><img class="iso" src="epirus-card-src/img/iso-comms.svg" alt=""></div>
+                    <div class="rc-body"><h3>Epirus High-Power RF Test Solution Selected for FISTA&rsquo;s New Anechoic Chambers</h3><span>August 4, 2026</span></div>
+                  </div>
+                  <div class="rcard" style="left:1444px" data-layer="release" data-depth="0.24" data-shadow="0,0.16,14">
+                    <div class="rc-art" data-layer="image" data-depth="0.36"><img src="epirus-card-src/img/press-p5.webp" alt=""></div>
+                    <div class="rc-body"><h3>Epirus Names Mark Cuyler Chief Operating Officer and Mark Horton Chief People Officer</h3><span>June 8, 2026</span></div>
+                  </div>
+                  <div class="rcard" style="left:1805px" data-layer="release" data-depth="0.24" data-shadow="0,0.16,14">
+                    <div class="rc-art bone" data-layer="image" data-depth="0.36"><img class="iso" src="epirus-card-src/img/iso-security.svg" alt=""></div>
+                    <div class="rc-body"><h3>Epirus Achieves CMMC Level 2 Certification</h3><span>March 27, 2026</span></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- let's talk about your mission -->
+              <section class="sec cta" data-tone="light" data-stop="briefing">
+                <img class="c-plan" src="epirus-card-src/img/cta-plan.webp" alt="" data-layer="the plan" data-depth="0.2" style="--lab-x:60px;--lab-y:60px">
+                <h2 class="h2 c-h" data-layer="headline" data-depth="0.74" data-shadow="0,0.2,12">Let&rsquo;s Talk About<br>Your Mission</h2>
+                <p class="lead c-p" data-layer="body copy" data-depth="0.45">Tell us what has to be protected. Our team will walk through the threat picture and how an Epirus Point Defense node would be configured for your site.</p>
+                <div class="btn ink c-btn" data-layer="button" data-depth="0.88" data-shadow="0,0.3,10">Request Briefing</div>
+              </section>
+
+              <!-- the footer -->
+              <footer class="sec foot" data-tone="dark" data-stop="footer">
+                <img class="f-logo" src="epirus-card-src/img/epirus-white.svg" alt="" data-layer="logo" data-depth="0.5">
+                <p class="f-news" data-layer="headline" data-depth="0.62">Keep up to date with news and content from Epirus.</p>
+                <div class="f-form" data-layer="sign up" data-depth="0.72"><span class="f-in">Email</span><span class="f-go">Submit</span></div>
+                <div class="f-cols" data-layer="links" data-depth="0.34" style="--lab-y:-34px">
+                  <div style="left:629px"><b>Products</b><span>Leonidas HPM</span><span>Manta AI-Enabled Sense</span><span>Kosmos Simulation</span></div>
+                  <div style="left:968px"><b>Company</b><span>Our Customers</span><span>About</span><span>Newsroom</span><span>Careers</span><span>Leadership</span></div>
+                  <div style="left:1235px"><b>Social</b><span>X</span><span>Linkedin</span><span>Facebook</span><span>Instagram</span><span>Youtube</span></div>
+                </div>
+                <i class="f-rule" data-layer="rule" data-depth="0.1"></i>
+                <div class="f-legal" data-layer="small print" data-depth="0.24" style="--lab-y:-34px">
+                  <p class="f-credit">&copy; 2026 Epirus Inc.<br>Epirus&reg;, Leonidas&reg;, and the bow &amp; arrow<br>logo are registered trademarks of Epirus, Inc.</p>
+                  <div style="left:791px"><span>Privacy Policy</span><span>Cookie Policy</span><span>Consent Preferences</span></div>
+                  <div style="left:942px"><span>Limit the Use Of My Sensitive Personal Information</span><span>Data Subject Access Request Form</span><span>Do Not Sell or Share My Personal Information</span></div>
+                  <div style="left:1262px"><span>Suppliers</span></div>
+                </div>
+              </footer>
+            </div>
+
+            <!-- the nav, fixed in the window: over the hero it is clear; it slides away going down and comes back on its own ground going up -->
+            <nav class="abs nav" id="nav">
+              <div class="nav-shift" id="navShift">
+                <div class="nav-band" id="navBand" data-layer="nav" data-depth="0.5" style="--lab-x:300px;--lab-y:86px">
+                  <i class="nav-ground" id="navGround"></i>
+                  <img class="nav-logo" src="epirus-card-src/img/epirus-white.svg" alt="">
+                  <span class="nav-link" style="left:794px">Point Defense</span>
+                  <span class="nav-link" style="left:920px">Products<svg viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.55806 6.29544C2.46043 6.19781 2.46043 6.03952 2.55806 5.94189L3.44195 5.058C3.53958 4.96037 3.69787 4.96037 3.7955 5.058L8.00001 9.26251L12.2045 5.058C12.3021 4.96037 12.4604 4.96037 12.5581 5.058L13.4419 5.94189C13.5396 6.03952 13.5396 6.19781 13.4419 6.29544L8.17678 11.5606C8.07915 11.6582 7.92086 11.6582 7.82323 11.5606L2.55806 6.29544Z" fill="currentColor"/></svg></span>
+                  <span class="nav-link" style="left:1038px">Company<svg viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.55806 6.29544C2.46043 6.19781 2.46043 6.03952 2.55806 5.94189L3.44195 5.058C3.53958 4.96037 3.69787 4.96037 3.7955 5.058L8.00001 9.26251L12.2045 5.058C12.3021 4.96037 12.4604 4.96037 12.5581 5.058L13.4419 5.94189C13.5396 6.03952 13.5396 6.19781 13.4419 6.29544L8.17678 11.5606C8.07915 11.6582 7.92086 11.6582 7.82323 11.5606L2.55806 6.29544Z" fill="currentColor"/></svg></span>
+                  <i class="nav-menu"><i></i><i></i><i></i></i>
+                </div>
+                <div class="btn line nav-btn" data-layer="nav button" data-depth="0.64">Request Briefing</div>
+              </div>
+            </nav>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Epirus</h3>
+      <p><span>Defense &amp; space</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="epirus-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, the Studio's own Params (defineParams from /shared/params/params.js).
+   Embedded on the site there is no panel and nothing is fetched, so the module
+   is only loaded here, and only when served (opened from disk there is no
+   studio to load it from): the card runs on its defaults without it. */
+const card = window.epirusCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'epirus work card';
+    const D = card.defaults;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        swarm: [D['motion.swarm'], 0, 3, 0.05],            // the hero's drone groups and Leonidas's rings
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        scrub: [D['drag.scrub'], 0, 6, 0.1],               // page px per px of a sideways drag (right = further down)
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

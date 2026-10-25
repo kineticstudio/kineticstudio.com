@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Redesign Health work card, 2026-10-24, built on the Ethos engine as the
+     Roam Robotics, August Health and Konvoy cards carry it (19, 21, 23):
+     - the miniature is redesignhealth.com's homepage as Kinetic shipped it,
+       rebuilt in HTML and CSS layers at its own 1440px width, laid out K
+       times larger than the card and scaled back, so tilted text stays sharp;
+       one spring-driven loop, transforms and opacity only
+     - idle, it tours the site on a 20.2 s loop of eased stops: the hero with
+       its prism film, Health matters to absolutely everyone, the Redesign
+       Health model (Ideate, Build and Scale, each turning to the site's
+       italic pink as it comes into view), Built at Redesign and its four
+       companies in three stops, Shape the future of health and the footer
+     - hover tilts it toward the pointer (10 degrees) and the layers separate
+       by depth with soft shadows that grow with height; one round bloom of
+       light follows the pointer; the tour keeps running under the hover
+     - press and drag scrolls it either way: vertical like a phone (drag up,
+       page down, 1:1), horizontal as a scrub (drag right, further down the
+       page, about 2.5x); whichever axis moves more wins; momentum, clamped
+       ends, and the tour picks up from where it was let go
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge
+       at the frame's aspect (cropped, never letterboxed), on a transparent
+       page, nothing fetched. &bleed=N keeps N px of clear frame round the card
+       (the site's iframe overhangs the tile by that much, room for the tilt),
+       &radius=N rounds its corners, &touchdrag=1 lets a finger drag it (off by
+       default, so a swipe over the tile scrolls the site; a tap still opens).
+       It pauses when hidden or when the parent posts
+       {type: "ks-card", visible: false} (true resumes), and a click that is
+       not a drag posts {type: "ks-card-open"} to the parent.
+
+     The live redesignhealth.com is now another design, so this is rebuilt
+     from the web archive's captures of Kinetic's version (2022-05-03 to
+     2022-08-09; measured from the 2022-08-09 capture at 1440x900 in headless
+     Chromium) and matched against Kinetic's own cover still. From those
+     captures, in redesign-health-card-src/: the site's Almoneda, Domaine
+     Display Narrow and Albra Grotesk files, its logo and the four company
+     marks (its own inline drawings), its spectrum image and photography, its
+     copy word for word (its dashes set as commas), colours and spacing. The
+     hero's prism film is rebuilt as six stills pulled from its own file with
+     ffmpeg, cross-fading and drifting; the companies' slide-in and the step
+     word turning italic as it comes into view follow the site's own classes
+     (its scripts are not in the archive). raw/ keeps the fetched HTML, CSS,
+     fonts, film and images for reference; nothing in it is executed or
+     loaded. -->
+<title>Redesign Health work card</title>
+<script>
+  /* before first paint: embed or not, and the studio's own type for the label row
+     (served by the studio; opened from disk the label uses the bundled copies) */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    var h = document.documentElement;
+    if (embed) {
+      h.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    } else if (location.protocol !== 'file:') {
+      var l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = '/fonts/kinetic/fonts.css';
+      document.head.appendChild(l);
+    }
+  })();
+</script>
+<link rel="stylesheet" href="redesign-health-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Redesign Health, redesignhealth.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- the nav: fixed at the top of the window in its black fade -->
+              <div class="nav" data-pin="nav">
+                <img class="nav-logo" src="redesign-health-card-src/img/rh-logo.svg" alt="" data-layer="logo" data-depth="0.5" style="--lab-y:44px">
+                <div class="nav-links" data-layer="nav links" data-depth="0.46" style="--lab-x:-60px;--lab-y:30px">
+                  <span style="left:0">Companies</span><span style="left:108.4px">Blog</span><span style="left:170.3px">Careers</span><span style="left:255.8px">Contact</span>
+                </div>
+              </div>
+
+              <!-- the hero: the prism film in its slanted window over the spectrum, the headline riding the edge -->
+              <section class="sec hero" id="s-hero" data-tone="dark">
+                <img class="h-ground" src="redesign-health-card-src/img/ground.webp" alt="" data-layer="spectrum" data-depth="0.02" style="--lab-x:20px;--lab-y:900px">
+                <div class="h-prism" data-layer="prism film" data-depth="0.1" style="--lab-x:1100px;--lab-y:170px">
+                  <img data-slide="prism" src="redesign-health-card-src/img/prism-1.webp" alt="">
+                  <img data-slide="prism" src="redesign-health-card-src/img/prism-2.webp" alt="" style="opacity:0">
+                  <img data-slide="prism" src="redesign-health-card-src/img/prism-3.webp" alt="" style="opacity:0">
+                  <img data-slide="prism" src="redesign-health-card-src/img/prism-4.webp" alt="" style="opacity:0">
+                  <img data-slide="prism" src="redesign-health-card-src/img/prism-5.webp" alt="" style="opacity:0">
+                  <img data-slide="prism" src="redesign-health-card-src/img/prism-6.webp" alt="" style="opacity:0">
+                  <i class="veil"></i>
+                </div>
+                <div class="h-head" data-layer="headline" data-depth="0.8" data-shadow="0.1,0.34,16" style="--lab-x:900px;--lab-y:-20px">
+                  <h1>HEALTH NEEDS A <br><span>REDESIGN</span></h1>
+                </div>
+                <p class="h-p" data-layer="lead" data-depth="0.52" data-shadow="0.02,0.22,12" style="--lab-x:900px;--lab-y:-34px">Health matters to absolutely everyone on the planet. No one company can do it alone. That's why we're launching dozens of companies in rapid succession.</p>
+                <span class="pill h-btn" data-layer="button" data-depth="0.64" data-shadow="0.02,0.34,10" style="--lab-x:270px;--lab-y:12px">See what we're building</span>
+              </section>
+
+              <!-- the Redesign Health model: Ideate, Build, Scale -->
+              <section class="sec model" id="s-model" data-tone="dark">
+                <h2 class="lab m-lab" data-layer="label" data-depth="0.36" style="--lab-x:300px;--lab-y:-4px">The Redesign Health Model</h2>
+                <p class="lead m-lead" data-layer="lead" data-depth="0.46" style="--lab-x:840px">Our approach to company-building is comprehensive. We are deeply involved in the entire process, from idea to scale, delivering a repeatable model that leverages our vast network and centralized resources to accelerate the innovation process and build out an impressive array of solutions, scaling them to improve the health of millions of people.</p>
+                <h3 class="step" style="top:469px;--lab-x:1000px;--lab-y:100px" data-step="0" data-layer="step" data-depth="0.72" data-shadow="0,0.3,16"><span class="up">IDEATE</span><span class="it">IDEATE</span></h3>
+                <p class="s-p" style="top:746px" data-layer="body copy" data-depth="0.42">We don’t wait for potential founders to bring good ideas our way. Instead, we build the momentum ourselves, working with our experienced team to concept, research, and validate world-changing ideas.</p>
+                <div class="down" style="left:84px;top:865px" data-layer="arrow" data-depth="0.34"><img src="redesign-health-card-src/img/arrow.svg" alt=""></div>
+                <h3 class="step" style="top:932px" data-step="1" data-layer="step" data-depth="0.72" data-shadow="0,0.3,16"><span class="up">BUILD</span><span class="it">BUILD</span></h3>
+                <p class="s-p" style="top:1209px" data-layer="body copy" data-depth="0.42">Once we land on a good idea, we recruit the best founders to the business and throw our considerable weight behind them as they bring the concept to market.</p>
+                <div class="down" style="left:84px;top:1303px" data-layer="arrow" data-depth="0.34"><img src="redesign-health-card-src/img/arrow.svg" alt=""></div>
+                <h3 class="step" style="top:1370px" data-step="2" data-layer="step" data-depth="0.72" data-shadow="0,0.3,16"><span class="up">SCALE</span><span class="it">SCALE</span></h3>
+                <p class="s-p" style="top:1647px" data-layer="body copy" data-depth="0.42">We stay close to our companies after launch, giving them the support to grow rapidly and the assets to increase their influence exponentially.</p>
+              </section>
+
+              <!-- built at Redesign: the four companies, staggered, each sliding in from its own side -->
+              <section class="sec cos" id="s-cos" data-tone="light">
+                <h2 class="lab c-lab" data-layer="label" data-depth="0.36" style="--lab-x:200px;--lab-y:-4px">Built at Redesign</h2>
+                <p class="lead c-lead" data-layer="lead" data-depth="0.46" style="--lab-x:840px">We launch companies that create immediate change, because our health simply can’t afford to wait. Since 2018, exceptional founding teams have built over two dozen healthcare businesses at Redesign Health, touching the lives of more than 10 million people across verticals including cancer care, teleaudiology, senior care, COVID-19 testing, and metabolic health.</p>
+                <span class="pill c-btn" data-layer="button" data-depth="0.62" data-shadow="0,0.3,10,1" style="--lab-x:340px;--lab-y:12px">See the full range of companies</span>
+
+                <div class="co" style="left:780px;top:425px" data-dir="1">
+                  <img class="co-logo" src="redesign-health-card-src/img/anomaly.svg" alt="" style="width:201px" data-layer="logo" data-depth="0.58">
+                  <p class="co-p" data-layer="tagline" data-depth="0.42" style="--lab-y:-30px">Anomaly is bringing precision payments to healthcare, reducing costs and removing friction for payers, providers, and patients.</p>
+                  <div class="co-links" style="top:146px;--lab-x:230px" data-layer="links" data-depth="0.5"><span class="lm">Learn more</span><span class="wh">Work here</span><img src="redesign-health-card-src/img/arrow-ne.svg" alt=""></div>
+                  <img class="co-ph a" style="top:195px" src="redesign-health-card-src/img/anomaly-photo.webp" alt="" data-layer="photo" data-depth="0.24" data-shadow="0,0.42,22">
+                </div>
+                <div class="co" style="left:80px;top:720px" data-dir="-1">
+                  <img class="co-logo" src="redesign-health-card-src/img/jasper.svg" alt="" style="width:150px" data-layer="logo" data-depth="0.58">
+                  <p class="co-p" data-layer="tagline" data-depth="0.42">Jasper is a digital planning, navigation and engagement experience that improves the lives of people living with cancer and their caregivers.</p>
+                  <div class="co-links" style="top:146px" data-layer="links" data-depth="0.5"><span class="lm">Learn more</span><span class="wh">Work here</span><img src="redesign-health-card-src/img/arrow-ne.svg" alt=""></div>
+                  <img class="co-ph b" style="top:195px" src="redesign-health-card-src/img/jasper-photo.webp" alt="" data-layer="photo" data-depth="0.24" data-shadow="0,0.42,22">
+                </div>
+                <div class="co" style="left:780px;top:1392px" data-dir="1">
+                  <img class="co-logo" src="redesign-health-card-src/img/everbody.svg" alt="" style="width:137px" data-layer="logo" data-depth="0.58">
+                  <p class="co-p" data-layer="tagline" data-depth="0.42">Cosmetic dermatology for every tone, texture, age, gender, and body.</p>
+                  <div class="co-links" style="top:122px" data-layer="links" data-depth="0.5"><span class="lm">Learn more</span><span class="wh">Work here</span><img src="redesign-health-card-src/img/arrow-ne.svg" alt=""></div>
+                  <img class="co-ph a" style="top:171px" src="redesign-health-card-src/img/everbody-photo.webp" alt="" data-layer="photo" data-depth="0.24" data-shadow="0,0.42,22">
+                </div>
+                <div class="co" style="left:80px;top:1735px" data-dir="-1">
+                  <img class="co-logo" src="redesign-health-card-src/img/calibrate.svg" alt="" style="width:251px" data-layer="logo" data-depth="0.58">
+                  <p class="co-p" data-layer="tagline" data-depth="0.42">Calibrate is a metabolic health company on a mission to change the way the world treats weight.</p>
+                  <div class="co-links" style="top:146px" data-layer="links" data-depth="0.5"><span class="lm">Learn more</span><span class="wh">Work here</span><img src="redesign-health-card-src/img/arrow-ne.svg" alt=""></div>
+                  <img class="co-ph b" style="top:195px" src="redesign-health-card-src/img/calibrate-photo.webp" alt="" data-layer="photo" data-depth="0.24" data-shadow="0,0.42,22">
+                </div>
+              </section>
+
+              <!-- shape the future of health -->
+              <section class="sec shape" id="s-shape" data-tone="light">
+                <h2 class="sh-h" data-layer="headline" data-depth="0.76" data-shadow="0,0.22,16" style="--lab-x:1020px;--lab-y:20px"><span>SHAPE THE</span><span>FUTURE OF</span><span class="it">HEALTH</span></h2>
+                <p class="lead sh-p" data-layer="lead" data-depth="0.46" style="--lab-x:860px">We work with the people who are shaping the future of health, as our founders, employees, advisors, investors, and partners. All of us are ambitious, bringing together our diverse experiences to tackle the industry’s toughest challenges, and build momentum as we rapidly advance human health.</p>
+                <span class="pill sh-btn" data-layer="button" data-depth="0.62" data-shadow="0,0.3,10" style="--lab-x:130px;--lab-y:12px">Join us</span>
+              </section>
+
+              <!-- the footer -->
+              <section class="sec foot" id="s-foot" data-tone="dark">
+                <img class="ft-ph" src="redesign-health-card-src/img/ground.webp" alt="" data-layer="spectrum" data-depth="0.06" style="--lab-x:20px;--lab-y:20px">
+                <div class="ft-logo" data-layer="logo" data-depth="0.52" data-shadow="0.06,0.3,12" style="--lab-x:110px;--lab-y:20px"><img src="redesign-health-card-src/img/rh-logo.svg" alt=""></div>
+                <div class="ft-nav" data-layer="links" data-depth="0.56" style="--lab-x:300px;--lab-y:10px">
+                  <span style="top:0">Companies</span><span style="top:77px">Blog</span><span style="top:154px">Careers</span><span style="top:231px">Contact</span>
+                </div>
+                <i class="ft-rule" data-layer="rule" data-depth="0.18" style="--lab-x:500px;--lab-y:-30px"></i>
+                <div class="ft-legal" data-layer="legal" data-depth="0.3" style="--lab-x:280px;--lab-y:-6px"><small style="left:0">© 2022 Redesign Health Inc.</small><small style="left:162.4px">Privacy Policy</small></div>
+                <div class="ft-soc" data-layer="social" data-depth="0.44" style="--lab-x:-150px;--lab-y:-4px"><img src="redesign-health-card-src/img/angel.svg" alt="" style="left:0;width:18px;height:24px"><img src="redesign-health-card-src/img/linkedin.svg" alt="" style="left:34px;width:25px;height:24px"></div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Redesign Health</h3>
+      <p><span>Health</span><span>Web design</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="redesign-health-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the studio's way: defineParams from
+   /shared/params/params.js. Embedded on the site there is no panel and
+   nothing is fetched, so the module is only loaded here, and only when served
+   (opened from disk there is no studio to load it from). */
+const card = window.redesignCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const D = card.values;
+    const TOOL = 'redesign health work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.4, 2.5, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        scrub: [D['drag.scrub'], 0, 6, 0.1],               // page px per px of a sideways drag (right = down the page)
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: D['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

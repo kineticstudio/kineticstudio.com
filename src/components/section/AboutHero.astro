@@ -1,0 +1,271 @@
+---
+import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+/* Hunter, Oct 24: "This looks a little lazily designed ... We also need a
+   headline for this. There's just a row that talks about me, so I'm not the
+   hero. The headline would be like, 'A studio that cares about craft,
+   quality, and story over everything.'" So the page leads with the studio:
+   the line set as big as the page takes, its three values each in the logo's
+   pill, the way KINETIC sits in it; the studio line and the awards under it.
+   Hunter is the next row (AboutFounder). */
+// word by word, so the line wraps where the page needs it to
+const LINE = [
+  ..."A studio that cares about".split(" ").map((text) => ({ text })),
+  { pill: "craft", after: "," },
+  { pill: "quality", after: "," },
+  { text: "and" },
+  { pill: "story" },
+  ..."over everything.".split(" ").map((text) => ({ text })),
+] as { text?: string; pill?: string; after?: string }[];
+---
+
+{
+  render && (
+    <header class="about-hero_wrap">
+      <div class="about-hero_line" data-coins>
+        <h1 class="about-hero_title text-style-display">
+          {LINE.map((part, i) => (
+            <span class="about-hero_part" style={`--i:${i}`}>{part.pill ? <span class="about-hero_pill">{part.pill}</span> : part.text}{part.after}</span>
+          ))}
+        </h1>
+        {/* the three values as made pills over their slots (src/scripts/coin-pills.js) */}
+        <canvas class="about-hero_coins" aria-hidden="true" />
+      </div>
+      <div class="about-hero_foot">
+        <p class="about-hero_lead text-style-large" data-reveal style="--reveal-delay:0.5s">
+          Kinetic Studio makes brands and bespoke websites for the companies building what's next. Every project is directed by hand and realized with flagship AI.
+        </p>
+        <AwardsLaurels compact class="about-hero_awards" />
+      </div>
+    </header>
+  )
+}
+
+<script>
+  import { COIN_DESIGNS, COIN_LOOK, COIN_TUNING_KEY } from "@/data/coin-look.js";
+  import { defineParams } from "@/scripts/ks-params.js";
+
+  /* Hunter, Oct 25: "Come up with your own designs for the craft, quality,
+     and story pills ... they just feel slightly lazy and unrealistic." Three
+     designs (Machined, Enamel, Ingot), each with its own settings in
+     COIN_LOOK (src/data/coin-look.js); Design picks one and the dials below
+     it are that design's (the Studio's Params panel, P on the page by
+     itself), kept in this browser until Reset; Copy props hands back the
+     whole object to paste over the file. */
+  type Dial = [number, number, number] | "color";
+  // each design's dials, [min, max, step], by group
+  const DIALS: Record<string, Record<string, Record<string, Dial>>> = {
+    machined: {
+      metal: { anodize: "color", cut: "color", blast: [0.05, 0.9, 0.01], mottle: [0, 2, 0.01] },
+      word: { size: [0.3, 0.75, 0.005], tracking: [-0.05, 0.2, 0.005], depth: [0.01, 0.08, 0.001], lip: [0, 0.04, 0.001], floor: [0.02, 0.9, 0.01] },
+      edge: { chamfer: [0, 0.12, 0.001], round: [0, 0.03, 0.001], thick: [0.08, 0.4, 0.01] },
+      wear: { scratches: [0, 300, 1], smudge: [0, 1, 0.01], seed: [1, 99, 1] },
+    },
+    enamel: {
+      metal: { tint: "color", polish: [0.02, 0.6, 0.01], brush: [0, 1, 0.01] },
+      word: { size: [0.3, 0.75, 0.005], tracking: [-0.05, 0.2, 0.005], enamel: "color", gloss: [0.02, 0.6, 0.01], lip: [0, 0.03, 0.001] },
+      edge: { round: [0.01, 0.2, 0.001], thick: [0.08, 0.4, 0.01] },
+      wear: { swirls: [0, 2, 0.01], scratches: [0, 300, 1], smudge: [0, 1, 0.01], seed: [1, 99, 1] },
+    },
+    ingot: {
+      metal: { tint: "color", polish: [0.01, 0.5, 0.01], ripple: [0, 2, 0.01], frost: [0.1, 1, 0.01] },
+      word: { size: [0.3, 0.75, 0.005], tracking: [-0.05, 0.2, 0.005], depth: [0.005, 0.08, 0.001], soft: [0.002, 0.06, 0.001] },
+      edge: { round: [0.02, 0.3, 0.001], draft: [0, 0.15, 0.001], thick: [0.1, 0.45, 0.01] },
+      wear: { dings: [0, 40, 1], scratches: [0, 300, 1], smudge: [0, 1, 0.01], tarnish: [0, 1.5, 0.01], seed: [1, 99, 1] },
+    },
+  };
+  const STUDIO: Record<string, Dial> = {
+    exposure: [0.3, 2.5, 0.01], reflect: [0, 3, 0.01], room: [0, 20, 0.1], box: [0, 30, 0.1], key: [0, 20, 0.1], sides: [0, 12, 0.1],
+    front: [0, 6, 0.05], flag: [0, 1, 0.01], flagAt: [-0.35, 0.35, 0.005], floor: [0, 4, 0.05], paper: [0, 2, 0.01], turn: [-180, 180, 1], shadow: [0, 1, 0.01],
+  };
+  const SHARED: Record<string, Record<string, Dial>> = {
+    motion: { drift: [0, 6, 0.1], speed: [0, 2, 0.01], lean: [0, 10, 0.1] },
+    render: { quality: [0.75, 2, 0.05] },
+  };
+
+  document.querySelectorAll<HTMLElement>("[data-coins]").forEach(async (root) => {
+    const canvas = root.querySelector<HTMLCanvasElement>("canvas")!;
+    const slots = [...root.querySelectorAll<HTMLElement>(".about-hero_pill")];
+    if (!slots.length || !canvas.getContext("webgl2")) return;
+    // the engine comes down while the fonts load, not after (Hunter, Oct 25: the pills
+    // "kind of take forever to load"); the words need the display face to be cut
+    const engine = import("@/scripts/coin-pills.js");
+    await document.fonts.ready;
+    const { mountCoins } = await engine;
+    const L = COIN_LOOK as unknown as Record<string, any>;
+    const coins = mountCoins(canvas, slots, L, { font: getComputedStyle(slots[0]).fontFamily });
+    if (!coins) return;
+    // the pills take the words' place once all three are made
+    await coins.ready;
+    root.classList.add("has-coins");
+
+    const key = () => String(L.design).toLowerCase();
+    // where a dial's path lives in COIN_LOOK: motion and render are shared, the rest the design's
+    const groupOf = (g: string) => (g in SHARED ? L[g] : L[key()][g]);
+    const dials = (values: Record<string, any>, spec: Record<string, Dial>) =>
+      Object.fromEntries(Object.entries(spec).map(([k, d]) => [k, d === "color" ? values[k] : [values[k], ...d]]));
+    const save = () => {
+      try {
+        localStorage.setItem(COIN_TUNING_KEY, JSON.stringify(L));
+      } catch {}
+    };
+    let timer = 0;
+    const define = () => {
+      const D = L[key()];
+      const schema: Record<string, any> = { design: { type: "select", options: COIN_DESIGNS, value: L.design } };
+      for (const [g, spec] of Object.entries(DIALS[key()])) schema[g] = dials(D[g], spec);
+      schema.studio = dials(D.studio, STUDIO);
+      for (const [g, spec] of Object.entries(SHARED)) schema[g] = dials(L[g], spec);
+      schema.copyProps = { type: "action", label: "Copy props" };
+      schema.reset = { type: "action", label: "Reset" };
+      defineParams("About coins", schema, {
+        onChange(values: Record<string, any>, path: string | null) {
+          if (!path) return;
+          if (path === "design") {
+            L.design = values.design;
+            save();
+            coins.rebuild(L);
+            // the panel again, with the new design's dials
+            setTimeout(define);
+            return;
+          }
+          const [g, k] = path.split(".");
+          groupOf(g)[k] = values[path];
+          save();
+          // the studio, motion and quality change live; the rest makes the maps and the shape again
+          if (g === "studio" || g in SHARED) coins.update(L);
+          else {
+            clearTimeout(timer);
+            timer = window.setTimeout(() => coins.rebuild(L), 160);
+          }
+        },
+        onAction(name: string) {
+          if (name === "copyProps") return `export const COIN_LOOK = ${JSON.stringify(L, null, 2).replace(/"(\w+)":/g, "$1:")};\n`;
+          if (name === "reset") {
+            try {
+              localStorage.removeItem(COIN_TUNING_KEY);
+            } catch {}
+            location.reload();
+          }
+          return undefined;
+        },
+      });
+    };
+    define();
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .about-hero_wrap {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--space-8);
+      min-height: min(100svh, 62rem);
+      padding: calc(var(--nav-height) + var(--space-8)) var(--site-margin) var(--space-7);
+      box-sizing: border-box;
+    }
+    .about-hero_line {
+      position: relative;
+    }
+    /* the pills' canvas over the line (coin-pills.js fits it to the pills and
+       their shadows, which it draws itself); it fades up once they are made */
+    .about-hero_coins {
+      position: absolute;
+      inset: -0.6em -0.4em;
+      width: calc(100% + 0.8em);
+      height: calc(100% + 1.2em);
+      max-width: none;
+      font-size: clamp(2.9rem, 7.2vw, 8.75rem);
+      pointer-events: none;
+    }
+    .about-hero_line.has-coins .about-hero_coins {
+      animation: about-coins-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    @keyframes about-coins-in {
+      from {
+        opacity: 0;
+      }
+    }
+    /* the coins take the pills' place; the words stay for screen readers and the layout */
+    .about-hero_line.has-coins .about-hero_pill {
+      color: transparent;
+      border-color: transparent;
+    }
+    .about-hero_title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      column-gap: 0.2em;
+      row-gap: 0.08em;
+      margin: 0;
+      font-size: clamp(2.9rem, 7.2vw, 8.75rem);
+      line-height: 0.88;
+    }
+    /* each part rises into place, one after another */
+    .about-hero_part {
+      display: inline-block;
+      white-space: nowrap;
+      animation: about-rise 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: calc(0.12s + var(--i) * 0.045s);
+    }
+    @keyframes about-rise {
+      from {
+        opacity: 0;
+        translate: 0 0.35em;
+      }
+    }
+    /* the logo's pill round a word: its line is the logo's, against its height */
+    .about-hero_pill {
+      display: inline-block;
+      padding: 0.04em 0.26em 0;
+      border: 0.075em solid currentColor;
+      border-radius: 999px;
+      line-height: 0.92;
+      margin-right: 0.04em;
+      /* the drawn pill fades out as the made one fades up over it */
+      transition:
+        color 0.4s ease,
+        border-color 0.4s ease;
+    }
+    .about-hero_foot {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--space-6);
+      align-items: start;
+      border-top: var(--border-width) solid var(--border);
+      padding-top: var(--space-5);
+      @media (width < 56rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .about-hero_lead {
+      max-width: 36ch;
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 85%, transparent);
+    }
+    .about-hero_awards.awards_wrap {
+      width: auto;
+      & .awards_list {
+        justify-content: end;
+      }
+      @media (width < 56rem) {
+        & .awards_list {
+          justify-content: start;
+        }
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .about-hero_part {
+        animation: none;
+      }
+    }
+  }
+</style>

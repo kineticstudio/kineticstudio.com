@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Baseten work card, 2026-10-24, built on the Ethos engine as the Way,
+     IngredientAI and Roam Robotics cards carry it (16, 18, 19):
+     - the miniature is baseten.co's homepage as Kinetic shipped it, rebuilt in
+       HTML and CSS layers at its own 1440px width, laid out K times larger
+       than the card and scaled back, so tilted text stays sharp; one
+       spring-driven loop, transforms and opacity only
+     - idle, it tours the site on a 20.2 s loop of eased stops: the hero with
+       its app screen and cards settling as the page moves, Less hoop jumping,
+       the Serve marquee and its parallax cards, Integrate, Design, Ship apps,
+       the customers and their sliding quotes, No more abandoned models and the
+       footer
+     - hover tilts it toward the pointer (10 degrees) and the layers separate
+       by depth with soft shadows that grow with height; one round bloom of
+       light follows the pointer; the tour keeps running under the hover
+     - press and drag scrolls it either way: vertical like a phone (drag up,
+       page down, 1:1), horizontal as a scrub (drag right, further down the
+       page, about 2.5x); whichever axis moves more wins; momentum, clamped
+       ends, and the tour picks up from where it was let go
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge
+       at the frame's aspect (cropped, never letterboxed), on a transparent
+       page, nothing fetched. &bleed=N keeps N px of clear frame round the card
+       (the site's iframe overhangs the tile by that much, room for the tilt),
+       &radius=N rounds its corners, &touchdrag=1 lets a finger drag it (off by
+       default, so a swipe over the tile scrolls the site; a tap still opens).
+       It pauses when hidden or when the parent posts
+       {type: "ks-card", visible: false} (true resumes), and a click that is
+       not a drag posts {type: "ks-card-open"} to the parent.
+
+     baseten.co has since been replaced by a different site, and Kinetic's own
+     media for it is a single still (kineticstudio public/media/baseten.jpg, a
+     design comp; there is no baseten.mp4 and no recording in the Twitter
+     folder). So this is the version Kinetic shipped as the web archive holds
+     it: the capture of 2022-05-24 (the design ran unchanged from 2022-04-26
+     to 2022-10), its HTML, CSS, Roobert files, logos, product renders and
+     headshots fetched into baseten-card-src/raw/ and its layout measured at
+     1440x900. The copy is the site's own, word for word, except its two
+     em dashes, which are commas here. Its motion is redone with transforms
+     and opacity: the app screen rising and the notebook and flow cards
+     turning straight as the hero scrolls away, the marquee and the quote
+     strip sliding, the playhead's pulse, the Serve cards' parallax, the
+     fade-and-rise reveals. Its intro video (a YouTube lightbox) stays the
+     still screen with its play button. Nothing in raw/ is executed or loaded. -->
+<title>Baseten work card</title>
+<script>
+  /* before first paint: embed or not, and the studio's own type for the label row
+     (served by the studio; opened from disk the label uses the bundled copies) */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    var h = document.documentElement;
+    if (embed) {
+      h.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    } else if (location.protocol !== 'file:') {
+      var l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = '/fonts/kinetic/fonts.css';
+      document.head.appendChild(l);
+    }
+  })();
+</script>
+<link rel="stylesheet" href="baseten-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Baseten, baseten.co, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- the header: the site's sticky bar, held 16px from the top of the window -->
+              <div class="hdr-pin" data-pin="nav">
+                <div class="hdr" data-layer="header" data-depth="0.4" data-shadow="0,0.3,18,1" style="--lab-x:640px;--lab-y:20px">
+                  <img class="hdr-logo" src="baseten-card-src/img/logo.svg" alt="" data-layer="logo" data-depth="0.56" style="--lab-y:30px">
+                  <div class="hdr-nav" data-layer="nav" data-depth="0.5" style="--lab-y:30px">
+                    <span style="left:0">Gallery</span><span style="left:81.5px">Customers</span><span style="left:192.4px">Docs</span><span style="left:260.7px">Pricing</span><span style="left:342.1px">Careers</span>
+                  </div>
+                  <span class="hdr-in" data-layer="nav link" data-depth="0.5" style="--lab-x:-120px;--lab-y:30px">Sign in</span>
+                  <span class="btn hdr-btn" data-layer="button" data-depth="0.66" data-shadow="0.4,0.32,8,1" style="--lab-x:-60px;--lab-y:50px">Sign up</span>
+                </div>
+              </div>
+
+              <!-- the hero: the headline, the logos, the app screen and its cards; the whole section sinks at
+                   a little over a third of the scroll speed while the next one rises over it -->
+              <section class="sec hero" id="s-hero" data-tone="light" data-pin="hero">
+                <img class="dots" src="baseten-card-src/img/grid-tr.webp" alt="" style="left:0;top:699.2px" data-layer="dots" data-depth="0.04">
+                <img class="dots" src="baseten-card-src/img/grid-tl.webp" alt="" style="left:1008px;top:699.2px" data-layer="dots" data-depth="0.04">
+                <div class="banner" data-layer="banner" data-depth="0.42" style="--lab-y:-34px"><span>Announcing our public beta and Series A 🚀</span><b>Read more</b></div>
+                <h1 class="h-h1 ctr" data-layer="headline" data-depth="0.74" data-shadow="0,0.15,16" style="--lab-x:270px;--lab-y:-34px">From model to full-stack app. Shockingly fast.</h1>
+                <p class="h-p md ctr" data-layer="body copy" data-depth="0.5" style="--lab-x:290px;--lab-y:-34px">Baseten gives data science teams instant APIs and UI components to build and ship interactive apps that move the business forward.</p>
+                <span class="btn" style="left:519.1px;top:435.2px;width:178.7px" data-layer="button" data-depth="0.66" data-shadow="0.4,0.34,9,1">Get started for free</span>
+                <span class="btn sec2" style="left:713.8px;top:435.2px;width:207.1px" data-layer="button" data-depth="0.6">Attend an intro meetup</span>
+                <p class="trust sm-t ctr mut" data-layer="label" data-depth="0.3" style="--lab-x:290px;--lab-y:-30px">Trusted by top data science and machine learning teams</p>
+                <div class="lf" data-layer="logos" data-depth="0.36" style="--lab-x:330px;--lab-y:40px">
+                  <img src="baseten-card-src/img/patreon.svg" alt="" style="left:5.9px;top:11.2px;width:129px;height:19px">
+                  <img src="baseten-card-src/img/pipe.svg" alt="" style="left:183.7px;top:8.7px;width:87px;height:24px">
+                  <img src="baseten-card-src/img/primer.svg" alt="" style="left:340px;top:5.7px;width:88px;height:30px">
+                  <img src="baseten-card-src/img/limbix.svg" alt="" style="left:487.3px;top:6.7px;width:107px;height:28px">
+                  <img src="baseten-card-src/img/sil.svg" alt="" style="left:683.1px;top:4.2px;width:29px;height:33px">
+                </div>
+                <img class="h-m1" src="baseten-card-src/img/model.webp" alt="" data-hero="m1" data-layer="notebook" data-depth="0.4" data-shadow="0.04,0.3,16,1">
+                <img class="h-m2" src="baseten-card-src/img/model.webp" alt="" data-hero="m2" data-layer="notebook" data-depth="0.48" data-shadow="0.04,0.3,16,1">
+                <div class="h-screen" data-hero="screen" data-layer="app screen" data-depth="0.22" data-shadow="0.02,0.42,26,1" style="--lab-x:20px;--lab-y:20px">
+                  <img src="baseten-card-src/img/hero-screen.webp" alt="">
+                  <div class="play" data-layer="play" data-depth="0.72" data-shadow="0.24,0.45,10" style="--lab-x:100px;--lab-y:30px"><i data-pulse><img src="baseten-card-src/img/playhead.svg" alt=""></i></div>
+                </div>
+                <img class="h-flow" src="baseten-card-src/img/hero-flow.webp" alt="" data-hero="flow" data-layer="flow" data-depth="0.52" data-shadow="0.04,0.32,16" style="--lab-x:20px;--lab-y:120px">
+              </section>
+
+              <!-- less hoop jumping, more model shipping: without and with -->
+              <section class="sec with" id="s-with" data-tone="dark">
+                <h2 class="mega w-h ctr mut" style="top:96px;--lab-x:540px" data-layer="headline" data-depth="0.66">Less hoop jumping.</h2>
+                <h2 class="mega w-h ctr" style="top:160px" data-layer="headline" data-depth="0.72" data-rv="0">More model shipping.</h2>
+                <p class="w-p md ctr" data-layer="body copy" data-depth="0.5" data-rv="0" style="--lab-x:290px">Baseten simplifies the set-up of backends, frontends, and MLOps, so your models get used faster.</p>
+                <div class="w-card" style="left:80px" data-layer="card" data-depth="0.14" data-rv="0">
+                  <h3 class="lg ctr" style="top:75.2px" data-layer="headline" data-depth="0.6">Without Baseten</h3>
+                  <p class="ctr" style="top:148.8px" data-layer="body copy" data-depth="0.44">A frustratingly slow process requiring development resources or know-how, resulting in most models never seeing the light of day.</p>
+                  <img src="baseten-card-src/img/without.svg" alt="" style="top:273.6px" data-layer="diagram" data-depth="0.36">
+                </div>
+                <div class="w-card" style="left:736px" data-layer="card" data-depth="0.14" data-rv="0">
+                  <h3 class="lg ctr green" style="top:64px" data-layer="headline" data-depth="0.6"><span style="color:#fff">With</span> Baseten</h3>
+                  <p class="ctr" style="top:137.6px" data-layer="body copy" data-depth="0.44">Ship full-stack apps in minutes. Deploy models instantly, automatically generate API endpoints, and quickly build UI with drag-and-drop components.</p>
+                  <img src="baseten-card-src/img/with.svg" alt="" style="top:284.8px" data-layer="diagram" data-depth="0.4">
+                </div>
+              </section>
+
+              <!-- serve, integrate, design: the marquee and the three features -->
+              <section class="sec feat" id="s-feat" data-tone="light">
+                <div class="mq" data-layer="marquee" data-depth="0.56" data-shadow="0,0.1,14" style="--lab-x:600px;--lab-y:0px">
+                  <div class="mq-strip">
+                    <span>Serve</span><span class="alt">Integrate</span><span>Design</span><span class="alt">Ship</span>
+                    <span>Serve</span><span class="alt">Integrate</span><span>Design</span><span class="alt">Ship</span>
+                    <span>Serve</span><span class="alt">Integrate</span><span>Design</span><span class="alt">Ship</span>
+                  </div>
+                </div>
+
+                <!-- serve -->
+                <h2 class="f-h" style="left:80px;top:289.2px" data-layer="headline" data-depth="0.72" data-shadow="0,0.12,14">Serve <span class="mut">models in minutes, not months</span></h2>
+                <p class="f-h md" style="left:80px;top:410.8px" data-layer="body copy" data-depth="0.5">You shouldn’t need to become a DevOps engineer to get models into production. With Baseten, you can instantly serve, manage, and monitor models with a few lines of Python.</p>
+                <div class="fi f-h" style="left:80px;top:546.8px;height:67.2px" data-layer="feature" data-depth="0.4"><i>🚀</i><div><h3 class="sm">Fast, flexible deployment</h3><div>Just pip install and import Baseten to instantly containerize and deploy your model.</div></div></div>
+                <div class="fi f-h" style="left:80px;top:638px;height:48px" data-layer="feature" data-depth="0.4"><i>⏰</i><div><h3 class="sm">Version control</h3><div>Easily track model changes and rollback to previous versions when needed.</div></div></div>
+                <div class="fi f-h" style="left:80px;top:710px;height:67.2px" data-layer="feature" data-depth="0.4"><i>❤️</i><div><h3 class="sm">Monitor model health</h3><div>Optimize performance with insight into your model version’s latency and resource utilization.</div></div></div>
+                <img class="f-grid" src="baseten-card-src/img/grid-tl.webp" alt="" style="left:760px;top:261.2px" data-layer="dots" data-depth="0.04">
+                <img class="f-img" src="baseten-card-src/img/model.webp" alt="" style="left:682.5px;top:305.9px;width:285.3px;height:193.3px;z-index:1" data-par="code" data-layer="notebook" data-depth="0.42" data-shadow="0.04,0.28,16,1">
+                <img class="f-img" src="baseten-card-src/img/serve-response.webp" alt="" style="left:789.5px;top:488.4px;width:427.9px;height:313.3px;z-index:2" data-par="response" data-layer="response time" data-depth="0.5" data-shadow="0.04,0.3,18,1">
+                <img class="f-img" src="baseten-card-src/img/serve-model.webp" alt="" style="left:1046.2px;top:272.1px;width:320.9px;height:268.1px;z-index:3;--lab-y:-34px" data-par="model" data-layer="model version" data-depth="0.6" data-shadow="0.04,0.3,18,1">
+
+                <!-- integrate -->
+                <img class="f-grid" src="baseten-card-src/img/grid-tr.webp" alt="" style="left:173.3px;top:959.8px" data-layer="dots" data-depth="0.04">
+                <img class="f-img flat" src="baseten-card-src/img/integrate-flow.webp" alt="" style="left:132.2px;top:936.6px;width:589px;height:555.9px;z-index:1" data-layer="flow" data-depth="0.36" data-shadow="0.04,0.2,18">
+                <h2 class="f-h r" style="left:805.3px;top:929.2px" data-layer="headline" data-depth="0.72" data-shadow="0,0.12,14">Integrate <span class="mut">custom business logic</span></h2>
+                <p class="f-h r md" style="left:805.3px;top:1050.8px" data-layer="body copy" data-depth="0.5">Assemble business logic around your model and sync data sources without the infrastructure headaches.</p>
+                <div class="fi f-h r" style="left:805.3px;top:1130.8px;height:67.2px" data-layer="feature" data-depth="0.4"><i>🔄</i><div><h3 class="sm">REST APIs</h3><div>Connect your model to other services and data stores with auto-generated API endpoints.</div></div></div>
+                <div class="fi f-h r" style="left:805.3px;top:1222px;height:67.2px" data-layer="feature" data-depth="0.4"><i>⚙️</i><div><h3 class="sm">Fully customizable environment</h3><div>Start immediately with sensible defaults, and scale infinitely with fine-grained controls when you need them.</div></div></div>
+                <div class="fi f-h r" style="left:805.3px;top:1313.2px;height:67.2px" data-layer="feature" data-depth="0.4"><i>🔌</i><div><h3 class="sm">Connect data stores</h3><div>Read and write to your existing data stores or with our built-in Postgres database.</div></div></div>
+                <div class="logos-row" data-layer="logos" data-depth="0.34" style="--lab-x:300px;--lab-y:-30px">
+                  <img src="baseten-card-src/img/postgres.svg" alt="" style="left:0;width:37.3px">
+                  <img src="baseten-card-src/img/redis.svg" alt="" style="left:142.7px;width:46.1px">
+                  <img src="baseten-card-src/img/snowflake.svg" alt="" style="left:285.4px;width:38.4px">
+                  <img src="baseten-card-src/img/bigquery.svg" alt="" style="left:428px;width:38.4px">
+                </div>
+
+                <!-- design -->
+                <h2 class="f-h" style="left:80px;top:1747.4px" data-layer="headline" data-depth="0.72" data-shadow="0,0.12,14">Design <span class="mut">powerful <br>front-ends</span></h2>
+                <p class="f-h md" style="left:80px;top:1869px" data-layer="body copy" data-depth="0.5">Drag-and-drop components to create fully-featured UI without learning HTML, CSS, or React.</p>
+                <div class="fi f-h" style="left:80px;top:1949px;height:67.2px" data-layer="feature" data-depth="0.4"><i>🧩</i><div><h3 class="sm">Display</h3><div>Create clear, engaging interfaces for business users with headings, callouts, dividers, and more.</div></div></div>
+                <div class="fi f-h" style="left:80px;top:2040.1px;height:48px" data-layer="feature" data-depth="0.4"><i>✏️</i><div><h3 class="sm">Forms</h3><div>Collect data and trigger actions from stakeholder input.</div></div></div>
+                <div class="fi f-h" style="left:80px;top:2112.1px;height:48px" data-layer="feature" data-depth="0.4"><i>🔢</i><div><h3 class="sm">Data</h3><div>Display information as tables, cards, key-value maps, and more.</div></div></div>
+                <div class="fi f-h" style="left:80px;top:2184.1px;height:67.2px" data-layer="feature" data-depth="0.4"><i>📊</i><div><h3 class="sm">Charts</h3><div>Empower stakeholders to act with confidence by visualizing data in clean, digestible ways.</div></div></div>
+                <img class="f-grid" src="baseten-card-src/img/grid-tr.webp" alt="" style="left:760px;top:1854.9px" data-layer="dots" data-depth="0.04">
+                <img class="f-img flat" src="baseten-card-src/img/design-charts.webp" alt="" style="left:708.9px;top:1627.8px;width:589px;height:767.2px;z-index:1" data-layer="components" data-depth="0.38" data-shadow="0.04,0.2,18">
+              </section>
+
+              <!-- ship apps, drive outcomes: the gallery cards -->
+              <section class="sec uses" id="s-uses" data-tone="dark">
+                <h2 class="mega" style="left:80px;top:96px;width:768px" data-layer="headline" data-depth="0.74" data-rv="0">Ship apps, drive outcomes</h2>
+                <p class="md" style="left:80px;top:192px;width:768px" data-layer="body copy" data-depth="0.5" data-rv="0">Instantly publish and share applications for anyone to use. As you iterate, any changes to your model, logic, or UI are automatically updated.</p>
+                <span class="btn" style="left:80px;top:280px;width:154.2px" data-layer="button" data-depth="0.66" data-shadow="0.4,0.4,9,1" data-rv="0">View the gallery</span>
+                <div class="uc" style="left:80px;top:422.4px" data-layer="card" data-depth="0.14" data-rv="1"><h3 class="sm" data-layer="title" data-depth="0.5">🚀 Deploy fast.ai model</h3><p data-layer="body copy" data-depth="0.4">Serve a fast.ai model behind a REST API endpoint.</p><span class="btn wht" style="width:148.2px" data-layer="button" data-depth="0.62" data-shadow="0.14,0.42,8,1">View notebook</span></div>
+                <div class="uc" style="left:522.7px;top:422.4px" data-layer="card" data-depth="0.14" data-rv="1"><h3 class="sm" data-layer="title" data-depth="0.5">🏗 Build REST APIs</h3><p data-layer="body copy" data-depth="0.4">Build serverless API endpoints with Python.</p><span class="btn wht" style="width:101.2px" data-layer="button" data-depth="0.62" data-shadow="0.14,0.42,8,1">See how</span></div>
+                <div class="uc" style="left:965.3px;top:422.4px" data-layer="card" data-depth="0.14" data-rv="1"><h3 class="sm" data-layer="title" data-depth="0.5">🏷 Label image data</h3><p data-layer="body copy" data-depth="0.4">Build a custom data labeling app with Baseten.</p><span class="btn wht" style="width:138.5px" data-layer="button" data-depth="0.62" data-shadow="0.14,0.42,8,1">Launch demo</span></div>
+                <div class="uc" style="left:80px;top:685.6px" data-layer="card" data-depth="0.14" data-rv="1"><h3 class="sm" data-layer="title" data-depth="0.5">💾 Write to S3</h3><p data-layer="body copy" data-depth="0.4">Connect and write your models' outputs to S3.</p><span class="btn wht" style="width:101.2px" data-layer="button" data-depth="0.62" data-shadow="0.14,0.42,8,1">See how</span></div>
+                <div class="uc" style="left:522.7px;top:685.6px" data-layer="card" data-depth="0.14" data-rv="1"><h3 class="sm" data-layer="title" data-depth="0.5">Deploy 🤗 model</h3><p data-layer="body copy" data-depth="0.4">Serve a Hugging Face model behind a REST API endpoint.</p><span class="btn wht" style="width:148.2px" data-layer="button" data-depth="0.62" data-shadow="0.14,0.42,8,1">View notebook</span></div>
+                <div class="uc" style="left:965.3px;top:685.6px" data-layer="card" data-depth="0.14" data-rv="1"><h3 class="sm" data-layer="title" data-depth="0.5">🙅 Moderate content</h3><p data-layer="body copy" data-depth="0.4">Build a human-in-the-loop workflow with Baseten. </p><span class="btn wht" style="width:138.5px" data-layer="button" data-depth="0.62" data-shadow="0.14,0.42,8,1">Launch demo</span></div>
+              </section>
+
+              <!-- the customers: Patreon's quote, then the strip of quote cards sliding by -->
+              <section class="sec testi" id="s-testi" data-tone="light">
+                <img src="baseten-card-src/img/patreon.svg" alt="" style="left:80px;top:98.4px;width:129px;height:19px" data-layer="logo" data-depth="0.42" data-rv="0">
+                <h3 style="left:80px;top:166.4px;width:933.5px;--lab-x:400px;--lab-y:-34px" data-layer="quote" data-depth="0.7" data-shadow="0,0.12,14" data-rv="0">"Baseten gets the process of tool-building out of the way, so we can focus on our key skills: modeling, measurement, and problem solving."</h3>
+                <span class="btn wht" style="left:80px;top:329.5px;width:154.7px" data-layer="button" data-depth="0.62" data-shadow="0.3,0.3,9,1" data-rv="0">View customers</span>
+                <img src="baseten-card-src/img/nikhil.webp" alt="" style="left:1098.8px;top:96px;width:240px;height:240px;border-radius:10000px" data-layer="portrait" data-depth="0.5" data-shadow="0.04,0.3,18,1" data-rv="0">
+                <p class="sm-t ctr mut" style="left:1077.5px;top:352px;width:282.5px" data-layer="name" data-depth="0.36" data-rv="0">Nikhil Harithas<br>Senior Machine Learning Engineer at Patreon</p>
+                <div class="tm" data-layer="quotes" data-depth="0.22" data-rv="1" style="--lab-x:600px;--lab-y:-34px">
+                  <div class="tm-strip" id="tmStrip"></div>
+                </div>
+              </section>
+
+              <!-- no more abandoned models -->
+              <section class="sec pre" id="s-pre" data-tone="light">
+                <h2 style="left:80px;top:96px;width:588.8px" data-layer="headline" data-depth="0.74" data-shadow="0,0.14,14" data-rv="0">No more abandoned models</h2>
+                <p style="left:80px;top:217.6px;width:588.8px" data-layer="body copy" data-depth="0.5" data-rv="0">Start shipping full-stack apps and driving business outcomes with machine learning today.</p>
+                <span class="btn wht" style="left:80px;top:310.4px;width:178.7px" data-layer="button" data-depth="0.64" data-shadow="0.3,0.3,9,1" data-rv="0">Get started for free</span>
+                <img class="pre-img" src="baseten-card-src/img/hero-screen.webp" alt="" data-layer="app screen" data-depth="0.3" data-shadow="0.02,0.36,24,1" data-rv="0" style="--lab-x:40px;--lab-y:40px">
+              </section>
+
+              <!-- the footer -->
+              <section class="sec foot" id="s-foot" data-tone="dark">
+                <img src="baseten-card-src/img/logo-white.svg" alt="" style="left:80px;top:64px;width:179px;height:40px" data-layer="logo" data-depth="0.44">
+                <div class="ft-col" style="left:517.3px;top:64px;--lab-x:180px" data-layer="links" data-depth="0.56">
+                  <h3 style="top:0">Gallery</h3><h3 style="top:54.4px">Customers</h3><h3 style="top:108.8px">Docs</h3><h3 style="top:163.2px">Pricing</h3><h3 style="top:217.6px">Changelog</h3><h3 style="top:272px">Status</h3>
+                </div>
+                <div class="ft-col" style="left:954.7px;top:64px;--lab-x:180px" data-layer="links" data-depth="0.56">
+                  <h3 style="top:0">Careers</h3><h3 style="top:54.4px">About</h3><h3 style="top:108.8px">Blog</h3>
+                </div>
+                <span class="tag" data-layer="tag" data-depth="0.7" style="--lab-y:30px">We're hiring!</span>
+                <i class="ft-rule" data-layer="rule" data-depth="0.1"></i>
+                <div class="legal" data-layer="legal" data-depth="0.3" style="--lab-x:440px"><span style="left:0">© Baseten 2022</span><span style="left:149.1px">Terms of Service</span><span style="left:300.3px">Privacy Policy</span></div>
+                <div class="soc" data-layer="social" data-depth="0.44" style="--lab-x:-150px">
+                  <img src="baseten-card-src/img/twitter.svg" alt="" style="left:0"><img src="baseten-card-src/img/linkedin.svg" alt="" style="left:40px"><img src="baseten-card-src/img/youtube.svg" alt="" style="left:80px">
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Baseten</h3>
+      <p><span>AI</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="baseten-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the studio's way: defineParams from
+   /shared/params/params.js. Embedded on the site there is no panel and
+   nothing is fetched, so the module is only loaded here, and only when served
+   (opened from disk there is no studio to load it from). */
+const card = window.basetenCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const D = card.values;
+    const TOOL = 'baseten work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.4, 2.5, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        scrub: [D['drag.scrub'], 0, 6, 0.1],               // page px per px of a sideways drag (right = down the page)
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: D['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

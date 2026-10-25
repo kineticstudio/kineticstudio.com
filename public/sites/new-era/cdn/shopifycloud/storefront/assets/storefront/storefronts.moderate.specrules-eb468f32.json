@@ -1,0 +1,16 @@
+{
+    "tag": "shopify_storefront_moderate",
+    "prefetch": [
+        {
+            "where": {
+                "or": [
+                { "href_matches": "/(products|collections|pages|search|shop|blogs|policies){/*}?" },
+                { "href_matches": "/([a-z]{2,3}|zh-hans|zh-hant)(-[a-z]{2,3})?/(products|collections|pages|search|shop|blogs|policies){/*}?" },
+                { "href_matches": "/" },
+                { "href_matches": "/([a-z]{2,3}|zh-hans|zh-hant)(-[a-z]{2,3})?{/}?" }
+                ]
+            },
+            "eagerness": "moderate"
+        }
+    ]
+}

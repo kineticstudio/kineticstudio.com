@@ -1,5 +1,5 @@
 ---
-import markRaw from "@/assets/brand/mark-ink.svg?raw";
+import markRaw from "@/assets/brand/mark.svg?raw";
 import MEDIA from "@/data/media.json";
 import { WORK } from "@/data/work.js";
 
@@ -81,7 +81,7 @@ const placed = cards.map((w, i) => {
 
         <svg class="portal_defs" width="0" height="0" aria-hidden="true">
           <clipPath id="portal-clip" clipPathUnits="objectBoundingBox">
-            <path class="portal_clip-path" transform="scale(0.000829 0.000871) translate(-397 -426)" d={markD} data-d={markD} />
+            <path class="portal_clip-path" transform="scale(0.004751 0.004992)" d={markD} data-d={markD} />
           </clipPath>
         </svg>
 
@@ -104,7 +104,7 @@ const placed = cards.map((w, i) => {
 <script>
   import { gsap } from "gsap";
   import { ScrollTrigger } from "gsap/ScrollTrigger";
-  import { morph } from "@/scripts/mark.js";
+  import { morphAll } from "@/scripts/mark.js";
   gsap.registerPlugin(ScrollTrigger);
 
   document.querySelectorAll<HTMLElement>("[data-portal]").forEach((root) => {
@@ -123,7 +123,8 @@ const placed = cards.map((w, i) => {
       playing: false,
     }));
     const reels = [...root.querySelectorAll<HTMLVideoElement>(".portal_reel")];
-    const shape = morph(clip.dataset.d!);
+    const parts = morphAll(clip.dataset.d!.split("M").filter(Boolean).map((s) => "M" + s.trim()));
+    const shape = { at: (t: number) => parts.map((p) => p.at(t)).join(" ") };
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const nav = document.querySelector(".nav_wrap");
 
@@ -229,7 +230,7 @@ const placed = cards.map((w, i) => {
       top: 50%;
       left: 50%;
       height: min(64svh, 60vw);
-      aspect-ratio: 1206.2 / 1148;
+      aspect-ratio: 210.48 / 200.33;
       margin: calc(min(64svh, 60vw) * -0.56) 0 0 calc(min(64svh, 60vw) * -0.525);
       clip-path: url(#portal-clip);
       background: var(--dark-700);
@@ -293,9 +294,9 @@ const placed = cards.map((w, i) => {
     }
     .portal_card-meta {
       float: right;
-      font-family: var(--mono-family);
+      font-family: var(--primary-family);
       font-size: 0.7rem;
-      text-transform: uppercase;
+      text-transform: none;
       color: color-mix(in srgb, var(--text) 55%, transparent);
     }
     .portal_intro {

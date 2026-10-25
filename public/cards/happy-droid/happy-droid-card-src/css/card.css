@@ -1,0 +1,281 @@
+/* Happy Droid work card. The page chrome (stage, card, light, ruler, label
+   row) follows the Venus Aerospace and Epirus cards; everything under .vp is
+   Happy Droid rebuilt at its own 1440px design width from the live site
+   (www.happydroid.ai, captured 2026-10-23 at 1440x900 in headless Chromium).
+   Every height that is a share of the window on the live page (100vh, 250vh)
+   is a share of --vh here, so the miniature behaves the same at any aspect. */
+
+@font-face { font-family: "HD Sprig"; src: url("../fonts/FaireSprig-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+@font-face { font-family: "HD Sprig Sans"; src: url("../fonts/FaireSprigSans-Medium.woff2") format("woff2"); font-weight: 500; font-display: block; }
+@font-face { font-family: "KS Panell Condensed"; src: url("../fonts/PanellCondensed-TRIAL-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "KS Mono"; src: url("../fonts/PPNeueMontrealMono-Book.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #0d0d0d;
+  color: #eef1ea;
+  font-family: "KS Mono", ui-monospace, monospace;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Kinetic: the page and the work card ---------- */
+.stage {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  --size: 40;
+  --card-w: min(calc(var(--size) * 1vw), calc((100vh - 150px) * 4 / 3));
+}
+@media (max-width: 700px) { .stage { --card-w: calc(100vw - 32px); } }
+
+.slot { width: var(--card-w); display: flex; flex-direction: column; gap: clamp(14px, 1.1vw, 16px); }
+
+/* the hit area never moves; only what is inside it does */
+.persp {
+  position: relative;
+  width: 100%; aspect-ratio: 4 / 3;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+.persp.is-dragging { cursor: grabbing; }
+.card-shadow {
+  position: absolute; inset: 6% 7% -1% 7%;
+  border-radius: 12%;
+  background: rgba(0, 0, 0, .9);
+  filter: blur(30px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+/* laid out K times its size and scaled back inside its own 3D transform, so
+   the tilted card rasters as sharp as the flat one (see the Dawn card) */
+.card {
+  position: absolute; left: 0; top: 0;
+  --k: 1;
+  border-radius: calc(var(--r, 6px) * var(--k));
+  background: var(--frame-color, #ece9e1);
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  isolation: isolate;
+}
+.card, .card * { user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+
+/* the site's browser window, inset on the card ground when framed */
+.win {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  overflow: hidden;
+  background: #fff;
+  will-change: transform;
+}
+.win-shadow {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  background: #000;
+  filter: blur(calc(var(--card-px, 576px) * .022));
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.card:not(.is-framed) .win-shadow { display: none; }
+
+/* The light, as on an Apple TV poster: one soft round bloom of light under
+   the pointer, brightest there and fading to nothing, added on top (screen).
+   No stripes, no bands. It moves by transform only. The rim is a faint
+   brightening of the card edge nearest the pointer, the same bloom seen
+   through a thin ring mask. */
+.bloom, .rim { position: absolute; z-index: 6; pointer-events: none; opacity: 0; will-change: transform, opacity; }
+.bloom {
+  width: calc(var(--card-px, 576px) * 1.3); height: calc(var(--card-px, 576px) * 1.3);
+  left: calc(var(--card-px, 576px) * -.65); top: calc(var(--card-px, 576px) * -.65);
+  background: radial-gradient(circle closest-side,
+    rgba(255, 255, 255, .72), rgba(255, 255, 255, .5) 9%, rgba(255, 255, 255, .26) 22%, rgba(250, 252, 255, .11) 40%,
+    rgba(250, 252, 255, .04) 62%, rgba(250, 252, 255, .01) 82%, rgba(250, 252, 255, 0) 100%);
+  mix-blend-mode: screen;
+}
+.rim {
+  left: 0; top: 0; width: 100%; height: 100%;
+  border-radius: inherit; overflow: hidden;
+  padding: calc(1.5px * var(--k));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  mix-blend-mode: screen;
+}
+.rim i {
+  position: absolute; display: block;
+  width: calc(var(--card-px, 576px) * .9); height: calc(var(--card-px, 576px) * .9);
+  left: calc(var(--card-px, 576px) * -.45); top: calc(var(--card-px, 576px) * -.45);
+  background: radial-gradient(circle closest-side, rgba(255, 255, 255, .85), rgba(255, 255, 255, .22) 45%, rgba(255, 255, 255, 0) 100%);
+  will-change: transform;
+}
+
+/* The scroll ruler: 1px notches every 6px that slide as the miniature
+   scrolls, one brighter mark fixed at the reading position. Framed, it sits
+   in the window's right margin on the card ground; full bleed, just outside
+   the card (embedded, just inside its right edge, in dark ink: the site is
+   light from top to bottom). */
+.notches { position: absolute; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); }
+.notches .ticks { position: absolute; left: 0; right: 0; top: calc(var(--np) * -2); bottom: calc(var(--np) * -2);
+  background: repeating-linear-gradient(to bottom, var(--tick) 0 var(--nw), transparent var(--nw) var(--np)); will-change: transform; }
+.notches .mark { position: absolute; top: 50%; height: var(--nw); background: var(--mark); }
+.notches-in { --nw: calc(1px * var(--k)); --np: calc(6px * var(--k)); --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .6);
+  width: calc(5px * var(--k)); height: 46%; top: 27%; right: calc(var(--mx) / 2 - 2.5px * var(--k)); z-index: 2; }
+.notches-in .mark { left: calc(-2px * var(--k)); right: calc(-2px * var(--k)); }
+.notches-out { --nw: 1px; --np: 6px; --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .62);
+  width: 5px; height: 46%; top: 27%; right: -16px; }
+.notches-out .mark { left: -2px; right: -2px; }
+.card.is-light-frame .notches-in { --tick: rgba(20, 18, 14, .15); --mark: rgba(20, 18, 14, .6); }
+.card:not(.is-framed) .notches-in, .slot:not(.full) .notches-out, .no-notches .notches { display: none; }
+
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: clamp(14px, 1.1vw, 16px); }
+.meta h3 {
+  margin: 0;
+  font-family: "KS Panell Condensed", "Arial Narrow", sans-serif; font-weight: 500;
+  font-size: clamp(22px, 1.95vw, 28px); line-height: .94; letter-spacing: -.02em;
+  text-transform: uppercase;
+}
+.meta p {
+  margin: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
+  text-align: right;
+  font-family: "KS Mono", ui-monospace, monospace;
+  font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
+  color: rgba(238, 241, 234, .5);
+}
+
+/* Embed (?embed=1): the card alone, edge to edge at the frame's own aspect,
+   on a transparent page. The site's tile frames it. */
+html.is-embed, html.is-embed body { background: transparent; }
+.is-embed .stage { display: block; }
+.is-embed .slot { position: absolute; inset: 0; width: auto; display: block; }
+.is-embed .persp { position: absolute; inset: var(--bleed, 0px); width: auto; height: auto; aspect-ratio: auto; }
+.is-embed .meta, .is-embed .notches-out, .is-embed .card-shadow { display: none; }
+.is-embed .card:not(.is-framed) .notches-in { display: block; right: calc(7px * var(--k)); --tick: rgba(20, 18, 14, .2); --mark: rgba(20, 18, 14, .62); }
+
+/* ---------- Happy Droid: the miniature, at its own 1440px design width ---------- */
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  background: #fff;
+  --ground: #bebfb7; --green: #e6f7d4; --clay: #986d55; --cream: #fcefda;
+  font-family: "HD Sprig", Georgia, serif;
+  font-size: 18px; line-height: 1.5; font-weight: 400;   /* the live root is 18px at 1440 */
+  color: #000;
+  text-rendering: geometricPrecision;
+}
+.page { position: absolute; left: 0; top: 0; width: 1440px; will-change: transform; }
+.main { position: relative; z-index: 2; width: 1440px; background: #fff; }
+.sec { position: relative; width: 1440px; }
+.sec > *, .vp .abs { position: absolute; }
+[data-depth] { will-change: transform; }
+.vp h1, .vp h2, .vp h3, .vp p { margin: 0; font-weight: inherit; }
+.vp img { display: block; }
+.vp svg { display: block; overflow: visible; }
+.rv { display: block; will-change: transform; }
+.sp { width: 1440px; }
+.label { font-family: "HD Sprig Sans", Arial, sans-serif; font-weight: 500; font-size: 18px; line-height: 27px;
+  letter-spacing: -.54px; text-transform: uppercase; color: var(--clay); text-align: center; white-space: nowrap; }
+
+/* the hero wrapper: three windows tall, white into the site's pale green */
+.hw { height: calc(var(--vh) * 3); background: linear-gradient(180deg, #fff, var(--green)); }
+
+/* a customer-centric robot: pinned in the middle while the hero leaves, growing from 0.8 */
+.lay { left: 0; top: 0; width: 1440px; height: var(--vh); }
+.lay-in { position: absolute; left: 374.6px; width: 690.8px; top: calc(var(--vh) / 2 - 118px); height: 236px; transform-origin: 50% 50%; will-change: transform; }
+.lay-in > * { position: absolute; left: 0; width: 690.8px; }
+.lay-eb { top: 0; }
+.lay-h { top: 63px; font-size: 36px; line-height: 43.2px; text-align: center; }
+
+/* the hero: the rounded ground at 0.985, the droid turning with the scroll, happy / droid */
+.hero { left: 0; top: 0; width: 1440px; height: var(--vh); }
+.h-ground {
+  position: absolute; left: 10.8px; top: calc(var(--vh) * .0075); width: 1418.4px; height: calc(var(--vh) * .985);
+  border-radius: 70.9px; overflow: hidden; background: var(--ground);
+}
+.h-ground > * { position: absolute; }
+/* the droid is the hero's frame sequence: crisp stills at either end, the turn between them from one
+   sprite of sixteen frames (two copies cross-fading, one frame apart). It sits 1.5% low so the
+   coat's cut edge never shows above the ground's bottom as the layer floats. */
+.h-head { width: calc(var(--vh) * .985); height: calc(var(--vh) * .985); left: calc(709.2px - var(--vh) * .4925); top: calc(var(--vh) * .015); }
+.hd-clip { position: absolute; inset: 0; overflow: hidden;   /* the frames' own ground feathered into the hero's, so no edge shows */
+  -webkit-mask: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent), linear-gradient(transparent, #000 5%); -webkit-mask-composite: source-in;
+  mask: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent) intersect, linear-gradient(transparent, #000 5%); }
+.hd-clip img { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+.hd-sprite { width: 400%; height: 400%; }
+.hd-still { width: 100%; height: 100%; }
+.h-word {
+  top: calc(var(--vh) * .4925 - 93.1px); height: 186.2px;
+  font-size: 124.1px; line-height: 186.2px; letter-spacing: -6.2px; font-weight: 300; font-variation-settings: "wght" 140;
+  color: #fff; white-space: nowrap;
+}
+.h-happy { left: 44.2px; }
+.h-droid { right: 45.2px; }
+.h-arrow { left: 684.3px; top: calc(var(--vh) * .985 - 62.9px); width: 49.9px; height: 25.5px; color: #fff; }
+.h-arrow svg { width: 100%; height: 100%; will-change: transform; }
+/* the live hero blurs to 100px as it scrolls away: two blurs baked from the live page, cross-faded */
+.h-blur { position: absolute; opacity: 0; will-change: transform, opacity; }
+.h-blur img { width: 100%; height: 100%; }
+.h-blur1 { left: -90px; top: calc(var(--vh) * -.1); width: 1620px; height: calc(var(--vh) * 1.2); }
+.h-blur2 { left: -300px; top: calc(var(--vh) * -.33333); width: 2040px; height: calc(var(--vh) * 1.66667); }
+
+/* the features: three pills, each pinned for a window and a half as it grows from 500 x 280 to
+   its full width, the caption sharpening in and then dissolving, the render coming into focus */
+.feat { height: calc(var(--vh) * 2.5); }
+.f-pin { left: 0; top: 0; width: 1440px; height: var(--vh); }
+.f-pin > * { position: absolute; left: calc(720px - var(--w) / 2); top: calc(var(--vh) / 2 - var(--h) / 2); width: var(--w); height: var(--h); }
+.f-sc { position: absolute; inset: 0; transform-origin: 50% 50%; will-change: transform; }
+.f-shadow .f-sc { border-radius: 1000px; background: rgba(0, 0, 0, .1);
+  box-shadow: 0 30px 66px rgba(0, 0, 0, .1), 0 121px 121px rgba(0, 0, 0, .09), 0 271px 163px rgba(0, 0, 0, .05); }
+.f-clip { border-radius: 1000px; overflow: hidden; background: #fff; }
+.f-clip img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.f-clip .f-med, .f-clip .f-sharp { opacity: 0; will-change: opacity; }
+.f-pin > .f-text { left: 0; width: 1440px; top: calc(var(--vh) / 2 - 23.6px); height: 47.25px; }
+.f-text .rv { position: relative; font-size: 31.5px; line-height: 47.25px; color: #fff; text-align: center; white-space: nowrap; opacity: 0; }
+.f-text .rv b { font-weight: inherit; display: block; }
+.f-text .rv .glow { position: absolute; inset: 0; color: transparent; text-shadow: 0 0 14px rgba(255, 255, 255, .95), 0 0 30px rgba(255, 255, 255, .5); opacity: 0; will-change: opacity; }
+
+/* backed by the best (the live block sits 40% of its height up, as it is left by the hero's tween) */
+.inv { height: 145.6px; }
+.inv-t { left: 486px; top: -58.25px; width: 468px; }
+.inv-l { top: 58.75px; height: 28.6px; }
+.inv-l img { width: 100%; height: auto; }
+.inv-k { left: 486px; width: 198px; }
+.inv-r { left: 756px; width: 198px; }
+
+/* the footer: pinned to the window's bottom under the page, revealed as the page runs out */
+.foot { z-index: 1; height: 790px; background: linear-gradient(180deg, var(--cream), #fff); }
+.f-mark { left: 612px; top: 234px; width: 216px; height: 223px; overflow: hidden; }
+.mk-rise { position: absolute; inset: 0; will-change: transform; }
+.mk-rise svg { width: 216px; height: 223px; overflow: hidden; }
+.f-word { left: 588.4px; top: 457px; width: 263.3px; height: 45px; }
+.f-word img { width: 100%; height: 100%; }
+.f-loc, .f-links span { font-family: "HD Sprig Sans", Arial, sans-serif; font-weight: 500; font-size: 18px; line-height: 27px; text-transform: uppercase; color: #000; white-space: nowrap; }
+.f-loc { left: 653.3px; top: 502px; width: 133.4px; text-align: center; }
+.f-links { left: 623px; top: 673px; width: 194px; height: 27px; }
+.f-links span { position: absolute; top: 0; }
+
+/* debug: every layer outlined and labelled */
+.show-layers [data-layer] { outline: 3px dashed #ff5ad1; outline-offset: -3px; }
+.show-layers [data-layer]::after {
+  content: attr(data-layer) "  z " attr(data-depth);
+  position: absolute; left: var(--lab-x, 6px); top: var(--lab-y, 6px); z-index: 50;
+  padding: 3px 8px 2px; border-radius: 4px;
+  background: #ff5ad1; color: #0d0d0d;
+  font: 500 22px/1.15 "KS Mono", ui-monospace, monospace;
+  -webkit-text-fill-color: #0d0d0d; text-transform: uppercase; letter-spacing: .02em;
+  white-space: nowrap; text-align: left; text-shadow: none;
+}
+.card.show-layers > [data-layer] { outline-width: calc(1px * var(--k)); outline-offset: calc(-1px * var(--k)); }
+.card.show-layers > [data-layer]::after { font-size: calc(8px * var(--k)); left: auto; right: calc(4px * var(--k)); top: auto; bottom: calc(4px * var(--k)); padding: calc(2px * var(--k)) calc(4px * var(--k)) calc(1px * var(--k)); border-radius: calc(2px * var(--k)); }
+
+/* shadow twins: the layer's own shape in black, softened, thrown by the light */
+.twin { pointer-events: none; opacity: 0; filter: brightness(0) blur(var(--blur, 10px)); will-change: transform, opacity; }

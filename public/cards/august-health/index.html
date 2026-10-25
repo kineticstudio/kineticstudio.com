@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     August Health work card, 2026-10-23, built on the Happy Droid and
+     Metamag cards' engine (a classic script, august-health-card-src/js/card.js,
+     itself from the Ethos and Dawn cards) with Hunter's notes built in from
+     the start: the miniature keeps touring while you hover, the light is one
+     soft round bloom under the pointer, you can drag the page like a phone
+     (up and down) or scrub it sideways (right goes further down the page), a
+     notched ruler slides with the scroll, and there is no Case Study pill.
+
+     August Health (www.augusthealth.com, ours) has changed since Kinetic
+     built it, so this is the version Kinetic shipped: the page as the web
+     archive caught it on 2024-11-14 (its first capture of Kinetic's design),
+     checked against Kinetic's own recordings (the portfolio loop and Hunter's
+     three October 2024 clips). It is rebuilt at its 1440px design width as
+     HTML/CSS layers, each at its own depth: the hero's ring of eight circles
+     turning once in 340 s (each photo counter-turning to stay upright), the
+     frosted nav pill, the section breaks flattening as you scroll, the
+     moving row of operator logos, the five product cards fading in as their
+     screens slide up, the values with their coloured border drawing itself
+     round the three cards, the case-study carousel stepping on a card, the
+     closing ring of outlined circles, and the footer revealed under the page
+     cycling through the site's four colour schemes (on the site, hovering
+     the mark's dots). The archive's news banner is left out, as in the
+     recordings. Fonts (Saans, Reckless Neue) and images are the site's own,
+     in august-health-card-src/. raw/ keeps the fetched HTML, CSS, fonts,
+     images and interaction data for reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched from outside it:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=1      the site in a window on the card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), {type: "ks-card", at:
+     seconds} puts the tour and all of its motion at that time (the tile's
+     resting loop hands over to the live card), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>August Health work card</title>
+<script>
+  /* before first paint: embed or not, and the bleed */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="august-health-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="August Health, augusthealth.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+              <div class="main" id="main">
+
+                <!-- the hero: the ring of eight circles turning round the headline -->
+                <section class="sec hero" id="hero" data-stop="hero">
+                  <div class="h-ring ring" data-layer="ring" data-depth="0.12" style="--lab-x:520px;--lab-y:120px">
+                    <div class="rotor" id="heroRotor">
+                      <img class="r-it" src="august-health-card-src/img/ring-1.webp" style="--a:45deg" alt="">
+                      <img class="r-it" src="august-health-card-src/img/ring-2.webp" style="--a:90deg" alt="">
+                      <img class="r-it" src="august-health-card-src/img/ring-3.webp" style="--a:135deg" alt="">
+                      <img class="r-it" src="august-health-card-src/img/ring-4.webp" style="--a:180deg" alt="">
+                      <img class="r-it" src="august-health-card-src/img/ring-5.webp" style="--a:225deg" alt="">
+                      <img class="r-it" src="august-health-card-src/img/ring-6.webp" style="--a:270deg" alt="">
+                      <img class="r-it" src="august-health-card-src/img/ring-7.webp" style="--a:315deg" alt="">
+                      <img class="r-it" src="august-health-card-src/img/ring-8.webp" style="--a:360deg" alt="">
+                    </div>
+                  </div>
+                  <h1 class="h-h1" data-layer="headline" data-depth="0.62" data-shadow="0,0.12,10" style="--lab-x:120px;--lab-y:-40px">The EHR platform caregivers love</h1>
+                  <p class="h-sub" data-layer="subhead" data-depth="0.48" style="--lab-x:200px;--lab-y:80px">August Health drives proactive care and uplevels operations with our modern senior living platform.</p>
+                  <div class="btn btn-lg h-btn" data-layer="button" data-depth="0.74" data-shadow="0,0.3,14" style="--lab-x:20px;--lab-y:66px">Request demo</div>
+                  <svg class="brk" id="heroBrk" viewBox="0 0 1440 96" preserveAspectRatio="none"><path d="M1440 96V0C1210.89 62.95 967.64 96 720 96C472.36 96 229.11 62.95 0 0V96H720H1440Z" fill="#f8f3eb"/></svg>
+                </section>
+
+                <!-- trusted by: the operators' logos moving left, 100 s a lap -->
+                <section class="sec logos" id="logos">
+                  <h2 class="lg-h" data-layer="heading" data-depth="0.42" style="--lab-x:640px;--lab-y:-30px">Trusted by leading senior living operators</h2>
+                  <div class="lg-track" data-layer="logos" data-depth="0.28" style="--lab-x:640px;--lab-y:48px">
+                    <div class="lg-move" id="lgMove">
+                      <div class="lg-list">
+                        <img src="august-health-card-src/img/l-innovation.webp" alt=""><img src="august-health-card-src/img/l-arbors.webp" alt=""><img src="august-health-card-src/img/l-belmont.webp" alt=""><img src="august-health-card-src/img/l-sri.webp" alt=""><img src="august-health-card-src/img/l-srg.webp" alt=""><img src="august-health-card-src/img/l-westmont.webp" alt=""><img src="august-health-card-src/img/l-plc.webp" alt=""><img class="sil" src="august-health-card-src/img/l-koelsch.svg" alt=""><img src="august-health-card-src/img/l-claiborne.webp" alt=""><img class="sil" src="august-health-card-src/img/l-bickford.svg" alt=""><img src="august-health-card-src/img/l-12oaks.webp" alt="">
+                      </div>
+                      <div class="lg-list">
+                        <img src="august-health-card-src/img/l-innovation.webp" alt=""><img src="august-health-card-src/img/l-arbors.webp" alt=""><img src="august-health-card-src/img/l-belmont.webp" alt=""><img src="august-health-card-src/img/l-sri.webp" alt=""><img src="august-health-card-src/img/l-srg.webp" alt=""><img src="august-health-card-src/img/l-westmont.webp" alt=""><img src="august-health-card-src/img/l-plc.webp" alt=""><img class="sil" src="august-health-card-src/img/l-koelsch.svg" alt=""><img src="august-health-card-src/img/l-claiborne.webp" alt=""><img class="sil" src="august-health-card-src/img/l-bickford.svg" alt=""><img src="august-health-card-src/img/l-12oaks.webp" alt="">
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- the platform: five product cards, each fading in as its screen slides up -->
+                <section class="sec feats" id="feats">
+                  <div class="tag tag-dark ft-tag" data-layer="tagline" data-depth="0.36" style="--lab-x:130px">the platform</div>
+                  <h2 class="h2 ft-h" data-layer="heading" data-depth="0.56" data-shadow="0,0.1,8" style="--lab-x:400px">Get to know us</h2>
+                  <div class="fc fc-green" data-layer="card" data-depth="0.1" style="left:140px;top:310.8px;width:572px;height:563.4px;--lab-x:20px;--lab-y:500px">
+                    <div class="fc-head" data-layer="title" data-depth="0.52" style="--lab-x:200px"><img src="august-health-card-src/img/i-move-ins.webp" alt=""><h3>Move-Ins</h3></div>
+                    <p class="fc-p" data-layer="copy" data-depth="0.4" style="--lab-x:300px;--lab-y:56px">Fully-digital move-in experiences that families love, featuring e-signatures and real-time collaboration.</p>
+                    <div class="fc-arrow" data-layer="arrow" data-depth="0.66" data-shadow="0.1,0.12,10" style="--lab-x:-120px"><svg viewBox="0 0 32 32"><path fill-rule="evenodd" clip-rule="evenodd" d="M18.3131 7.31319C18.5084 7.11793 18.825 7.11793 19.0202 7.31319L27.3536 15.6465C27.5488 15.8418 27.5488 16.1584 27.3536 16.3536L19.0202 24.687C18.825 24.8822 18.5084 24.8822 18.3131 24.687C18.1179 24.4917 18.1179 24.1751 18.3131 23.9799L25.7929 16.5001H5C4.72386 16.5001 4.5 16.2762 4.5 16.0001C4.5 15.7239 4.72386 15.5001 5 15.5001H25.7929L18.3131 8.0203C18.1179 7.82504 18.1179 7.50846 18.3131 7.31319Z" fill="currentColor"/></svg></div>
+                    <div class="fc-img" data-layer="screen" data-depth="0.26" style="top:134.3px;height:429.1px;--lab-x:200px;--lab-y:60px"><img class="fc-shot" src="august-health-card-src/img/f-move-ins.webp" style="height:428.6px" alt=""></div>
+                  </div>
+                  <div class="fc fc-orange" data-layer="card" data-depth="0.1" style="left:728px;top:310.8px;width:572px;height:563.4px;--lab-x:20px;--lab-y:500px">
+                    <div class="fc-head" data-layer="title" data-depth="0.52" style="--lab-x:160px"><img src="august-health-card-src/img/i-emar.webp" alt=""><h3>eMAR</h3></div>
+                    <p class="fc-p" data-layer="copy" data-depth="0.4" style="--lab-x:300px;--lab-y:56px">Our eMAR is easy enough for your newest med tech, and powerful enough for your savviest nurse.</p>
+                    <div class="fc-arrow" data-layer="arrow" data-depth="0.66" data-shadow="0.1,0.12,10" style="--lab-x:-120px"><svg viewBox="0 0 32 32"><path fill-rule="evenodd" clip-rule="evenodd" d="M18.3131 7.31319C18.5084 7.11793 18.825 7.11793 19.0202 7.31319L27.3536 15.6465C27.5488 15.8418 27.5488 16.1584 27.3536 16.3536L19.0202 24.687C18.825 24.8822 18.5084 24.8822 18.3131 24.687C18.1179 24.4917 18.1179 24.1751 18.3131 23.9799L25.7929 16.5001H5C4.72386 16.5001 4.5 16.2762 4.5 16.0001C4.5 15.7239 4.72386 15.5001 5 15.5001H25.7929L18.3131 8.0203C18.1179 7.82504 18.1179 7.50846 18.3131 7.31319Z" fill="currentColor"/></svg></div>
+                    <div class="fc-img" data-layer="screen" data-depth="0.26" style="top:134.3px;height:429.1px;--lab-x:200px;--lab-y:60px"><img class="fc-shot" src="august-health-card-src/img/f-emar.webp" style="height:428.6px" alt=""></div>
+                  </div>
+                  <div class="fc fc-pink" data-layer="card" data-depth="0.1" style="left:140px;top:890.1px;width:1160px;height:786.9px;--lab-x:20px;--lab-y:720px">
+                    <div class="fc-head" data-layer="title" data-depth="0.52" style="--lab-x:140px"><img src="august-health-card-src/img/i-ehr.webp" alt=""><h3>EHR</h3></div>
+                    <p class="fc-p" data-layer="copy" data-depth="0.4" style="width:400px;--lab-x:300px;--lab-y:56px">Our easy-to-use EHR platform advances caregivers from reactive tactics to proactive care strategies.</p>
+                    <div class="fc-arrow" data-layer="arrow" data-depth="0.66" data-shadow="0.1,0.12,10" style="left:1080px;--lab-x:-120px"><svg viewBox="0 0 32 32"><path fill-rule="evenodd" clip-rule="evenodd" d="M18.3131 7.31319C18.5084 7.11793 18.825 7.11793 19.0202 7.31319L27.3536 15.6465C27.5488 15.8418 27.5488 16.1584 27.3536 16.3536L19.0202 24.687C18.825 24.8822 18.5084 24.8822 18.3131 24.687C18.1179 24.4917 18.1179 24.1751 18.3131 23.9799L25.7929 16.5001H5C4.72386 16.5001 4.5 16.2762 4.5 16.0001C4.5 15.7239 4.72386 15.5001 5 15.5001H25.7929L18.3131 8.0203C18.1179 7.82504 18.1179 7.50846 18.3131 7.31319Z" fill="currentColor"/></svg></div>
+                    <div class="fc-img" data-layer="screen" data-depth="0.26" style="top:134.3px;height:652.6px;--lab-x:400px;--lab-y:60px"><img class="fc-shot" src="august-health-card-src/img/f-ehr.webp" style="height:652.5px" alt=""></div>
+                  </div>
+                  <div class="fc fc-purple" data-layer="card" data-depth="0.1" style="left:140px;top:1693px;width:572px;height:563.9px;--lab-x:20px;--lab-y:500px">
+                    <div class="fc-head" data-layer="title" data-depth="0.52" style="--lab-x:180px"><img src="august-health-card-src/img/i-insights.webp" alt=""><h3>Insights</h3></div>
+                    <p class="fc-p" data-layer="copy" data-depth="0.4" style="--lab-x:300px;--lab-y:56px">Real-time visibility into communities and predictive intelligence for emerging trends and rising risk.</p>
+                    <div class="fc-arrow" data-layer="arrow" data-depth="0.66" data-shadow="0.1,0.12,10" style="--lab-x:-120px"><svg viewBox="0 0 32 32"><path fill-rule="evenodd" clip-rule="evenodd" d="M18.3131 7.31319C18.5084 7.11793 18.825 7.11793 19.0202 7.31319L27.3536 15.6465C27.5488 15.8418 27.5488 16.1584 27.3536 16.3536L19.0202 24.687C18.825 24.8822 18.5084 24.8822 18.3131 24.687C18.1179 24.4917 18.1179 24.1751 18.3131 23.9799L25.7929 16.5001H5C4.72386 16.5001 4.5 16.2762 4.5 16.0001C4.5 15.7239 4.72386 15.5001 5 15.5001H25.7929L18.3131 8.0203C18.1179 7.82504 18.1179 7.50846 18.3131 7.31319Z" fill="currentColor"/></svg></div>
+                    <div class="fc-img" data-layer="screen" data-depth="0.26" style="top:134.3px;height:429.6px;--lab-x:200px;--lab-y:60px"><img class="fc-shot" src="august-health-card-src/img/f-insights.webp" style="height:428.6px" alt=""></div>
+                  </div>
+                  <div class="fc fc-green" data-layer="card" data-depth="0.1" style="left:728px;top:1693px;width:572px;height:563.9px;--lab-x:20px;--lab-y:500px">
+                    <div class="fc-head" data-layer="title" data-depth="0.52" style="--lab-x:300px"><img src="august-health-card-src/img/i-billing.webp" alt=""><h3>Billing &amp; Payments</h3></div>
+                    <p class="fc-p" data-layer="copy" data-depth="0.4" style="--lab-x:300px;--lab-y:56px">Our integrated platform improves billing and payments for communities and families.</p>
+                    <div class="fc-arrow" data-layer="arrow" data-depth="0.66" data-shadow="0.1,0.12,10" style="--lab-x:-120px"><svg viewBox="0 0 32 32"><path fill-rule="evenodd" clip-rule="evenodd" d="M18.3131 7.31319C18.5084 7.11793 18.825 7.11793 19.0202 7.31319L27.3536 15.6465C27.5488 15.8418 27.5488 16.1584 27.3536 16.3536L19.0202 24.687C18.825 24.8822 18.5084 24.8822 18.3131 24.687C18.1179 24.4917 18.1179 24.1751 18.3131 23.9799L25.7929 16.5001H5C4.72386 16.5001 4.5 16.2762 4.5 16.0001C4.5 15.7239 4.72386 15.5001 5 15.5001H25.7929L18.3131 8.0203C18.1179 7.82504 18.1179 7.50846 18.3131 7.31319Z" fill="currentColor"/></svg></div>
+                    <div class="fc-img" data-layer="screen" data-depth="0.26" style="top:134.3px;height:429.6px;--lab-x:200px;--lab-y:60px"><img class="fc-shot" src="august-health-card-src/img/f-billing.webp" style="height:429.2px" alt=""></div>
+                  </div>
+                </section>
+
+                <!-- our values: the three cards, a coloured line drawing itself round them -->
+                <section class="sec vals" id="vals">
+                  <div class="tag v-tag" data-layer="tagline" data-depth="0.36" style="--lab-x:120px">Our values</div>
+                  <h2 class="h2 v-h" data-layer="heading" data-depth="0.6" data-shadow="0,0.22,12" style="--lab-x:760px">Designed for forward-thinking, care-obsessed operators</h2>
+                  <p class="v-p" data-layer="copy" data-depth="0.46" style="--lab-x:760px">We believe senior living communities deserve exceptional technology that enables them to provide exceptional care.</p>
+                  <div class="v-row" id="vRow" data-layer="frame" data-depth="0.1" style="--lab-x:850px;--lab-y:40px">
+                    <div class="v-lines" id="vLines"></div>
+                    <i class="v-dot" style="left:-4.8px;top:103.4px;background:#328a3b"></i>
+                    <i class="v-dot" style="left:824.8px;top:287.4px;background:#f65300"></i>
+                    <i class="v-dot" style="left:-4.8px;top:471.4px;background:#f098d7"></i>
+                    <div class="v-card v-green" data-layer="value" data-depth="0.3" data-shadow="0.1,0.34,16" style="top:32px;--lab-x:780px">
+                      <h3 data-layer="title" data-depth="0.62" style="--lab-x:0;--lab-y:84px">Accessible data, actionable insights</h3>
+                      <p data-layer="copy" data-depth="0.5" style="--lab-x:190px;--lab-y:84px">An operating strategy is only as good as the data that’s driving it. Our embedded BI dashboard delivers unmatched visibility and predictive capabilities for resident care, operations, and performance oversight at your communities.</p>
+                    </div>
+                    <div class="v-card v-orange" data-layer="value" data-depth="0.3" data-shadow="0.1,0.34,16" style="top:216px;--lab-x:780px">
+                      <h3 data-layer="title" data-depth="0.62" style="--lab-x:0;--lab-y:84px">Unquestionably caregiver-friendly</h3>
+                      <p data-layer="copy" data-depth="0.5" style="--lab-x:190px;--lab-y:84px">August Health is easy to learn and easy to use. Communities rapidly adopt our platform because every interface and interaction is designed to be efficient, intuitive, and helpful, allowing staff to focus on resident care.</p>
+                    </div>
+                    <div class="v-card v-pink" data-layer="value" data-depth="0.3" data-shadow="0.1,0.34,16" style="top:400px;--lab-x:780px">
+                      <h3 data-layer="title" data-depth="0.62" style="--lab-x:0;--lab-y:84px">Purpose-built for proactive care</h3>
+                      <p data-layer="copy" data-depth="0.5" style="--lab-x:190px;--lab-y:84px">We help operators shift from reactive tactics to proactive care strategies. Built-in intelligence and smarter workflows help you spot trends, address risks earlier, and stay a step ahead of everything from increasing acuity to compliance deadlines.</p>
+                    </div>
+                  </div>
+                  <svg class="brk" id="valsBrk" viewBox="0 0 1440 96" preserveAspectRatio="none"><path d="M1440 96V0C1210.89 62.95 967.64 96 720 96C472.36 96 229.11 62.95 0 0V96H720H1440Z" fill="#f8f3eb"/></svg>
+                </section>
+
+                <!-- case studies: the carousel, stepping on a card as the next arrow does -->
+                <section class="sec cases" id="cases">
+                  <div class="cs-dots" data-layer="dots" data-depth="0.02" style="--lab-x:600px;--lab-y:640px"><img src="august-health-card-src/img/cs-dots.avif" alt=""></div>
+                  <div class="tag tag-dark cs-tag" data-layer="tagline" data-depth="0.36" style="--lab-x:130px">Case Studies</div>
+                  <h2 class="h2 cs-h2" data-layer="heading" data-depth="0.6" data-shadow="0,0.1,10" style="--lab-x:780px">Operators like you rely on<br>August Health to drive better care<br>and operations</h2>
+                  <p class="cs-p" data-layer="copy" data-depth="0.46" style="--lab-x:500px">Communities run better with August Health.</p>
+                  <div class="cs-strip" data-layer="carousel" data-depth="0.3" style="--lab-x:540px;--lab-y:-40px">
+                    <div class="cs-track" id="csTrack">
+                      <div class="cs-card cs-orange" style="left:-692px"><img class="cs-icon" src="august-health-card-src/img/cs-arrow-up.webp" alt=""><h3 class="cs-h">Transform your communities within weeks</h3><i class="cs-rule" style="top:260.8px"></i><img class="cs-logo" src="august-health-card-src/img/cs-koelsch.webp" style="top:285.8px;height:31.5px" alt=""><p class="cs-title">How Koelsch Communities implemented August Health in 40 communities in under 100 days</p><div class="cs-arrow"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div></div>
+                      <div class="cs-card cs-green" style="left:-284px"><img class="cs-icon" src="august-health-card-src/img/cs-ff.webp" alt=""><h3 class="cs-h">Simplify clinical workflows and improve efficiency</h3><i class="cs-rule" style="top:267.9px"></i><img class="cs-logo" src="august-health-card-src/img/cs-claiborne.webp" style="top:292.9px;height:24.4px" alt=""><p class="cs-title">How Claiborne Senior Living radically simplified caregiving with August Health</p><div class="cs-arrow"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div></div>
+                      <div class="cs-card cs-navy" style="left:124px"><div class="cs-stat">93%</div><h3 class="cs-h">of staff save time every day with August Health</h3><div class="cs-arrow" style="top:370px"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div></div>
+                      <div class="cs-card cs-blue" style="left:532px"><img class="cs-icon" src="august-health-card-src/img/cs-house.webp" alt=""><h3 class="cs-h">Enable proactive care across your communities</h3><i class="cs-rule" style="top:249.0px"></i><img class="cs-logo" src="august-health-card-src/img/cs-bickford.webp" style="top:274.0px;height:43.3px" alt=""><p class="cs-title">How Bickford Senior Living reduced incidents and early move-outs with August Health</p><div class="cs-arrow"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div></div>
+                      <div class="cs-card cs-pink" style="left:940px"><img class="cs-icon" src="august-health-card-src/img/cs-eye.webp" alt=""><h3 class="cs-h">Optimize workflows and revenue capture</h3><i class="cs-rule" style="top:316.3px"></i><p class="cs-title">How a top operator identified previously untracked care needs with August Health</p><div class="cs-arrow"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div></div>
+                      <div class="cs-card cs-forest" style="left:1348px"><div class="cs-stat">82%</div><h3 class="cs-h">of staff are more satisfied in their roles because of August Health</h3><div class="cs-arrow" style="top:370px"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div></div>
+                      <div class="cs-card cs-orange" style="left:1756px"><img class="cs-icon" src="august-health-card-src/img/cs-arrow-up.webp" alt=""><h3 class="cs-h">Transform your communities within weeks</h3><i class="cs-rule" style="top:260.8px"></i><img class="cs-logo" src="august-health-card-src/img/cs-koelsch.webp" style="top:285.8px;height:31.5px" alt=""><p class="cs-title">How Koelsch Communities implemented August Health in 40 communities in under 100 days</p><div class="cs-arrow"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div></div>
+                      <div class="cs-card cs-green" style="left:2164px"><img class="cs-icon" src="august-health-card-src/img/cs-ff.webp" alt=""><h3 class="cs-h">Simplify clinical workflows and improve efficiency</h3><i class="cs-rule" style="top:267.9px"></i><img class="cs-logo" src="august-health-card-src/img/cs-claiborne.webp" style="top:292.9px;height:24.4px" alt=""><p class="cs-title">How Claiborne Senior Living radically simplified caregiving with August Health</p><div class="cs-arrow"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div></div>
+                      <div class="cs-card cs-navy" style="left:2572px"><div class="cs-stat">93%</div><h3 class="cs-h">of staff save time every day with August Health</h3><div class="cs-arrow" style="top:370px"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div></div>
+                      <div class="cs-card cs-blue" style="left:2980px"><img class="cs-icon" src="august-health-card-src/img/cs-house.webp" alt=""><h3 class="cs-h">Enable proactive care across your communities</h3><i class="cs-rule" style="top:249.0px"></i><img class="cs-logo" src="august-health-card-src/img/cs-bickford.webp" style="top:274.0px;height:43.3px" alt=""><p class="cs-title">How Bickford Senior Living reduced incidents and early move-outs with August Health</p><div class="cs-arrow"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div></div>
+                      <div class="cs-card cs-pink" style="left:3388px"><img class="cs-icon" src="august-health-card-src/img/cs-eye.webp" alt=""><h3 class="cs-h">Optimize workflows and revenue capture</h3><i class="cs-rule" style="top:316.3px"></i><p class="cs-title">How a top operator identified previously untracked care needs with August Health</p><div class="cs-arrow"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div></div>
+                      <div class="cs-card cs-forest" style="left:3796px"><div class="cs-stat">82%</div><h3 class="cs-h">of staff are more satisfied in their roles because of August Health</h3><div class="cs-arrow" style="top:370px"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div></div>
+                    </div>
+                  </div>
+                  <div class="cs-nav" data-layer="arrows" data-depth="0.68" data-shadow="0,0.16,8" style="--lab-x:150px">
+                    <div class="cs-btn cs-prev"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div>
+                    <div class="cs-btn cs-next"><svg viewBox="0 0 48 48" fill="none"><path d="M0.5 24C0.5 11.0213 11.0213 0.5 24 0.5C36.9787 0.5 47.5 11.0213 47.5 24C47.5 36.9787 36.9787 47.5 24 47.5C11.0213 47.5 0.5 36.9787 0.5 24Z" stroke="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M26.3131 15.3132C26.5084 15.1179 26.825 15.1179 27.0202 15.3132L35.3536 23.6465C35.5488 23.8418 35.5488 24.1584 35.3536 24.3536L27.0202 32.687C26.825 32.8822 26.5084 32.8822 26.3131 32.687C26.1179 32.4917 26.1179 32.1751 26.3131 31.9799L33.7929 24.5001H13C12.7239 24.5001 12.5 24.2762 12.5 24.0001C12.5 23.7239 12.7239 23.5001 13 23.5001H33.7929L26.3131 16.0203C26.1179 15.825 26.1179 15.5085 26.3131 15.3132Z" fill="currentColor"/></svg></div>
+                  </div>
+                </section>
+
+                <!-- the close: the ring again, as outlined circles, round the founders' line -->
+                <section class="sec cta" id="cta">
+                  <div class="c-ring ring" data-layer="ring" data-depth="0.12" style="--lab-x:520px;--lab-y:120px">
+                    <div class="rotor" id="ctaRotor">
+                      <i class="r-it" style="--a:45deg;color:#4865ff"></i><i class="r-it" style="--a:90deg;color:#328a3b"></i><i class="r-it" style="--a:135deg;color:#f098d7"></i><i class="r-it" style="--a:180deg;color:#ff6d39"></i>
+                      <i class="r-it" style="--a:225deg;color:#328a3b"></i><i class="r-it" style="--a:270deg;color:#4865ff"></i><i class="r-it" style="--a:315deg;color:#ff6d39"></i><i class="r-it" style="--a:360deg;color:#f098d7"></i>
+                    </div>
+                  </div>
+                  <h2 class="h2 c-h" data-layer="statement" data-depth="0.62" data-shadow="0,0.2,12" style="--lab-x:60px;--lab-y:-40px">The only EHR platform created by a senior living physician and an Apple engineering leader</h2>
+                  <div class="btn c-btn" data-layer="button" data-depth="0.76" data-shadow="0,0.3,12" style="--lab-x:20px;--lab-y:54px">Learn more about August Health</div>
+                </section>
+              </div>
+
+              <!-- the footer, pinned to the window's bottom under the page, in the mark's four colour schemes -->
+              <footer class="sec foot" id="foot" data-pin="foot" data-stop="footer">
+                <div class="ft-bg" id="ftBg"><i class="ft-l" style="background:#328a3b"></i><i class="ft-r" style="background:#0d5238"></i></div>
+                <div class="ft-bg" id="ftBg1"><i class="ft-l" style="background:#4865ff"></i><i class="ft-r" style="background:#1b1463"></i></div>
+                <div class="ft-bg" id="ftBg2"><i class="ft-l" style="background:#f098d7"></i><i class="ft-r" style="background:#6f205d"></i></div>
+                <div class="ft-bg" id="ftBg3"><i class="ft-l" style="background:#ff6d39"></i><i class="ft-r" style="background:#792501"></i></div>
+                <div class="ft-mark" data-layer="mark" data-depth="0.56" data-shadow="0,0.2,14" style="--lab-x:20px;--lab-y:250px"><img src="august-health-card-src/img/foot-mark.svg" alt=""></div>
+                <div class="ft-col" data-layer="links" data-depth="0.42" style="left:628px;top:96px;width:572px;--lab-x:300px">
+                  <div class="ft-head">Platform</div>
+                  <span style="left:0;top:41.6px">Move-Ins</span><span style="left:286px;top:41.6px">Insights</span>
+                  <span style="left:0;top:96px">EHR</span><span style="left:286px;top:96px">Billing &amp; Payments</span>
+                  <span style="left:0;top:150.3px">eMAR</span>
+                </div>
+                <div class="ft-col" data-layer="links" data-depth="0.42" style="left:628px;top:356.7px;width:278px;--lab-x:120px">
+                  <div class="ft-head">Company</div>
+                  <span style="left:0;top:41.6px">About Us</span><span style="left:0;top:96px">Careers</span><span style="left:0;top:150.4px">Testimonials</span>
+                </div>
+                <div class="ft-col" data-layer="links" data-depth="0.42" style="left:922px;top:356.7px;width:278px;--lab-x:120px">
+                  <div class="ft-head">Support</div>
+                  <span style="left:0;top:41.6px">Resources</span><span style="left:0;top:96px">Contact</span>
+                </div>
+                <div class="ft-copy" data-layer="copyright" data-depth="0.32" style="--lab-x:150px">August Health © 2024</div>
+                <div class="ft-in" data-layer="linkedin" data-depth="0.5" style="--lab-x:-130px"><svg viewBox="0 0 48 49"><path d="M34.2234 12.5005H13.7719C12.7922 12.5005 12 13.2739 12 14.2302V34.7661C12 35.7224 12.7922 36.5005 13.7719 36.5005H34.2234C35.2031 36.5005 36 35.7224 36 34.7708V14.2302C36 13.2739 35.2031 12.5005 34.2234 12.5005ZM19.1203 32.952H15.5578V21.4958H19.1203V32.952ZM17.3391 19.9349C16.1953 19.9349 15.2719 19.0114 15.2719 17.8724C15.2719 16.7333 16.1953 15.8099 17.3391 15.8099C18.4781 15.8099 19.4016 16.7333 19.4016 17.8724C19.4016 19.0067 18.4781 19.9349 17.3391 19.9349ZM32.4516 32.952H28.8937V27.3833C28.8937 26.0567 28.8703 24.3458 27.0422 24.3458C25.1906 24.3458 24.9094 25.7942 24.9094 27.2896V32.952H21.3563V21.4958H24.7687V23.0614H24.8156C25.2891 22.1614 26.4516 21.2099 28.1813 21.2099C31.7859 21.2099 32.4516 23.5817 32.4516 26.6661V32.952Z" fill="currentColor"/></svg></div>
+              </footer>
+            </div>
+
+            <!-- the nav, fixed over the page: a frosted pill -->
+            <div class="nav" data-layer="nav" data-depth="0.88" data-shadow="0,0.14,18" style="--lab-x:440px;--lab-y:70px">
+              <img class="nv-mark" src="august-health-card-src/img/logo-mark.svg" alt="">
+              <img class="nv-word" src="august-health-card-src/img/logo-word.svg" alt="">
+              <span class="nv-link" style="left:377.2px;color:#080331">Platform</span>
+              <svg class="nv-chev" viewBox="0 0 9 6"><path fill-rule="evenodd" clip-rule="evenodd" d="M0.146447 0.646202C0.341709 0.45094 0.658291 0.45094 0.853553 0.646202L4.49995 4.2926H4.50005L8.14645 0.646202C8.34171 0.45094 8.65829 0.45094 8.85355 0.646202C9.04882 0.841465 9.04882 1.15805 8.85355 1.35331L5.20715 4.99971C4.81659 5.39027 4.18341 5.39027 3.79285 4.99971L0.146447 1.35331C-0.0488155 1.15805 -0.0488155 0.841465 0.146447 0.646202Z" fill="#080331"/></svg>
+              <span class="nv-link" style="left:491.7px">About Us</span>
+              <span class="nv-link" style="left:593.6px">Customers</span>
+              <span class="nv-link" style="left:708px">Resources</span>
+              <span class="nv-link" style="left:940.7px;color:#4865ff">Log in</span>
+              <div class="btn nv-btn" data-layer="button" data-depth="0.92" style="--lab-x:-80px;--lab-y:50px">Request demo</div>
+            </div>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>August Health</h3>
+      <p><span>Health</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="august-health-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the Dawn card's way: the studio's own Params,
+   defineParams from /shared/params/params.js. Embedded on the site there is
+   no panel and nothing is fetched, so the module is only loaded here, and
+   only when served (opened from disk there is no studio to load it from). */
+const card = window.augustHealthCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'august health work card';
+    const D = card.values;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        ambient: [D['motion.ambient'], 0, 4, 0.05],        // the site's own clocks: the rings (340 s a turn), the logos, the values line, the footer colours
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        scrub: [D['drag.scrub'], 0.5, 6, 0.1],             // page px per px of a sideways drag (right = down the page)
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+        navBlur: { type: 'toggle', labels: ['Flat nav', 'Frosted nav'], default: D['card.navBlur'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+/* The Claude Community page (claude.com/community), rebuilt at its 1440px
+   design width. The hero is Kinetic's version with the globe, measured off
+   Kinetic's recording (made at 1920 x 1080, so its sizes are the page's own at
+   1440: the type is fluid only up to 1440); the sections below it are the web
+   archive's capture of 2026-03-19, read off its computed styles at 1440 x 900.
+   Colours are the site's own swatches. */
+
+@font-face { font-family: "AC Sans"; src: url("../fonts/AnthropicSans-Roman-Web.woff2") format("woff2"); font-weight: 300 800; font-display: block; }
+@font-face { font-family: "AC Serif"; src: url("../fonts/AnthropicSerif-Roman-Web.woff2") format("woff2"); font-weight: 300 800; font-display: block; }
+
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  --ivory: #faf9f5; --ink: #141413; --g150: #f0eee6; --g200: #e8e6dc; --g250: #dedcd1; --g300: #d1cfc5;
+  --g450: #9c9a92; --g500: #87867f; --g600: #5e5d59; --g650: #4d4c48; --g700: #3d3d3a; --g750: #30302e; --g850: #1f1e1d;
+  --clay: #d97757;
+  background: var(--ivory);
+  font-family: "AC Sans", "Helvetica Neue", Arial, sans-serif; font-weight: 400;
+  color: var(--ink);
+  text-rendering: geometricPrecision;
+}
+.vp p, .vp h1, .vp h2, .vp h3 { margin: 0; font-weight: inherit; }
+.vp img { display: block; }
+.vp svg { display: block; }
+.page { position: absolute; left: 0; top: 0; width: 1440px; height: 5472px; will-change: transform; }
+.page .sec, .sec > *, .abs, .nav-bar > *, .subnav > *, .ev > *, .mrow > *, .mcard > *, .feat > *, .news > *, .field > *, .prompt > * { position: absolute; }
+.sec { left: 0; width: 1440px; overflow: hidden; }
+[data-depth] { will-change: transform; }
+
+.serif { font-family: "AC Serif", Georgia, serif; }
+.h2 { left: 0; top: 246px; width: 1440px; text-align: center; font-family: "AC Serif", Georgia, serif; font-weight: 500; font-size: 44px; line-height: 52.8px; }
+.lead { left: 0; width: 1440px; text-align: center; font-size: 20px; line-height: 32px; color: var(--g600); }
+.pict { left: 672px; top: 128px; width: 96px; height: 96px; }
+
+/* buttons: the site's main button (40 px, 8.5 px corners, 17 px medium) and its tiny one */
+.btn {
+  display: flex; align-items: center; gap: 8px;
+  height: 40px; padding: 0 24px; border-radius: 8.5px;
+  font-weight: 500; font-size: 17px; line-height: 17px; white-space: nowrap;
+}
+.btn svg { width: 20px; height: 20px; margin-right: -8px; }
+.btn.dark { background: var(--ink); color: var(--ivory); }
+.btn.light { background: var(--ivory); color: var(--ink); }
+.tbtn { height: 28px; padding: 0 12px; border-radius: 6px; font-weight: 500; font-size: 12px; line-height: 28px; letter-spacing: .12px; color: var(--g650); white-space: nowrap; }
+.tbtn.oat { background: var(--g200); box-shadow: inset 0 0 0 1px var(--g300); }
+.tbtn.ring { background: #fff; box-shadow: inset 0 0 0 1px var(--g250); }
+
+/* ---------- nav and sub nav, fixed in the viewport ---------- */
+.nav { left: 0; top: 0; width: 1440px; height: 121px; }
+.nav-bar { left: 0; top: 0; width: 1440px; height: 81px; background: var(--ivory); box-shadow: inset 0 -1px 0 var(--g200); }
+.nav-logo { left: 64px; top: 26px; width: 120px; height: 26.2px; }
+.nav-links { right: 339px; top: 22px; height: 36px; display: flex; align-items: center; gap: 20px; font-size: 15px; line-height: 24px; color: var(--g750); }
+.nav-links span { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.nav-links svg { width: 16px; height: 16px; color: var(--g600); }
+.nbtn { top: 22px; height: 36px; border-radius: 8px; font-size: 15px; line-height: 36px; text-align: center; white-space: nowrap; }
+.nbtn.line { left: 1126px; width: 130px; background: var(--ivory); color: var(--g750); box-shadow: inset 0 0 0 1px var(--g300); }
+.nbtn.dark { left: 1268px; width: 108px; background: var(--ink); color: var(--ivory); }
+.subnav { left: 0; top: 80px; width: 1440px; height: 41px; background: var(--ivory); box-shadow: inset 0 -1px 0 var(--g200); font-size: 13px; line-height: 40px; color: var(--g750); }
+.subnav span { top: 0; white-space: nowrap; }
+.subnav > span:first-child { left: 64px; }
+.sub-r { right: 64px; display: flex; align-items: center; gap: 4px; color: var(--ink); }
+.sub-r svg { width: 14px; height: 14px; transform: rotate(180deg); }
+
+/* ---------- hero, with the globe ---------- */
+.hero { top: 0; height: 1050px; background: var(--ivory); }
+.margin-rule { left: 104px; top: 527px; width: 1px; height: 523px; background: var(--g200); opacity: .7; }
+.globe { left: 400px; top: 480px; width: 1040px; height: 570px; }
+.globe canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.hero-h { left: 64px; top: 223px; width: 1312px; font-family: "AC Serif", Georgia, serif; font-weight: 400; font-size: 112px; line-height: 123.2px; white-space: nowrap; }
+.hero-h span { display: block; }
+.hero-h .l2 { text-align: right; }
+.hero-p { left: 64px; top: 576px; font-size: 23px; line-height: 34.5px; color: var(--g600); white-space: nowrap; }
+.hero-btn { left: 64px; top: 715px; }
+.globe-tips { left: 400px; top: 480px; width: 1040px; height: 570px; pointer-events: none; }
+.tip { left: 0; top: 0; width: 0; height: 0; opacity: 0; will-change: transform, opacity; }
+.tip > * { position: absolute; white-space: nowrap; }
+.tip-pill {
+  left: -86px; top: -33.5px; width: 172px; height: 33px; border-radius: 8px;
+  background: #fff; box-shadow: 0 2px 10px rgba(20, 20, 19, .1), 0 0 0 .5px rgba(20, 20, 19, .04);
+  font-weight: 500; font-size: 15px; line-height: 33px; text-align: center; color: var(--g600);
+}
+.tip-city { left: -80px; top: 13px; width: 160px; text-align: center; font-weight: 600; font-size: 15px; line-height: 20px; color: var(--clay); }
+
+/* ---------- upcoming community events ---------- */
+.events { top: 1050px; height: 1428px; background: #fff; }
+.ev-lead { top: 322px; }
+.search { left: 240px; top: 506px; width: 300px; height: 50px; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 1px var(--g150); }
+.search svg { position: absolute; left: 13px; top: 15px; width: 20px; height: 20px; color: var(--ink); }
+.search span { position: absolute; left: 48px; top: 0; font-size: 17px; line-height: 50px; color: var(--g600); }
+.ev-all { left: 1069px; top: 511px; }
+.ev-head { left: 0; top: 599px; width: 1440px; height: 16px; }
+.ev-head span { position: absolute; top: 0; font-size: 10px; line-height: 16px; letter-spacing: .5px; text-transform: uppercase; color: var(--ink); }
+.ev-rows { left: 0; top: 627px; width: 1440px; height: 652px; }
+.ev { position: absolute; left: 240px; width: 960px; height: 93px; box-shadow: inset 0 1px 0 var(--g150); }
+.ev.last { box-shadow: inset 0 1px 0 var(--g150), inset 0 -1px 0 var(--g150); height: 94px; }
+.cc { left: 0; top: 25px; width: 44px; height: 44px; color: var(--c); font-style: normal; }
+.cc svg { position: absolute; inset: 0; width: 44px; height: 44px; }
+.cc b { position: absolute; left: 0; top: 0; width: 44px; line-height: 44px; text-align: center; font-family: "AC Serif", Georgia, serif; font-weight: 400; font-size: 17px; color: var(--ink); }
+.cc.on-dark b { color: var(--ivory); }
+.ev .t { left: 68px; top: 33px; font-size: 17px; line-height: 27.2px; white-space: nowrap; }
+.ev .loc, .ev .dt { top: 37px; font-size: 12px; line-height: 19.2px; letter-spacing: .12px; color: var(--g600); white-space: nowrap; }
+.ev .loc { left: 656px; }
+.ev .dt { left: 848px; }
+
+/* ---------- bring your big ideas in to the world ---------- */
+.ideas { top: 2478px; height: 1036px; background: var(--ivory); }
+.id-lead { top: 375px; }
+.mrow { left: 400px; width: 640px; box-shadow: inset 0 1px 0 var(--g200); }
+.mrow-a { top: 551px; height: 160px; }
+.mrow-b { top: 775px; height: 133px; }
+.mrow .mi { left: 0; top: 33px; width: 24px; height: 24px; color: var(--g700); }
+.mrow h3 { left: 36px; top: 32px; font-family: "AC Serif", Georgia, serif; font-weight: 500; font-size: 19px; line-height: 22.8px; color: var(--g750); white-space: nowrap; }
+.mrow p { left: 336px; top: 26px; font-size: 17px; line-height: 27.2px; color: var(--g600); white-space: nowrap; }
+.mrow-a .tbtn { left: 336px; top: 132px; }
+.mrow-b .tbtn { left: 336px; top: 105px; }
+.mcard { background: #fff; border-radius: 16px; box-shadow: inset 0 0 0 1px var(--g150), 0 4px 24px rgba(0, 0, 0, .05); }
+.mcard.photo { left: 64px; top: 692px; width: 216px; height: 181px; }
+.photo img { left: 17px; top: 17px; width: 182px; height: 102px; object-fit: cover; border-radius: 4px; }
+.photo p { left: 17px; top: 130px; font-size: 12px; line-height: 19.2px; letter-spacing: .12px; color: var(--g600); white-space: nowrap; }
+.mcard.stat { left: 1160px; top: 551px; width: 216px; height: 243px; }
+.st-h { left: 17px; top: 16px; width: 182px; height: 31px; box-shadow: inset 0 -1px 0 var(--g150); font-weight: 600; font-size: 12px; line-height: 19.2px; letter-spacing: .12px; }
+.st-n { left: 17px; font-family: "AC Serif", Georgia, serif; font-weight: 500; font-size: 36px; line-height: 46.8px; }
+.st-l { left: 17px; font-size: 12px; line-height: 19.2px; letter-spacing: .12px; color: var(--g600); }
+.st-rule { left: 17px; top: 148px; width: 182px; height: 1px; background: var(--g150); }
+
+/* ---------- find your space ---------- */
+.space { top: 3514px; height: 780px; background: #fff; }
+.sp-lead { top: 322px; }
+.feat { top: 434px; width: 464px; height: 218px; box-shadow: inset 1px 0 0 var(--g150); }
+.feat .fi { left: 33px; top: 12px; width: 32px; height: 32px; color: var(--g600); }
+.feat h3 { left: 33px; top: 63px; font-family: "AC Serif", Georgia, serif; font-weight: 500; font-size: 19px; line-height: 22.8px; color: var(--g750); white-space: nowrap; }
+.feat p { left: 33px; top: 99px; font-size: 15px; line-height: 24px; color: var(--g600); white-space: nowrap; }
+.feat .tbtn { left: 33px; top: 166px; }
+
+/* ---------- where problem solvers think together ---------- */
+.cta { top: 4294px; height: 618px; background: var(--ink); color: var(--ivory); }
+.cta-h { left: 64px; top: 206px; width: auto; text-align: left; white-space: nowrap; }
+.cta-btn { left: 64px; top: 356px; }
+.news { left: 848px; top: 128px; width: 528px; height: 362px; border-radius: 24px; background: var(--g850); }
+.news .mail { left: 32px; top: 32px; width: 64px; height: 64px; }
+.news h3 { left: 32px; top: 107px; font-family: "AC Serif", Georgia, serif; font-weight: 500; font-size: 25px; line-height: 30px; white-space: nowrap; }
+.news p { left: 32px; top: 140px; font-size: 17px; line-height: 27.2px; color: var(--g450); white-space: nowrap; }
+.news .fine { top: 296px; font-size: 12px; line-height: 19.2px; letter-spacing: .12px; }
+.news .fine u { text-underline-offset: 2px; }
+.field { left: 32px; top: 227px; width: 464px; height: 58px; border-radius: 12px; background: var(--g850); box-shadow: inset 0 0 0 1px var(--g700); }
+.field span { left: 34px; top: 0; font-size: 17px; line-height: 58px; color: var(--g500); }
+.field .go { left: 415px; top: 9px; width: 40px; height: 40px; border-radius: 12px; background: var(--ivory); color: var(--ink); }
+.field .go svg { position: absolute; left: 12px; top: 12px; width: 16px; height: 16px; }
+
+/* ---------- footer (its first rows) ---------- */
+.foot { top: 4912px; height: 560px; background: var(--ink); color: var(--ivory); box-shadow: inset 0 1px 0 var(--g750); }
+.f-logo { left: 64px; top: 97px; width: 144px; height: 31.4px; }
+.prompt { left: 64px; top: 160px; width: 304px; height: 46px; border-radius: 12px; background: var(--g850); box-shadow: inset 0 0 0 1px var(--g700); }
+.prompt span { left: 17px; top: 0; font-size: 12px; letter-spacing: .12px; line-height: 46px; color: var(--g450); white-space: nowrap; }
+.prompt i { left: 266px; top: 8.5px; width: 29px; height: 29px; border-radius: 8px; background: var(--clay); color: var(--ivory); }
+.prompt i svg { position: absolute; left: 6.5px; top: 6.5px; width: 16px; height: 16px; }
+.chips { left: 64px; top: 221px; display: flex; gap: 6px; }
+.chips span { display: flex; align-items: center; gap: 6px; height: 27px; padding: 0 10px; border-radius: 8px; background: var(--g850); box-shadow: inset 0 0 0 1px var(--g700); font-size: 13px; line-height: 27px; }
+.chips svg { width: 14px; height: 14px; }
+.cols { left: 0; top: 89.5px; width: 1440px; height: 440px; }
+.cols > div { position: absolute; top: 0; display: flex; flex-direction: column; font-size: 12px; line-height: 25.2px; letter-spacing: .12px; white-space: nowrap; }
+.cols b { font-weight: 400; color: var(--g450); }
+.cols b.gap { margin-top: 27px; }
+
+/* shadow twins: a darkened, blurred copy of a lifted layer, left on the surface below it */
+.twin { filter: brightness(0) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; }
+.twin * { will-change: auto !important; }

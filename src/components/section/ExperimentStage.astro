@@ -22,24 +22,18 @@ const next = live[(at + 1) % live.length];
 
       <header class="exp_head">
         <a class="exp_back text-style-label" href="/playground">← Playground</a>
-        <h1 class="exp_title text-style-h2">{e.title}</h1>
+        <h1 class="exp_title text-style-h3">{e.title}</h1>
         <p class="exp_note text-style-label">{e.note}</p>
+        {/* Hunter, Oct 25: "People don't know what params are, so maybe we
+            have a little label" */}
+        <p class="exp_hint text-style-label">Feel free to play around with the parameters.</p>
+        <div class="exp_actions">
+          <button class="exp_btn pill is-primary" type="button" data-toggle>Parameters <kbd>P</kbd></button>
+          <button class="exp_btn pill is-secondary" type="button" data-randomize>Randomize</button>
+          <button class="exp_btn pill is-secondary" type="button" data-reset>Reset</button>
+          <button class="exp_btn pill is-secondary" type="button" data-share>Copy link</button>
+        </div>
       </header>
-
-      <aside class="exp_panel" data-panel aria-label="Params">
-        <div class="exp_panel-head">
-          <p class="exp_panel-title">Params</p>
-          <button class="exp_panel-hide text-style-label" type="button" data-toggle aria-expanded="true">Hide <kbd>P</kbd></button>
-        </div>
-        <div class="exp_panel-body" data-params />
-        <div class="exp_panel-actions">
-          <button class="exp_btn" type="button" data-randomize>Randomize</button>
-          <button class="exp_btn" type="button" data-reset>Reset</button>
-          <button class="exp_btn is-lime" type="button" data-share>Copy link</button>
-        </div>
-      </aside>
-
-      <button class="exp_open text-style-label" type="button" data-toggle hidden>Params <kbd>P</kbd></button>
 
       <nav class="exp_pager" aria-label="More experiments">
         <a class="exp_page text-style-label" href={`/playground/${prev.slug}`}>← {prev.title}</a>
@@ -51,46 +45,31 @@ const next = live[(at + 1) % live.length];
 }
 
 <script>
-  import { createParams } from "@/scripts/params.js";
+  import { hostExperiment } from "@/scripts/experiment-host.js";
 
   const modules = import.meta.glob("../../experiments/*.js");
 
   document.querySelectorAll<HTMLElement>("[data-exp]").forEach(async (root) => {
     const slug = root.dataset.exp!;
     const stage = root.querySelector<HTMLElement>("[data-stage]")!;
-    const panel = root.querySelector<HTMLElement>("[data-panel]")!;
     const load = modules[`../../experiments/${slug}.js`];
     if (!load) {
       stage.innerHTML = `<p class="exp_missing text-style-label">This one is still in the lab.</p>`;
-      panel.hidden = true;
       return;
     }
-    const mod = (await load()) as {
-      params: object;
-      mount: (host: HTMLElement, values: object, ctx: object) => { update(v: object, p: string | null): void; action?(n: string): void; destroy(): void };
-    };
-    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let handle: ReturnType<typeof mod.mount> | undefined;
-    const params = createParams(root.querySelector("[data-params]")!, mod.params, {
-      onChange: (values: object, path: string | null) => handle?.update(values, path),
-      onAction: (name: string) => handle?.action?.(name),
-    });
-    handle = mod.mount(stage, { ...params.values }, { reducedMotion });
+    const mod = (await load()) as { params: object; mount: (...args: unknown[]) => unknown };
+    const title = root.querySelector(".exp_title")?.textContent ?? slug;
+    // Hunter's Params: the Studio's panel when framed, the standalone one here
+    const host = hostExperiment(stage, mod, { title, slug, open: matchMedia("(width >= 48rem)").matches });
+    if (host.framed) root.classList.add("is-framed");
 
-    const open = root.querySelector<HTMLButtonElement>(".exp_open")!;
-    const setPanel = (on: boolean) => {
-      panel.classList.toggle("is-hidden", !on);
-      open.hidden = on;
-      window.dispatchEvent(new CustomEvent("ks:sound", { detail: "tick" }));
-    };
-    root.querySelectorAll("[data-toggle]").forEach((b) => b.addEventListener("click", () => setPanel(panel.classList.contains("is-hidden"))));
+    root.querySelector("[data-toggle]")!.addEventListener("click", () => host.togglePanel());
+    root.querySelector("[data-randomize]")!.addEventListener("click", () => host.randomize());
+    root.querySelector("[data-reset]")!.addEventListener("click", () => host.reset());
     document.addEventListener("keydown", (ev) => {
       if ((ev.target as HTMLElement).closest("input, textarea, select")) return;
-      if (ev.key === "p" || ev.key === "P") setPanel(panel.classList.contains("is-hidden"));
-      if (ev.key === "r") params.randomize();
+      if (ev.key === "r") host.randomize();
     });
-    root.querySelector("[data-randomize]")!.addEventListener("click", () => params.randomize());
-    root.querySelector("[data-reset]")!.addEventListener("click", () => params.reset());
     const share = root.querySelector<HTMLButtonElement>("[data-share]")!;
     share.addEventListener("click", async () => {
       try {
@@ -99,7 +78,7 @@ const next = live[(at + 1) % live.length];
         setTimeout(() => (share.textContent = "Copy link"), 1400);
       } catch {}
     });
-    addEventListener("pagehide", () => handle?.destroy());
+    addEventListener("pagehide", () => host.destroy());
   });
 </script>
 
@@ -123,6 +102,19 @@ const next = live[(at + 1) % live.length];
       margin: 0;
       color: color-mix(in srgb, var(--text) 50%, transparent);
     }
+    /* the title card, the pager and the nav take the piece's look, as its
+       Parameters panel does (experiment-host.js sets data-ksp-theme) */
+    .exp_wrap {
+      --glass: var(--dark-800);
+    }
+    html[data-ksp-theme="light"] :is(.exp_wrap, .nav_wrap:has(~ main .exp_wrap)) {
+      color-scheme: light;
+      --glass: var(--light-100);
+      --text: var(--dark-900);
+      --background: var(--light-300);
+      --border: color-mix(in lab, var(--text) 20%, transparent);
+      color: var(--text);
+    }
     .exp_head {
       position: absolute;
       top: 5.5rem;
@@ -131,7 +123,7 @@ const next = live[(at + 1) % live.length];
       max-width: 22rem;
       padding: 1rem 1.1rem 1.1rem;
       border-radius: 1rem;
-      background: color-mix(in srgb, var(--dark-800) 72%, transparent);
+      background: color-mix(in srgb, var(--glass) 72%, transparent);
       border: var(--border-width) solid color-mix(in srgb, var(--text) 12%, transparent);
       backdrop-filter: blur(1.25rem) saturate(1.3);
       -webkit-backdrop-filter: blur(1.25rem) saturate(1.3);
@@ -144,229 +136,30 @@ const next = live[(at + 1) % live.length];
     }
     .exp_title {
       margin: var(--space-3) 0 var(--space-2);
-      font-size: clamp(2.25rem, 4vw, 3.5rem);
     }
     .exp_note {
       margin: 0;
       color: color-mix(in srgb, var(--text) 65%, transparent);
     }
-    .exp_panel {
-      position: absolute;
-      top: 5rem;
-      right: var(--space-4);
-      bottom: 4.5rem;
-      z-index: 3;
-      display: flex;
-      flex-direction: column;
-      width: 18rem;
-      border-radius: 1rem;
-      background: color-mix(in srgb, var(--dark-800) 72%, transparent);
-      border: var(--border-width) solid color-mix(in srgb, var(--text) 12%, transparent);
-      backdrop-filter: blur(1.25rem) saturate(1.3);
-      -webkit-backdrop-filter: blur(1.25rem) saturate(1.3);
-      transition: translate 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.3s ease;
-      &.is-hidden {
-        translate: calc(100% + 2rem) 0;
-        opacity: 0;
-        pointer-events: none;
-      }
-      @media (width < 48rem) {
-        top: auto;
-        left: var(--space-3);
-        right: var(--space-3);
-        width: auto;
-        max-height: 45svh;
-        bottom: 4rem;
-        &.is-hidden {
-          translate: 0 calc(100% + 5rem);
-        }
-      }
-    }
-    .exp_panel-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.9rem 1rem 0.7rem;
-      border-bottom: var(--border-width) solid color-mix(in srgb, var(--text) 10%, transparent);
-    }
-    .exp_panel-title {
-      margin: 0;
-      font-family: var(--display-family);
-      font-size: 1.25rem;
-      line-height: 1;
-      text-transform: uppercase;
-    }
-    .exp_panel-hide,
-    .exp_open {
-      color: color-mix(in srgb, var(--text) 60%, transparent);
-      & kbd {
-        margin-left: 0.25rem;
-        padding: 0.1rem 0.3rem;
-        border-radius: 0.25rem;
-        border: var(--border-width) solid currentColor;
-        font: inherit;
-      }
-    }
-    .exp_open {
-      position: absolute;
-      top: 5rem;
-      right: var(--space-4);
-      z-index: 3;
-      padding: 0.6rem 0.9rem;
-      border-radius: var(--radius-round);
-      background: color-mix(in srgb, var(--dark-800) 72%, transparent);
-      backdrop-filter: blur(1rem);
-      &[hidden] {
-        display: none;
-      }
-    }
-    .exp_panel-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0.75rem 1rem;
-      scrollbar-width: thin;
-    }
-    .params_group {
-      margin: 1rem 0 0.5rem;
-      font-family: var(--mono-family);
-      font-size: 0.6875rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--brand-500);
-      &:first-child {
-        margin-top: 0;
-      }
-    }
-    .params_row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: center;
-      gap: 0.35rem 0.5rem;
-      margin-bottom: 0.8rem;
-      & input[type="range"],
-      & select,
-      & input[type="text"],
-      & .params_toggle {
-        grid-column: 1 / -1;
-      }
-    }
-    .params_label {
-      font-size: 0.8125rem;
-      color: color-mix(in srgb, var(--text) 80%, transparent);
-    }
-    .params_value {
-      font-family: var(--mono-family);
-      font-size: 0.6875rem;
-      color: color-mix(in srgb, var(--text) 55%, transparent);
-    }
-    .params_row input[type="range"] {
-      --fill: 50%;
-      appearance: none;
-      width: 100%;
-      height: 0.25rem;
-      margin: 0.35rem 0;
-      border-radius: 1rem;
-      background: linear-gradient(to right, var(--sage-300) var(--fill), color-mix(in srgb, var(--text) 15%, transparent) var(--fill));
-      cursor: pointer;
-      &::-webkit-slider-thumb {
-        appearance: none;
-        width: 0.9rem;
-        height: 0.9rem;
-        border-radius: 50%;
-        background: var(--light-100);
-        box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--dark-900) 50%, transparent);
-      }
-      &::-moz-range-thumb {
-        width: 0.9rem;
-        height: 0.9rem;
-        border: 0;
-        border-radius: 50%;
-        background: var(--light-100);
-      }
-    }
-    .params_row input[type="color"] {
-      width: 1.6rem;
-      height: 1.6rem;
-      padding: 0;
-      border: 0;
-      border-radius: 50%;
-      overflow: hidden;
-      background: none;
-      cursor: pointer;
-      &::-webkit-color-swatch-wrapper {
-        padding: 0;
-      }
-      &::-webkit-color-swatch {
-        border: var(--border-width) solid color-mix(in srgb, var(--text) 25%, transparent);
-        border-radius: 50%;
-      }
-    }
-    .params_row.is-color {
-      grid-template-columns: 1fr auto auto;
-    }
-    .params_row select,
-    .params_row input[type="text"] {
-      width: 100%;
-      padding: 0.45rem 0.6rem;
-      border-radius: 0.5rem;
-      border: var(--border-width) solid color-mix(in srgb, var(--text) 15%, transparent);
-      background: color-mix(in srgb, var(--dark-900) 50%, transparent);
+    /* the invitation, in full ink, says what the button under it opens */
+    .exp_hint {
+      margin: var(--space-3) 0 0;
       color: var(--text);
-      font-size: 0.8125rem;
     }
-    .params_toggle {
+    .exp_actions {
       display: flex;
-      gap: 0.2rem;
-      padding: 0.2rem;
-      border-radius: 0.6rem;
-      background: color-mix(in srgb, var(--dark-900) 50%, transparent);
-      & button {
-        flex: 1;
-        padding: 0.4rem;
-        border-radius: 0.45rem;
-        color: color-mix(in srgb, var(--text) 60%, transparent);
-        font-size: 0.75rem;
-        &[aria-pressed="true"] {
-          background: var(--light-100);
-          color: var(--brand-text);
-        }
-      }
-    }
-    .params_action {
-      width: 100%;
-      padding: 0.55rem;
-      border-radius: 0.6rem;
-      border: var(--border-width) solid color-mix(in srgb, var(--text) 18%, transparent);
-      color: var(--text);
-      font-size: 0.8125rem;
-      &:hover {
-        background: color-mix(in srgb, var(--text) 8%, transparent);
-      }
-    }
-    .params_row.is-action {
-      grid-template-columns: 1fr;
-    }
-    .exp_panel-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      flex-wrap: wrap;
       gap: 0.3rem;
-      padding: 0.75rem 1rem 1rem;
-      border-top: var(--border-width) solid color-mix(in srgb, var(--text) 10%, transparent);
+      margin-top: var(--space-4);
     }
-    .exp_btn {
-      padding: 0.6rem 0.3rem 0.5rem;
-      border-radius: var(--radius-round);
-      background: color-mix(in srgb, var(--text) 8%, transparent);
-      color: var(--text);
-      font-family: var(--display-family);
-      font-size: 0.95rem;
-      line-height: 1;
-      text-transform: uppercase;
-      text-align: center;
-      &.is-lime {
-        background: var(--brand-500);
-        color: var(--brand-text);
-      }
+    .exp_wrap.is-framed [data-toggle] {
+      display: none;
+    }
+    /* Hunter's standalone Params panel, kept as it is, placed under the nav */
+    .ksp {
+      top: 5rem !important;
+      bottom: 4.5rem !important;
+      right: var(--space-4) !important;
     }
     .exp_pager {
       position: absolute;
@@ -379,7 +172,7 @@ const next = live[(at + 1) % live.length];
     .exp_page {
       padding: 0.5rem 0.8rem;
       border-radius: var(--radius-round);
-      background: color-mix(in srgb, var(--dark-800) 60%, transparent);
+      background: color-mix(in srgb, var(--glass) 60%, transparent);
       backdrop-filter: blur(0.75rem);
       color: color-mix(in srgb, var(--text) 75%, transparent);
       &:hover {

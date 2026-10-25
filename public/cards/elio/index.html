@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Code-powered work card for Elio (elio.com), 2026-10-24, built on the Wispr
+     Flow card's engine (04-Wispr-Flow-work-card.html), the classic-script way
+     of the Ethos card so it also runs opened from disk:
+     - the miniature is the Elio home page Kinetic shipped (Home V3: the family
+       at golden hour inside the orbit of glass cards, the red sky of
+       transaction cards, the blue "With Elio" workflow board) rebuilt in HTML
+       and CSS layers at 1440px, scaled into a 16:10 card laid out K times
+       larger so tilted text stays sharp; one spring-driven loop, transforms
+       and opacity only
+     - idle, it tours the page on a fixed ~19 s loop of eased stops that starts
+       and ends on the hero: the hero, the red transaction sky, the blue
+       headline, the workflow board. On the way it plays the page's own scroll
+       choreography: the task cards gather in from the sides and dissolve as
+       the blue arch rises, the red copy and sky lag the scroll; and its
+       ambient motion: the glass cards ride the ring, the Elio AI task spins,
+       the Application stage fills, all on the tour's own clock so the
+       recorded loop is seamless
+     - hover tilts it toward the pointer and the layers separate by depth with
+       soft shadows that grow with height; the light is one round bloom that
+       follows the pointer; the tour keeps running under the hover
+     - press and drag scrolls the miniature either way: drag up, page goes
+       down (1:1); drag right, it scrubs further down, left back up (2.5x);
+       momentum and clamped ends; the tour picks up from there after a beat
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge,
+       on a transparent page; it pauses when hidden or when the parent posts
+       {type: "ks-card", visible: false}; {type: "ks-card", at: seconds} puts
+       the tour at that time (the site's resting loop is this tour recorded);
+       a click or tap posts {type: "ks-card-open"}. &bleed=N keeps N px of clear
+       frame round the card; &radius=N rounds it; &mat=F frames it (the
+       site's border: the window inset F x the card's width on every side, on
+       Elio's red, lifting off it on hover); touch drag is off unless
+       &touchdrag=1, so a swipe over the tile scrolls the site
+
+     elio.com no longer serves Kinetic's site (on 2026-10-24 it is a domain
+     sale page, kept in raw/), so the page is rebuilt from Kinetic's own
+     source (~/Developer/kinetic/elio-site: its Test Family and PP Neue York
+     Narrow, its logo, its family photograph and cutout, the nav, orbit and
+     button recipes) and from Hunter's recording of the shipped home page
+     (elio-hero.mp4, 2026-09-25, stills in raw/recordings) for the layout and
+     every word. -->
+<title>Elio work card</title>
+<script>
+  /* ?embed=1 is the site tile. &radius=N rounds the card's corners. &bleed=N: the site's iframe overhangs the tile by N px on every side
+     (room for the tilt), so the card keeps N px of clear frame round it and sits exactly on the tile at rest.
+     &touchdrag=1 lets a finger drag the miniature; off by default, so a swipe over the tile scrolls the site. */
+  (function () {
+    const q = new URLSearchParams(location.search);
+    if (q.get('embed') !== '1') return;
+    const h = document.documentElement;
+    h.classList.add('embed');
+    const b = parseFloat(q.get('bleed'));
+    if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    const r = parseFloat(q.get('radius'));   // &radius=N: the card's corner radius in px (the site passes 6)
+    if (r >= 0) h.style.setProperty('--card-r', r + 'px');
+  })();
+</script>
+<link rel="stylesheet" href="elio-card-src/css/card.css">
+<link rel="stylesheet" href="elio-card-src/css/site.css">
+</head>
+
+<body>
+<!-- Elio's own logo (public/brand/logo.svg), as symbols: the full lockup and the mark alone -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="elio-rays">
+      <path d="M14.5443 0H17.5785C17.7342 0 17.8554 0.13449 17.8364 0.289671L16.5919 10.7833C16.5763 10.9144 16.4655 11.0109 16.334 11.0109H15.7732C15.6416 11.0109 15.5309 10.9127 15.5153 10.7816L14.2864 0.287947C14.2691 0.13449 14.3885 0 14.5443 0Z"/>
+      <path d="M6.7174 2.90016L9.34656 1.38801C9.48157 1.31042 9.65292 1.36732 9.71523 1.51043L13.9039 11.2178C13.9558 11.3385 13.9091 11.4782 13.7948 11.5437L13.3085 11.8231C13.1942 11.8886 13.0488 11.8593 12.971 11.7541L6.63778 3.27776C6.54432 3.15362 6.5824 2.97602 6.71567 2.90016H6.7174Z"/>
+      <path d="M1.39336 9.30911L2.91131 6.69001C2.9892 6.55552 3.16748 6.51931 3.2921 6.61242L11.7923 12.9334C11.8979 13.011 11.9273 13.1559 11.8615 13.2697L11.5811 13.7542C11.5154 13.868 11.3752 13.9145 11.254 13.8628L1.51452 9.67637C1.37259 9.6143 1.31547 9.4436 1.39336 9.30911Z"/>
+      <path d="M32.1245 14.4732V17.5268C32.1245 17.6751 31.9982 17.7941 31.8493 17.7854L11.0757 16.5198C11.0601 16.5198 11.0445 16.5198 11.029 16.5198L0.289051 17.7682C0.135006 17.7854 0 17.6665 0 17.5113V14.4887C0 14.3335 0.135006 14.2145 0.290782 14.2318L11.0307 15.4957C11.0463 15.4974 11.0618 15.4974 11.0774 15.4957L31.8493 14.2145C31.9982 14.2059 32.1245 14.3232 32.1245 14.4732Z"/>
+      <path d="M2.91126 25.31L1.39331 22.6909C1.31542 22.5564 1.37254 22.3857 1.5162 22.3236L11.2609 18.151C11.382 18.0993 11.5222 18.1458 11.588 18.2596L11.8684 18.7441C11.9342 18.8579 11.9047 19.0028 11.7992 19.0803L3.29205 25.3876C3.16743 25.4807 2.98915 25.4428 2.91299 25.31H2.91126Z"/>
+      <path d="M9.34486 30.6137L6.7157 29.1016C6.5807 29.024 6.54435 28.8464 6.63782 28.7222L12.9831 20.2545C13.061 20.1494 13.2064 20.12 13.3206 20.1856L13.807 20.4649C13.9212 20.5304 13.968 20.6701 13.916 20.7908L9.71353 30.4913C9.65122 30.6327 9.47987 30.6896 9.34486 30.612V30.6137Z"/>
+      <path d="M17.5802 32H14.546C14.3903 32 14.2691 31.8655 14.2882 31.7103L15.5326 21.2167C15.5482 21.0856 15.659 20.9891 15.7905 20.9891H16.3513C16.4829 20.9891 16.5936 21.0873 16.6092 21.2184L17.8381 31.7121C17.8554 31.8655 17.736 32 17.5802 32Z"/>
+      <path d="M25.4071 29.1016L22.778 30.6137C22.643 30.6913 22.4716 30.6344 22.4093 30.4913L18.2206 20.7839C18.1687 20.6632 18.2155 20.5235 18.3297 20.458L18.8161 20.1787C18.9303 20.1132 19.0757 20.1425 19.1536 20.2477L25.485 28.7223C25.5785 28.8464 25.5404 29.024 25.4071 29.0999V29.1016Z"/>
+      <path d="M29.2132 6.69001L30.7312 9.30911C30.8091 9.4436 30.752 9.6143 30.6083 9.67637L20.8636 13.849C20.7425 13.9007 20.6023 13.8542 20.5365 13.7404L20.2561 13.2559C20.1903 13.1421 20.2198 12.9972 20.3253 12.9197L28.8324 6.61242C28.9571 6.51931 29.1353 6.55724 29.2115 6.69001H29.2132Z"/>
+      <path d="M22.778 1.388L25.4071 2.90015C25.5421 2.97774 25.5785 3.15534 25.485 3.27948L19.1397 11.7472C19.0618 11.8524 18.9164 11.8817 18.8022 11.8162L18.3158 11.5368C18.2016 11.4713 18.1549 11.3316 18.2068 11.2109L22.4093 1.51042C22.4716 1.36904 22.6429 1.31214 22.778 1.38973V1.388Z"/>
+    </g>
+    <g id="elio-word">
+      <path d="M8.59317 22.5264C6.95637 22.5264 5.48326 22.1786 4.17382 21.4829C2.86439 20.7873 1.84139 19.8052 1.10484 18.5367C0.368279 17.2682 0 15.8155 0 14.1787C0 12.6647 0.317129 11.3246 0.951386 10.1584C1.6061 8.97168 2.51657 8.05098 3.68279 7.39626C4.849 6.74154 6.18913 6.41419 7.70316 6.41419C9.07398 6.41419 10.2913 6.68016 11.3553 7.21212C12.4396 7.74408 13.2785 8.48064 13.8718 9.42179C14.4652 10.363 14.7618 11.4371 14.7618 12.6442C14.7618 13.1557 14.7005 13.6877 14.5777 14.2401L2.91554 13.7184C2.99738 15.6825 3.64187 17.2477 4.849 18.4139C6.05614 19.5597 7.63155 20.1326 9.57524 20.1326C10.6392 20.1326 11.611 19.9587 12.4908 19.6108C13.391 19.2426 14.1583 18.7106 14.7925 18.015C14.5675 19.3858 13.9332 20.4804 12.8898 21.2988C11.8463 22.1172 10.4141 22.5264 8.59317 22.5264ZM8.99214 12.5215C10.0356 12.5215 10.7517 12.3987 11.1404 12.1532C11.5292 11.9077 11.7235 11.4576 11.7235 10.8028C11.7235 9.86168 11.3962 9.12513 10.7415 8.59317C10.0867 8.06121 9.18651 7.79523 8.04075 7.79523C6.66993 7.79523 5.52418 8.23512 4.60348 9.1149C3.68279 9.97421 3.1406 11.1097 2.97692 12.5215H8.99214Z"/>
+      <path d="M17.697 0.583108H20.766V22.066H17.697V0.583108Z"/>
+      <path d="M25.0554 6.99729L28.1244 6.72109V22.066H25.0554V6.99729ZM26.5899 3.49865C25.9556 3.49865 25.4646 3.3452 25.1168 3.0383C24.769 2.71094 24.5951 2.28128 24.5951 1.74932C24.5951 1.21737 24.769 0.797938 25.1168 0.491039C25.4646 0.16368 25.9556 0 26.5899 0C27.2242 0 27.7152 0.16368 28.063 0.491039C28.4108 0.797938 28.5847 1.21737 28.5847 1.74932C28.5847 2.28128 28.4108 2.71094 28.063 3.0383C27.7152 3.3452 27.2242 3.49865 26.5899 3.49865Z"/>
+      <path d="M39.9328 22.5264C38.2551 22.5264 36.7513 22.1786 35.4214 21.4829C34.0915 20.7873 33.048 19.8257 32.291 18.5981C31.5545 17.35 31.1862 15.9383 31.1862 14.3629C31.1862 12.8284 31.5545 11.4576 32.291 10.2504C33.048 9.04329 34.0915 8.10213 35.4214 7.42695C36.7513 6.75177 38.2551 6.41419 39.9328 6.41419C41.6105 6.41419 43.1143 6.762 44.4442 7.45764C45.7741 8.15328 46.8073 9.12513 47.5439 10.3732C48.3009 11.6008 48.6794 13.0023 48.6794 14.5777C48.6794 16.1122 48.3009 17.483 47.5439 18.6901C46.8073 19.8973 45.7741 20.8384 44.4442 21.5136C43.1143 22.1888 41.6105 22.5264 39.9328 22.5264ZM40.117 21.1453C41.6924 21.1453 42.9404 20.5622 43.8611 19.396C44.7818 18.2298 45.2422 16.6544 45.2422 14.6698C45.2422 13.3194 45.0069 12.1225 44.5363 11.079C44.0862 10.0356 43.4417 9.22743 42.6028 8.65455C41.7844 8.08167 40.833 7.79523 39.7487 7.79523C38.1733 7.79523 36.9252 8.37834 36.0045 9.54455C35.0838 10.7108 34.6235 12.2862 34.6235 14.2708C34.6235 15.6212 34.8485 16.8181 35.2986 17.8615C35.7692 18.905 36.4137 19.7131 37.2321 20.286C38.071 20.8589 39.0326 21.1453 40.117 21.1453Z"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Elio, elio.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- the grounds: the Glow and Sunrise sky that runs from the hero into the blue, lagging the scroll -->
+              <div class="mv sky-mv" id="skyMv"><div class="sky" data-layer="sky" data-depth="-0.2"></div></div>
+              <div class="blue-bg" data-layer="blue ground" data-depth="-0.2"></div>
+              <div class="mv arch-mv" id="archMv"><div class="arch" data-layer="blue arch" data-depth="-0.12"></div></div>
+
+              <!-- hero: the family at golden hour inside the orbit -->
+              <section class="sec hero" id="s-hero" data-tone="dark">
+                <div class="photo" data-layer="photo" data-depth="0"><img src="elio-card-src/img/elio-02.webp" alt=""></div>
+                <svg class="ring" data-layer="ring" data-depth="0.06" viewBox="0 0 1638 1638" fill="none"><circle cx="819" cy="819" r="818"/></svg>
+                <div class="orbit" id="orbit" data-layer="glass cards" data-depth="0.16">
+                  <div class="sat"><div class="glass"><span class="lab">Interest rate</span><span class="big">6.125%</span>
+                    <svg class="chart bars" viewBox="0 0 168 44"><rect x="0" y="9" width="15" height="35" rx="3"/><rect x="21" y="14" width="15" height="30" rx="3"/><rect x="42" y="11" width="15" height="33" rx="3"/><rect x="63" y="17" width="15" height="27" rx="3"/><rect x="84" y="21" width="15" height="23" rx="3"/><rect x="105" y="26" width="15" height="18" rx="3"/><rect x="126" y="24" width="15" height="20" rx="3"/><rect class="hot" x="147" y="30" width="15" height="14" rx="3"/></svg>
+                    <span class="act">Lock in</span></div></div>
+                  <div class="sat"><div class="glass"><span class="lab">Pre-approved</span><span class="big">$418,000</span><span class="act">View letter</span></div></div>
+                  <div class="sat"><div class="glass"><span class="lab">Clear to close</span><span class="big">11 days</span>
+                    <svg class="chart track" viewBox="0 0 168 12"><line class="rail" x1="4" y1="6" x2="164" y2="6"/><line class="fillline" x1="4" y1="6" x2="122" y2="6"/><circle class="head" cx="122" cy="6" r="4"/></svg>
+                    <span class="act">On track</span></div></div>
+                  <div class="sat"><div class="glass"><span class="lab">Closing day</span><span class="big">Oct 12</span><span class="act">Add to calendar</span></div></div>
+                  <div class="sat"><div class="glass"><span class="lab">Appraisal</span><span class="big">$425,000</span>
+                    <svg class="chart spark" viewBox="0 0 168 44"><path class="fill" d="M2 36 C 26 34, 44 30, 62 30 S 100 24, 122 18 S 152 8, 164 6 L 164 44 L 2 44 Z"/><path class="line" d="M2 36 C 26 34, 44 30, 62 30 S 100 24, 122 18 S 152 8, 164 6"/><circle class="dot" cx="164" cy="6" r="3.2"/></svg>
+                    <span class="act">Complete</span></div></div>
+                  <div class="sat"><div class="glass"><span class="lab">Monthly payment</span><span class="big">$2,180</span><span class="act">See breakdown</span></div></div>
+                </div>
+                <div class="people" data-layer="people" data-depth="0.2"><img src="elio-card-src/img/elio-02-people.webp" alt=""><div class="tint"></div></div>
+                <h1 class="hero-h" data-layer="headline" data-depth="0.7" data-shadow="0.2,0.3,14">The mortgage company<br>built around you.</h1>
+                <p class="hero-p" data-layer="body copy" data-depth="0.5">A new operating model for mortgage: human relationships up front, intelligent agents behind the scenes, and origination that is simpler, more connected and more predictable.</p>
+                <div class="ctas" data-layer="buttons" data-depth="0.85" data-shadow="0.2,0.34,10"><span class="pill blue">Talk to us</span><span class="pill ghost">For loan officers</span></div>
+              </section>
+
+              <!-- the red sky: real estate transactions are messy -->
+              <section class="sec sec-red" id="s-red" data-tone="dark">
+                <div class="mv red-copy-mv" id="redCopyMv">
+                  <div class="red-copy" id="redCopy">
+                    <h2 class="red-h" data-layer="headline" data-depth="0.7" data-shadow="0,0.26,14">Real estate transactions are<br>messy. There are always<br>hundreds of things in play.</h2>
+                    <p class="red-p" data-layer="body copy" data-depth="0.5">Documents in one inbox. Updates in another. Deadlines keep moving, handoffs get lost, and everyone is waiting on someone else. Who owns the next step, and when will it happen?</p>
+                  </div>
+                </div>
+              </section>
+
+              <!-- the task cards, gathering in from both sides (their words as on the shipped page; a card is in the deck only where its text could be read) -->
+              <div class="tasks" id="tasks">
+                <div class="tk-mv" data-side="l" style="left:-34px;top:1212px"><div class="tk" data-layer="task" data-depth="0.26" data-shadow="-0.2,0.3,16"><span class="due">Due today</span><b>Title commitment</b></div></div>
+                <div class="tk-mv" data-side="l" style="left:70px;top:1276px"><div class="tk" data-layer="task" data-depth="0.32" data-shadow="-0.2,0.3,16"><span class="due">Due 3 days ago</span><b>Earnest money receipt</b><small>Who has the latest copy?</small></div></div>
+                <div class="tk-mv" data-side="l" style="left:-14px;top:1394px"><div class="tk" data-layer="task" data-depth="0.36" data-shadow="-0.2,0.3,16"><span class="due">Due in 2 hours</span><b>Employment verification</b><small>Second follow-up</small></div></div>
+                <div class="tk-mv" data-side="l" style="left:112px;top:1468px"><div class="tk" data-layer="task" data-depth="0.44" data-shadow="-0.2,0.3,16"><span class="due">Due in 2 days</span><b>Repair addendum</b><small>Two versions in the thread</small></div></div>
+                <div class="tk-mv" data-side="l" style="left:-6px;top:1584px"><div class="tk" data-layer="task" data-depth="0.3" data-shadow="-0.2,0.3,16"><span class="due">Due yesterday</span><b>Gift letter</b><small>Donor signature missing</small></div></div>
+                <div class="tk-mv" data-side="l" style="left:104px;top:1652px"><div class="tk" data-layer="task" data-depth="0.4" data-shadow="-0.2,0.3,16"><span class="due">Due in 4 hours</span><b>Rate lock confirmation</b><small>Expires before closing?</small></div></div>
+                <div class="tk-mv" data-side="l" style="left:-40px;top:1764px"><div class="tk" data-layer="task" data-depth="0.28" data-shadow="-0.2,0.3,16"><span class="due">Due in 3 days</span><b>Flood certification</b></div></div>
+                <div class="tk-mv" data-side="l" style="left:28px;top:1826px"><div class="tk" data-layer="task" data-depth="0.34" data-shadow="-0.2,0.3,16"><span class="due">Due tomorrow</span><b>Pay stubs</b><small>Only one of two received</small></div></div>
+                <div class="tk-mv" data-side="l" style="left:150px;top:1880px"><div class="tk" data-layer="task" data-depth="0.46" data-shadow="-0.2,0.3,16"><span class="due">Due in 6 days</span><b>Condo questionnaire</b><small>HOA hasn’t replied</small></div></div>
+                <div class="tk-mv" data-side="l" style="left:52px;top:1950px"><div class="tk" data-layer="task" data-depth="0.52" data-shadow="-0.2,0.3,16"><span class="due">Due in 1 week</span><b>Wire instructions</b><small>Verify by phone first</small></div></div>
+
+                <div class="tk-mv" data-side="r" style="right:24px;top:1196px"><div class="tk" data-layer="task" data-depth="0.26" data-shadow="-0.2,0.3,16"><span class="due">Due today</span><b>Appraisal review</b><small>Revision still outstanding</small></div></div>
+                <div class="tk-mv" data-side="r" style="right:118px;top:1262px"><div class="tk" data-layer="task" data-depth="0.34" data-shadow="-0.2,0.3,16"><span class="due">Due in 3 days</span><b>Closing disclosure</b><small>Figures don’t match yet</small></div></div>
+                <div class="tk-mv" data-side="r" style="right:-26px;top:1356px"><div class="tk" data-layer="task" data-depth="0.4" data-shadow="-0.2,0.3,16"><span class="due">Due in 5 days</span><b>Final walk-through</b><small>Waiting for a time that works</small></div></div>
+                <div class="tk-mv" data-side="r" style="right:152px;top:1430px"><div class="tk" data-layer="task" data-depth="0.48" data-shadow="-0.2,0.3,16"><span class="due">Due next week</span><b>Signature package</b><small>Notary hasn’t confirmed</small></div></div>
+                <div class="tk-mv" data-side="r" style="right:6px;top:1530px"><div class="tk" data-layer="task" data-depth="0.36" data-shadow="-0.2,0.3,16"><span class="due">Due tomorrow</span><b>Termite inspection</b><small>Report not uploaded</small></div></div>
+                <div class="tk-mv" data-side="r" style="right:136px;top:1606px"><div class="tk" data-layer="task" data-depth="0.3" data-shadow="-0.2,0.3,16"><span class="due">Due in 2 days</span><b>Bank statements</b></div></div>
+                <div class="tk-mv" data-side="r" style="right:70px;top:1676px"><div class="tk" data-layer="task" data-depth="0.42" data-shadow="-0.2,0.3,16"><span class="due">Due in 4 days</span><b>Survey</b><small>Seller can’t find the original</small></div></div>
+                <div class="tk-mv" data-side="r" style="right:-30px;top:1752px"><div class="tk" data-layer="task" data-depth="0.28" data-shadow="-0.2,0.3,16"><span class="due">Due in 5 days</span><b>Home insurance</b></div></div>
+                <div class="tk-mv" data-side="r" style="right:112px;top:1810px"><div class="tk" data-layer="task" data-depth="0.38" data-shadow="-0.2,0.3,16"><span class="due">Due 2 days ago</span><b>Tax transcripts</b><small>IRS request still open</small></div></div>
+                <div class="tk-mv" data-side="r" style="right:164px;top:1898px"><div class="tk" data-layer="task" data-depth="0.46" data-shadow="-0.2,0.3,16"><span class="due">Due in 3 days</span><b>Seller credits</b><small>Amount changed twice</small></div></div>
+                <div class="tk-mv" data-side="r" style="right:8px;top:1946px"><div class="tk" data-layer="task" data-depth="0.54" data-shadow="-0.2,0.3,16"><span class="due">Due next week</span><b>Power of attorney</b><small>Lender approval needed</small></div></div>
+              </div>
+
+              <!-- the blue: with Elio, you own the relationship -->
+              <section class="sec sec-blue" id="s-blue" data-tone="light">
+                <h2 class="blue-h" id="blueH" data-layer="headline" data-depth="0.7" data-shadow="0,0.16,14">With Elio, you own the relationship.<br>We do the heavy lifting.</h2>
+                <p class="blue-p" data-layer="body copy" data-depth="0.5">From the first application to life after closing, Elio helps prepare the work, coordinate each handoff, and keep everyone moving, with you in control.</p>
+                <div class="stages" data-layer="stage tabs" data-depth="0.6" data-shadow="0,0.2,10">
+                  <span class="stg on"><i class="stg-fill" id="stageFill"></i><em>Application</em></span><span class="stg">Processing</span><span class="stg">Post-transaction</span>
+                </div>
+
+                <div class="board" id="board">
+                  <div class="panel side-l" data-layer="borrower" data-depth="0.3" data-shadow="0,0.14,20">
+                    <h3>Borrower</h3><hr>
+                    <div class="row"><i class="ring-o"></i>Confirm contact details<time>Sent 2 hours ago</time></div>
+                    <div class="row"><i class="ring-o"></i>Upload photo ID<time>Sent yesterday</time></div>
+                  </div>
+                  <div class="panel lo" data-layer="loan officer" data-depth="0.42" data-shadow="0,0.18,26">
+                    <h3><svg class="mark" viewBox="0 0 32.1245 32"><use href="#elio-rays"/></svg>Elio powered Loan Officer</h3>
+                    <div class="ai" data-layer="Elio AI" data-depth="0.6" data-shadow="0.42,0.16,16">
+                      <h4>Elio AI</h4>
+                      <div class="row"><i class="spin" id="aiSpin"></i>Check income-document consistency</div>
+                      <div class="row done"><i class="chk"><svg viewBox="0 0 12 12"><path d="M3.2 6.2l1.9 1.9 3.8-4"/></svg></i>Check application completeness</div>
+                      <div class="row done"><i class="chk"><svg viewBox="0 0 12 12"><path d="M3.2 6.2l1.9 1.9 3.8-4"/></svg></i>Prepare document checklist</div>
+                    </div>
+                    <hr class="hr-a">
+                    <h4 class="nx">Next up</h4>
+                    <div class="row r1"><i class="ring-o"></i>Upload bank statements<span class="send" data-layer="button" data-depth="0.62">Send to borrower</span></div>
+                    <div class="row r2"><i class="ring-o"></i>Share purchase contract<span class="send" data-layer="button" data-depth="0.62">Send to agent</span></div>
+                    <hr class="hr-b">
+                    <h4 class="wt">Waiting on borrower</h4>
+                    <div class="row r3"><i class="ring-o"></i>Review loan estimate<time>Opened 1 hour ago</time></div>
+                  </div>
+                  <div class="panel side-r" data-layer="agent" data-depth="0.3" data-shadow="0,0.14,20">
+                    <h3>Agent</h3><hr>
+                    <div class="row"><i class="ring-o"></i>Confirm offer terms</div>
+                    <div class="row"><i class="ring-o"></i>Add title-company contact</div>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <!-- the nav, fixed in the viewport: one glass capsule of segment pills (Nav.astro) -->
+            <nav class="nav abs" id="nav">
+              <div class="nav-bar" data-layer="nav" data-depth="0.55" data-shadow="0,0.2,14">
+                <span class="seg mark"><svg viewBox="0 0 89 32"><use href="#elio-rays"/><g transform="translate(40.12, 4.74)"><use href="#elio-word"/></g></svg></span>
+                <span class="seg">Loan officers</span><span class="seg">Partners</span><span class="seg">Borrowers</span><span class="seg">Platform</span><span class="seg">Company</span>
+                <span class="seg cta">Talk to us</span>
+              </div>
+            </nav>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Elio</h3>
+      <p><span>Fintech &amp; web3</span><span>Brand, Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="elio-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the Dawn card's way: the studio's own Params,
+   defineParams from /shared/params/params.js. Embedded on the site there is
+   no panel and nothing is fetched, so the module is only loaded here, and
+   only when served (opened from disk there is no studio to load it from). */
+const card = window.__elioCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const D = card.defaults;
+    const TOOL = 'elio work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],        // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],    // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],        // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],        // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],// eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],         // the round light under the pointer
+        bloomSize: [D['light.bloomSize'], 0.4, 2.5, 0.05], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],
+        shadow: [D['light.shadow'], 0, 1, 0.01],
+      },
+      motion: {
+        scrollSpeed: [D['motion.scrollSpeed'], 0, 3, 0.05],
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [D['drag.momentum'], 0, 3, 0.05],      // how far a flick carries
+        scrub: [D['drag.scrub'], 0, 6, 0.1],             // px of page per px of sideways drag
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],     // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: D['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],                // the mat round the window (Elio's red; the site's &mat=F always frames it)
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

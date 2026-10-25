@@ -1,0 +1,553 @@
+---
+import MEDIA from "@/data/media.json";
+import CARDS from "@/data/cards.json";
+import LOOPS from "@/data/card-loops.json";
+import { MAT, cardSrc } from "@/data/card-embed.js";
+import SITES from "@/data/sites.json";
+import { WORK } from "@/data/work.js";
+import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
+import ClientLogos from "@/components/content/ClientLogos.astro";
+import StudioFilmCard from "@/components/content/StudioFilmCard.astro";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The line over the work; a "|" breaks it onto a second line. */
+  heading?: string;
+  /** Rows of work that come through (when `only` isn't given). */
+  rows?: number;
+  /** Exactly these projects (slugs), in this order, each once. */
+  only?: string[];
+}
+
+const { render = true, heading = "Captivating websites that | tell compelling stories", rows = 8, only } = Astro.props;
+const media = MEDIA as Record<string, { w: number; h: number; ground: string; video: boolean }>;
+const pool = only
+  ? only.map((slug) => WORK.find((w) => w.slug === slug)).filter((w): w is (typeof WORK)[number] => Boolean(w && media[w.cover]))
+  : WORK.filter((w) => media[w.cover]?.video);
+
+// rows of two (Hunter, Oct 24: "always two columns"), dealt from the work in
+// order; with `only`, every project exactly once (a lone last tile if odd)
+let next = 0;
+const deal = () => pool[next++ % pool.length];
+const list = only
+  ? Array.from({ length: Math.ceil(pool.length / 2) }, (_, i) => pool.slice(i * 2, i * 2 + 2))
+  : Array.from({ length: rows }, () => [deal(), deal()]);
+/* Hunter, Oct 24: "We're loading in way too much on the home page." Every
+   tile is a still until it's hovered (src/scripts/card-hover.js): a project
+   with a code-powered card loads the live card then, one without plays its
+   loop. The few in card-loops.json rest on a loop recorded from their own
+   card instead of the still, playing while their row is near the middle. */
+const cards = CARDS as string[];
+const loops = LOOPS as string[];
+---
+
+{
+  render && (
+    <section class="wheel_wrap" data-wheel>
+      <div class="wheel_stage">
+        <div class="wheel_space">
+          <div class="wheel_drum">
+            {list.map((row, i) => (
+              <div class="wheel_row" data-row={i} style={`--count:${row.length}`}>
+                {row.map((w, j) => {
+                  const card = cards.includes(w.slug);
+                  const ext = w.case ? {} : { target: "_blank", rel: "noopener" };
+                  const href = w.case ? `/work/${w.slug}` : w.url;
+                  // a click opens the project's modal (src/scripts/project-modal.js)
+                  const site = (SITES as Record<string, { live?: boolean; hosted?: string; still?: string }>)[w.slug];
+                  const still = card ? `/cards/${w.slug}/poster.jpg` : `/media/${w.cover}.jpg`;
+                  const project = {
+                    "data-project": w.slug, "data-name": w.name, "data-url": w.url,
+                    "data-site": site?.hosted ?? (site?.live ? w.url : undefined),
+                    "data-still": site?.still ?? still, "data-still-mat": site?.still ? undefined : "1", "data-loop": media[w.cover].video ? `/media/${w.cover}.mp4` : undefined, "data-inset": MAT,
+                    // the tile whole, mat and all, for the modal's border (a card's poster; else the mat's colour)
+                    "data-framed": card ? `/cards/${w.slug}/poster.jpg` : undefined, "data-mat-color": card ? undefined : media[w.cover].ground,
+                  };
+                  return (
+                    <div class="wheel_item">
+                    <div
+                      class:list={["wheel_card", card ? "is-3d" : "is-matted"]}
+                      style={`--mat:${MAT * 100}cqw;--ground:${media[w.cover].ground}`}
+                      data-card-src={card ? cardSrc(w.slug, { bleed: 24 }) : undefined}
+                      data-loop-src={!card && media[w.cover].video ? `/media/${w.cover}.mp4` : undefined}
+                      data-card-title={`${w.name}, a live miniature of the site`}
+                    >
+                      <a class="wheel_hit" href={href} {...ext} {...project} data-card-link aria-label={w.name}>
+                        {card && loops.includes(w.slug) ? (
+                          <video class="wheel_still" data-rest data-src={`/media/card-${w.slug}.mp4`} poster={`/cards/${w.slug}/poster.jpg`} muted loop playsinline preload="none" aria-hidden="true" />
+                        ) : (
+                          <img class="wheel_still" src={card ? `/cards/${w.slug}/poster.jpg` : `/media/${w.cover}.jpg`} alt="" loading="lazy" decoding="async" />
+                        )}
+                      </a>
+                      <span class="wheel_hover" data-card-stage />
+                    </div>
+                    {/* the caption, always there under the tile, like the Work grid's */}
+                    {/* the Studio tool panel, in the gap the zip leaves over the first row's right tile */}
+                    {i === 0 && j === 1 && <StudioFilmCard class="wheel_film" />}
+                    <p class="wheel_caption">
+                      <a class="wheel_name text-style-h5" href={href} {...ext} {...project} tabindex="-1">{w.name}</a>
+                      <span class="wheel_meta text-style-label">
+                        <span>{w.industry}</span>
+                        <span>{w.does.join(", ")}</span>
+                      </span>
+                    </p>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div class="wheel_head">
+          <h1 class="wheel_heading text-style-h3">
+            {heading.split("|").map((line) => (
+              <span class="wheel_line">
+                {line.trim().split(" ").map((w) => (
+                  <span class="wheel_word"><span>{w}</span></span>
+                ))}
+              </span>
+            ))}
+          </h1>
+          <AwardsLaurels compact class="wheel_awards" />
+          <ClientLogos class="wheel_logos" />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+  import { armCards } from "@/scripts/card-hover.js";
+  import { heroParticles } from "@/scripts/hero-particles.js";
+  import { INTERLUDES } from "@/data/work.js";
+  import { HOME_LOOK } from "@/data/home-look.js";
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* The work comes up from below on a long, shallow curve, tied to the
+     scroll: a row arrives tilted back, stands up as it crosses the middle
+     of the screen and turns away over the top, out of the way. Only a
+     stretch of the curve is ever on screen, so it reads as work moving
+     past, not a wheel. Native scroll, pinned while the rows go by; the
+     page's notched edges travel with it. */
+  document.querySelectorAll<HTMLElement>("[data-wheel]").forEach((root) => {
+    const stage = root.querySelector<HTMLElement>(".wheel_stage")!;
+    const drum = root.querySelector<HTMLElement>(".wheel_drum")!;
+    const head = root.querySelector<HTMLElement>(".wheel_head")!;
+    const words = root.querySelectorAll(".wheel_word > span");
+    const rows = [...root.querySelectorAll<HTMLElement>(".wheel_row")].map((el, i) => ({
+      el,
+      i,
+      n: el.querySelectorAll(".wheel_card").length,
+      h: 0,
+      at: 0, // degrees along the curve from the first row
+      // the resting loops (the top few); every other tile is a still until hovered
+      videos: [...el.querySelectorAll<HTMLVideoElement>("video[data-rest]")],
+      right: el.querySelector<HTMLElement>(".wheel_item:nth-child(2)"),
+      playing: false,
+    }));
+    const N = rows.length;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // on a phone the wheel stays light (Hunter, Oct 25: "For mobile, we should kill all
+    // of this so it's super performant"): no lead, no sinking back, stills instead of loops
+    const phone = !matchMedia("(hover: hover) and (pointer: fine)").matches;
+    const particles = reduced ? null : heroParticles(head, stage);
+    // the lines the particles spell between the sets: the gap after every other row, from the first
+    const gaps = INTERLUDES.map((_, k) => 2 * k).filter((r) => r + 1 < N);
+    particles?.lines(INTERLUDES.slice(0, gaps.length));
+
+    // geometry, in px and degrees: rows sit along a circle of radius R whose
+    // centre is level with the middle of the screen; every card keeps the
+    // site's own 16:10, so a row of two is taller than a row of three
+    let R = 900, H = 260;
+    // the parallax (Hunter, Oct 24: "a parallax effect from left to right
+    // columns as I scroll, like one scrolls faster"): the right tile of each
+    // row sits lower than the zip as the row comes up, level with it in the
+    // middle, higher as it leaves, so the right column covers more ground and
+    // runs ahead of the left. PARALLAX is its lead per degree of the curve, as
+    // a share of a tile's height (HOME_LOOK.wheel, which the homepage's Params tune).
+    const WHEEL = HOME_LOOK.wheel;
+    let tileH = 0, zipH = 0;
+    let START = -38; // the first row at the top of the page: peeking up at the fold (set in layout)
+    const LEAVE = 78; // gone over the top
+    const st = { scroll: 0, intro: reduced ? 0 : -28 };
+
+    const layout = () => {
+      const w = stage.clientWidth, h = stage.clientHeight;
+      const inner = drum.clientWidth;
+      const gap = Math.max(12, w * 0.012);
+      const narrow = w < 768;
+      // two across, each at the site's 16:10, with its caption under it
+      const tile = ((inner - gap) / 2) * 0.625;
+      const capGap = narrow ? 8 : 12;
+      // the zip (Hunter, Oct 24: "stagger the cards vertically ... the right
+      // columns should go down a little bit"): the right tile of each pair
+      // sits this much lower than the left, the pair still centred on the curve
+      const zip = tile * WHEEL.zip;
+      tileH = tile;
+      zipH = zip;
+      root.style.setProperty("--tile-h", `${tile.toFixed(1)}px`);
+      root.style.setProperty("--cap-gap", `${capGap}px`);
+      root.style.setProperty("--zip", `${zip.toFixed(1)}px`);
+      for (const r of rows) {
+        // the row's taller caption (a long name wraps on a phone)
+        const cap = Math.max(0, ...[...r.el.querySelectorAll<HTMLElement>(".wheel_caption")].map((c) => c.offsetHeight));
+        r.h = tile + capGap + cap + (r.n > 1 ? zip : 0);
+        r.el.style.setProperty("--row-h", `${r.h.toFixed(1)}px`);
+      }
+      H = rows.reduce((a, r) => a + r.h, 0) / N;
+      R = Math.max(h * 0.95, H * 3.2) * WHEEL.curve;
+      // each row half its own height plus half the next one's, and a clear
+      // gap of half an average row between them, along the curve
+      let at = 0;
+      rows.forEach((r, i) => {
+        if (i) at += (((rows[i - 1].h + r.h) / 2 + H * 0.5) / R) * (180 / Math.PI);
+        r.at = at;
+      });
+      root.style.setProperty("--row-gap", `${gap.toFixed(1)}px`);
+      // the first row's top third shows above the fold when the page opens
+      const drop = Math.min(0.95 * R, h / 2 + rows[0].h * 0.18);
+      START = -Math.asin(drop / R) * (180 / Math.PI);
+    };
+
+    const span = () => rows[N - 1].at + LEAVE - START; // degrees of turn until the last row has left
+
+    const place = () => {
+      const turn = st.scroll * span() + st.intro;
+      for (const r of rows) {
+        const phi = START + turn - r.at; // 0 = level with the middle, + = above
+        const show = phi > -80 && phi < 80;
+        r.el.style.visibility = show ? "visible" : "hidden";
+        if (show) {
+          const rad = (phi * Math.PI) / 180;
+          const y = -R * Math.sin(rad);
+          const z = phone ? 0 : R * (Math.cos(rad) - 1) * WHEEL.depth;
+          r.el.style.transform = `translate3d(0, ${y.toFixed(1)}px, ${z.toFixed(1)}px) rotateX(${phi.toFixed(2)}deg)`;
+          r.el.style.opacity = Math.min(1, Math.max(0, (78 - Math.abs(phi)) / WHEEL.fade)).toFixed(3);
+          r.el.style.pointerEvents = Math.abs(phi) < 40 ? "auto" : "none";
+          if (r.right) r.right.style.translate = `0 ${(zipH / 2 - (reduced || phone ? 0 : phi * WHEEL.parallax * tileH)).toFixed(1)}px`;
+        }
+        const want = show && Math.abs(phi) < 45 && !reduced && !phone;
+        if (want !== r.playing) {
+          r.playing = want;
+          for (const v of r.videos) {
+            if (want && v.offsetParent) {
+              if (!v.src) v.src = v.dataset.src!;
+              v.play().catch(() => {});
+            } else v.pause();
+          }
+        }
+      }
+      // the hero steps back as the first row nears the middle: it turns into
+      // particles that drift off (src/scripts/hero-particles.js), or without
+      // WebGL or with reduced motion, it fades and rises; from the first
+      // degree of scroll (Hunter, Oct 24: "let's do it the second we start scrolling")
+      const out = Math.min(1, Math.max(0, turn / WHEEL.dissolve));
+      if (particles) {
+        // the line nearest the middle of the screen, in its gap: spelled out as
+        // the gap rises from the bottom, held through the middle, let go near the top
+        let line = null;
+        let near = -1, nearPhi = Infinity;
+        gaps.forEach((r, k) => {
+          const phi = START + turn - (rows[r].at + rows[r + 1].at) / 2;
+          if (Math.abs(phi) < Math.abs(nearPhi)) (nearPhi = phi), (near = k);
+        });
+        if (near >= 0 && Math.abs(nearPhi) < 70) {
+          const r = gaps[near];
+          const base = stage.getBoundingClientRect();
+          const gapY = (rows[r].el.getBoundingClientRect().bottom + rows[r + 1].el.getBoundingClientRect().top) / 2 - base.top;
+          const half = base.height / 2;
+          const u = (gapY - half) / half; // 1 at the bottom of the screen, -1 at the top
+          const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+          line = { k: near, x: base.width / 2, y: gapY, a: clamp01((1 - u) / 0.6), d: clamp01((-0.35 - u) / 0.6) };
+        }
+        particles.update({ hero: out, line });
+        head.style.opacity = particles.domOpacity(out).toFixed(3);
+      } else {
+        head.style.opacity = (1 - out).toFixed(3);
+        head.style.transform = `translateY(${(-out * 6).toFixed(2)}vh) scale(${(1 - out * 0.04).toFixed(3)})`;
+      }
+      head.style.visibility = out >= 1 ? "hidden" : "visible";
+      // the notched edges move with the surface
+      dispatchEvent(new CustomEvent("ks:ticks", { detail: -((turn * Math.PI) / 180) * R }));
+    };
+
+    const relayout = () => {
+      layout();
+      place();
+      ScrollTrigger.refresh();
+    };
+    new ResizeObserver(relayout).observe(stage);
+    // the homepage's Params changed the wheel
+    addEventListener("ks:home-look", relayout);
+    layout();
+    armCards(root);
+
+    // pinned for as long as the rows take to come through
+    ScrollTrigger.create({
+      trigger: root,
+      start: "top top",
+      end: () => `+=${Math.round(span() * (R / 60))}`,
+      pin: stage,
+      scrub: 0.5,
+      onUpdate: (s) => {
+        st.scroll = s.progress;
+        place();
+      },
+    });
+
+    // on arrival the first rows rise in from below and settle, no spring
+    const start = () => {
+      root.classList.add("is-in");
+      gsap.fromTo(words, { yPercent: 110, y: 0 }, { yPercent: 0, y: 0, duration: reduced ? 0 : 1, stagger: 0.035, ease: "expo.out" });
+      if (!reduced) gsap.to(st, { intro: 0, duration: 1.8, ease: "power3.out", onUpdate: place });
+      place();
+    };
+    if (document.documentElement.dataset.intro === "done") start();
+    else addEventListener("ks:intro-done", start, { once: true });
+    place();
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .wheel_wrap {
+      position: relative;
+    }
+    .wheel_stage {
+      position: relative;
+      height: 100svh;
+      overflow: hidden;
+    }
+    /* the rows pass over the hero as they rise, so its fading words never
+       show through a tile; only the rows themselves take the pointer */
+    .wheel_space {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      perspective: 1250px;
+      perspective-origin: 50% 50%;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+    .wheel_wrap.is-in .wheel_space {
+      opacity: 1;
+    }
+    .wheel_drum {
+      position: absolute;
+      left: var(--site-margin);
+      right: var(--site-margin);
+      top: 50%;
+      transform-style: preserve-3d;
+    }
+    .wheel_row {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(var(--row-h) / -2);
+      display: grid;
+      grid-template-columns: repeat(var(--count), calc((100% - var(--row-gap)) / 2));
+      justify-content: center;
+      gap: var(--row-gap);
+      height: var(--row-h);
+      visibility: hidden;
+      backface-visibility: hidden;
+      will-change: transform, opacity;
+    }
+    .wheel_item {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: var(--cap-gap);
+      min-width: 0;
+      &:first-child:not(:only-child) {
+        translate: 0 calc(var(--zip, 0px) / -2);
+      }
+      &:nth-child(2) {
+        translate: 0 calc(var(--zip, 0px) / 2);
+      }
+    }
+    .wheel_card {
+      position: relative;
+      display: block;
+      flex: none;
+      height: var(--tile-h);
+      border-radius: var(--radius-media);
+      background: var(--dark-700);
+      color: var(--text);
+      &.is-3d {
+        background: none;
+      }
+      &.is-hovered {
+        z-index: 1;
+      }
+    }
+    /* a tile with no card yet: the recording on a mat, the border a card draws for itself */
+    .wheel_card.is-matted {
+      container-type: inline-size;
+      /* the recording's own ground, so a clip that sits on its brand colour gets one border, not two */
+      background: var(--ground, var(--mat-color));
+      & .wheel_hit,
+      & .card-loop {
+        inset: var(--mat);
+        border-radius: calc(var(--radius-media) * 0.75);
+      }
+      & .card-loop {
+        position: absolute;
+        width: auto;
+        height: auto;
+      }
+    }
+    .wheel_hit {
+      position: absolute;
+      inset: 0;
+      display: block;
+      overflow: hidden;
+      border-radius: var(--radius-media);
+    }
+    .wheel_still {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: opacity 0.3s ease;
+    }
+    /* the still stays put under the card while it fades in, then steps aside; nothing scales */
+    .wheel_card.is-live.is-hovered .wheel_still {
+      opacity: 0;
+      transition: opacity 0.15s ease 0.22s;
+    }
+    /* the hover layer: a 3D card's frame (overhanging the tile so the tilt has room) or a loop */
+    .wheel_hover {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      & .card-frame {
+        position: absolute;
+        inset: -24px;
+        width: calc(100% + 48px);
+        height: calc(100% + 48px);
+        border: 0;
+        color-scheme: normal;
+        background: transparent;
+        opacity: 0;
+        transition: opacity 0.35s ease;
+      }
+      & .card-loop {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: var(--radius-media);
+        opacity: 0;
+        transition: opacity 0.35s ease;
+      }
+    }
+    /* a quick crossfade: the card is already on the loop's frame (card-hover.js), so a long
+       one only showed the two drifting apart (Oct 25: "a bit of a flicker on hover") */
+    .wheel_card.is-live.is-hovered .wheel_hover :is(.card-frame, .card-loop) {
+      opacity: 1;
+      transition-duration: 0.25s;
+    }
+    .wheel_card.is-live .card-frame {
+      pointer-events: auto;
+    }
+    .wheel_caption {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-3);
+      margin: 0;
+    }
+    /* the Work grid's caption: name in h5, industry and disciplines as labels */
+    .wheel_name {
+      color: inherit;
+      text-decoration: none;
+    }
+    .wheel_meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.2rem;
+      text-align: right;
+      color: color-mix(in srgb, var(--text) 50%, transparent);
+    }
+    @media (width < 48rem) {
+      .wheel_caption {
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+      .wheel_meta {
+        align-items: flex-start;
+        text-align: left;
+        & > span + span {
+          display: none;
+        }
+      }
+    }
+    .wheel_head {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(var(--nav-height) + var(--space-6));
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-5);
+      padding: 0 var(--site-margin);
+      pointer-events: none;
+      transform-origin: 50% 0;
+      & .awards_wrap,
+      & .logos_wrap {
+        pointer-events: auto;
+      }
+    }
+    .wheel_heading {
+      margin: 0;
+      text-align: center;
+    }
+    .wheel_line {
+      display: block;
+    }
+    .wheel_word {
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: top;
+      padding-right: 0.2em;
+      & > span {
+        display: inline-block;
+        transform: translateY(110%);
+      }
+    }
+    .wheel_awards,
+    .wheel_logos {
+      opacity: 0;
+      transition: opacity 1s ease 0.5s;
+    }
+    /* the Studio tool panel sits over its tile, inside the gap the zip leaves */
+    .wheel_film {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(100% + var(--cap-gap) * 1.5);
+    }
+    /* the logos run the width of the page, only their very ends fading (Hunter,
+       Oct 24: "I want to be able to see more logos horizontally") */
+    .wheel_logos {
+      max-width: none;
+      &.is-marquee {
+        mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+      }
+      margin-top: var(--space-2);
+      transition-delay: 0.8s;
+      & .logos_item {
+        opacity: 0.6;
+      }
+    }
+    .wheel_wrap.is-in :is(.wheel_awards, .wheel_logos) {
+      opacity: 1;
+    }
+  }
+</style>

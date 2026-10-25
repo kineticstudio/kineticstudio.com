@@ -1,0 +1,137 @@
+---
+/* The project modal's look; its markup and motion are src/scripts/project-modal.js,
+   which any a[data-project] on the page opens. */
+---
+
+<script>
+  import { armProjects } from "@/scripts/project-modal.js";
+  armProjects();
+</script>
+
+<style is:global>
+  @layer components {
+    .pm_wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 150;
+      &[hidden] {
+        display: none;
+      }
+    }
+    /* the page dims and softens behind the modal */
+    .pm_veil {
+      position: absolute;
+      inset: 0;
+      background: color-mix(in srgb, var(--dark-900) 78%, transparent);
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+    }
+    /* the window: a modal over the page once grown (placed by the script), the tile's window at either end */
+    .pm_frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+      border-radius: var(--radius-media, 0.75rem);
+      background: #000;
+      box-shadow: 0 2.5rem 6rem -1.5rem rgb(0 0 0 / 0.7);
+      will-change: transform;
+      & > * {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+    }
+    .pm_still {
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .pm_loop {
+      object-fit: cover;
+    }
+    /* the page scrolling top to bottom (src/data/scroll-loops.json): the frame's own 16:10 */
+    .pm_scroll {
+      object-fit: cover;
+      object-position: top center;
+    }
+    .pm_site {
+      background: #fff;
+    }
+    /* under the modal, centred (placed by the script) */
+    .pm_bar {
+      position: absolute;
+      left: 50%;
+      translate: -50% 0;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.3rem 0.3rem 1rem;
+      border-radius: var(--radius-round);
+      background: color-mix(in srgb, var(--dark-900) 82%, transparent);
+      backdrop-filter: blur(12px);
+      color: var(--sage-300);
+      box-shadow: 0 0.75rem 2rem -1rem rgb(0 0 0 / 0.6);
+    }
+    .pm_name {
+      margin-right: 0.4rem;
+      white-space: nowrap;
+    }
+    /* what we did: chip pills, side by side, only to read */
+    .pm_did {
+      display: flex;
+      gap: 0.3rem;
+      margin-right: 0.3rem;
+      &:empty {
+        display: none;
+      }
+    }
+    .pm_tag {
+      cursor: default;
+      pointer-events: none;
+      border-color: color-mix(in srgb, currentColor 35%, transparent);
+    }
+    @media (width < 48rem) {
+      .pm_bar {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: max-content;
+        max-width: calc(100vw - 2rem);
+        border-radius: 1.25rem;
+      }
+      .pm_did {
+        order: 3;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        margin: 0;
+      }
+    }
+    /* Visit site is a primary pill (src/styles/pill.css); the close is its round twin */
+    .pm_visit[hidden] {
+      display: none;
+    }
+    .pm_close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      width: var(--pill-height);
+      height: var(--pill-height);
+      border: 0;
+      border-radius: var(--radius-round);
+      cursor: pointer;
+      background: color-mix(in srgb, var(--sage-300) 14%, transparent);
+      color: var(--sage-300);
+      & svg {
+        width: 0.8rem;
+        height: 0.8rem;
+      }
+    }
+    /* the page under the modal holds still */
+    :root.pm-open {
+      overflow: hidden;
+    }
+  }
+</style>

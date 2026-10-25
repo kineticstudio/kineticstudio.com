@@ -1,5 +1,7 @@
 # build output
 dist/
+# the Creative Studio's build (npm run build:studio), framed in its Production stage
+dist-studio/
 # generated types
 .astro/
 

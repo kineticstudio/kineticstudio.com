@@ -1,0 +1,427 @@
+/* Way work card. The page chrome (stage, card, light, ruler, label row)
+   follows the Epirus, Ethos and Dawn cards; everything under .vp is Way
+   (way.co) rebuilt at its own 1440px design width, as Kinetic built it: the
+   live site has since been replaced by a new design, so this follows
+   Kinetic's recordings of it (the portfolio loop and the 43 s studio
+   recording) and Kinetic's last published build of it, archived on
+   2025-02-27, measured at 1440x900 in headless Chromium. */
+
+@font-face { font-family: "WY Basis"; src: url("../fonts/BasisGrotesquePro-Regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: "WY Rhymes"; src: url("../fonts/RhymesText-RegularItalic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: block; }
+@font-face { font-family: "WY Pitch"; src: url("../fonts/PitchSans-Semibold.woff2") format("woff2"); font-weight: 400 700; font-display: block; }
+@font-face { font-family: "KS Panell Condensed"; src: url("../fonts/PanellCondensed-TRIAL-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "KS Mono"; src: url("../fonts/PPNeueMontrealMono-Book.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #0d0d0d;
+  color: #eef1ea;
+  font-family: "KS Mono", ui-monospace, monospace;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Kinetic: the page and the work card ---------- */
+.stage {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  --size: 40;
+  --card-w: min(calc(var(--size) * 1vw), calc((100vh - 150px) * 4 / 3));
+}
+@media (max-width: 700px) { .stage { --card-w: calc(100vw - 32px); } }
+
+.slot { width: var(--card-w); display: flex; flex-direction: column; gap: clamp(14px, 1.1vw, 16px); }
+
+/* the hit area never moves; only what is inside it does */
+.persp {
+  position: relative;
+  width: 100%; aspect-ratio: 4 / 3;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+.persp.is-dragging { cursor: grabbing; }
+.card-shadow {
+  position: absolute; inset: 6% 7% -1% 7%;
+  border-radius: 12%;
+  background: rgba(0, 0, 0, .9);
+  filter: blur(30px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+/* laid out K times its size and scaled back inside its own 3D transform, so
+   the tilted card rasters as sharp as the flat one (see the Dawn card) */
+.card {
+  position: absolute; left: 0; top: 0;
+  --k: 1;
+  border-radius: calc(var(--r, 6px) * var(--k));
+  background: var(--frame-color, #ebebe0);
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  isolation: isolate;
+}
+.card, .card * { user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+
+/* the site's browser window, inset on the card ground when framed */
+.win {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  overflow: hidden;
+  background: #071f1b;
+  will-change: transform;
+}
+.win-shadow {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  background: #3b3a36;
+  filter: blur(calc(var(--card-px, 576px) * .022));
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.card:not(.is-framed) .win-shadow { display: none; }
+
+/* The light, as on an Apple TV poster: one soft round bloom of light under
+   the pointer, brightest there and fading to nothing, added on top (screen).
+   No stripes, no bands. It moves by transform only. The rim is a faint
+   brightening of the card edge nearest the pointer, the same bloom seen
+   through a thin ring mask. */
+.bloom, .rim { position: absolute; z-index: 6; pointer-events: none; opacity: 0; will-change: transform, opacity; }
+.bloom {
+  width: calc(var(--card-px, 576px) * 1.3); height: calc(var(--card-px, 576px) * 1.3);
+  left: calc(var(--card-px, 576px) * -.65); top: calc(var(--card-px, 576px) * -.65);
+  background: radial-gradient(circle closest-side,
+    rgba(255, 255, 255, .72), rgba(255, 255, 255, .5) 9%, rgba(255, 255, 255, .26) 22%, rgba(250, 252, 255, .11) 40%,
+    rgba(250, 252, 255, .04) 62%, rgba(250, 252, 255, .01) 82%, rgba(250, 252, 255, 0) 100%);
+  mix-blend-mode: screen;
+}
+.rim {
+  left: 0; top: 0; width: 100%; height: 100%;
+  border-radius: inherit; overflow: hidden;
+  padding: calc(1.5px * var(--k));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  mix-blend-mode: screen;
+}
+.rim i {
+  position: absolute; display: block;
+  width: calc(var(--card-px, 576px) * .9); height: calc(var(--card-px, 576px) * .9);
+  left: calc(var(--card-px, 576px) * -.45); top: calc(var(--card-px, 576px) * -.45);
+  background: radial-gradient(circle closest-side, rgba(255, 255, 255, .85), rgba(255, 255, 255, .22) 45%, rgba(255, 255, 255, 0) 100%);
+  will-change: transform;
+}
+
+/* The scroll ruler: 1px notches every 6px that slide as the miniature
+   scrolls, one brighter mark fixed at the reading position. Full bleed it
+   sits just outside the card; framed, in the window's right margin on the
+   card ground; in a tile, just inside the right edge, its ink following the
+   section under the mark (dark on the light sections, light on the dark). */
+.notches { position: absolute; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); }
+.notches .ticks { position: absolute; left: 0; right: 0; top: calc(var(--np) * -2); bottom: calc(var(--np) * -2);
+  background: repeating-linear-gradient(to bottom, var(--tick) 0 var(--nw), transparent var(--nw) var(--np)); will-change: transform; }
+.notches .mark { position: absolute; top: 50%; height: var(--nw); background: var(--mark); }
+.notches-in { --nw: calc(1px * var(--k)); --np: calc(6px * var(--k));
+  width: calc(5px * var(--k)); height: 46%; top: 27%; right: calc(var(--mx) / 2 - 2.5px * var(--k)); z-index: 2; }
+.notches-in .ink { position: absolute; inset: 0; will-change: opacity; }
+.notches-in .dark { --tick: rgba(7, 31, 27, .15); --mark: rgba(7, 31, 27, .6); }
+.notches-in .light { --tick: rgba(235, 235, 224, .17); --mark: rgba(235, 235, 224, .7); opacity: 0; }
+.notches-in .mark { left: calc(-2px * var(--k)); right: calc(-2px * var(--k)); }
+.notches-out { --nw: 1px; --np: 6px; --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .62);
+  width: 5px; height: 46%; top: 27%; right: -16px; }
+.notches-out .mark { left: -2px; right: -2px; }
+.card.is-framed .notches-in .light { opacity: 0 !important; }
+.card.is-framed .notches-in .dark { opacity: 1 !important; }
+.card.is-framed.is-dark-frame .notches-in .dark { --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .6); }
+.card:not(.is-framed) .notches-in, .slot:not(.full) .notches-out, .no-notches .notches { display: none; }
+
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: clamp(14px, 1.1vw, 16px); }
+.meta h3 {
+  margin: 0;
+  font-family: "KS Panell Condensed", "Arial Narrow", sans-serif; font-weight: 500;
+  font-size: clamp(22px, 1.95vw, 28px); line-height: .94; letter-spacing: -.02em;
+  text-transform: uppercase;
+}
+.meta p {
+  margin: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
+  text-align: right;
+  font-family: "KS Mono", ui-monospace, monospace;
+  font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
+  color: rgba(238, 241, 234, .5);
+}
+
+/* Embed (?embed=1): the card alone, edge to edge at the frame's own aspect,
+   on a transparent page. The site's tile frames it. */
+html.is-embed, html.is-embed body { background: transparent; }
+.is-embed .stage { display: block; }
+.is-embed .slot { position: absolute; inset: 0; width: auto; display: block; }
+.is-embed .persp { position: absolute; inset: var(--bleed, 0px); width: auto; height: auto; aspect-ratio: auto; }
+.is-embed .meta, .is-embed .notches-out, .is-embed .card-shadow { display: none; }
+/* full bleed in a tile there is no margin to sit in, so the ruler rides just inside the right edge */
+.is-embed .card:not(.is-framed) .notches-in { display: block; right: calc(7px * var(--k)); }
+
+/* ---------- Way: the miniature, at its own 1440px design width ---------- */
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  background: #071f1b;
+  --ink: #071f1b; --cream: #ebebe0; --neon: #b1ff85; --g60: #3b6457; --g50: #093d2e;
+  --brown: #3a341c; --brown60: #625d49; --sand: #b09f8b; --mist: #9da4a4;
+  --off: calc((var(--vh, 900px) - 900px) / 2);   /* the hero is measured at 900 tall; it keeps its middle */
+  --ih: max(1064px, var(--vh, 900px));           /* the brand section always fills the window */
+  font-family: "WY Basis", Arial, sans-serif;
+  font-size: 16px; line-height: 1.3; font-weight: 400; letter-spacing: -.4px;
+  color: var(--cream);
+  text-rendering: geometricPrecision;
+}
+.page { position: absolute; left: 0; top: 0; width: 1440px; will-change: transform; }
+.sec { position: relative; width: 1440px; }
+.sec > *, .vp .abs { position: absolute; }
+[data-depth] { will-change: transform; }
+:where(.vp h1, .vp h2, .vp h3, .vp h4, .vp p) { margin: 0; font-weight: inherit; }
+.vp img { display: block; }
+.vp svg { display: block; overflow: visible; }
+.it { font-family: "WY Rhymes", Georgia, serif; font-style: italic; font-weight: 400; }
+.neon { color: var(--neon); }
+.mono { font-family: "WY Pitch", "WY Basis", sans-serif; font-weight: 600; text-transform: uppercase; }
+
+/* the site's type: Basis Grotesque Pro, Rhymes Text italic for the turns, Pitch Sans for labels */
+.d1 { font-size: 64px; line-height: 60.8px; letter-spacing: -1px; }
+.d2 { font-size: 48px; line-height: 52.8px; letter-spacing: -1px; }
+.d3 { font-size: 32px; line-height: 35.2px; }
+.t24 { font-size: 24px; line-height: 31.2px; }
+.t20 { font-size: 20px; line-height: 26px; }
+
+.btn {
+  display: flex; align-items: center; justify-content: center;
+  height: 46px; padding: 0 24px; border-radius: 8px;
+  font: 600 16px/14.4px "WY Pitch", sans-serif; letter-spacing: -.4px; text-transform: uppercase; white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(7, 31, 27, .08);
+}
+.btn.lime { background: var(--neon); color: var(--ink); }
+.btn.white { background: #fff; color: var(--ink); }
+.btn.ink { background: var(--ink); color: var(--cream); }
+.btn.glass { background: rgba(255, 255, 255, .1); color: var(--cream); box-shadow: none; }
+
+/* the nav, fixed in the window: clear over the hero; it slides away going down and comes back on its ground going up */
+.nav { left: 0; top: 0; width: 1440px; height: 72px; z-index: 20; }
+.nav-shift { position: absolute; inset: 0; will-change: transform; }
+.nav-ground { position: absolute; left: -80px; top: -80px; right: -80px; bottom: 0; background: rgba(7, 31, 27, .9); opacity: 0; will-change: opacity; }
+.nav-band { position: absolute; left: 0; top: 0; width: 1440px; height: 72px; }
+.nav-logo { position: absolute; left: 72px; top: 22px; width: 108px; height: 28px; color: var(--cream); }
+.nav-logo svg { width: 108px; height: 28px; }
+.nav-links { position: absolute; right: 346px; top: 13px; height: 46px; display: flex; align-items: center; }
+.nav-link { display: flex; align-items: center; gap: 8px; padding: 8px 16px; font: 600 16px/20.8px "WY Pitch", sans-serif; letter-spacing: -.4px; text-transform: uppercase; color: var(--cream); white-space: nowrap; }
+.nav-link svg { width: 12px; height: 12px; }
+.nav-lang { display: flex; margin-left: 16px; height: 41px; padding: 3px; border-radius: 6px; background: rgba(255, 255, 255, .06); }
+.nav-lang span { display: flex; align-items: center; padding: 0 10px; border-radius: 4px; font: 600 16px/20.8px "WY Pitch", sans-serif; letter-spacing: -.4px; color: var(--cream); }
+.nav-lang span:first-child { background: rgba(255, 255, 255, .08); }
+.nav-lang span:last-child { background: var(--ink); }
+.nav-btns { position: absolute; right: 72px; top: 13px; display: flex; gap: 16px; }
+
+/* hero: the copy, the logos, and the pinned tickets that spin out and open onto Venice */
+.hero { height: calc(var(--vh) + var(--pin, 2000px)); background: var(--ink); z-index: 1; }
+.h-copy { left: 0; top: 0; width: 1440px; height: var(--vh); will-change: opacity; }   /* the copy fades as it goes, as on the site */
+.h-copy > * { position: absolute; }
+.h-title { left: 744px; top: calc(266px + var(--off)); width: 590px; text-align: center; letter-spacing: -1.5px; }
+.h-lead { left: 783px; top: calc(492px + var(--off)); width: 512px; text-align: center; }
+.h-cta { left: 783px; top: calc(584px + var(--off)); width: 512px; display: flex; justify-content: center; }
+.h-logos { left: 0; top: calc(var(--vh) - 86px); width: 1440px; height: 78px; overflow: hidden; }
+.lg-fade { position: absolute; inset: 0; opacity: .8; will-change: opacity; }
+.lg-track { position: absolute; left: 0; top: 0; display: flex; gap: 8px; will-change: transform; }
+.lg { flex: none; width: 200px; height: 78px; padding: 0 20px; display: flex; align-items: center; justify-content: center;
+  background: url("../img/logo-border.png") 0 0 / contain repeat-y; }
+.lg.ritz { width: 133px; }
+.lg img { max-width: 160px; max-height: 78px; }
+
+.pin { position: absolute; left: 0; top: 0; width: 1440px; will-change: transform; }
+.pin-hero { height: var(--vh); z-index: 3; overflow: hidden; }   /* the window, held: nothing of it reaches past into the sections below */
+.tk { position: absolute; left: 137px; top: calc(210px + var(--off)); width: 368px; }
+.tk-main { z-index: 1; } .tk-main.front { z-index: 5; }
+.tk-1 { z-index: 2; } .tk-2 { z-index: 3; } .tk-3 { z-index: 4; }
+.tk-rot { transform-origin: 0 100%; will-change: transform, opacity; }
+.tk-2 .tk-rot { transform: rotate(5deg); } .tk-3 .tk-rot { transform: rotate(10deg); }
+.tk-body { position: relative; transform-origin: 0 0; will-change: transform; }
+
+/* the ticket: a dark card, its picture, a dotted tear line with a notch at each end */
+.tkt { position: relative; width: 368px; border-radius: 8px; overflow: hidden;
+  background: var(--ink) url("../img/bg-blur.webp") 0 100% / 90% no-repeat; }
+.tkt-in { border: 1px solid var(--g60); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 10px; height: 100%; }
+.tkt-img { position: relative; height: 144px; border-radius: 8px; overflow: hidden; background: #0c2924; }
+.tkt-img img { width: 100%; height: 100%; object-fit: cover; }
+.tkt-line { position: relative; height: 1px; background: repeating-linear-gradient(90deg, var(--g60) 0 1px, transparent 1px 8px); }
+.tkt-line::before, .tkt-line::after { content: ""; position: absolute; top: -8px; width: 8px; height: 16px; }
+.tkt-line::before { left: -7.5px; background: radial-gradient(circle at 0 50%, #09201c 7.5px, var(--g60) 7.5px 8.5px, transparent 8.5px); }
+.tkt-line::after { right: -7.5px; background: radial-gradient(circle at 100% 50%, #09201c 7.5px, var(--g60) 7.5px 8.5px, transparent 8.5px); }
+.tkt-body { padding: 45px 70px; display: flex; flex-direction: column; gap: 20px; text-align: center; }
+.tkt-body .mono { font-size: 16px; line-height: 20.8px; }
+.tkt-body h3 { font-size: 24px; line-height: 31.2px; }
+.tkt-main .tkt-body { padding: 60px 64px; height: 192px; }
+
+/* Venice: the main ticket's loop (a still here) opening to fill the window, the line growing over it */
+.v-clip { position: absolute; left: -159px; top: calc(-210px - var(--off) - var(--vh) * .015); width: 1484px; height: calc(var(--vh) * 1.03);
+  overflow: hidden; border-radius: 8px; transform-origin: 0 0; will-change: transform; }
+.v-clip img { width: 100%; height: 100%; object-fit: cover; transform-origin: 50% 50%; will-change: transform; }
+.v-title { position: absolute; left: 247px; top: calc(var(--vh) / 2 - 108px - 210px - var(--off)); width: 672px; }
+.v-tin .nw { white-space: nowrap; }
+.v-tin { width: 672px; font-size: 72px; line-height: 72px; letter-spacing: -1.2px; text-align: center; transform-origin: 0 0; will-change: transform; }
+
+/* effortlessly bring your brand to life: three brands, one booking flow */
+.iface { height: var(--ih); background: var(--brown); z-index: 2; overflow: hidden; }
+.i-bg { left: -72px; top: calc(var(--ih) * -.05); width: 1584px; height: calc(var(--ih) * 1.1); }
+.i-bg img, .i-code img, .i-ui img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; will-change: opacity; }
+.i-bg img + img, .i-code img + img, .i-ui img + img { opacity: 0; }
+.i-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(7, 31, 27, .28), rgba(7, 31, 27, 0) 45%); }
+.i-h { left: 106px; top: 128px; width: 420px; }
+.i-p { left: 736px; top: 128px; width: 576px; height: 94px; }
+.i-p p { position: absolute; left: 0; top: 0; width: 576px; will-change: opacity; }
+.i-p p + p { opacity: 0; }
+.i-btn { left: 736px; top: 254px; }
+.i-tabs { left: 106px; top: 469px; width: 368px; height: 73px; border: 1px solid #000; border-radius: 8px; background: var(--ink); }
+.i-pill { position: absolute; left: 8px; top: 8px; width: 114px; height: 55px; border-radius: 8px; background: var(--g50); transform-origin: 0 0; will-change: transform; }
+.i-tab { position: absolute; top: 8px; height: 55px; display: flex; align-items: center; justify-content: center; }
+.i-tab > div { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; will-change: opacity; }
+.i-tab .on { color: var(--neon); opacity: 0; } .i-tab .off { color: var(--mist); }
+.i-tab svg { width: 74px; height: 31px; }
+.i-tab.t0 { left: 8px; width: 114px; } .i-tab.t0 svg { width: 20px; }
+.i-tab.t1 { left: 126px; width: 119px; } .i-tab.t1 svg { width: 79px; height: 21px; }
+.i-tab.t2 { left: 249px; width: 114px; }
+.i-code { left: 106px; top: 594px; width: 471px; height: 286px; z-index: 2; }
+.i-code img { object-fit: contain; }
+.i-ui { left: 515px; top: 469px; width: 819px; height: 466px; }
+.i-ui img { border-radius: 8px; }
+
+/* deepen brand loyalty & increase profit */
+.feat { height: 976px; background: var(--brown); }
+.f-h { left: 106px; top: 128px; width: 420px; }
+.f-p { left: 736px; top: 128px; width: 500px; }
+.f-btn { left: 736px; top: 254px; }
+.f-dash { left: 308px; top: 448px; width: 824px; height: 400px; }
+.f-rate { left: 582px; top: 368px; width: 275px; height: 161px; }
+
+/* manage experiential from a single hub: four steps, the picture held beside them */
+.hub { height: 3570px; background: var(--cream); color: var(--ink); }
+.hb-h { left: 106px; top: 64px; white-space: nowrap; }
+.hb-p { left: 106px; top: 149px; width: 512px; }
+.hb-btn { left: 106px; top: 275px; }
+.st-rule { left: 106px; height: 1px; width: 1334px; border-top: 1px dashed var(--g60); }
+.st-tag { left: 106px; height: 32px; padding: 0 16px; display: flex; align-items: center; border-radius: 100px; background: var(--neon);
+  font: 600 16px/16px "WY Pitch", sans-serif; letter-spacing: -.4px; text-transform: uppercase; color: var(--ink); }
+.st-h { left: 106px; width: 383px; }
+.st-h.narrow, .st-list.narrow { width: 262px; }
+.st-list { left: 106px; width: 383px; }
+.st-list div { display: flex; align-items: center; gap: 8px; padding: 16px 0 20px; border-top: 1px dotted var(--g60); font-size: 16px; line-height: 20.8px; }
+.st-list svg { width: 32px; height: 32px; flex: none; }
+.hb-pin { left: 574px; top: 466px; width: 941px; height: 570px; }
+.hb-shot { position: absolute; inset: 0; }
+.hb-shot img { position: absolute; inset: 0; width: 100%; height: 100%; will-change: opacity; }
+.hb-shot img + img { opacity: 0; }
+
+/* bundle your experiential technology: Host, Activate, Reserve */
+.plat { height: 1220px; background: var(--ink); }
+.p-h { left: 106px; top: 128px; width: 420px; }
+.p-p { left: 736px; top: 128px; width: 500px; }
+.p-btn { left: 736px; top: 212px; }
+.pi { top: 443px; width: 396px; height: 650px; border-radius: 8px; background: var(--cream); color: var(--ink); text-align: center; }
+.pi > * { position: absolute; }
+.pi-media { left: 8px; top: 8px; width: 380px; height: 300px; border-radius: 8px; overflow: hidden; background: var(--ink); box-shadow: 0 12px 24px rgba(7, 31, 27, .2); }
+.pi-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; will-change: transform; }
+.pi-media::after { content: ""; position: absolute; inset: 55% 0 0; background: linear-gradient(rgba(7, 31, 27, 0), rgba(7, 31, 27, .35)); }
+.pi-label { position: absolute; left: 0; right: 0; top: 252px; z-index: 2; font: 600 16px/16px "WY Pitch", sans-serif; letter-spacing: -.4px; text-transform: uppercase; color: var(--cream); }
+.pi-arrow { position: absolute; top: 248px; width: 24px; height: 24px; z-index: 2; }
+.pi-arrow.l { left: 28px; } .pi-arrow.r { right: 28px; transform: rotate(180deg); }
+.pi-icon { left: 0; right: 0; top: 348px; height: 32px; display: flex; justify-content: center; }
+.pi-icon svg { height: 32px; width: auto; }
+.pi-t { left: 8px; top: 420px; width: 380px; font-size: 32px; line-height: 35.2px; }
+.pi-d { left: 8px; top: 471px; width: 380px; padding: 0 12px; text-wrap: balance; }
+.pi-btn { left: 127px; top: 563px; width: 142px; padding: 0; }
+
+/* grow revenue: the experiences, drifting by as the page scrolls; build connection */
+.act { height: 758px; background: var(--ink); }
+.a-h { left: 106px; top: 64px; white-space: nowrap; }
+.a-rule { height: 1px; border-top: 1px dashed var(--g60); }
+.a-rule.r1 { left: 506px; top: 96px; width: 934px; }
+.a-rule.r2 { left: 0; top: 693px; width: 850px; }
+.a-track { left: 106px; top: 209px; display: flex; gap: 24px; will-change: transform; }
+.a-track .tkt { flex: none; height: 372px; border-radius: 0; }
+.a-h2 { left: 899px; top: 661px; white-space: nowrap; }
+
+/* build connection: the map, the numbers, what partners say */
+.stats { height: 1575px; background: var(--cream); color: var(--ink); }
+.s-map { left: 559px; top: 0; width: 837px; height: 423px; }
+.s-h { left: 106px; top: 143px; width: 419px; }
+.s-btn { left: 106px; top: 281px; }
+.s-item { top: 455px; display: flex; flex-direction: column; align-items: flex-start; }
+.s-dot { width: 64px; height: 64px; padding: 16px; border-radius: 100px; background: var(--neon); color: var(--ink); }
+.s-dot svg { width: 32px; height: 32px; }
+.s-num { margin-top: 16px; font-size: 88px; line-height: 88px; letter-spacing: -.4px; }
+.s-lab { margin-top: 16px; color: rgba(7, 31, 27, .7); }
+.s-arrows { left: 1246px; top: 761px; display: flex; gap: 8px; color: var(--ink); }
+.s-arrows svg { width: 40px; height: 40px; }
+.s-arrows .prev { transform: rotate(180deg); opacity: .3; }
+.tc { top: 841px; width: 550px; height: 605px; color: var(--brown); text-align: center;
+  -webkit-mask: radial-gradient(circle at 0 451px, transparent 9.5px, #000 10px) 0 0 / 51% 100% no-repeat, radial-gradient(circle at 100% 451px, transparent 9.5px, #000 10px) 100% 0 / 51% 100% no-repeat;
+  mask: radial-gradient(circle at 0 451px, transparent 9.5px, #000 10px) 0 0 / 51% 100% no-repeat, radial-gradient(circle at 100% 451px, transparent 9.5px, #000 10px) 100% 0 / 51% 100% no-repeat; }
+.tc > * { position: absolute; left: 0; width: 550px; }
+.tc-top { top: 0; height: 450px; background: #fff; }
+.tc-bot { top: 452px; height: 153px; background: #fff; }
+.tc-line { top: 450px; left: 11px; width: 528px; height: 2px; background: #fff repeating-linear-gradient(90deg, var(--sand) 0 2.9px, transparent 2.9px 16px); }
+.tc-icons { top: 40px; left: 205px; width: 141px; height: 70px; display: flex; border-radius: 8px; overflow: hidden; }
+.tc-icons > div { width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; background: var(--cream); color: var(--brown60); }
+.tc-icons > i { width: 1px; background: var(--cream) repeating-linear-gradient(var(--ink) 0 2px, transparent 2px 8px) 0 11px / 1px calc(100% - 22px) no-repeat; opacity: .55; }
+.tc-icons svg { width: 35px; height: 36px; }
+.tc-icons img { max-width: 46px; max-height: 46px; }
+.tc-q { top: 152px; left: 46px; width: 457px; }
+.tc-face { top: 411px; left: 236px; width: 78px; height: 78px; border-radius: 100px; overflow: hidden; z-index: 2; }
+.tc-face img { width: 100%; height: 100%; object-fit: cover; }
+.tc-name { top: 508px; font-size: 20px; line-height: 22px; }
+.tc-role { top: 530px; font: 600 16px/19.2px "WY Pitch", sans-serif; letter-spacing: -.4px; text-transform: uppercase; color: var(--sand); }
+
+/* the report */
+.cta { height: 455px; background: #c9c3cf; overflow: hidden; }
+.c-bg { left: -58px; top: -23px; width: 1556px; height: 501px; }
+.c-bg img { width: 100%; height: 100%; object-fit: cover; }
+.c-block { left: 266px; top: 128px; width: 909px; height: 199px; border-radius: 12px; background: var(--cream); color: var(--ink); text-align: center;
+  -webkit-mask: radial-gradient(circle at 0 99.5px, transparent 7.5px, #000 8px) 0 0 / 51% 100% no-repeat, radial-gradient(circle at 100% 99.5px, transparent 7.5px, #000 8px) 100% 0 / 51% 100% no-repeat;
+  mask: radial-gradient(circle at 0 99.5px, transparent 7.5px, #000 8px) 0 0 / 51% 100% no-repeat, radial-gradient(circle at 100% 99.5px, transparent 7.5px, #000 8px) 100% 0 / 51% 100% no-repeat; }
+.c-block > * { position: absolute; }
+.c-h { left: 64px; top: 28px; width: 781px; letter-spacing: -1px; }
+.c-line { left: 0; top: 99px; width: 909px; height: 1px; background: repeating-linear-gradient(90deg, var(--sand) 0 1.5px, transparent 1.5px 8px); }
+.c-btn { left: 374px; top: 126px; width: 161px; padding: 0; }
+
+/* the footer */
+.foot { height: 333px; background: var(--ink); }
+.ft-h { left: 106px; top: 64px; width: 557px; }
+.ft-col { top: 64px; width: 135px; }
+.ft-col b { display: block; font-weight: 400; font-size: 20px; line-height: 22px; color: rgba(235, 235, 224, .5); margin-bottom: 16px; }
+.ft-col span { display: block; padding: 3.2px 0; font: 600 16px/20.8px "WY Pitch", sans-serif; letter-spacing: -.4px; text-transform: uppercase; }
+.ft-soc { display: flex; gap: 12px; margin-top: 12px; }
+.ft-soc svg { width: 16px; height: 16px; }
+
+/* shadow twins: a darkened, blurred copy of a lifted layer left on the surface below it,
+   composited like the layer it shadows, so a changing scale never re-rasters the blur */
+.twin { filter: brightness(0) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; will-change: transform, opacity; }
+
+/* debug: layer outlines */
+.show-layers [data-layer] { outline: 3px dashed #a8ff66; outline-offset: -3px; }
+.show-layers [data-layer]::after {
+  content: attr(data-layer) "  z " attr(data-depth);
+  position: absolute; left: var(--lab-x, 6px); top: var(--lab-y, 6px); z-index: 50;
+  padding: 3px 8px 2px; border-radius: 4px;
+  background: #a8ff66; color: #0d0d0d;
+  font: 500 22px/1.15 "KS Mono", ui-monospace, monospace;
+  -webkit-text-fill-color: #0d0d0d; text-transform: uppercase; letter-spacing: .02em;
+  white-space: nowrap; text-align: left;
+}
+.show-layers img[data-layer] { outline-offset: -3px; }
+.card.show-layers > [data-layer] { outline-width: calc(1px * var(--k)); outline-offset: calc(-1px * var(--k)); }
+.card.show-layers > [data-layer]::after { font-size: calc(8px * var(--k)); left: auto; right: calc(4px * var(--k)); top: auto; bottom: calc(4px * var(--k)); padding: calc(2px * var(--k)) calc(4px * var(--k)) calc(1px * var(--k)); border-radius: calc(2px * var(--k)); }

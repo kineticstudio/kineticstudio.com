@@ -27,7 +27,7 @@ const JSON_OUT = path.join(ROOT, "src/data/media.json");
 const KINETIC = path.join(os.homedir(), "Developer/kinetic");
 const SOURCES = {
   twitter: path.join(os.homedir(), "Library/Mobile Documents/com~apple~CloudDocs/💻 Kinetic/twitter"),
-  portfolio: path.join(KINETIC, "kinetic-creative-studio/clients/kinetic/designs/portfolio-src/media"),
+  portfolio: path.join(KINETIC, "kinetic-creative-studio/clients/kinetic/designs/01-Personal/portfolio-src/media"),
   mirror: path.join(KINETIC, "kineticstudio-webflow-mirror/assets"),
   capture: path.join(ROOT, "scripts/.captures"),
 };

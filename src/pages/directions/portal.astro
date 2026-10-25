@@ -1,0 +1,24 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import Section from "@/components/wrapper/Section.astro";
+import HeroPortal from "@/components/section/HeroPortal.astro";
+import WorkIndex from "@/components/section/WorkIndex.astro";
+import Statement from "@/components/content/Statement.astro";
+import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
+import ClientWall from "@/components/content/ClientWall.astro";
+---
+
+<Layout title="Portal" logoHidden noindex>
+  {/* Direction one, Portal: the mark is a window, and the scroll goes through it */}
+  <HeroPortal />
+  <WorkIndex heading="Selected work" filter={false} limit={12} paddingTop="medium" />
+  <Section paddingTop="large">
+    <Statement />
+  </Section>
+  <Section paddingTop="medium">
+    <AwardsLaurels />
+  </Section>
+  <Section paddingTop="medium" paddingBottom="large">
+    <ClientWall />
+  </Section>
+</Layout>

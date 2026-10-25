@@ -1,121 +1,98 @@
 ---
-import lockupRaw from "@/assets/brand/lockup-ink.svg?raw";
-import studioRaw from "@/assets/brand/studio-lockup.svg?raw";
+import logoRaw from "@/assets/brand/logo.svg?raw";
 
 interface Props {
   /** Set to `false` to omit the component. */
   render?: boolean;
-  /** Play the build on load: lines rise, bend into the mark, Kinetic slides out, the Studio pill draws. */
+  /** Play the build on load: the lines fire in, the pill (KINETIC inside it) slides in from the right, and its pull bends the lines. */
   autoplay?: boolean;
-  /** Show the Studio pill after the wordmark. */
-  studio?: boolean;
   /** Utility classes. */
   class?: string;
 }
 
-const { render = true, autoplay = true, studio = true, class: className, ...rest } = Astro.props;
+const { render = true, autoplay = true, class: className, ...rest } = Astro.props;
 
-const ds = [...lockupRaw.matchAll(/ d="([^"]+)"/g)].map((m) => m[1]);
-const [markD, ...letterDs] = ds;
-const stripes = markD.split("M").filter(Boolean).map((s) => "M" + s.trim()).reverse();
-const letters = letterDs.reverse();
-const pillRect = studioRaw.match(/<rect[^>]*>/)![0];
-const studioD = studioRaw.match(/id="Studio" d="([^"]+)"/)![1];
-const pill = {
-  x: Number(pillRect.match(/x="([\d.]+)"/)![1]),
-  y: Number(pillRect.match(/y="([\d.]+)"/)![1]),
-  w: Number(pillRect.match(/width="([\d.]+)"/)![1]),
-  h: Number(pillRect.match(/height="([\d.]+)"/)![1]),
-};
-const s = 212 / 200.33;
-const tx = 1568 - s * pill.x;
-const ty = 894 + (212 - pill.h * s) / 2 - s * pill.y;
-const clipId = `kl-${Math.random().toString(36).slice(2, 8)}`;
-const viewBox = studio ? "466 884 1612 232" : "466 884 1074 232";
+// The 2026 logo (Figma "Kinetic Studio Brand" 82:6), read from the one file
+const markD = logoRaw.match(/id="mark"[^>]*\sd="([^"]+)"/)![1];
+const stripes = markD.split("M").filter(Boolean).map((s) => "M" + s.trim());
+const letters = [...logoRaw.matchAll(/<path d="([^"]+)"\/>/g)].map((m) => m[1]);
+const viewBox = logoRaw.match(/viewBox="([^"]+)"/)![1];
+const rect = logoRaw.match(/<rect id="pill"[^>]*>/)![0];
+const n = (k: string) => Number(rect.match(new RegExp(`\\s${k}="([\\d.]+)"`))![1]);
+const pill = { x: n("x"), y: n("y"), w: n("width"), h: n("height"), r: n("rx"), sw: n("stroke-width") };
 ---
 
 {
   render && (
     <div class:list={["kinetic-logo_wrap", autoplay && "is-autoplay", className]} data-kinetic-logo {...rest}>
-      <svg class="kinetic-logo_svg" viewBox={viewBox} fill="none" role="img" aria-label="Kinetic Studio">
+      <svg class="kinetic-logo_svg" viewBox={viewBox} fill="none" role="img" aria-label="Kinetic">
         <g class="kinetic-logo_mark">
-          {stripes.map((d, i) => (
-            <path class="kinetic-logo_stripe" d={d} data-d={d} style={`--i:${i}`} fill="currentColor" />
-          ))}
+          {stripes.map((d) => <path class="kinetic-logo_stripe" d={d} data-d={d} fill="currentColor" fill-rule="evenodd" />)}
         </g>
-        <clipPath id={clipId}>
-          <rect x="706" y="860" width="1400" height="300" />
-        </clipPath>
-        <g class="kinetic-logo_word" clip-path={`url(#${clipId})`}>
-          {letters.map((d, i) => (
-            <path class="kinetic-logo_letter" d={d} style={`--i:${i}`} fill="currentColor" />
-          ))}
+        <g class="kinetic-logo_pill">
+          <rect x={pill.x} y={pill.y} width={pill.w} height={pill.h} rx={pill.r} stroke="currentColor" stroke-width={pill.sw} />
+          <g fill="currentColor">{letters.map((d) => <path d={d} />)}</g>
         </g>
-        {studio && (
-          <g class="kinetic-logo_studio" transform={`translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${s.toFixed(4)})`}>
-            <rect class="kinetic-logo_pill" x={pill.x} y={pill.y} width={pill.w} height={pill.h} rx={pill.h / 2} stroke="currentColor" stroke-width="18.9" pathLength="1" />
-            <path class="kinetic-logo_studio-word" d={studioD} fill="currentColor" />
-          </g>
-        )}
       </svg>
     </div>
   )
 }
 
 <script>
-  import { gsap } from "gsap";
+  import { mountLogoIntro } from "@/scripts/logo-intro.js";
+  import { HOME_LOOK } from "@/data/home-look.js";
 
-  import { straighten, tokens } from "@/scripts/mark.js";
-
-  const join = (a: (string | number)[]) => a.map((t) => (typeof t === "number" ? t.toFixed(2) : t)).join(" ");
-
+  // the intro itself is src/scripts/logo-intro.js (the Studio's Logo intro prototype plays the same file)
   document.querySelectorAll<HTMLElement>("[data-kinetic-logo]").forEach((root) => {
-    const stripes = [...root.querySelectorAll<SVGPathElement>(".kinetic-logo_stripe")];
-    const shapes = stripes.map((p) => {
-      const from = straighten(p.dataset.d!);
-      const to = tokens(p.dataset.d!);
-      return { p, from, to, t: { v: 0 } };
-    });
-    const letters = root.querySelectorAll(".kinetic-logo_letter");
-    const pill = root.querySelector(".kinetic-logo_pill");
-    const studioWord = root.querySelector(".kinetic-logo_studio-word");
-    const draw = (s: (typeof shapes)[number]) =>
-      s.p.setAttribute("d", join(s.from.map((f, i) => (typeof f === "number" ? f + ((s.to[i] as number) - f) * s.t.v : f))));
-
-    let current: gsap.core.Timeline | null = null;
-    const build = () => {
-      current?.progress(1).kill();
-      const tl = (current = gsap.timeline({ defaults: { ease: "expo.out" } }));
-      shapes.forEach((s) => {
-        s.t.v = 0;
-        draw(s);
-      });
-      tl.fromTo(stripes, { scaleY: 0, transformOrigin: "50% 100%" }, { scaleY: 1, duration: 0.9, stagger: 0.07, ease: "expo.inOut" });
-      shapes.forEach((s, i) => tl.to(s.t, { v: 1, duration: 1.1, ease: "expo.inOut", onUpdate: () => draw(s) }, 0.75 + i * 0.06));
-      tl.fromTo(letters, { x: -160, opacity: 0 }, { x: 0, opacity: 1, duration: 1, stagger: 0.045 }, 1.35);
-      if (pill) tl.fromTo(pill, { strokeDasharray: "1 1", strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.1, ease: "expo.inOut" }, 1.75);
-      if (studioWord) tl.fromTo(studioWord, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8 }, 2.15);
-      return tl;
+    const say = (name: string, rate = 1, gain = 1) => {
+      window.dispatchEvent(new CustomEvent("ks:sound", { detail: { name, rate, gain } }));
     };
+    // tells a page that the logo is whole (HeroLines then docks it)
+    let announced = false;
+    const built = () => {
+      if (announced) return;
+      announced = true;
+      root.dispatchEvent(new CustomEvent("kinetic-logo:built", { bubbles: true }));
+    };
+    const intro = mountLogoIntro(root, { look: HOME_LOOK.intro, say, onBuilt: built });
 
-    root.addEventListener("click", () => build());
-    if (root.classList.contains("is-autoplay") && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    root.addEventListener("click", () => intro.build());
+    const arrival = document.documentElement.classList.contains("is-arrival"); // the intro is skipped
+    if (root.classList.contains("is-autoplay") && !arrival && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
       root.classList.add("is-ready");
-      build();
-    } else root.classList.add("is-ready");
+      intro.build();
+    } else {
+      intro.pulled();
+      root.classList.add("is-ready");
+      requestAnimationFrame(built);
+    }
   });
 </script>
 
 <style is:global>
   @layer components {
     .kinetic-logo_wrap {
-      color: var(--text);
+      position: relative;
+      color: var(--sage-300);
       cursor: pointer;
       &.is-autoplay:not(.is-ready) svg {
         visibility: hidden;
       }
     }
+    /* the intro's field of lines, the size of the window (placed by the script) */
+    .kinetic-logo_field {
+      position: absolute;
+      z-index: 0;
+      display: none;
+      /* the reset caps canvases at their box's width, which scaled the field off the logo */
+      max-width: none;
+      max-height: none;
+      pointer-events: none;
+    }
     .kinetic-logo_svg {
+      position: relative;
+      z-index: 1;
+      display: block;
       width: 100%;
       height: auto;
       overflow: visible;

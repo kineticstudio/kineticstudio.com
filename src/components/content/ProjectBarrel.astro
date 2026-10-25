@@ -1,0 +1,206 @@
+---
+import { HOME, WORK } from "@/data/work.js";
+import { MAT } from "@/data/card-embed.js";
+import SITES from "@/data/sites.json";
+
+interface Props {
+  /** Utility classes. */
+  class?: string;
+  /** How many rows of work go round. */
+  rows?: number;
+}
+
+const { class: className, rows = 3 } = Astro.props;
+/* The best of the work on the inside of a barrel, the way the Playground's
+   globe holds its pieces (Hunter, Oct 25: "This should be more of the barrel
+   effect, kind of like the playground"). The camera sits at the barrel's
+   axis: the piece straight ahead is at true size and the ones toward the
+   sides turn and stretch toward you. The rows drift round on their own, each
+   the other way from the one above, and a drag turns them all; a click opens
+   the piece in the project modal (src/scripts/project-modal.js). */
+const picks = HOME.map((slug) => WORK.find((w) => w.slug === slug)).filter(Boolean) as (typeof WORK)[number][];
+const lines = Array.from({ length: rows }, (_, r) => {
+  const from = Math.round((r * picks.length) / rows);
+  return [...picks.slice(from), ...picks.slice(0, from)];
+});
+const sites = SITES as Record<string, { live?: boolean; hosted?: string; still?: string }>;
+---
+
+<div class:list={["barrel_wrap", className]} data-barrel>
+  <div class="barrel_world">
+    {lines.map((line, r) =>
+      line.map((w, i) => {
+        const still = `/cards/${w.slug}/poster.jpg`;
+        const site = sites[w.slug];
+        return (
+          <a
+            class="barrel_tile"
+            href={w.url}
+            target="_blank"
+            rel="noopener"
+            data-row={r}
+            data-u={i}
+            draggable="false"
+            aria-label={w.name}
+            data-project={w.slug}
+            data-name={w.name}
+            data-url={w.url}
+            data-site={site?.hosted ?? (site?.live ? w.url : undefined)}
+            data-still={site?.still ?? still}
+            data-still-mat={site?.still ? undefined : "1"}
+            data-inset={MAT}
+            data-framed={still}
+          >
+            <img src={still} alt="" width="1200" height="750" loading="lazy" decoding="async" draggable="false" />
+          </a>
+        );
+      }),
+    )}
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-barrel]").forEach((root) => {
+    const world = root.querySelector<HTMLElement>(".barrel_world")!;
+    const tiles = [...root.querySelectorAll<HTMLAnchorElement>(".barrel_tile")].map((el) => ({ el, row: Number(el.dataset.row), u: Number(el.dataset.u) }));
+    const ROWS = Math.max(...tiles.map((t) => t.row)) + 1;
+    const COUNT = tiles.filter((t) => t.row === 0).length;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // the projection: a tile at angle a round the axis, at the barrel's radius F
+    let F = 1400, COL = 0.2, TH = 200, GAP = 16, view = 1, W = 0;
+    const layout = () => {
+      W = root.clientWidth;
+      F = Math.max(700, W * 0.62);
+      const tw = Math.min(360, Math.max(190, W * 0.22));
+      TH = tw * 0.625;
+      GAP = Math.max(12, tw * 0.07);
+      COL = (tw + GAP) / F;
+      view = Math.atan(W / 2 / F) + COL;
+      world.style.perspective = `${F}px`;
+      root.style.setProperty("--tile-w", `${tw}px`);
+      root.style.setProperty("--barrel-h", `${ROWS * TH + (ROWS - 1) * GAP}px`);
+    };
+    const wrap = (x: number, span: number) => ((((x + span / 2) % span) + span) % span) - span / 2;
+
+    const pan = Array.from({ length: ROWS }, (_, r) => r * 0.37);
+    let drift = reduced ? 0 : 0.035, drag = 0, raf = 0, last = 0, on = false;
+    const place = () => {
+      const span = COUNT * COL;
+      for (const t of tiles) {
+        const a = wrap(t.u * COL - pan[t.row] - drag, span);
+        const show = Math.abs(a) < view;
+        t.el.style.visibility = show ? "visible" : "hidden";
+        if (!show) continue;
+        const y = (t.row - (ROWS - 1) / 2) * (TH + GAP);
+        t.el.style.transform = `translate(-50%, -50%) translateY(${y.toFixed(1)}px) translateZ(${F}px) rotateY(${(-a).toFixed(4)}rad) translateZ(${-F}px)`;
+      }
+    };
+    let held = false, lastX = 0, moved = 0, fling = 0;
+    const tick = (now: number) => {
+      raf = 0;
+      if (!on) return;
+      const dt = Math.min(0.05, (now - (last || now)) / 1000);
+      last = now;
+      if (!held) {
+        // each row goes its own way; a fling coasts out
+        pan.forEach((_, r) => (pan[r] += (r % 2 ? -1 : 1) * drift * dt));
+        drag += fling * dt;
+        fling *= Math.exp(-dt * 2.2);
+      }
+      place();
+      raf = requestAnimationFrame(tick);
+    };
+    const start = () => {
+      if (on) return;
+      on = true;
+      last = 0;
+      raf = requestAnimationFrame(tick);
+    };
+    const stop = () => {
+      on = false;
+      cancelAnimationFrame(raf);
+      raf = 0;
+    };
+
+    // a drag turns the barrel; a click that didn't drag opens the piece
+    root.addEventListener("pointerdown", (e) => {
+      held = true;
+      moved = 0;
+      fling = 0;
+      lastX = e.clientX;
+      root.setPointerCapture(e.pointerId);
+    });
+    root.addEventListener("pointermove", (e) => {
+      if (!held) return;
+      const dx = e.clientX - lastX;
+      lastX = e.clientX;
+      moved += Math.abs(dx);
+      drag -= dx / F;
+      fling = (-dx / F) * 60;
+      if (!on) place();
+    });
+    const release = () => (held = false);
+    root.addEventListener("pointerup", release);
+    root.addEventListener("pointercancel", release);
+    root.addEventListener("click", (e) => {
+      if (moved > 6) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+
+    new ResizeObserver(() => {
+      layout();
+      place();
+    }).observe(root);
+    new IntersectionObserver(([e]) => (e.isIntersecting && !document.hidden ? start() : stop())).observe(root);
+    document.addEventListener("visibilitychange", () => (document.hidden ? stop() : root.getBoundingClientRect().top < innerHeight && start()));
+    layout();
+    place();
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .barrel_wrap {
+      position: relative;
+      height: calc(var(--barrel-h, 40rem) + 4rem);
+      overflow: hidden;
+      touch-action: pan-y;
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+      /* the sides fall away into the dark */
+      mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+      &:active {
+        cursor: grabbing;
+      }
+    }
+    .barrel_world {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      perspective-origin: 50% 50%;
+    }
+    .barrel_tile {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: var(--tile-w, 18rem);
+      aspect-ratio: 16 / 10;
+      overflow: hidden;
+      border-radius: var(--radius-media);
+      background: var(--background-2);
+      backface-visibility: hidden;
+      will-change: transform;
+      & img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+      }
+    }
+  }
+</style>

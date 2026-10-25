@@ -1,0 +1,155 @@
+/* claude.com/solutions/code-modernization, rebuilt at its own 1440px width.
+   Colours, sizes, line heights and positions were read off the live page on
+   2026-10-23 (computed styles and boxes at 1440 x 900, both colour schemes).
+   Like the live page, every heading and paragraph is trimmed to its cap height
+   and baseline (text-box: trim-both cap alphabetic), so the boxes here are the
+   live page's boxes. Dark is the scheme Kinetic recorded; .th-light is the
+   other one the site ships. */
+
+@font-face { font-family: "CL Sans"; src: url("../fonts/AnthropicSans-Roman.woff2") format("woff2"); font-weight: 300 800; font-display: block; }
+@font-face { font-family: "CL Serif"; src: url("../fonts/AnthropicSerif-Roman.woff2") format("woff2"); font-weight: 300 800; font-display: block; }
+
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  contain: paint;
+  /* dark, as Kinetic recorded it */
+  --bg: #141413; --bg2: #1f1e1d; --text: #faf9f5; --nav: #b0aea5; --muted: #87867f; --muted2: #9c9a92;
+  --line: #30302e; --line-nav: #30302e; --line2: #3d3d3a;
+  --btn2: #30302e; --btn2-ink: #faf9f5; --ghost-ink: #faf9f5;
+  --watch: #c46849; --ink: #faf9f5; --ill: #5e5d59; --card: #1f1e1d; --card-line: #30302e;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "CL Sans", system-ui, sans-serif; font-weight: 400;
+  font-feature-settings: "pnum" on, "lnum" on, "liga" on;
+  text-rendering: geometricPrecision;
+}
+.vp.th-light {
+  --bg: #faf9f5; --bg2: #ffffff; --text: #141413; --nav: #30302e; --muted: #5e5d59; --muted2: #5e5d59;
+  --line: #f0eee6; --line-nav: #e8e6dc; --line2: #d1cfc5;
+  --btn2: #e8e6dc; --btn2-ink: #4d4c48; --ghost-ink: #5e5d59;
+  --watch: #d97757; --ink: #141413; --ill: #dedcd1; --card: #ffffff; --card-line: #e8e6dc;
+}
+.vp p, .vp h1, .vp h2, .vp h3 { margin: 0; font-weight: inherit; }
+.vp p, .vp h3 { text-wrap: pretty; }                 /* as the live page: body copy pretty, headings balanced */
+.vp h1, .vp h2 { text-wrap: balance; }
+.vp img, .vp svg { display: block; }
+.page { position: absolute; left: 0; top: 0; width: 1440px; height: 6690px; will-change: transform; }
+.page .sec, .sec > *, .abs, .hdr > *, .feat > *, .row > *, .rcard > *, .fcol > * { position: absolute; }
+.sec { left: 0; width: 1440px; background: var(--bg); }
+.sec.alt { background: var(--bg2); }
+.sec.rule::before, .row::before { content: ""; position: absolute; left: 0; top: 0; width: 100%; height: 1px; background: var(--line); }
+.row::before { background: var(--line2); }
+[data-depth] { will-change: transform; }
+
+.vp .serif { font-family: "CL Serif", Georgia, serif; font-weight: 500; }
+.trim { text-box: trim-both cap alphabetic; }
+.center { text-align: center; }
+.w { display: inline-block; }                 /* a heading word, revealed by the scroll */
+
+.btn {
+  display: flex; align-items: center; justify-content: center;
+  height: 40px; padding: 0 24px; border-radius: 8px;
+  font-size: 17px; line-height: 17px; font-weight: 500; white-space: nowrap;
+}
+.btn.pri { background: var(--text); color: var(--bg); }
+.btn.sec2 { background: var(--btn2); color: var(--btn2-ink); }
+
+/* ---------- the header, fixed in the viewport ---------- */
+.hdr { left: 0; top: 0; width: 1440px; height: 129px; background: var(--bg); }
+.hdr .ln { left: 0; width: 1440px; height: 1px; background: var(--line-nav); }
+.hdr .wm { left: 64px; top: 29px; width: 120px; height: 26px; }
+.wm svg { width: 100%; height: 100%; color: var(--text); }
+.links { left: 0; top: 0; width: 1440px; height: 84px; }
+.links > span { position: absolute; top: 30px; font-size: 15px; line-height: 24px; color: var(--nav); white-space: nowrap; }
+.links > svg { position: absolute; top: 34px; width: 16px; height: 16px; color: var(--muted); }
+.nbtn { top: 24px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; line-height: 15px; font-weight: 500; white-space: nowrap; }
+.nbtn.ghost { left: 1126px; width: 130px; color: var(--ghost-ink); box-shadow: inset 0 0 0 1px var(--line); }
+.nbtn.solid { left: 1268px; width: 108px; background: var(--text); color: var(--bg); }
+.crumbs { left: 0; top: 84px; width: 1440px; height: 45px; }
+.crumbs span { position: absolute; top: 15px; font-size: 12px; line-height: 15px; letter-spacing: .12px; color: var(--nav); white-space: nowrap; }
+.crumbs .ex { color: var(--muted); }
+.crumbs svg { position: absolute; top: 15px; width: 16px; height: 16px; color: var(--muted); }
+
+/* ---------- hero ---------- */
+.hero { top: 0; height: 759px; }
+.hero-h { left: 64px; top: 295px; width: 665px; font-size: 64px; line-height: 70.4px; }
+.hero-p { left: 64px; top: 521px; width: 727px; font-size: 20px; line-height: 32px; color: var(--muted); }
+.hero-b1 { left: 64px; top: 600px; }
+.hero-b2 { left: 259px; top: 600px; }
+.ill { left: 960px; top: 240px; width: 416px; height: 416px; }
+.ill > .ill-l { position: absolute; inset: 0; }
+.ill-l > svg { width: 100%; height: 100%; overflow: visible; }
+.f-watch { fill: var(--watch); }
+.f-ink { fill: var(--ink); }
+.f-ill { fill: var(--ill); }
+
+/* ---------- logo walls ---------- */
+.logos { top: 759px; height: 337px; }
+.lg { width: 280px; height: 64px; display: grid; place-items: center; }
+.lg img { width: var(--lw); height: var(--lh); }
+
+/* ---------- the agentic modernization tool ---------- */
+.intro { top: 1096px; height: 1008px; }
+.icon96 { left: 672px; top: 126px; width: 96px; height: 96px; }
+.icon96 > svg, .icon96 > img { width: 96px; height: 96px; }
+.intro-h { left: 292px; top: 257px; width: 856px; font-size: 44px; line-height: 52.8px; }
+.intro-p { left: 448px; top: 381px; width: 545px; font-size: 20px; line-height: 32px; color: var(--muted2); }
+.vline { top: 620px; width: 1px; height: 259px; background: var(--line2); }
+.feat { top: 632px; width: 300px; height: 330px; }
+.feat > svg { left: 0; top: 0; width: 32px; height: 32px; color: var(--muted2); }
+.feat h3 { left: 0; top: 80px; width: 292px; font-size: 19px; line-height: 22.8px; }
+.feat p { left: 0; top: 117px; width: 292px; font-size: 15px; line-height: 24px; color: var(--muted2); }
+
+/* ---------- using Claude Code for code modernization ---------- */
+.using { top: 2104px; height: 1725px; }
+.using-h { left: 214px; top: 257px; width: 1012px; font-size: 52px; line-height: 62.4px; }
+.using-p { left: 406px; top: 397px; width: 628px; font-size: 23px; line-height: 34.5px; color: var(--muted); }
+.row { left: 400px; width: 640px; height: 160px; }
+.row .rh { left: 0; top: 33px; width: 280px; height: 30px; }
+.rh svg { position: absolute; left: 0; top: 0; width: 24px; height: 24px; color: var(--text); }
+.rh h3 { position: absolute; left: 36px; top: 4px; width: 221px; font-size: 19px; line-height: 22.8px; color: var(--nav); }
+.row p { left: 336px; top: 33px; width: 304px; font-size: 17px; line-height: 27.2px; color: var(--muted); }
+
+/* ---------- the AI ecosystem ---------- */
+.eco { top: 3829px; height: 732px; }
+.eco-h { left: 409px; top: 129px; width: 621px; font-size: 32px; line-height: 35.2px; }
+
+/* ---------- resources ---------- */
+.res { top: 4561px; height: 902px; }
+.res .icon96 { top: 129px; }
+.res-h { left: 320px; top: 257px; width: 801px; font-size: 52px; line-height: 62.4px; }
+.res-b { left: 641px; top: 334px; }
+.rcard { top: 502px; width: 299px; height: 200px; border-radius: 24px; background: var(--card); box-shadow: inset 0 0 0 1px var(--card-line); }
+.vp .rcard p { left: 33px; top: 33px; width: 233px; font-family: "CL Serif", Georgia, serif; font-size: 17px; line-height: 27.2px; font-weight: 400; }
+.rcard .tag { left: 33px; top: 147px; height: 20px; display: flex; align-items: center; gap: 4px; font-size: 12px; line-height: 19.2px; letter-spacing: .12px; color: var(--muted2); }
+.rcard .tag svg { width: 20px; height: 20px; }
+
+/* ---------- footer (dark in both schemes, as on the live site) ---------- */
+.foot { top: 5463px; height: 1227px; background: #141413; color: #faf9f5; --line: #30302e; }
+.foot .wm { left: 64px; top: 97px; width: 144px; height: 31px; }
+.foot .wm svg { color: #faf9f5; }
+.ask { left: 64px; top: 167px; width: 280px; height: 46px; border-radius: 12px; background: #262624; box-shadow: inset 0 0 0 1px #3d3d3a; }
+.ask span { position: absolute; left: 14px; top: 14px; font-size: 12px; line-height: 19.2px; letter-spacing: .12px; color: #87867f; white-space: nowrap; }
+.ask i { position: absolute; left: 243px; top: 9px; width: 28px; height: 28px; border-radius: 8px; background: #c6613f; display: grid; place-items: center; }
+.ask i svg { width: 14px; height: 16px; color: #fff; }
+.fcol { top: 97px; width: 189px; height: 960px; }
+.fcol > * { left: 0; width: 189px; font-size: 12px; letter-spacing: .12px; white-space: nowrap; }
+.fcol b { font-weight: 400; color: #87867f; line-height: 19.2px; }
+.fcol span { line-height: 27.2px; color: #faf9f5; }
+.fcol span.tall { white-space: normal; line-height: 19.2px; padding-top: 4px; }
+.anth { left: 64px; top: 993px; width: 108px; height: 12px; color: #87867f; }
+.copy { left: 64px; top: 1019px; font-size: 11px; line-height: 16.5px; color: #87867f; }
+.fhr { left: 64px; top: 1068px; width: 1312px; height: 1px; background: #30302e; }
+.social { left: 64px; top: 1100px; width: 420px; height: 20px; color: #87867f; }
+.social svg { position: absolute; top: 0; width: 16px; height: 16px; }
+.social span { position: absolute; left: 245px; top: -2px; font-size: 12px; line-height: 19.2px; letter-spacing: .12px; white-space: nowrap; }
+.locale { left: 1248px; top: 1085px; width: 128px; height: 46px; border-radius: 12px; box-shadow: inset 0 0 0 1px #30302e; color: #b0aea5; }
+.locale svg { position: absolute; top: 13px; width: 20px; height: 20px; }
+.locale span { position: absolute; left: 43px; top: 13px; font-size: 12px; line-height: 19.2px; letter-spacing: .12px; }
+
+/* shadow twins: a darkened, blurred copy of a lifted layer, left on the surface below it */
+.twin { filter: brightness(0) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; }
+.twin * { will-change: auto !important; }

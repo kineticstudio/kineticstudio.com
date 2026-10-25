@@ -1,0 +1,1 @@
+var bundler_settings_updated = 'default2';

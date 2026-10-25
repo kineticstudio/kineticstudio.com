@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Rime work card, 2026-10-23. A code-powered 3D work card on the Dawn
+     card's architecture (01-Code-powered-work-card.html), with the engine of
+     the Ethos and Wispr Flow cards and Hunter's notes built in from the start:
+     - the miniature is www.rime.ai rebuilt in HTML and CSS layers at its own
+       1440px width, each layer at its own depth, in a card laid out K times
+       larger and scaled back so tilted text stays sharp; one spring-driven
+       loop that only writes transforms and opacity
+     - idle, it tours the page (hero, the voices card, the venn, the globe,
+       the reviews, the circle snake, the footer) on a ~20 s loop of eased stops
+     - hover tilts it toward the pointer (10 degrees), the layers separate by
+       depth with shadows that grow with height, one round bloom of light
+       follows the pointer, and the tour keeps running underneath
+     - press and drag scrolls it either way: drag up and the page goes down
+       (1:1, like a phone); drag right and it scrubs further down, left back
+       up (2.5x); momentum, clamped ends, the tour picks up a beat after
+     - a notched ruler beside the card slides with the scroll
+     - over "Start the conversation" the circle snake chases the pointer, as
+       it chases the cursor on the live site
+
+     Rime's own motion, rebuilt without canvases: the hero waveform is the
+     live shader's own maths drawn into a sprite of column frames (one per
+     spread level) that each column steps through by transform; the venn,
+     the call ring, the orbiting play button and the snake are DOM circles
+     blended the way the live canvases blend them; the globe is a still of
+     the live canvas. Fonts and images are the site's own, in rime-card-src/.
+     raw/ keeps the fetched HTML, CSS, fonts, images and section scripts for
+     reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched.
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent; it never navigates. -->
+<title>Rime work card</title>
+<script>
+  (function () {
+    var q = new URLSearchParams(location.search);
+    if (q.get('embed') !== '1') return;
+    var h = document.documentElement;
+    h.classList.add('embed');
+    var b = parseFloat(q.get('bleed'));          // &bleed=N: room round the card for the tilt
+    if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    var r = parseFloat(q.get('radius'));         // &radius=N: the card's corner radius in px
+    if (r >= 0) h.style.setProperty('--card-r', r + 'px');
+  })();
+</script>
+<link rel="stylesheet" href="rime-card-src/css/card.css">
+<link rel="stylesheet" href="rime-card-src/css/site.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Rime, rime.ai, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- the dark footer, under the last section's rounded corners -->
+              <div class="sec foot-ground" data-tone="dark"></div>
+
+              <!-- hero: the waveform, the headline, the logos -->
+              <section class="sec hero" id="s-hero">
+                <div class="wave" id="wave" data-layer="waveform" data-depth="0.22"></div>
+                <h1 class="h1 hero-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,14">Voice models made for<br>human conversation</h1>
+                <p class="hero-p" data-layer="body copy" data-depth="0.5">Rime voice models power the world's most important conversations.</p>
+                <div class="btn light" style="left:80px;top:773px" data-layer="button" data-depth="0.86" data-shadow="0,0.16,12">Book a call</div>
+                <div class="btn dark" style="left:214px;top:773px" data-layer="button" data-depth="0.9" data-shadow="0,0.2,12">Try for free</div>
+                <div class="logos" data-layer="logos" data-depth="0.34"><div class="logos-track" id="logos"></div></div>
+              </section>
+
+              <!-- voices that keep customers on the line -->
+              <section class="sec player" id="s-player">
+                <div class="pcard" data-layer="voices card" data-depth="0.06" data-shadow="0,0.32,26">
+                  <h2 class="h2 center pcard-h" data-layer="headline" data-depth="0.62">Voices that keep customers on the line</h2>
+                  <div class="ptabs" data-layer="tabs" data-depth="0.34">
+                    <div class="ptab-on" data-layer="active tab" data-depth="0.46"></div>
+                    <span class="on" style="left:20px">Customer support</span><span style="left:191px">Healthcare</span><span style="left:311px">Banking</span><span style="left:405px">Hospitality</span>
+                  </div>
+                  <i class="vline" style="left:351px" data-layer="rule" data-depth="0.12"></i>
+                  <i class="vline" style="left:639px" data-layer="rule" data-depth="0.12"></i>
+                  <i class="vline" style="left:928px" data-layer="rule" data-depth="0.12"></i>
+                  <div class="voice" style="left:207px" data-voice data-layer="voice" data-depth="0.42">
+                    <div class="orbit" data-c="pink,yellow"><i></i><i></i></div>
+                    <div class="vbtn" style="background:var(--aqua)" data-layer="play" data-depth="0.84"></div>
+                    <div class="vtype" style="left:-43px">Professional</div><div class="vname" style="left:-43px;color:var(--aqua)">Cupola</div>
+                  </div>
+                  <div class="voice" style="left:496px" data-voice data-layer="voice" data-depth="0.42">
+                    <div class="orbit" data-c="yellow,aqua"><i></i><i></i></div>
+                    <div class="vbtn" style="background:var(--pink)" data-layer="play" data-depth="0.84"></div>
+                    <div class="vtype" style="left:-23px">Calm</div><div class="vname" style="left:-23px;color:var(--pink)">Eliphas</div>
+                  </div>
+                  <div class="voice" style="left:784px" data-voice data-layer="voice" data-depth="0.42">
+                    <div class="orbit" data-c="aqua,pink"><i></i><i></i></div>
+                    <div class="vbtn" style="background:var(--yellow)" data-layer="play" data-depth="0.84"></div>
+                    <div class="vtype" style="left:-18px">Happy</div><div class="vname" style="left:-18px;color:var(--yellow)">Astra</div>
+                  </div>
+                  <div class="voice" style="left:1073px" data-voice data-layer="voice" data-depth="0.42">
+                    <div class="orbit" data-c="pink,aqua"><i></i><i></i></div>
+                    <div class="vbtn" style="background:var(--green)" data-layer="play" data-depth="0.84"></div>
+                    <div class="vtype" style="left:-26px">Casual</div><div class="vname" style="left:-26px;color:var(--green)">Vespera</div>
+                  </div>
+                </div>
+              </section>
+
+              <i class="sec divider" style="top:1749px" data-layer="divider" data-depth="0.04"></i>
+
+              <!-- reliability: the call ring -->
+              <section class="sec feature" id="s-feature">
+                <div class="eyebrow" style="left:160px;top:104px;background:var(--aqua)" data-layer="eyebrow" data-depth="0.52">Reliability</div>
+                <h2 class="h2" style="left:160px;top:156px;width:480px" data-layer="headline" data-depth="0.72" data-shadow="0,0.14,12">For the calls you can't<br>get wrong</h2>
+                <p class="body18" style="left:160px;top:297px;width:466px" data-layer="body copy" data-depth="0.46">When the voice is talking to a patient, a cardholder, or a hotel guest deciding whether to stay the night, quality stops being a nice-to-have. Rime delivers the speed real conversations need and runs inside your own environment when compliance demands it.</p>
+                <div class="ring" data-layer="ring" data-depth="0.32"><div class="rotor" id="rotor"></div></div>
+                <div class="rcenter" data-layer="call" data-depth="0.56" data-shadow="0.32,0.26,10"><div class="timer" id="timer"></div></div>
+                <div class="rpill" id="rpill" data-layer="caption" data-depth="0.78"></div>
+              </section>
+
+              <i class="sec divider" style="top:2175px" data-layer="divider" data-depth="0.04"></i>
+
+              <!-- a voice for every conversation: the venn -->
+              <section class="sec voices" id="s-voices">
+                <div class="vtabs" data-layer="tabs" data-depth="0.4">
+                  <div class="vind" style="left:6px;width:82px"><i></i></div><div class="vind" style="left:94px;width:104px"><i></i></div><div class="vind" style="left:204px;width:126px"><i></i></div>
+                  <span style="left:6px;width:82px">Banking</span><span style="left:94px;width:104px">Healthcare</span><span style="left:204px;width:126px">Food ordering</span>
+                </div>
+                <div class="venn" id="venn" data-layer="voices" data-depth="0.28"><i style="background:var(--aqua)"></i><i style="background:var(--pink)"></i><i style="background:var(--yellow)"></i><i style="background:var(--venn-green)"></i></div>
+                <div class="venn-labels" id="vennLabels" data-layer="labels" data-depth="0.56"><b>Professional</b><b>Casual</b><b>Formal</b><b>Energetic</b></div>
+                <div class="eyebrow" style="left:816px;top:204px;background:var(--yellow)" data-layer="eyebrow" data-depth="0.52">Voices</div>
+                <h2 class="h2" style="left:816px;top:257px;width:480px" data-layer="headline" data-depth="0.72" data-shadow="0,0.14,12">A voice for every<br>conversation</h2>
+                <p class="body18" style="left:816px;top:397px;width:470px" data-layer="body copy" data-depth="0.46">Choose from 600+ voices, then shape accent, pace, and tone until it fits your brand and your industry. What comes out sounds like a person who wants to be on the call and not a system working through a script.</p>
+              </section>
+
+              <i class="sec divider" style="top:2779px" data-layer="divider" data-depth="0.04"></i>
+
+              <!-- built by linguists: the word search -->
+              <section class="sec ling" id="s-ling">
+                <div class="eyebrow" style="left:160px;top:195px;background:var(--pink)" data-layer="eyebrow" data-depth="0.52">Linguistics</div>
+                <h2 class="h2" style="left:160px;top:248px;white-space:nowrap" data-layer="headline" data-depth="0.72" data-shadow="0,0.14,12">Built by linguists</h2>
+                <p class="body18" style="left:160px;top:334px;width:466px" data-layer="body copy" data-depth="0.46">Rime was founded by people who study how language actually works. That's why our voices land the rhythm, stress, and warmth of real speech instead of the hollow tones you hear everywhere else. We treat voice as a craft, not a feature to bolt onto a stack.</p>
+                <div class="ws ws-pills" id="wsPills" data-layer="words" data-depth="0.16"></div>
+                <div class="ws ws-grid" id="wsGrid" data-layer="letters" data-depth="0.28"></div>
+                <div class="ws ws-lit" id="wsLit" data-layer="found" data-depth="0.5"></div>
+              </section>
+
+              <i class="sec divider" style="top:3333px" data-layer="divider" data-depth="0.04"></i>
+
+              <!-- spoken like a local -->
+              <section class="sec langs" id="s-langs">
+                <div class="lcard" data-layer="languages card" data-depth="0.05" data-shadow="0,0.3,24">
+                  <div class="globe" data-layer="globe" data-depth="0.11"><img src="rime-card-src/img/globe.webp" alt=""></div>
+                  <h2 class="h1 center lcard-h" data-layer="headline" data-depth="0.74" data-shadow="0.11,0.22,16">Spoken like a local</h2>
+                  <div class="chip" style="left:48px" data-layer="feature" data-depth="0.48" data-shadow="0.11,0.26,12"><div class="check"><svg viewBox="0 0 32 32" fill="none"><path d="M10.5 16.4l3.6 3.6 7.4-7.6" stroke="#f0e9dd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><p>Multilingual fluency</p></div>
+                  <div class="chip" style="left:449px" data-layer="feature" data-depth="0.48" data-shadow="0.11,0.26,12"><div class="check"><svg viewBox="0 0 32 32" fill="none"><path d="M10.5 16.4l3.6 3.6 7.4-7.6" stroke="#f0e9dd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><p>Dialects and accents that sound local</p></div>
+                  <div class="chip" style="left:849px" data-layer="feature" data-depth="0.48" data-shadow="0.11,0.26,12"><div class="check"><svg viewBox="0 0 32 32" fill="none"><path d="M10.5 16.4l3.6 3.6 7.4-7.6" stroke="#f0e9dd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><p>Controls to get it right, every time</p></div>
+                </div>
+              </section>
+
+              <!-- from the teams that put us on the line -->
+              <section class="sec reviews" id="s-reviews">
+                <h2 class="h2 center full rev-h" data-layer="headline" data-depth="0.68" data-shadow="0,0.14,12">From the teams that put us on the line</h2>
+                <div class="rev-row" data-layer="reviews" data-depth="0.3"><div class="rev-track" id="revTrack"></div></div>
+              </section>
+
+              <!-- questions, answered -->
+              <section class="sec faq" id="s-faq">
+                <div class="faq-box" data-layer="faq" data-depth="0.05">
+                  <h2 class="h2 center faq-h" data-layer="headline" data-depth="0.62" data-shadow="0.05,0.12,12">Questions, answered</h2>
+                  <div class="faq-item" style="top:155px" data-layer="question" data-depth="0.26" data-shadow="0.05,0.1,12"><h3>How good are the voices?</h3><div class="tog" style="background:var(--yellow)"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#24211d" stroke-width="1.6" stroke-linecap="round"/></svg></div></div>
+                  <div class="faq-item" style="top:251px" data-layer="question" data-depth="0.26" data-shadow="0.05,0.1,12"><h3>How fast are the voices?</h3><div class="tog" style="background:var(--pink)"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#24211d" stroke-width="1.6" stroke-linecap="round"/></svg></div></div>
+                  <div class="faq-item" style="top:347px" data-layer="question" data-depth="0.26" data-shadow="0.05,0.1,12"><h3>What languages do you support?</h3><div class="tog" style="background:var(--aqua)"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#24211d" stroke-width="1.6" stroke-linecap="round"/></svg></div></div>
+                  <div class="faq-item" style="top:443px" data-layer="question" data-depth="0.26" data-shadow="0.05,0.1,12"><h3>Can I try it, and will it work with my stack?</h3><div class="tog" style="background:var(--yellow)"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#24211d" stroke-width="1.6" stroke-linecap="round"/></svg></div></div>
+                  <div class="faq-item" style="top:539px" data-layer="question" data-depth="0.26" data-shadow="0.05,0.1,12"><h3>Do you have customers I'd recognize?</h3><div class="tog" style="background:var(--pink)"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#24211d" stroke-width="1.6" stroke-linecap="round"/></svg></div></div>
+                </div>
+              </section>
+
+              <!-- the footer: the big wordmark, the links, the badges -->
+              <section class="sec foot" id="s-foot" data-tone="dark">
+                <div class="wordmark" data-layer="wordmark" data-depth="0.36">
+                  <svg viewBox="0 0 61 33" fill="none"><path fill="currentColor" d="M53.5049 9.45714C55.9002 9.45714 57.7457 10.0966 59.04 11.3761C60.3492 12.6406 61.0038 14.4039 61.0039 16.6652V22.7804H52.2773V26.5743C52.2774 27.5858 52.7314 28.0918 53.6387 28.0919C54.5611 28.0919 55.0224 27.586 55.0225 26.5743V24.8556H60.8477V26.2169C60.8477 28.3147 60.2148 29.9593 58.9502 31.1495C57.6856 32.3395 55.893 32.9347 53.5723 32.9347C51.1174 32.9347 49.2133 32.3018 47.8594 31.0372C46.5056 29.7727 45.8282 28.0028 45.8281 25.7267V16.6652C45.8282 15.1627 46.1332 13.8759 46.7432 12.8048C47.3532 11.7187 48.2313 10.8926 49.377 10.3273C50.5373 9.7472 51.9133 9.45718 53.5049 9.45714ZM18.6553 32.5333H12.25V9.85949H18.6553V32.5333ZM39.918 9.45714C41.2124 9.45714 42.2469 9.85123 43.0205 10.6398C43.7941 11.4283 44.1807 12.5226 44.1807 13.921V32.5333H37.7754V15.9288C37.7754 15.5869 37.6937 15.3194 37.5303 15.1261C37.3666 14.9178 37.1354 14.8136 36.8379 14.8136C36.481 14.8137 36.1909 14.9397 35.9678 15.1925C35.7446 15.4305 35.6328 15.7583 35.6328 16.1749V32.5333H29.251V15.9288C29.2509 15.5868 29.1609 15.3195 28.9824 15.1261C28.8188 14.9178 28.5885 14.8136 28.291 14.8136C27.9488 14.8136 27.6656 14.9396 27.4424 15.1925C27.2193 15.4305 27.1084 15.7584 27.1084 16.1749V32.5333H20.7031V9.85851H26.5947V12.8712C26.9369 11.8598 27.5321 11.0419 28.3799 10.4171C29.2428 9.77735 30.2404 9.45714 31.3711 9.45714C32.5014 9.45722 33.4161 9.73974 34.1152 10.3048C34.8144 10.8701 35.2616 11.6812 35.4551 12.7374C35.8121 11.7409 36.3769 10.9447 37.1504 10.3497C37.924 9.75461 38.8468 9.45716 39.918 9.45714ZM9.57422 9.56847C10.0353 9.56852 10.3926 9.70306 10.6455 9.97082C10.913 10.2386 11.0468 10.6103 11.0469 11.0861V14.0099C11.0469 14.6049 10.8905 15.0664 10.5781 15.3937C10.2657 15.706 9.8042 15.8624 9.19434 15.8624H7.74414C7.28292 15.8624 6.94094 15.9666 6.71777 16.1749C6.5095 16.3832 6.40527 16.7252 6.40527 17.2013V32.5323H0V9.85851H5.78027V13.6974C5.92905 12.8196 6.1896 12.0759 6.56152 11.4659C6.93342 10.8411 7.35699 10.3721 7.83301 10.0597C8.3091 9.73237 8.77804 9.56847 9.23926 9.56847H9.57422ZM53.5049 14.2775C53.0885 14.2775 52.769 14.3969 52.5459 14.6349C52.3376 14.8729 52.2334 15.2074 52.2334 15.6388V19.0314H54.7998V15.6388C54.7998 15.2075 54.6879 14.8729 54.4648 14.6349C54.2566 14.3968 53.9363 14.2775 53.5049 14.2775Z"/></svg>
+                  <i style="background:var(--aqua)"></i><i style="background:var(--pink)"></i><i style="background:var(--yellow)"></i>
+                </div>
+                <div class="flinks" data-layer="links" data-depth="0.24">
+                  <div style="left:0;top:0"><b>Product</b><span>Book a demo</span><span>Pricing</span><span>Resources</span><span>Docs</span></div>
+                  <div style="left:259px;top:0"><b>Company</b><span>About</span><span>Careers</span><span>Privacy</span><span>Terms</span><span>Security</span><span>Subprocessors</span></div>
+                  <div style="left:518px;top:0"><b>Account</b><span>Sign up</span><span>Log in</span></div>
+                  <div style="left:0;top:249px"><b>Guides</b><span>ElevenLabs vs Rime</span><span>Rime vs Deepgram</span><span>Enterprise TTS buyer's guide</span><span>On-prem voice AI guide</span><span>TTS voice best practices</span></div>
+                  <div style="left:259px;top:251px"><b>Social</b><span>Linkedin</span><span>X</span><span>YouTube</span></div>
+                </div>
+                <div class="badges" data-layer="badges" data-depth="0.46">
+                  <svg viewBox="0 0 72 72" style="left:0"><circle cx="36" cy="36" r="34.75" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="36" cy="36" r="29" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray=".1 3.4" stroke-linecap="round"/><text x="36" y="39" text-anchor="middle" fill="currentColor" font-family="Rime Condensed, sans-serif" font-weight="700" font-size="17">HIPAA</text><text x="36" y="49" text-anchor="middle" fill="currentColor" font-family="Rime Mono, monospace" font-size="5.6" letter-spacing=".5">COMPLIANT</text></svg>
+                  <svg viewBox="0 0 72 72" style="left:76px"><circle cx="36" cy="36" r="34.75" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="36" cy="36" r="29" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray=".1 3.4" stroke-linecap="round"/><text x="36" y="39" text-anchor="middle" fill="currentColor" font-family="Rime Condensed, sans-serif" font-weight="700" font-size="17">SOC 2</text><text x="36" y="49" text-anchor="middle" fill="currentColor" font-family="Rime Mono, monospace" font-size="5.6" letter-spacing=".5">COMPLIANT</text></svg>
+                </div>
+              </section>
+
+              <!-- start the conversation: the circle snake -->
+              <section class="sec pre" id="s-pre">
+                <div class="snake" id="snake" data-layer="circles" data-depth="0.2"></div>
+                <h2 class="h1 center pre-h" id="preH" data-layer="headline" data-depth="0.74" data-shadow="0.2,0.16,16">Start the conversation</h2>
+                <div class="btn dark pre-btns" style="left:588px" data-layer="button" data-depth="0.88" data-shadow="0.2,0.26,12">Try for free</div>
+                <div class="btn light pre-btns" style="left:722px" data-layer="button" data-depth="0.86" data-shadow="0.2,0.22,12">Book a call</div>
+              </section>
+
+              <div class="sec banner bottom" data-layer="banner" data-depth="0.12"><div class="banner-txt">Free for 30 days: Rime speech-to-text is here</div></div>
+            </div>
+
+            <!-- the nav, fixed in the viewport: it hides as the page goes down and comes back as it goes up -->
+            <nav class="nav abs" id="nav">
+              <div class="nav-shift" id="navShift">
+                <div class="banner abs" data-layer="banner" data-depth="0.3"><div class="banner-txt">Free for 30 days: Rime speech-to-text is here</div></div>
+                <div class="nav-bar abs" data-layer="nav" data-depth="0.4" data-shadow="0,0.12,14">
+                  <svg class="nav-logo" viewBox="0 0 61 33" fill="none"><path fill="#24211d" d="M53.5015 9.4895C55.8966 9.4895 57.742 10.1289 59.0362 11.4083C60.3453 12.6728 60.9999 14.4359 61 16.6971V22.8119H52.274V26.6056C52.2741 27.617 52.728 28.123 53.6353 28.1231C54.5576 28.1231 55.0189 27.6172 55.019 26.6056V24.887H60.8438V26.2482C60.8438 28.3459 60.2109 29.9904 58.9464 31.1805C57.6819 32.3704 55.8894 32.9656 53.5689 32.9656C51.1141 32.9656 49.2102 32.3327 47.8563 31.0682C46.5026 29.8038 45.8253 28.034 45.8252 25.758V16.6971C45.8253 15.1947 46.1302 13.908 46.7402 12.8369C47.3502 11.7509 48.2282 10.9249 49.3738 10.3596C50.5341 9.77954 51.91 9.48954 53.5015 9.4895ZM18.6541 32.5642H12.2492V9.89183H18.6541V32.5642ZM39.9154 9.4895C41.2098 9.4895 42.2442 9.88357 43.0177 10.6721C43.7913 11.4605 44.1779 12.5548 44.1779 13.9531V32.5642H37.773V15.9607C37.773 15.6189 37.6913 15.3514 37.5279 15.1581C37.3642 14.9498 37.133 14.8456 36.8355 14.8456C36.4787 14.8457 36.1886 14.9717 35.9655 15.2245C35.7423 15.4625 35.6305 15.7903 35.6305 16.2068V32.5642H29.2491V15.9607C29.249 15.6188 29.159 15.3515 28.9805 15.1581C28.817 14.9498 28.5867 14.8456 28.2892 14.8456C27.947 14.8456 27.6638 14.9716 27.4406 15.2245C27.2176 15.4625 27.1067 15.7904 27.1067 16.2068V32.5642H20.7018V9.89085H26.593V12.9033C26.9352 11.892 27.5303 11.0742 28.3781 10.4494C29.2409 9.80969 30.2385 9.4895 31.3691 9.4895C32.4993 9.48958 33.414 9.77208 34.113 10.3371C34.8122 10.9024 35.2593 11.7134 35.4528 12.7696C35.8098 11.7731 36.3746 10.977 37.148 10.382C37.9216 9.78695 38.8443 9.48952 39.9154 9.4895ZM9.57361 9.60082C10.0347 9.60087 10.3919 9.73541 10.6448 10.0031C10.9123 10.2709 11.0461 10.6426 11.0462 11.1184V14.042C11.0462 14.6369 10.8898 15.0984 10.5774 15.4257C10.265 15.738 9.80357 15.8944 9.19375 15.8944H7.74364C7.28245 15.8944 6.9405 15.9985 6.71734 16.2068C6.50908 16.4151 6.40486 16.7571 6.40486 17.2332V32.5632H0V9.89085H5.7799V13.7295C5.92867 12.8517 6.1892 12.1081 6.5611 11.4981C6.93298 10.8734 7.35652 10.4044 7.83251 10.092C8.30857 9.76471 8.77748 9.60082 9.23867 9.60082H9.57361ZM53.5015 14.3096C53.0851 14.3096 52.7656 14.4289 52.5425 14.6669C52.3343 14.9049 52.2301 15.2394 52.2301 15.6708V19.0632H54.7963V15.6708C54.7963 15.2395 54.6844 14.9049 54.4613 14.6669C54.2531 14.4288 53.9329 14.3096 53.5015 14.3096Z"/><path fill="#24211d" d="M15.4155 8.24052C17.682 8.24052 19.5193 6.40319 19.5193 4.13674C19.5193 1.87028 17.682 0.032959 15.4155 0.032959C13.1491 0.032959 11.3118 1.87028 11.3118 4.13674C11.3118 6.40319 13.1491 8.24052 15.4155 8.24052Z"/></svg>
+                  <div class="nav-links">
+                    <span style="left:592px">Product</span><svg viewBox="0 0 10 6" style="left:663px"><path d="M1 1l4 4 4-4" fill="none" stroke="#24211d" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    <span style="left:700px">Pricing</span><span style="left:777px">Company</span>
+                    <span style="left:875px">Resources</span><svg viewBox="0 0 10 6" style="left:965px"><path d="M1 1l4 4 4-4" fill="none" stroke="#24211d" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    <span style="left:1002px">Log in</span>
+                  </div>
+                  <div class="btn light nav-btn" style="left:1076px" data-layer="nav button" data-depth="0.52">Book a demo</div>
+                  <div class="btn dark nav-btn" style="left:1230px" data-layer="nav button" data-depth="0.58">Try for free</div>
+                </div>
+              </div>
+            </nav>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Rime</h3>
+      <p><span>AI</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened straight from disk -->
+<script src="rime-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, the Dawn card's way: the studio's own Params, defineParams from
+   /shared/params/params.js. Embedded on the site there is no panel and nothing
+   is fetched, so the module is only loaded here, and only when served. */
+const card = window.rimeCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const D = card.defaults;
+    const TOOL = 'rime work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round light under the pointer
+        bloomSize: [D['light.bloomSize'], 0.4, 2.5, 0.05], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        ambient: [D['motion.ambient'], 0, 3, 0.05],        // Rime's own motion: the wave, the circles, the marquees
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [D['drag.momentum'], 0, 3, 0.05],        // how far a flick carries
+        scrub: [D['drag.scrub'], 0, 6, 0.1],               // px of page per px of sideways drag, against 1 for up and down
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: D['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: { type: 'select', options: ['yellow', 'pink', 'aqua', 'ink'], default: D['card.frameColor'] },
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

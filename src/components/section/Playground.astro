@@ -1,308 +1,472 @@
 ---
 import MEDIA from "@/data/media.json";
 import { EXPERIMENTS } from "@/data/experiments.js";
+import logoRaw from "@/assets/brand/logo.svg?raw";
+import SizeSlider from "@/components/interactive/SizeSlider.astro";
 
 interface Props {
   /** Set to `false` to omit the component. */
   render?: boolean;
+  /** Columns and rows of the grid that wraps round the globe. */
+  cols?: number;
+  rows?: number;
 }
 
-const { render = true } = Astro.props;
+const { render = true, cols = 10, rows = 8 } = Astro.props;
 const media = MEDIA as Record<string, { w: number; h: number; ground: string; video: boolean }>;
-const items = EXPERIMENTS.map((e) => ({ ...e, m: (media[e.media] ? e.media : e.fallback) ?? "" })).filter((e) => media[e.m]);
-const live = items.filter((e) => e.kind === "live").length;
-// Three rings of the barrel, every piece once.
-const rings = [0, 1, 2].map((r) => items.filter((_, i) => i % 3 === r));
+// Every tile is a live piece, so every click opens one with its Params.
+const live = EXPERIMENTS.filter((e) => e.kind === "live")
+  .map((e) => ({ ...e, m: (media[e.media] ? e.media : e.fallback) ?? "" }))
+  .filter((e) => media[e.m]);
+const n = live.length;
+const logo = logoRaw.replace(/<!--[\s\S]*?-->/g, "").replace(/<svg /, '<svg aria-hidden="true" ');
+// The grid that wraps the globe: dealt from a seeded shuffle so a piece is
+// never within two cells of itself, across the wrap seams too
+let seed = 7;
+const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const grid: number[][] = [];
+for (let v = 0; v < rows; v++) {
+  grid[v] = [];
+  for (let u = 0; u < cols; u++) {
+    const at = (uu: number, vv: number) => grid[(vv + rows) % rows]?.[(uu + cols) % cols];
+    const around = (cellsAway: number[][]) => new Set(cellsAway.map(([du, dv]) => at(u + du, v + dv)));
+    const ring1 = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
+    const line2 = [[-2, 0], [2, 0], [0, -2], [0, 2]];
+    const ring2 = [...ring1, ...line2, [-2, -1], [2, -1], [-1, -2], [1, -2], [-2, 1], [2, 1], [-1, 2], [1, 2]];
+    // the strictest spacing that still leaves a piece to deal, wrapping round the seams
+    const order = live.map((_, i) => i).sort(() => rand() - 0.5);
+    grid[v][u] =
+      [around(ring2), around([...ring1, ...line2]), around(ring1)].map((near) => order.find((i) => !near.has(i))).find((i) => i !== undefined) ??
+      order[0];
+  }
+}
+const cells = Array.from({ length: cols * rows }, (_, k) => {
+  const u = k % cols, v = Math.floor(k / cols);
+  return { u, v, e: live[grid[v][u]] };
+});
 ---
 
 {
   render && (
-    <section class="play_wrap" data-play data-view="barrel">
-      <header class="play_head">
-        <div>
-          <p class="play_eyebrow text-style-label">Experiments</p>
-          <h1 class="play_title text-style-display">Playground</h1>
-        </div>
-        <div class="play_side">
-          <p class="play_lead text-style-large">Things we make to find out what's possible. {live} are live: open one and play with its Params.</p>
-          <div class="play_views" role="tablist" aria-label="View">
-            <button class="play_view text-style-label" type="button" role="tab" data-view-set="barrel" aria-selected="true">Barrel</button>
-            <button class="play_view text-style-label" type="button" role="tab" data-view-set="grid" aria-selected="false">Grid</button>
-          </div>
-        </div>
-      </header>
-
-      <div class="play_barrel" data-barrel aria-label="Drag to spin">
-        <div class="play_cylinder">
-          {rings.map((ring, r) => (
-            <div class="play_ring" style={`--n:${ring.length};--row:${r - 1};--dir:${r === 1 ? -1 : 1}`}>
-              {ring.map((e, i) => (
-                <a
-                  class="play_tile"
-                  href={e.kind === "live" ? `/playground/${e.slug}` : `#${e.slug}`}
-                  data-kind={e.kind}
-                  data-slug={e.slug}
-                  style={`--i:${i};--ground:${media[e.m].ground}`}
-                  draggable="false"
-                >
-                  <video data-src={`/media/${e.m}.mp4`} poster={`/media/${e.m}.jpg`} muted loop playsinline preload="none" />
-                  <span class="play_tile-name">{e.title}</span>
-                  {e.kind === "live" && <span class="play_tile-live">Params</span>}
-                </a>
-              ))}
-            </div>
+    <section class="play_wrap" data-play>
+      <div class="play_stage">
+        <canvas class="play_grid" aria-hidden="true" />
+        <div class="play_world" data-world data-cols={cols} data-rows={rows} aria-label="Drag to look around, click a piece to open it">
+          {cells.map(({ u, v, e }) => (
+            <a class="play_tile" href={`/playground/${e.slug}`} data-open={e.slug} data-u={u} data-v={v} style={`--ground:${media[e.m].ground}`} draggable="false">
+              <video data-src={`/media/${e.m}.mp4`} poster={`/media/${e.m}.jpg`} muted loop playsinline preload="none" />
+              <span class="play_tile-name text-style-tag">{e.title}</span>
+            </a>
           ))}
         </div>
-        <p class="play_hint text-style-label">Drag to spin · Click to open</p>
+        {/* the world is the page: its title and how to use it are for screen readers only (Hunter, Oct 25: "Remove this") */}
+        <div class="play_head sr-only">
+          <h1 class="play_title">Playground</h1>
+          <p class="play_hint">Drag to look around. Click a piece to play with it.</p>
+        </div>
+        <SizeSlider name="playground" min={0.6} max={1.8} step={0.05} value={1} class="play_size" />
       </div>
 
-      <ul class="play_grid" data-grid>
-        {items.map((e, i) => (
-          <li class="play_cell" data-reveal style={`--reveal-delay:${(i % 4) * 0.05}s`}>
-            <a class="play_card" href={e.kind === "live" ? `/playground/${e.slug}` : `#${e.slug}`} data-kind={e.kind} data-slug={e.slug}>
-              <span class="play_card-media" style={`--ratio:${media[e.m].w}/${media[e.m].h};--ground:${media[e.m].ground}`}>
-                <video data-loop data-src={`/media/${e.m}.mp4`} poster={`/media/${e.m}.jpg`} muted loop playsinline preload="none" aria-hidden="true" />
-              </span>
-              <span class="play_card-meta">
-                <span class="play_card-name text-style-h6">{e.title}</span>
-                <span class="play_card-kind text-style-label">{e.kind === "live" ? "Live · Params" : e.from}</span>
-              </span>
-            </a>
-          </li>
-        ))}
-      </ul>
-
-      <dialog class="play_box" data-box>
-        <video muted loop playsinline />
-        <div class="play_box-meta">
-          <p class="play_box-name text-style-h3" />
-          <p class="play_box-note text-style-label" />
+      {/* Hunter, Oct 23: a piece opens full screen in its own colour, the
+          Kinetic logo top left and a close top right, its Params on the page */}
+      <div class="play_modal" data-modal hidden>
+        <div class="play_sheet" data-sheet>
+          <div class="play_live" data-live-stage />
+          <div class="play_poster" data-poster />
         </div>
-        <button class="play_box-close text-style-label" type="button" data-close>Close</button>
-      </dialog>
+        <div class="play_chrome">
+          <a class="play_logo" href="/" aria-label="Kinetic, home" set:html={logo} />
+          <button class="play_x" type="button" data-close aria-label="Close">
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 3l10 10M13 3 3 13" /></svg>
+          </button>
+          <div class="play_caption">
+            <p class="play_caption-title text-style-h5" data-title />
+            <p class="play_caption-note text-style-label" data-note />
+            {/* Hunter, Oct 25: "People don't know what params are, so maybe
+                we have a little label" */}
+            <p class="play_caption-hint text-style-label">Feel free to play around with the parameters.</p>
+            <p class="play_caption-actions">
+              <button class="pill is-secondary" type="button" data-random>Randomize</button>
+              <button class="pill is-secondary" type="button" data-reset>Reset</button>
+              <a class="pill is-tab" href="#" data-page>Full page ↗</a>
+            </p>
+          </div>
+        </div>
+      </div>
     </section>
   )
 }
 
 <script>
-  import { watchLoops } from "@/scripts/site.js";
+  import { gsap } from "gsap";
+  import { hostExperiment } from "@/scripts/experiment-host.js";
   import { EXPERIMENTS } from "@/data/experiments.js";
 
+  const modules = import.meta.glob("../../experiments/*.js");
+  const say = (detail: unknown) => {
+    window.dispatchEvent(new CustomEvent("ks:sound", { detail }));
+  };
+
   document.querySelectorAll<HTMLElement>("[data-play]").forEach((root) => {
-    const barrel = root.querySelector<HTMLElement>("[data-barrel]")!;
-    const cylinder = root.querySelector<HTMLElement>(".play_cylinder")!;
-    const tiles = [...root.querySelectorAll<HTMLElement>(".play_tile")];
+    const world = root.querySelector<HTMLElement>("[data-world]")!;
+    const grid = root.querySelector<HTMLCanvasElement>(".play_grid")!;
+    const tiles = [...root.querySelectorAll<HTMLAnchorElement>(".play_tile")];
+    const modal = root.querySelector<HTMLElement>("[data-modal]")!;
+    const sheet = root.querySelector<HTMLElement>("[data-sheet]")!;
+    const poster = root.querySelector<HTMLElement>("[data-poster]")!;
+    const stage = root.querySelector<HTMLElement>("[data-live-stage]")!;
+    const chrome = root.querySelectorAll(".play_chrome");
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    /* ---- the barrel: drag to spin, it keeps turning slowly on its own ---- */
-    let angle = 0, velocity = reduced ? 0 : 0.06, dragging = false, lastX = 0, moved = 0, raf = 0;
-    const visible = new Set<HTMLElement>();
-    const ringOf = (t: HTMLElement) => t.parentElement!;
-    const frame = () => {
-      raf = 0;
-      if (root.dataset.view !== "barrel" || document.hidden) return;
-      if (!dragging) {
-        velocity += ((reduced ? 0 : 0.06) - velocity) * 0.02;
-        angle += velocity;
-      }
-      cylinder.style.setProperty("--spin", `${angle}deg`);
-      // Play only what faces you.
-      for (const t of tiles) {
-        const n = Number(ringOf(t).style.getPropertyValue("--n"));
-        const i = Number(t.style.getPropertyValue("--i"));
-        const row = Number(ringOf(t).style.getPropertyValue("--row"));
-        const a = (((i * 360) / n + angle * (row === 0 ? -1 : 1)) % 360 + 360) % 360;
-        const facing = a < 50 || a > 310;
-        const v = t.querySelector("video")!;
-        if (facing && !visible.has(t)) {
-          visible.add(t);
-          if (!v.src) v.src = v.dataset.src!;
-          v.play().catch(() => {});
-        } else if (!facing && visible.has(t)) {
-          visible.delete(t);
-          v.pause();
+    /* ---- the globe: the inside of a sphere you look around by dragging ----
+       After Ramble's barrel (ramble-site src/scripts/barrel.ts), on both
+       axes: the camera sits at the centre of a sphere of radius F (the
+       perspective), so the piece straight ahead is at true size and the ones
+       toward the edges stretch, and the grid of pieces wraps without end
+       across and down. Every tile and the faint grid behind ride the same
+       projection:  x = cx + F tan(a),  y = cy - F tan(b) / cos(a). */
+    const COLS = Number(world.dataset.cols), ROWS = Number(world.dataset.rows);
+    // Size: bigger or smaller pieces on the globe, remembered here
+    const sizer = root.querySelector<HTMLInputElement>('[data-size="playground"]');
+    let zoom = 1;
+    try {
+      zoom = Number(localStorage.getItem("ks-play-size")) || 1;
+    } catch {}
+    if (sizer) sizer.value = String(zoom);
+    const cells = tiles.map((el) => ({ el, u: Number(el.dataset.u), v: Number(el.dataset.v), video: el.querySelector("video")!, on: false }));
+    let F = 1400, COL = 0.16, ROW = 0.11, TW = 220, TH = 138, viewA = 0.5, viewB = 0.35;
+    let W = 0, H = 0, dpr = 1;
+    const layout = () => {
+      W = world.clientWidth;
+      H = world.clientHeight;
+      F = Math.max(820, W * 0.92);
+      // the CSS clamp(9.5rem, 15vw, 15rem), times the Size slider
+      const tile = Math.min(240, Math.max(150, W * 0.15)) * zoom;
+      TW = tile;
+      TH = tile * 0.625;
+      const gap = Math.max(18, tile * 0.14);
+      COL = (TW + gap) / F;
+      ROW = (TH + gap) / F;
+      viewA = Math.atan(W / 2 / F) + COL;
+      viewB = Math.atan(H / 2 / F) + ROW;
+      world.style.perspective = `${F}px`;
+      world.style.setProperty("--tile-w", `${TW}px`);
+      dpr = Math.min(2, devicePixelRatio || 1);
+      grid.width = W * dpr;
+      grid.height = H * dpr;
+    };
+    const wrap = (x: number, span: number) => ((((x + span / 2) % span) + span) % span) - span / 2;
+
+    let panA = 0, panB = 0, va = reduced ? 0 : 0.018, vb = reduced ? 0 : 0.007, raf = 0, last = 0;
+    const DRIFT_A = va, DRIFT_B = vb;
+    let dragging = false, moved = 0, lastX = 0, lastY = 0, lastT = 0;
+    let paused = false;
+    let downTile: HTMLAnchorElement | null = null;
+
+    const drawGrid = () => {
+      const g = grid.getContext("2d")!;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, W, H);
+      g.strokeStyle = "rgb(217 226 210 / 0.07)";
+      g.lineWidth = 1;
+      const cx = W / 2, cy = H / 2;
+      const px = (a: number, b: number): [number, number] => [cx + F * Math.tan(a), cy - (F * Math.tan(b)) / Math.cos(a)];
+      const a0 = wrap(-panA - COL / 2, COL), b0 = wrap(-panB - ROW / 2, ROW);
+      g.beginPath();
+      for (let a = a0 - Math.ceil(viewA / COL) * COL; a <= viewA; a += COL) {
+        for (let b = -viewB; b <= viewB; b += ROW / 6) {
+          const [x, y] = px(a, b);
+          b === -viewB ? g.moveTo(x, y) : g.lineTo(x, y);
         }
       }
+      for (let b = b0 - Math.ceil(viewB / ROW) * ROW; b <= viewB; b += ROW) {
+        for (let a = -viewA; a <= viewA; a += COL / 6) {
+          const [x, y] = px(a, b);
+          a === -viewA ? g.moveTo(x, y) : g.lineTo(x, y);
+        }
+      }
+      g.stroke();
+    };
+
+    const place = () => {
+      const spanA = COLS * COL, spanB = ROWS * ROW;
+      let playing = 0;
+      for (const c of cells) {
+        const a = wrap(c.u * COL - panA, spanA);
+        const b = wrap(c.v * ROW - panB, spanB);
+        const show = Math.abs(a) < viewA && Math.abs(b) < viewB;
+        c.el.style.visibility = show ? "visible" : "hidden";
+        if (show) {
+          c.el.style.transform = `translateZ(${F}px) rotateY(${(-a).toFixed(4)}rad) rotateX(${(-b).toFixed(4)}rad) translateZ(${-F}px)`;
+          // fade toward the rim, where the stretch is strongest
+          const edge = Math.max(Math.abs(a) / viewA, Math.abs(b) / viewB);
+          c.el.style.opacity = Math.min(1, Math.max(0, (1 - edge) / 0.22)).toFixed(3);
+        }
+        // the pieces near the middle play; the rest hold their poster
+        const want = show && !paused && Math.abs(a) < viewA * 0.55 && Math.abs(b) < viewB * 0.6 && playing < 9;
+        if (want) playing++;
+        if (want !== c.on) {
+          c.on = want;
+          if (want) {
+            if (!c.video.src) c.video.src = c.video.dataset.src!;
+            c.video.play().catch(() => {});
+          } else c.video.pause();
+        }
+      }
+      drawGrid();
+    };
+
+    const frame = (t: number) => {
+      raf = 0;
+      if (document.hidden) return;
+      const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+      last = t;
+      if (!dragging && !paused) {
+        // a flick coasts, then eases back into the slow drift
+        const k = 1 - Math.exp(-dt * 1.6);
+        va += (DRIFT_A - va) * k;
+        vb += (DRIFT_B - vb) * k;
+        panA += va * dt;
+        panB += vb * dt;
+      }
+      place();
       raf = requestAnimationFrame(frame);
     };
-    const start = () => (raf ||= requestAnimationFrame(frame));
+    const spin = () => {
+      if (raf) return;
+      last = 0;
+      raf = requestAnimationFrame(frame);
+    };
 
-    barrel.addEventListener("pointerdown", (e) => {
+    world.addEventListener("pointerdown", (e) => {
+      if (paused) return;
       dragging = true;
       moved = 0;
       lastX = e.clientX;
-      barrel.setPointerCapture(e.pointerId);
-      barrel.classList.add("is-dragging");
+      lastY = e.clientY;
+      lastT = performance.now();
+      // the world captures the pointer to drag, so the click lands on it, not the tile
+      downTile = (e.target as HTMLElement).closest<HTMLAnchorElement>("[data-open]");
+      world.setPointerCapture(e.pointerId);
+      world.classList.add("is-dragging");
     });
-    barrel.addEventListener("pointermove", (e) => {
+    world.addEventListener("pointermove", (e) => {
       if (!dragging) return;
-      const dx = e.clientX - lastX;
+      const now = performance.now();
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      const dt = Math.max(0.008, (now - lastT) / 1000);
       lastX = e.clientX;
-      moved += Math.abs(dx);
-      velocity = dx * 0.12;
-      angle += velocity;
+      lastY = e.clientY;
+      lastT = now;
+      moved += Math.abs(dx) + Math.abs(dy);
+      // the world follows the hand
+      panA -= dx / F;
+      panB += dy / F;
+      va = -dx / F / dt;
+      vb = dy / F / dt;
+      if (reduced) place();
     });
-    const end = () => {
+    const release = () => {
       dragging = false;
-      barrel.classList.remove("is-dragging");
+      world.classList.remove("is-dragging");
     };
-    barrel.addEventListener("pointerup", end);
-    barrel.addEventListener("pointercancel", end);
-    barrel.addEventListener("click", (e) => {
-      if (moved > 6) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    }, true);
-    barrel.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowLeft") velocity = -3;
-      if (e.key === "ArrowRight") velocity = 3;
+    world.addEventListener("pointerup", release);
+    world.addEventListener("pointercancel", release);
+    new ResizeObserver(() => {
+      layout();
+      place();
+    }).observe(world);
+    sizer?.addEventListener("input", () => {
+      zoom = Number(sizer.value);
+      try {
+        localStorage.setItem("ks-play-size", sizer.value);
+      } catch {}
+      layout();
+      place();
     });
-    new IntersectionObserver(([en]) => (en.isIntersecting ? start() : null)).observe(barrel);
+    layout();
+    place();
+    new IntersectionObserver(([en]) => en.isIntersecting && spin()).observe(world);
 
-    /* ---- views ---- */
-    root.querySelectorAll<HTMLButtonElement>("[data-view-set]").forEach((b) =>
-      b.addEventListener("click", () => {
-        root.dataset.view = b.dataset.viewSet!;
-        root.querySelectorAll("[data-view-set]").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
-        if (root.dataset.view === "barrel") start();
-        else {
-          tiles.forEach((t) => t.querySelector("video")!.pause());
-          visible.clear();
-          watchLoops(root);
-        }
-      }),
-    );
-    window.addEventListener("ks:view-toggle", () => root.querySelector<HTMLButtonElement>(`[data-view-set="${root.dataset.view === "barrel" ? "grid" : "barrel"}"]`)?.click());
+    /* ---- a tile grows into the modal; closing puts it back ---- */
+    let host: ReturnType<typeof hostExperiment> | null = null;
+    let from: HTMLElement | null = null;
+    let token = 0;
+    const siteRoot = document.querySelector<HTMLLinkElement>('link[rel="site-root"]')?.href ?? location.origin + "/";
+    // the sheet's transform that puts it exactly over a rect
+    const flipTo = (rect: DOMRect) => {
+      gsap.set(sheet, { clearProps: "transform" });
+      const s = sheet.getBoundingClientRect();
+      return { x: rect.left - s.left, y: rect.top - s.top, scaleX: rect.width / s.width, scaleY: rect.height / s.height };
+    };
 
-    /* ---- clips open in place ---- */
-    const box = root.querySelector<HTMLDialogElement>("[data-box]")!;
-    const bv = box.querySelector("video")!;
-    const open = (slug: string) => {
+    // The screen takes the piece's colour: its ground dial if it has one
+    // (followed as it's dialled), else the ground sampled from its loop; the
+    // logo, close and caption go dark or light against it.
+    const ink = (hex: string) => {
+      const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})/i.exec(hex.trim());
+      if (!m) return "var(--light-100)";
+      const [r, g, b] = m.slice(1).map((h) => parseInt(h, 16) / 255).map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.32 ? "var(--dark-900)" : "var(--light-100)";
+    };
+    const paint = (ground: string) => {
+      modal.style.setProperty("--play-ground", ground);
+      modal.style.setProperty("--play-ink", ink(ground));
+    };
+    // on a phone the Params panel sits above the caption: it needs the caption's height
+    const caption = root.querySelector<HTMLElement>(".play_caption")!;
+    new ResizeObserver(() => document.documentElement.style.setProperty("--play-caption-h", `${caption.offsetHeight}px`)).observe(caption);
+    // the logo sits exactly where the nav's does
+    const placeLogo = () => {
+      const r = document.querySelector(".nav_logo-svg")?.getBoundingClientRect();
+      if (!r) return;
+      modal.style.setProperty("--logo-x", `${r.left}px`);
+      modal.style.setProperty("--logo-y", `${r.top}px`);
+      modal.style.setProperty("--logo-h", `${r.height}px`);
+    };
+    let unpaint: (() => void) | null = null;
+    const follow = () => {
+      unpaint?.();
+      unpaint = null;
+      const api = host?.api as { controls: { path: string; kind: string }[]; values: Record<string, unknown>; subscribe?: (fn: (v: Record<string, unknown>, p: string | null) => void) => () => void } | undefined;
+      const dial = api?.controls.find((c) => c.kind === "color" && /(ground|background|bg)$/i.test(c.path));
+      if (!api || !dial) return;
+      paint(String(api.values[dial.path]));
+      unpaint = api.subscribe?.((v, path) => (path === dial.path || path === null) && paint(String(v[dial.path]))) ?? null;
+    };
+
+    const open = async (tile: HTMLElement) => {
+      const slug = tile.dataset.open!;
       const e = EXPERIMENTS.find((x) => x.slug === slug);
-      if (!e) return;
-      bv.poster = `/media/${e.media}.jpg`;
-      bv.src = `/media/${e.media}.mp4`;
-      bv.play().catch(() => {});
-      box.querySelector(".play_box-name")!.textContent = e.title;
-      box.querySelector(".play_box-note")!.textContent = `${e.note}  ${e.from ?? ""}`;
-      box.showModal();
-      window.dispatchEvent(new CustomEvent("ks:sound", { detail: "open" }));
+      const load = modules[`../../experiments/${slug}.js`];
+      if (!e || !load || !modal.hidden) return;
+      const mine = ++token;
+      paused = true;
+      from = tile;
+      poster.style.backgroundImage = `url("${tile.querySelector("video")!.poster}")`;
+      poster.style.opacity = "1";
+      root.querySelector("[data-title]")!.textContent = e.title;
+      root.querySelector("[data-note]")!.textContent = e.note;
+      root.querySelector<HTMLAnchorElement>("[data-page]")!.href = new URL(`playground/${slug}`, siteRoot).href;
+      paint(tile.style.getPropertyValue("--ground") || "#0d0d0d");
+      placeLogo();
+      modal.hidden = false;
+      document.documentElement.classList.add("is-playing");
+      history.replaceState(null, "", `${location.pathname}?open=${slug}`);
+      say({ name: "open", gain: 0.45 });
+      const start = flipTo(tile.getBoundingClientRect());
+      tile.style.visibility = "hidden";
+      gsap.fromTo(sheet, { ...start, borderRadius: 6, transformOrigin: "0 0" }, { x: 0, y: 0, scaleX: 1, scaleY: 1, borderRadius: 0, duration: reduced ? 0 : 0.75, ease: "expo.inOut" });
+      gsap.fromTo(chrome, { opacity: 0 }, { opacity: 1, duration: 0.4, delay: reduced ? 0 : 0.4 });
+      const mod = (await load()) as { params: object; mount: (...args: unknown[]) => unknown };
+      if (mine !== token) return;
+      gsap.delayedCall(reduced ? 0 : 0.7, () => {
+        if (mine !== token) return;
+        // the panel takes this piece's look, switching with the piece
+        host = hostExperiment(stage, mod, { title: e.title, slug, open: true });
+        follow();
+        gsap.to(poster, { opacity: 0, duration: 0.5, delay: 0.2 });
+      });
     };
-    root.addEventListener("click", (ev) => {
-      const a = (ev.target as HTMLElement).closest<HTMLAnchorElement>("[data-kind=clip]");
-      if (!a) return;
-      ev.preventDefault();
-      history.replaceState(null, "", `#${a.dataset.slug}`);
-      open(a.dataset.slug!);
-    });
-    box.querySelector("[data-close]")!.addEventListener("click", () => box.close());
-    box.addEventListener("click", (e) => e.target === box && box.close());
-    box.addEventListener("close", () => {
-      bv.pause();
+
+    const close = () => {
+      if (modal.hidden) return;
+      token++;
+      unpaint?.();
+      unpaint = null;
+      host?.destroy();
+      host = null;
+      document.querySelector(".ksp")?.remove();
+      const w = window as unknown as Record<string, unknown>;
+      if (typeof w.__kspKeys === "function") removeEventListener("keydown", w.__kspKeys as EventListener);
+      delete w.__ksParams;
+      delete w.__kspKeys;
+      stage.replaceChildren();
+      gsap.killTweensOf(poster);
+      poster.style.opacity = "1";
       history.replaceState(null, "", location.pathname);
+      say({ name: "close", gain: 0.45 });
+      const tile = from;
+      const done = () => {
+        modal.hidden = true;
+        document.documentElement.classList.remove("is-playing");
+        if (tile) tile.style.visibility = "";
+        gsap.set(sheet, { clearProps: "transform,borderRadius" });
+        paused = false;
+        spin();
+      };
+      gsap.to(chrome, { opacity: 0, duration: 0.25 });
+      if (!tile || reduced) return done();
+      const end = flipTo(tile.getBoundingClientRect());
+      gsap.fromTo(sheet, { x: 0, y: 0, scaleX: 1, scaleY: 1, transformOrigin: "0 0" }, { ...end, borderRadius: 6, duration: 0.6, ease: "expo.inOut", onComplete: done });
+    };
+
+    world.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const tile = downTile ?? (ev.target as HTMLElement).closest<HTMLAnchorElement>("[data-open]");
+      downTile = null;
+      if (!tile) return;
+      if (moved > 6) return; // a drag is not a click
+      if (ev.metaKey || ev.ctrlKey) window.open(tile.href, "_blank");
+      else open(tile);
     });
-    if (location.hash) open(location.hash.slice(1));
+    root.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", close));
+    document.addEventListener("keydown", (e) => e.key === "Escape" && close());
+    root.querySelector("[data-random]")!.addEventListener("click", () => host?.randomize());
+    root.querySelector("[data-reset]")!.addEventListener("click", () => host?.reset());
+
+    const first = new URLSearchParams(location.search).get("open");
+    const tile = first && tiles.find((t) => t.dataset.open === first);
+    if (tile) requestAnimationFrame(() => open(tile));
   });
 </script>
 
 <style is:global>
   @layer components {
     .play_wrap {
-      padding: var(--section-space-nav-overlap) var(--site-margin) var(--section-space-medium);
+      position: relative;
       overflow-x: clip;
     }
-    .play_head {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: var(--space-6);
-      align-items: end;
-      padding-bottom: var(--space-6);
-      border-bottom: var(--border-width) solid var(--grey-300);
-      @media (width < 48rem) {
-        grid-template-columns: 1fr;
-      }
-    }
-    .play_eyebrow {
-      margin: 0 0 var(--space-3);
-      color: var(--brand-500);
-    }
-    .play_title {
-      margin: 0;
-      font-size: clamp(4.5rem, 13vw, 13rem);
-      line-height: 0.8;
-    }
-    .play_side {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--space-4);
-    }
-    .play_lead {
-      margin: 0;
-      max-width: 34ch;
-      color: color-mix(in srgb, var(--text) 70%, transparent);
-    }
-    .play_views {
-      display: flex;
-      gap: 0.2rem;
-      padding: 0.25rem;
-      border-radius: var(--radius-round);
-      border: var(--border-width) solid color-mix(in srgb, var(--text) 14%, transparent);
-    }
-    .play_view {
-      padding: 0.55rem 0.9rem;
-      border-radius: var(--radius-round);
-      color: color-mix(in srgb, var(--text) 60%, transparent);
-      &[aria-selected="true"] {
-        background: var(--brand-500);
-        color: var(--brand-text);
-      }
-    }
-
-    /* Barrel */
-    .play_barrel {
-      --tile: clamp(13rem, 22vw, 20rem);
+    .play_stage {
       position: relative;
-      height: min(46rem, 92svh);
-      margin-inline: calc(var(--site-margin) * -1);
-      perspective: 1400px;
+      height: 100svh;
+      min-height: 36rem;
+      overflow: hidden;
+    }
+    .play_grid {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    /* the globe: the camera at its centre, perspective = its radius (set in JS) */
+    .play_world {
+      --tile-w: clamp(9.5rem, 15vw, 15rem);
+      position: absolute;
+      inset: 0;
       perspective-origin: 50% 50%;
       cursor: grab;
-      touch-action: pan-y;
+      touch-action: none;
       user-select: none;
       &.is-dragging {
         cursor: grabbing;
       }
     }
-    .play_wrap[data-view="grid"] .play_barrel,
-    .play_wrap[data-view="barrel"] .play_grid {
-      display: none;
-    }
-    .play_cylinder {
-      position: absolute;
-      inset: 0;
-      transform-style: preserve-3d;
-    }
-    .play_ring {
-      --r: calc(var(--tile) * 1.08 / (2 * tan(180deg / var(--n))));
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform-style: preserve-3d;
-      transform: translateY(calc(var(--row) * var(--tile) * 0.72)) translateZ(calc(var(--r) * -1.0)) rotateY(calc(var(--spin, 0deg) * var(--dir)));
-    }
     .play_tile {
       position: absolute;
-      width: var(--tile);
+      left: 50%;
+      top: 50%;
+      width: var(--tile-w);
       aspect-ratio: 16 / 10;
-      margin: calc(var(--tile) * -0.3125) 0 0 calc(var(--tile) * -0.5);
-      transform: rotateY(calc(var(--i) * 360deg / var(--n))) translateZ(var(--r));
+      margin: calc(var(--tile-w) * -0.3125) 0 0 calc(var(--tile-w) * -0.5);
+      visibility: hidden;
       backface-visibility: hidden;
       border-radius: var(--radius-media);
       overflow: hidden;
       background: var(--ground);
       color: var(--text);
+      will-change: transform, opacity;
       transition: filter 0.3s ease;
       & video {
         width: 100%;
@@ -311,131 +475,179 @@ const rings = [0, 1, 2].map((r) => items.filter((_, i) => i % 3 === r));
         pointer-events: none;
       }
       &:hover {
-        filter: brightness(1.12);
+        filter: brightness(1.15);
       }
-    }
-    .play_tile-name,
-    .play_tile-live {
-      position: absolute;
-      bottom: 0.5rem;
-      padding: 0.35rem 0.55rem 0.28rem;
-      border-radius: var(--radius-round);
-      font-family: var(--display-family);
-      font-size: 0.9rem;
-      line-height: 1;
-      text-transform: uppercase;
     }
     .play_tile-name {
-      left: 0.5rem;
+      position: absolute;
+      left: 0.45rem;
+      bottom: 0.45rem;
+      padding: 0.3rem 0.5rem 0.24rem;
+      border-radius: var(--radius-round);
       background: color-mix(in srgb, var(--dark-900) 70%, transparent);
     }
-    .play_tile-live {
-      right: 0.5rem;
-      background: var(--brand-500);
-      color: var(--brand-text);
+    /* small, in the corner: the world is the page */
+    .play_stage::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      z-index: 2;
+      width: min(34rem, 80vw);
+      height: 12rem;
+      background: radial-gradient(ellipse at 0% 100%, color-mix(in srgb, var(--background) 92%, transparent) 30%, transparent 70%);
+      pointer-events: none;
+    }
+    .play_size {
+      position: absolute;
+      right: var(--site-margin);
+      bottom: var(--space-5);
+      z-index: 3;
+      border-radius: var(--radius-round);
+      background: color-mix(in srgb, var(--dark-800) 70%, transparent);
+      border: var(--border-width) solid color-mix(in srgb, var(--text) 12%, transparent);
+      backdrop-filter: blur(1.25rem);
+      -webkit-backdrop-filter: blur(1.25rem);
+    }
+    .play_head {
+      position: absolute;
+      left: var(--site-margin);
+      bottom: var(--space-5);
+      z-index: 3;
+      pointer-events: none;
+    }
+    .play_title,
+    .play_hint {
+      margin: 0;
     }
     .play_hint {
+      margin-top: 0.4rem;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+
+    /* The full screen a tile grows into, in the piece's own colour */
+    .play_modal {
+      --play-ground: var(--dark-900);
+      --play-ink: var(--light-100);
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      color: var(--play-ink);
+      &[hidden] {
+        display: none;
+      }
+    }
+    html.is-playing {
+      overflow: hidden;
+    }
+    .play_sheet {
       position: absolute;
-      left: 50%;
-      bottom: var(--space-3);
-      translate: -50% 0;
-      margin: 0;
-      color: color-mix(in srgb, var(--text) 45%, transparent);
-    }
-
-    /* Grid */
-    .play_grid {
-      columns: 4 16rem;
-      column-gap: var(--site-gutter);
-      margin: var(--space-7) 0 0;
-    }
-    .play_cell {
-      break-inside: avoid;
-      margin-bottom: var(--space-6);
-    }
-    .play_card {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-2);
-      color: var(--text);
-    }
-    .play_card-media {
-      position: relative;
-      display: block;
-      aspect-ratio: var(--ratio);
+      inset: 0;
       overflow: hidden;
-      border-radius: var(--radius-media);
-      background: var(--ground);
-      & video {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: scale 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+      background: var(--play-ground);
+      transition: background-color 0.4s ease;
+      will-change: transform;
+    }
+    .play_live,
+    .play_poster {
+      position: absolute;
+      inset: 0;
+    }
+    .play_poster {
+      background-size: cover;
+      background-position: center;
+      pointer-events: none;
+    }
+    .play_chrome {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      & > * {
+        pointer-events: auto;
       }
     }
-    .play_card:hover .play_card-media video {
-      scale: 1.04;
-    }
-    .play_card-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: var(--space-2);
-    }
-    .play_card-name {
-      margin: 0;
-    }
-    .play_card-kind {
-      color: color-mix(in srgb, var(--text) 50%, transparent);
-    }
-    .play_card[data-kind="live"] .play_card-kind {
-      color: var(--brand-500);
-    }
-
-    /* Clip lightbox */
-    .play_box {
-      width: min(72rem, 92vw);
-      padding: 0;
-      border: 0;
-      border-radius: 0.75rem;
-      background: var(--dark-800);
-      color: var(--text);
-      overflow: hidden;
-      &::backdrop {
-        background: rgb(0 0 0 / 0.75);
-        backdrop-filter: blur(0.75rem);
-      }
-      & video {
+    /* the full logo, on the nav's own line */
+    .play_logo {
+      position: absolute;
+      left: var(--logo-x, var(--site-margin));
+      top: var(--logo-y, 1.5rem);
+      height: var(--logo-h, 1.875rem);
+      color: inherit;
+      & svg {
         display: block;
-        width: 100%;
-        max-height: 75svh;
-        object-fit: contain;
-        background: var(--dark-900);
+        width: auto;
+        height: 100%;
       }
     }
-    .play_box-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: var(--space-4);
-      padding: var(--space-4) var(--space-5);
+    .play_x {
+      position: absolute;
+      right: var(--site-margin);
+      top: calc(var(--logo-y, 1.5rem) + var(--logo-h, 1.875rem) / 2);
+      translate: 0 -50%;
+      display: grid;
+      place-items: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      border: var(--border-width) solid color-mix(in srgb, currentColor 35%, transparent);
+      background: color-mix(in srgb, var(--play-ground) 70%, transparent);
+      color: inherit;
+      transition: border-color 0.2s ease;
+      &:hover {
+        border-color: currentColor;
+      }
+      & svg {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+      }
+    }
+    .play_caption {
+      /* its pills take the piece's ink as the title and note do, so they
+         still show over a light piece */
+      --text: var(--play-ink);
+      --background: var(--play-ground);
+      position: absolute;
+      left: var(--site-margin);
+      bottom: var(--space-5);
+      max-width: 24rem;
       & p {
         margin: 0;
       }
     }
-    .play_box-note {
-      color: color-mix(in srgb, var(--text) 55%, transparent);
+    .play_caption-title {
+      line-height: 1;
     }
-    .play_box-close {
-      position: absolute;
-      top: var(--space-3);
-      right: var(--space-3);
-      padding: 0.5rem 0.8rem;
-      border-radius: var(--radius-round);
-      background: color-mix(in srgb, var(--dark-900) 70%, transparent);
-      color: var(--text);
+    .play_caption-note {
+      margin-top: 0.7rem !important;
+      opacity: 0.7;
+    }
+    /* the invitation, in full ink, over the buttons */
+    .play_caption-hint {
+      margin-top: 0.5rem !important;
+    }
+    .play_caption-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: var(--space-3) !important;
+    }
+    /* the Params panel on the page, under the close */
+    html.is-playing .ksp {
+      z-index: 70 !important;
+      top: calc(var(--logo-y, 1.5rem) + var(--logo-h, 1.875rem) + 1.5rem) !important;
+      bottom: var(--space-5) !important;
+      right: var(--site-margin) !important;
+      width: 19rem !important;
+      @media (width < 48rem) {
+        top: auto !important;
+        left: var(--site-margin) !important;
+        width: auto !important;
+        max-height: 42svh;
+        /* stacked over the caption rather than on it, so its label and buttons show */
+        bottom: calc(var(--space-5) + var(--play-caption-h, 8.5rem) + var(--space-3)) !important;
+      }
     }
   }
 </style>

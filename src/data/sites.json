@@ -1,0 +1,79 @@
+{
+  "wispr-flow": {
+    "live": false,
+    "hosted": "/sites/wispr-flow/index.html",
+    "still": "/sites/stills/wispr-flow.jpg"
+  },
+  "dawn": {
+    "live": false,
+    "hosted": "/sites/dawn/index.html",
+    "still": "/sites/stills/dawn.jpg"
+  },
+  "moses": {
+    "live": true,
+    "hosted": "https://moses.kineticstudio.com/designs/moses/round-two/01-everything-sheds",
+    "still": "/sites/stills/moses.jpg"
+  },
+  "anthropic-community": {
+    "live": false,
+    "hosted": "/sites/anthropic-community/index.html",
+    "still": "/sites/stills/anthropic-community.jpg"
+  },
+  "rime": {
+    "live": true,
+    "still": "/sites/stills/rime.jpg"
+  },
+  "rylo": {
+    "live": false,
+    "hosted": "/sites/rylo/index.html",
+    "still": "/sites/stills/rylo.jpg"
+  },
+  "ethos": {
+    "live": true,
+    "still": "/sites/stills/ethos.jpg"
+  },
+  "august-health": {
+    "live": false,
+    "hosted": "/sites/august-health/index.html",
+    "still": "/sites/stills/august-health.jpg"
+  },
+  "cambium": {
+    "live": true,
+    "still": "/sites/stills/cambium.jpg"
+  },
+  "venus-aerospace": {
+    "live": true,
+    "still": "/sites/stills/venus-aerospace.jpg"
+  },
+  "epirus": {
+    "live": false,
+    "hosted": "/sites/epirus/index.html",
+    "still": "/sites/stills/epirus.jpg"
+  },
+  "new-era": {
+    "live": false,
+    "hosted": "/sites/new-era/index.html",
+    "still": "/sites/stills/new-era.jpg"
+  },
+  "happy-droid": {
+    "live": true,
+    "still": "/sites/stills/happy-droid.jpg"
+  },
+  "metamag": {
+    "live": true,
+    "still": "/sites/stills/metamag.jpg"
+  },
+  "roam-robotics": {
+    "live": true,
+    "still": "/sites/stills/roam-robotics.jpg"
+  },
+  "elio": {
+    "live": true,
+    "hosted": "https://elio-site.kineticstudio.com/",
+    "still": "/sites/stills/elio.jpg"
+  },
+  "dorm-room-fund": {
+    "live": true,
+    "still": "/sites/stills/dorm-room-fund.jpg"
+  }
+}

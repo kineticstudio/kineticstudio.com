@@ -2,6 +2,9 @@
 
 @layer base, patterns, components, utilities;
 
+@import "./brand.css";
 @import "./base.css" layer(base);
 @import "./patterns.css" layer(patterns);
 @import "./utilities.css" layer(utilities);
+@import "./hover.css" layer(components);
+@import "./pill.css" layer(components);

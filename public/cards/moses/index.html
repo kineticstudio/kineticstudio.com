@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Code-powered work card for moses (Antiplastic Inc., formerly Unplastic),
+     2026-10-24: Kinetic's homepage redesign, round two "Everything sheds"
+     (clients/moses/designs/round-two/01-Everything-sheds.html, not yet on
+     moses.com), built on the Wispr Flow and Ethos cards' engine:
+     - the miniature is that page rebuilt in HTML and CSS layers at its own
+       1440px width, scaled into a 16:10 card laid out K times larger so tilted
+       text stays sharp; one spring-driven loop, transforms and opacity only
+     - the hero is the point of the design, so its shed runs live but light:
+       moses's worn retainer photo as a layer, its holes wearing wider with the
+       scroll (the page's own wear shader, over its field baked to a PNG), and one
+       canvas of particles leaving the holes, falling and heaping up into the
+       pile that says what fell off, drawn from the miniature's scroll and the
+       card's requestAnimationFrame clock, on its own depth
+     - idle, it tours the hero, the shed, the heap and the count, the answer on
+       black (the 3D retainer as a still of our own render) and back home, a
+       fixed ~19 s loop of eased stops
+     - hover tilts it toward the pointer (10 degrees) and the layers separate by
+       depth with soft shadows that grow with height; the light is one round
+       bloom that follows the pointer; the tour keeps running under the hover
+     - press and drag scrolls the miniature either way: drag up, page goes
+       down (1:1); drag right, it scrubs further down, left back up (2.5x);
+       momentum and clamped ends; the tour picks up from there after a beat
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge,
+       on a transparent page; it pauses when hidden or when the parent posts
+       {type: "ks-card", visible: false}; {type: "ks-card", at: seconds} puts
+       the tour at that time (the site's resting loop is this tour recorded);
+       a click or tap posts {type: "ks-card-open"}. &bleed=N keeps N px of clear
+       frame round the card, &radius=N rounds its corners, &mat=F draws it
+       framed (the site's border on every tile: the window inset F x the card's
+       width on all four sides, on moses's light grey, card.frameColor), and
+       touch drag is off unless &touchdrag=1, so a swipe over the tile scrolls
+       the site
+
+     Everything moses-side is Kinetic's own and lives in moses-card-src/: the
+     worn photo and its wear field, our retainer render, and the shed's outline
+     and hole edges baked from home-src (js/shed-data.js); the real wordmark
+     (clients/moses/brand/logo.svg) is inline in the header. The page's face,
+     Univers Pro 45 Light, is moses's licence and not shipped from another
+     domain, so the miniature sets the page's own fallback, Inter 300. raw/
+     keeps the reference captures of the page; nothing in it is used. "moses"
+     is always lowercase and always the real wordmark in the design. -->
+<title>moses work card</title>
+<script>
+  /* ?embed=1 is the site tile. &radius=N rounds the card's corners. &bleed=N: the site's iframe overhangs the tile by N px on every side
+     (room for the tilt), so the card keeps N px of clear frame round it and sits exactly on the tile at rest.
+     &touchdrag=1 lets a finger drag the miniature; off by default, so a swipe over the tile scrolls the site. */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    if (q.get('embed') !== '1') return;
+    var h = document.documentElement;
+    h.classList.add('embed');
+    var b = parseFloat(q.get('bleed'));
+    if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    var r = parseFloat(q.get('radius'));   // &radius=N: the card's corner radius in px (the site passes 6)
+    if (r >= 0) h.style.setProperty('--card-r', r + 'px');
+  })();
+</script>
+<link rel="stylesheet" href="moses-card-src/css/card.css">
+<link rel="stylesheet" href="moses-card-src/css/site.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="moses, Everything sheds, the homepage redesign built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- 1 the hero: the sweep, the worn retainer shedding, the pile and what fell off -->
+              <section class="sec hero" id="s-hero" data-tone="dark">
+                <div class="fig" id="fig" data-layer="worn retainer" data-depth="0.2" data-shadow="0,0.55,22">
+                  <img id="worn" src="moses-card-src/img/worn-r0-1400.webp" data-field="moses-card-src/img/wear-field-700.png" alt="">
+                </div>
+                <h1 class="center hero-h" data-layer="headline" data-depth="0.7" data-shadow="0,0.3,12">You’re eating your retainer.</h1>
+                <p class="center hero-p nw" data-layer="body copy" data-depth="0.5">The Unplastic Retainer is the first retainer designed<br>not to leave persistent microplastics behind.</p>
+                <div class="btns hero-btns" data-layer="buttons" data-depth="0.85" data-shadow="0,0.4,12"><span class="btn solid">Get Started</span><span class="btn">Learn more</span></div>
+                <p class="center trust" data-layer="trust line" data-depth="0.4"><span>HSA/FSA eligible</span><span>Free US shipping</span><span>30-day fit guarantee</span></p>
+                <div class="floor">
+                  <p class="count" data-layer="the count" data-depth="0.7" data-shadow="0,0.3,14">About<br>118,000</p>
+                  <p class="count-p nw" data-layer="body copy" data-depth="0.52">particles a year, from one retainer, in a lab<br>simulation of nightly wear.</p>
+                  <div class="fell" data-layer="what fell off" data-depth="0.45">
+                    <p class="lead">What fell off</p>
+                    <ul>
+                      <li><span>PETG</span><span>The petroleum plastic most clear retainers are made of</span></li>
+                      <li><span>About 3.4 mg a pair</span><span>Over six months of simulated wear</span></li>
+                      <li><span>52 microns on average</span><span>Anything under 15 wasn’t counted</span></li>
+                      <li><span>Plastic that stays plastic</span><span>In a simulated gut, PETG barely degraded in 60 days</span></li>
+                    </ul>
+                  </div>
+                  <p class="fell-links" data-layer="links" data-depth="0.6"><span class="link-arrow">Read the study →</span><span class="link-arrow">Read the whitepaper →</span></p>
+                  <p class="sources nw" data-layer="sources" data-depth="0.32">moses’s chewing study, 2026: four PETG retainer pairs, 58,240 cycles at about 11<br>lb in water at body temperature, about six months of nightly wear, doubled for a<br>year. A lab simulation, not a study in people. The particles drawn here stand for the<br>count; they are not to scale.</p>
+                </div>
+              </section>
+
+              <!-- 2 the solution, the answer on black -->
+              <section class="sec solution" id="s-sol" data-tone="dark">
+                <div class="sol-still" data-layer="retainer render" data-depth="0.3"><img src="moses-card-src/img/retainer-night-crop.webp" alt=""></div>
+                <h2 class="sol-h nw" data-layer="headline" data-depth="0.7" data-edge="l" data-shadow="0,0.3,12">We make sure it’s edible.</h2>
+                <p class="sol-p nw" data-layer="body copy" data-depth="0.5" data-edge="l">The Unplastic Retainer is PHA, a biopolymer produced by microbes<br>rather than petroleum. It performs like a conventional retainer<br>without shedding persistent microplastics, and it breaks down into a<br>molecule your body already produces.</p>
+                <ul class="facts" data-layer="facts" data-depth="0.42" data-edge="l">
+                  <li>No additives, plasticizers, colorants, or stabilizers.</li>
+                  <li>Custom-fit from your dental scan, upper and lower.</li>
+                  <li>Designed to break down after six months of wear.</li>
+                  <li>An FDA-registered medical device.</li>
+                </ul>
+                <div class="btns sol-btns" data-layer="buttons" data-depth="0.85" data-edge="l" data-shadow="0,0.4,12"><span class="btn solid">Get Started</span><span class="btn">Shop the retainer</span></div>
+              </section>
+
+              <!-- 3 customers, in their words -->
+              <section class="sec reviews-sec" id="s-rev" data-tone="light">
+                <h2 class="rev-h" data-layer="headline" data-depth="0.7" data-edge="l" data-shadow="0,0.16,14">Hear from customers who switched<br>to moses.</h2>
+                <div class="reviews" data-layer="reviews" data-depth="0.3" data-edge="lr" data-shadow="0,0.1,16">
+                  <figure><p class="stars">★★★★★</p><blockquote>“It fits comfortably, feels well made, and is easy to wear and clean.”</blockquote><figcaption>michelle · Verified Customer</figcaption></figure>
+                  <figure><p class="stars">★★★★★</p><blockquote>“They took care of all the legwork by contacting my dentist to get my official scans.”</blockquote><figcaption>Lauren V.</figcaption></figure>
+                  <figure><p class="stars">★★★★★</p><blockquote>“It’s comfortable, well made, and much more pleasant to wear every night than the traditional retainers I’ve used before.”</blockquote><figcaption>Lia X. · Verified Customer</figcaption></figure>
+                  <figure><p class="stars">★★★★★</p><blockquote>“I love these new retainers.”</blockquote><figcaption>YinQi X. · Verified Customer</figcaption></figure>
+                  <figure><p class="stars">★★★★★</p><blockquote>“I know what’s going into my body now.”</blockquote><figcaption>Carter D. · Verified Customer</figcaption></figure>
+                </div>
+              </section>
+            </div>
+
+            <!-- the particles: one canvas over the screen, leaving the holes, falling, heaping -->
+            <canvas class="abs shed" id="shed" data-layer="particles" data-depth="0.42"></canvas>
+
+            <!-- the header, fixed in the viewport, in the colour of the ground under it -->
+            <nav class="abs nav" id="nav">
+              <div class="abs bar" data-layer="header" data-depth="0.5" data-edge="lt" data-shadow="0,0.2,10"><span class="logo" aria-label="moses"><!-- the real wordmark, clients/moses/brand/logo.svg --><svg viewBox="0 0 48 10" fill="currentColor" aria-hidden="true"><path d="M20.4318 1.5036C20.0626 1.04201 19.6012 0.675249 19.0606 0.413395C18.5185 0.139081 17.8906 0 17.1942 0C16.4979 0 15.87 0.139081 15.328 0.413395C14.7874 0.675157 14.3261 1.04201 13.9568 1.5036C13.591 1.96088 13.307 2.4986 13.1127 3.10202L13.1118 3.10477C12.9308 3.69179 12.839 4.32938 12.839 4.99986C12.839 5.67035 12.9307 6.31298 13.1114 6.91136L13.1127 6.91539C13.3071 7.51871 13.591 8.05653 13.9568 8.51381L13.9587 8.51619C14.3273 8.96431 14.7873 9.33007 15.3262 9.6031L15.3299 9.60493C15.8713 9.86687 16.4986 9.99973 17.1943 9.99973C17.8901 9.99973 18.5174 9.86687 19.0589 9.60493L19.0626 9.6031C19.6015 9.32997 20.0615 8.96431 20.4299 8.51619L20.4319 8.51381C20.7982 8.0558 21.0766 7.51734 21.2591 6.91337C21.452 6.31426 21.5497 5.67044 21.5497 4.99986C21.5497 4.32929 21.4519 3.69096 21.2589 3.10339C21.0763 2.4997 20.798 1.96143 20.4318 1.5036ZM17.1942 8.95634C16.6742 8.95634 16.2093 8.85189 15.8124 8.64575C15.4122 8.42613 15.0723 8.13157 14.8023 7.77012C14.528 7.40318 14.3165 6.97961 14.1734 6.51134C14.029 6.02703 13.9558 5.51844 13.9558 4.99986C13.9558 4.48129 14.0289 3.9792 14.1732 3.50689L14.1736 3.50543C14.3167 3.02552 14.5282 2.59627 14.8023 2.2296C15.0718 1.86889 15.4109 1.58065 15.8102 1.37285L15.8144 1.37056C16.2107 1.15351 16.6749 1.04338 17.1942 1.04338C17.7134 1.04338 18.1778 1.15342 18.5739 1.37056L18.5782 1.37285C18.9773 1.58056 19.3164 1.86889 19.5861 2.2296C19.8602 2.59627 20.0717 3.02561 20.2148 3.50543L20.2152 3.50689C20.3595 3.9792 20.4326 4.48147 20.4326 4.99986C20.4326 5.51826 20.3594 6.02694 20.2151 6.51115C20.072 6.97952 19.8605 7.40318 19.5862 7.77012C19.316 8.13166 18.9761 8.42622 18.5761 8.64575C18.1792 8.8518 17.7144 8.95634 17.1942 8.95634Z"/><path d="M28.9657 5.1471C28.6667 4.93335 28.3036 4.76797 27.8863 4.65564C27.4977 4.53644 27.0743 4.43364 26.6277 4.35008L25.5482 4.10298C25.2157 4.02428 24.9073 3.92221 24.6313 3.79962C24.3848 3.67392 24.1825 3.51102 24.0301 3.31522C23.8882 3.13317 23.8163 2.8825 23.8163 2.57043C23.8163 2.2974 23.877 2.07385 24.002 1.88721C24.1455 1.69096 24.3272 1.52824 24.5422 1.40373C24.7642 1.27518 25.0172 1.18256 25.2943 1.12841C25.594 1.07224 25.8919 1.04366 26.1797 1.04366C26.5302 1.04366 26.8625 1.08846 27.1675 1.17669L27.1747 1.17862C27.468 1.25292 27.7215 1.3756 27.9282 1.54318L27.9381 1.55069C28.1514 1.70516 28.3098 1.90636 28.4225 2.16593L28.4256 2.1728C28.5502 2.43575 28.6134 2.76046 28.6134 3.13775V3.36681H29.7302V3.13775C29.7302 2.58647 29.6348 2.10628 29.4466 1.71057C29.2689 1.31293 29.0114 0.980622 28.6814 0.7228C28.3662 0.467726 27.9851 0.280727 27.5484 0.166842C27.1237 0.0561638 26.6633 0 26.1798 0C25.782 0 25.3789 0.0432452 24.9814 0.128453C24.5752 0.203674 24.1998 0.337166 23.8655 0.525448L23.8623 0.52728C23.5299 0.7217 23.2515 0.990334 23.0349 1.32576C22.8123 1.65834 22.6994 2.07705 22.6994 2.57016C22.6994 3.25365 22.8728 3.78945 23.2147 4.16263L23.2175 4.16565C23.5425 4.50767 23.9526 4.77676 24.4365 4.96541L24.4383 4.96605C24.9156 5.14746 25.4294 5.28847 25.9653 5.38504L25.9708 5.38595C26.4939 5.46667 26.9834 5.57754 27.4255 5.71543L27.4271 5.71588C27.8616 5.848 28.2229 6.03592 28.5008 6.27431C28.7531 6.49072 28.8758 6.81057 28.8758 7.25228C28.8758 7.59018 28.7967 7.87237 28.6406 8.09098C28.4768 8.30812 28.2635 8.48156 28.0067 8.60653L28.0034 8.60818C27.7454 8.73893 27.4556 8.83311 27.142 8.88827C26.8286 8.93353 26.5285 8.95643 26.2498 8.95643C25.8679 8.95643 25.5092 8.90073 25.184 8.79087C24.864 8.68276 24.5778 8.52453 24.3332 8.32067C24.0998 8.10482 23.9059 7.84763 23.7566 7.55637C23.6084 7.25521 23.5223 6.90403 23.5009 6.51253L23.4891 6.29621H22.3795L22.3846 6.5304C22.3969 7.09203 22.5042 7.59458 22.7034 8.02391C22.9029 8.45352 23.1812 8.82532 23.5307 9.12896L23.5343 9.13207C23.8825 9.42187 24.2911 9.63892 24.7488 9.77709C25.2114 9.92496 25.7165 10 26.2498 10C26.658 10 27.0779 9.95694 27.4979 9.8721C27.9397 9.79706 28.3453 9.65752 28.7036 9.45714L28.7087 9.45421C29.0735 9.23753 29.3798 8.95277 29.6191 8.60809C29.8671 8.25095 29.9927 7.79495 29.9927 7.25255C29.9927 6.74369 29.9012 6.31325 29.7207 5.97343C29.5405 5.63425 29.2866 5.35618 28.9657 5.1471Z"/><path d="M39.0833 2.90842C38.9122 2.33982 38.6516 1.83737 38.3086 1.41482C37.9624 0.976591 37.5242 0.627514 37.0064 0.377388C36.4995 0.126987 35.9073 0 35.2462 0C34.5247 0 33.8834 0.145861 33.3401 0.433552C32.8114 0.707866 32.3624 1.08727 32.0053 1.56104C31.6516 2.01887 31.3799 2.56292 31.1978 3.17834L31.197 3.18127C31.0287 3.77855 30.9433 4.4144 30.9433 5.07096C30.9433 5.72752 31.0287 6.39874 31.197 6.99611L31.1973 6.99739C31.3679 7.59009 31.6281 8.11709 31.9708 8.56365L31.9752 8.56915C32.3321 9.00563 32.7746 9.35957 33.2905 9.62105L33.2963 9.62389C33.8257 9.87338 34.4464 9.99991 35.1412 9.99991C35.7047 9.99991 36.221 9.92459 36.6759 9.77608C37.1368 9.62554 37.5468 9.39612 37.8947 9.09405C38.2472 8.79298 38.5416 8.42164 38.7698 7.99029C38.9955 7.5637 39.1622 7.0672 39.2651 6.51464L39.3158 6.24307H38.1994L38.1582 6.41944C37.9717 7.22049 37.6298 7.85515 37.1423 8.30592C36.9045 8.51986 36.6196 8.68294 36.2956 8.7906C35.9642 8.90073 35.5818 8.95652 35.1588 8.95652C34.649 8.95652 34.1947 8.85748 33.8086 8.66205C33.4331 8.46617 33.1121 8.19598 32.8542 7.85899C32.6038 7.51642 32.4102 7.11173 32.2786 6.6561C32.1561 6.23171 32.0891 5.78212 32.0791 5.31779H39.3389V5.08873C39.3389 4.7436 39.3178 4.339 39.2809 3.97874C39.2347 3.52797 39.1682 3.16771 39.0833 2.90842ZM33.9322 1.33721C34.3063 1.14224 34.7484 1.04329 35.2462 1.04329C35.709 1.04329 36.1216 1.13619 36.4724 1.31935L36.4748 1.32063C36.8398 1.50561 37.1499 1.75904 37.3962 2.07394L37.4017 2.08063C37.6604 2.38664 37.8575 2.75349 37.9876 3.17101L37.9881 3.17275C38.0986 3.51789 38.1716 3.88749 38.2061 4.27413H32.1185C32.1627 3.907 32.2447 3.54473 32.363 3.19401C32.5046 2.77438 32.7083 2.4057 32.9682 2.0984L32.9707 2.09538C33.2288 1.77947 33.5507 1.52513 33.9276 1.3395L33.9322 1.33721Z"/><path d="M47.5852 5.97316C47.405 5.63406 47.1509 5.35609 46.83 5.14682C46.531 4.93307 46.1679 4.76769 45.7507 4.65537C45.3618 4.53608 44.9384 4.43328 44.492 4.34981L43.4125 4.10271C43.0803 4.0241 42.7718 3.92203 42.4957 3.79935C42.2493 3.67365 42.047 3.51065 41.8945 3.31495C41.7527 3.1329 41.6807 2.88222 41.6807 2.57016C41.6807 2.29713 41.7415 2.07357 41.8665 1.88694C42.0099 1.69069 42.1916 1.52797 42.4067 1.40345C42.6286 1.27491 42.8817 1.18228 43.159 1.12813C43.4586 1.07197 43.7564 1.04347 44.0442 1.04347C44.3948 1.04347 44.727 1.08828 45.032 1.17651L45.0392 1.17843C45.3326 1.25274 45.586 1.37542 45.7927 1.54299L45.8026 1.55051C46.0159 1.70498 46.1744 1.90618 46.287 2.16574L46.2901 2.17271C46.4147 2.43566 46.4779 2.76036 46.4779 3.13766V3.36671H47.5947V3.13766C47.5947 2.58628 47.4993 2.1061 47.311 1.71048C47.1334 1.31284 46.876 0.98053 46.5459 0.722708C46.2308 0.467635 45.8496 0.280636 45.4129 0.166842C44.9882 0.0561638 44.5277 0 44.0443 0C43.6465 0 43.2433 0.0432452 42.8459 0.128453C42.4396 0.203674 42.0642 0.337258 41.73 0.525448L41.7268 0.52728C41.3946 0.721609 41.1162 0.990242 40.8993 1.32576C40.6768 1.65844 40.564 2.07705 40.564 2.57016C40.564 3.25365 40.7373 3.78936 41.0793 4.16263L41.0821 4.16565C41.407 4.50767 41.8171 4.77676 42.301 4.96541L42.3028 4.96605C42.7801 5.14746 43.2939 5.28847 43.8298 5.38504L43.8353 5.38595C44.3584 5.46667 44.8479 5.57753 45.2901 5.71542L45.2916 5.71588C45.7261 5.848 46.0874 6.03592 46.3653 6.27431C46.6176 6.49072 46.7403 6.81057 46.7403 7.25228C46.7403 7.59009 46.6611 7.87219 46.505 8.09098C46.3413 8.30803 46.128 8.48147 45.8711 8.60653L45.8678 8.60818C45.6099 8.73892 45.3201 8.83311 45.0063 8.88827C44.6931 8.93353 44.3929 8.95643 44.1143 8.95643C43.7323 8.95643 43.3736 8.90073 43.0484 8.79087C42.7284 8.68276 42.4423 8.52453 42.1977 8.32067C41.9643 8.10481 41.7703 7.84763 41.6211 7.55637C41.4728 7.25521 41.3868 6.90403 41.3654 6.51253L41.3535 6.29621H40.2437L40.2489 6.5304C40.2613 7.0924 40.3686 7.59485 40.5678 8.02391C40.7673 8.45352 41.0456 8.82532 41.395 9.12896L41.3986 9.13207C41.7468 9.42187 42.1555 9.63892 42.6132 9.77709C43.0758 9.92496 43.5807 10 44.1142 10C44.5224 10 44.9423 9.95694 45.3622 9.8721C45.804 9.79706 46.2096 9.65752 46.5679 9.45714L46.5731 9.45421C46.9379 9.23753 47.2441 8.95277 47.4835 8.60809C47.7314 8.25095 47.8571 7.79495 47.8571 7.25255C47.8571 6.74369 47.7657 6.31307 47.5852 5.97316Z"/><path d="M11.4496 1.86834C11.2894 1.44789 11.0583 1.09744 10.7626 0.826605C10.4798 0.54487 10.1334 0.336982 9.73279 0.208712C9.35441 0.0721962 8.93293 0.00256405 8.47999 0.00183108H8.4723C8.01936 0.00247242 7.59778 0.0721046 7.21914 0.208803C6.81863 0.336982 6.47225 0.544779 6.18942 0.826697C6.06225 0.943148 5.94673 1.07481 5.84378 1.22021C5.74082 1.07481 5.6253 0.943148 5.49813 0.826697C5.2153 0.54487 4.86892 0.337073 4.46832 0.208803C4.08977 0.0721962 3.66837 0.00256405 3.21543 0.00183108H3.20774C2.75489 0.00247242 2.33332 0.0721046 1.95458 0.208712C1.55407 0.33689 1.2076 0.544779 0.924776 0.826605C0.629021 1.09753 0.397895 1.44798 0.237815 1.86834C0.0799948 2.28311 0 2.77612 0 3.33391V9.7868H1.15726V3.31614C1.15726 2.77979 1.24105 2.35851 1.40619 2.06395C1.57233 1.76774 1.77154 1.54437 1.99824 1.39997L2.00837 1.3931C2.05871 1.357 2.15914 1.29845 2.35167 1.22397C2.53027 1.15488 2.72009 1.10761 2.91597 1.08333C3.11202 1.05905 3.31079 1.05905 3.50675 1.08333C3.70263 1.10761 3.89245 1.15488 4.07106 1.22397C4.26359 1.29836 4.36401 1.357 4.41435 1.3931L4.42448 1.39997C4.65118 1.54437 4.85039 1.76783 5.01653 2.06395C5.1758 2.34798 5.2595 2.75019 5.26519 3.25961C5.26483 3.28425 5.26456 3.3089 5.26456 3.33391V9.7868H6.42272V3.33391C6.42272 3.30899 6.42245 3.28425 6.42209 3.25961C6.42778 2.75019 6.51139 2.34798 6.67066 2.06395C6.83679 1.76774 7.03601 1.54437 7.26271 1.39997L7.27283 1.3931C7.32318 1.357 7.4236 1.29845 7.61613 1.22397C7.79474 1.15488 7.98456 1.10761 8.18044 1.08333C8.3764 1.05905 8.57526 1.05905 8.77122 1.08333L8.77457 1.08379C8.96918 1.10816 9.15791 1.15534 9.33552 1.22397C9.52805 1.29845 9.62848 1.357 9.67882 1.3931L9.68895 1.39997C9.91564 1.54437 10.1149 1.76774 10.281 2.06404C10.4462 2.35851 10.5299 2.77979 10.5299 3.31614V9.7868H11.6872V3.33391C11.6872 2.77612 11.6073 2.28311 11.4496 1.86834Z"/></svg></span><span>Shop all</span><span>Learn more</span><span>Our story</span></div>
+              <div class="abs tabs" data-layer="header" data-depth="0.5" data-edge="rt"><span>Account</span><span>[ 0 ]</span><span class="cta" data-layer="button" data-depth="0.72" data-edge="rt" data-shadow="0.5,0.3,8">Get Started</span></div>
+            </nav>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>moses</h3>
+      <p><span>Health</span><span>Web design</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="moses-card-src/js/shed-data.js"></script>
+<script src="moses-card-src/js/card.js"></script>
+<script type="module">
+const card = window.__mosesCard;
+const DEFAULTS = card.defaults;
+
+/* The dials. Embedded on the site there is no panel at all, and opened straight
+   from disk there is no studio to serve the module, so it loads on demand and the
+   card runs on its defaults without it. */
+if (!card.embed) {
+  import('/shared/params/params.js').then(({ defineParams }) => {
+    const TOOL = 'moses work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [DEFAULTS['layers.depth'], 0, 2.5, 0.01],        // how far apart the layers sit
+        parallax: [DEFAULTS['layers.parallax'], 0, 3, 0.01],    // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [DEFAULTS['layers.spread'], 0, 1, 0.01],        // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [DEFAULTS['tilt.tiltMax'], 0, 20, 0.5],        // degrees
+        perspective: [DEFAULTS['tilt.perspective'], 1, 6, 0.05],// eye distance, in card widths
+        hoverScale: [DEFAULTS['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [DEFAULTS['light.bloom'], 0, 1.5, 0.01],         // the round light under the pointer
+        bloomSize: [DEFAULTS['light.bloomSize'], 0.4, 2.5, 0.05], // its diameter, in card widths
+        rim: [DEFAULTS['light.rim'], 0, 1, 0.01],
+        shadow: [DEFAULTS['light.shadow'], 0, 1, 0.01],
+      },
+      motion: {
+        scrollSpeed: [DEFAULTS['motion.scrollSpeed'], 0, 3, 0.05],
+        stiffness: [DEFAULTS['motion.stiffness'], 40, 500, 1],
+        damping: [DEFAULTS['motion.damping'], 4, 60, 0.5],
+      },
+      shed: {
+        amount: [DEFAULTS['shed.amount'], 200, 4000, 50],       // particles in the story (the page draws 2200)
+        drip: [DEFAULTS['shed.drip'], 0, 400, 10],              // always on their way down, whatever the scroll
+        size: [DEFAULTS['shed.size'], 0.6, 3, 0.05],            // dot radius, in page px
+        heap: [DEFAULTS['shed.heap'], 0.2, 1, 0.01],            // the pile's height, against its half width
+        holes: [DEFAULTS['shed.holes'], 0, 1, 0.01],            // how far the holes wear by the heap (1 = the page's 18 px)
+      },
+      drag: {
+        momentum: [DEFAULTS['drag.momentum'], 0, 3, 0.05],      // how far a flick carries
+        scrub: [DEFAULTS['drag.scrub'], 0, 6, 0.1],             // px of page per px of sideways drag
+        resumeAfter: [DEFAULTS['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [DEFAULTS['card.cardSize'], 24, 72, 0.5],     // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: DEFAULTS['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: DEFAULTS['card.frame'] },
+        frameColor: DEFAULTS['card.frameColor'],                 // the mat (moses's light grey), also with the site's &mat=F
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: DEFAULTS['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  }).catch(() => { /* no studio here: the card runs on its defaults */ });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+import{t}from"./chunk.window_CAbVMZox.esm.js";function e(e,n,{session:o}={}){const s=o?"sessionStorage":"localStorage";try{return t[s].setItem(e,n),!0}catch(t){return!1}}function n(e,{session:n}={}){const o=n?"sessionStorage":"localStorage";try{return{ok:!0,value:t[o].getItem(e)}}catch(t){return{ok:!1,value:null}}}function o(t,e={}){return n(t,e).value}function s(e,{session:n}={}){const o=n?"sessionStorage":"localStorage";try{return t[o].removeItem(e),!0}catch(t){return!1}}export{n as i,s as n,e as r,o as t};
+//# sourceMappingURL=chunk.storage_DQF5v-OM.esm.js.map

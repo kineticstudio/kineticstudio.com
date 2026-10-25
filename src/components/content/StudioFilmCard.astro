@@ -1,0 +1,345 @@
+---
+import logoRaw from "@/assets/brand/logo.svg?raw";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Utility classes. */
+  class?: string;
+}
+
+const { render = true, class: className } = Astro.props;
+// the 2026 lockup, drawn in the text colour (it is all currentColor)
+const logo = logoRaw.replace(/<!--[\s\S]*?-->/g, "").replace(/<svg /, '<svg aria-hidden="true" ');
+---
+
+{/* Hunter, Oct 24: first a little card on the homepage hero that opens the Studio film with sound;
+    then "Let's make a little card that sits on the right column in the little gap that now exists on the
+    top ... The video could kind of be cut off a little bit with a gradient, and then it says 'the Kinetic
+    Studio tool' (somehow on my branding), and then it says 'bleeding-edge tooling for modern brand
+    marketing and interaction. for every client'." The panel loops a short silent cut
+    (/media/studio-film-card.mp4) fading under a gradient; the film it opens is the About page's, with
+    its sound (/media/studio-film.mp4). Later versions (STUDIO TOOL in the pill, a Watch film pill,
+    "Every client has access to") went back to this one: "the first stab at this looks better. Just go
+    revert back to what we did originally." */}
+{
+  render && (
+    <div class:list={["film-card_wrap", className]} data-film-card>
+      <button class="film-card_card" type="button" aria-label="Play the Kinetic Studio tool film, with sound">
+        <span class="film-card_media" data-film-from>
+          <video src="/media/studio-film-card.mp4" poster="/media/studio-film-card.jpg" muted loop playsinline autoplay preload="metadata" aria-hidden="true" />
+        </span>
+        <span class="film-card_body">
+          <span class="film-card_brand">
+            <span class="film-card_logo" set:html={logo} />
+            <span class="film-card_word">Studio tool</span>
+          </span>
+          <span class="film-card_text text-style-small">Bleeding-edge tooling for modern brand marketing and interaction. For every client.</span>
+          <span class="film-card_play" aria-hidden="true">
+            <svg viewBox="0 0 12 12"><path d="M3 1.8v8.4L10 6z" fill="currentColor" /></svg>
+          </span>
+        </span>
+      </button>
+      <div class="film-card_sheet" data-film-sheet hidden>
+        <div class="film-card_frame" data-film-frame>
+          <video data-film-video data-src="/media/studio-film.mp4" poster="/media/studio-film-card.jpg" playsinline preload="none" />
+          <span class="film-card_bar" aria-hidden="true"><i data-film-progress /></span>
+        </div>
+        <button class="film-card_close" type="button" aria-label="Close the film" data-film-close>
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5l7 7m0-7l-7 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+<script>
+  import { gsap } from "gsap";
+
+  document.querySelectorAll<HTMLElement>("[data-film-card]").forEach((root) => {
+    const card = root.querySelector<HTMLButtonElement>(".film-card_card")!;
+    const from = root.querySelector<HTMLElement>("[data-film-from]")!;
+    const sheet = root.querySelector<HTMLElement>("[data-film-sheet]")!;
+    const frame = sheet.querySelector<HTMLElement>("[data-film-frame]")!;
+    const video = sheet.querySelector<HTMLVideoElement>("[data-film-video]")!;
+    const progress = sheet.querySelector<HTMLElement>("[data-film-progress]")!;
+    const close = sheet.querySelector<HTMLButtonElement>("[data-film-close]")!;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // the sheet covers the window, so it lives on <body>, clear of the hero's pinned stage
+    document.body.append(sheet);
+    let open = false;
+
+    // the film's box when open: as big as fits, 16:9, centred
+    const target = () => {
+      const w = Math.min(innerWidth * 0.9, ((innerHeight * 0.82) * 16) / 9);
+      const h = (w * 9) / 16;
+      return { left: (innerWidth - w) / 2, top: (innerHeight - h) / 2, width: w, height: h };
+    };
+    const place = () => {
+      const t = target();
+      Object.assign(frame.style, { left: `${t.left}px`, top: `${t.top}px`, width: `${t.width}px`, height: `${t.height}px` });
+      return t;
+    };
+    // the transform that puts the open frame back over the card
+    const fromCard = (t: { left: number; top: number; width: number; height: number }) => {
+      const r = from.getBoundingClientRect();
+      return { x: r.left - t.left, y: r.top - t.top, scaleX: r.width / t.width, scaleY: r.height / t.height };
+    };
+
+    const show = () => {
+      if (open) return;
+      open = true;
+      sheet.hidden = false;
+      const t = place();
+      // it grows from the card showing the card's own picture, and the film
+      // starts from the top, with its sound, as it lands
+      if (!video.src) video.src = video.dataset.src!;
+      video.preload = "auto";
+      video.currentTime = 0;
+      video.muted = false;
+      card.classList.add("is-open");
+      gsap.fromTo(frame, { ...fromCard(t), borderRadius: 6, transformOrigin: "0 0" }, {
+        x: 0, y: 0, scaleX: 1, scaleY: 1, borderRadius: 8, duration: reduced ? 0 : 0.8, ease: "expo.inOut",
+        onComplete: () => void (open && video.play().catch(() => {})),
+      });
+      gsap.fromTo(sheet, { "--veil": 0 }, { "--veil": 1, duration: reduced ? 0 : 0.6, ease: "power2.out" });
+      gsap.fromTo(close, { opacity: 0 }, { opacity: 1, duration: 0.3, delay: reduced ? 0 : 0.6 });
+      close.focus({ preventScroll: true });
+    };
+    const hide = () => {
+      if (!open) return;
+      open = false;
+      const t = target();
+      gsap.to(close, { opacity: 0, duration: 0.15 });
+      gsap.to(sheet, { "--veil": 0, duration: reduced ? 0 : 0.55, ease: "power2.in" });
+      gsap.to(video, { volume: 0, duration: reduced ? 0 : 0.5 });
+      gsap.to(frame, {
+        ...fromCard(t),
+        borderRadius: 6,
+        duration: reduced ? 0 : 0.7,
+        ease: "expo.inOut",
+        onComplete: () => {
+          video.pause();
+          video.volume = 1;
+          sheet.hidden = true;
+          card.classList.remove("is-open");
+          card.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+        },
+      });
+    };
+
+    card.addEventListener("click", show);
+    close.addEventListener("click", hide);
+    // a click on the dark round the film closes it; on the film, it pauses and plays
+    sheet.addEventListener("click", (e) => {
+      if (e.target === sheet) hide();
+    });
+    video.addEventListener("click", () => (video.paused ? video.play() : video.pause()));
+    video.addEventListener("timeupdate", () => {
+      progress.style.transform = `scaleX(${video.duration ? video.currentTime / video.duration : 0})`;
+    });
+    video.addEventListener("ended", hide);
+    addEventListener("keydown", (e) => {
+      if (open && e.key === "Escape") hide();
+    });
+    addEventListener("resize", () => open && place());
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .film-card_wrap {
+      position: relative;
+    }
+    /* a panel: the loop on its right, fading into the ground under a
+       gradient, the lockup and the line on its left */
+    .film-card_card {
+      position: relative;
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 6;
+      padding: 0;
+      overflow: hidden;
+      border: 0;
+      border-radius: var(--radius-media);
+      background: var(--dark-800);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 1.25rem 2.5rem -1.25rem rgb(0 0 0 / 0.6);
+      &:focus-visible {
+        outline: var(--focus-width) solid var(--text);
+        outline-offset: 0.2rem;
+      }
+      &.is-open .film-card_media {
+        visibility: hidden;
+      }
+    }
+    .film-card_media {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 64%;
+      mask-image: linear-gradient(to right, transparent, #000 48%);
+      & video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: scale 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+    }
+    .film-card_card:hover .film-card_media video {
+      scale: 1.04;
+    }
+    .film-card_body {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.75rem;
+      height: 100%;
+      width: 52%;
+      padding: clamp(0.9rem, 2.2cqw, 1.5rem);
+      box-sizing: border-box;
+    }
+    .film-card_wrap {
+      container-type: inline-size;
+    }
+    /* the lockup: the mark and the KINETIC pill, then STUDIO TOOL at the word's height */
+    .film-card_brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      font-size: clamp(0.85rem, 2.6cqw, 1.25rem);
+      & .film-card_logo svg {
+        display: block;
+        height: 1.6em;
+        width: auto;
+      }
+    }
+    .film-card_word {
+      font-family: var(--display-family);
+      font-size: 1.32em;
+      line-height: 1;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .film-card_text {
+      max-width: 30ch;
+      line-height: 1.35;
+      color: color-mix(in srgb, var(--text) 72%, transparent);
+      text-wrap: balance;
+    }
+    .film-card_play {
+      display: grid;
+      place-items: center;
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: var(--radius-round);
+      background: var(--brand-500);
+      color: var(--brand-text);
+      transition: scale 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      & svg {
+        width: 0.8rem;
+        height: 0.8rem;
+        translate: 0.06rem 0;
+      }
+    }
+    .film-card_card:hover .film-card_play {
+      scale: 1.1;
+    }
+    /* a narrow column (a phone): the loop on top, the words under it */
+    @container (width < 26rem) {
+      .film-card_card {
+        aspect-ratio: auto;
+      }
+      .film-card_media {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        mask-image: linear-gradient(to bottom, #000 55%, transparent);
+      }
+      .film-card_body {
+        width: 100%;
+        margin-top: -1.5rem;
+        padding: 0 0.6rem 0.7rem;
+        gap: 0.4rem;
+      }
+      .film-card_brand {
+        flex-wrap: wrap;
+        row-gap: 0.3em;
+        font-size: 0.7rem;
+      }
+      .film-card_text {
+        font-size: 0.72rem;
+      }
+      .film-card_play {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 1.75rem;
+        height: 1.75rem;
+      }
+    }
+    .film-card_sheet {
+      --veil: 0;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgb(8 8 8 / calc(var(--veil) * 0.86));
+      backdrop-filter: blur(calc(var(--veil) * 12px));
+      &[hidden] {
+        display: none;
+      }
+    }
+    .film-card_frame {
+      position: fixed;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #000;
+      will-change: transform;
+      & video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        cursor: pointer;
+      }
+    }
+    .film-card_bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 2px;
+      background: rgb(255 255 255 / 0.15);
+      & i {
+        display: block;
+        height: 100%;
+        background: var(--brand-500);
+        transform: scaleX(0);
+        transform-origin: 0 50%;
+      }
+    }
+    .film-card_close {
+      position: fixed;
+      top: var(--space-5);
+      right: var(--site-margin);
+      display: grid;
+      place-items: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      border: 0;
+      border-radius: var(--radius-round);
+      background: var(--brand-500);
+      color: var(--brand-text);
+      cursor: pointer;
+      & svg {
+        width: 0.8rem;
+        height: 0.8rem;
+      }
+    }
+  }
+</style>

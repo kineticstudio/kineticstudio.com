@@ -1,0 +1,323 @@
+/* Baseten work card. The page chrome (stage, card, light, ruler, label row)
+   follows the Ethos engine's cards (Way, IngredientAI, Roam Robotics);
+   everything under .vp is baseten.co as Kinetic shipped it in spring 2022,
+   rebuilt at its own 1440px design width from the web archive's capture of
+   2022-05-24 (measured at 1440x900 in headless Chromium), in its own Roobert.
+   The site's page is a fixed 1000px hero, so nothing here is a share of the
+   window except the window itself (--vh). */
+
+@font-face { font-family: "BT Roobert"; src: url("../fonts/Roobert-Regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: "BT Roobert"; src: url("../fonts/Roobert-Medium.woff2") format("woff2"); font-weight: 500; font-display: block; }
+@font-face { font-family: "BT Roobert"; src: url("../fonts/Roobert-SemiBold.woff") format("woff"); font-weight: 600; font-display: block; }
+@font-face { font-family: "BT Roobert"; src: url("../fonts/Roobert-Bold.woff2") format("woff2"); font-weight: 700; font-display: block; }
+@font-face { font-family: "KS Panell Condensed"; src: url("../fonts/PanellCondensed-TRIAL-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "KS Mono"; src: url("../fonts/PPNeueMontrealMono-Book.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #0d0d0d;
+  color: #eef1ea;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Kinetic: the page and the work card ---------- */
+.stage {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  --size: 40; --ar: 1.6;
+  --card-w: min(calc(var(--size) * 1vw), calc((100vh - 150px) * var(--ar)));
+}
+@media (max-width: 700px) { .stage { --card-w: calc(100vw - 32px); } }
+.slot { width: var(--card-w); display: flex; flex-direction: column; gap: clamp(14px, 1.1vw, 16px); }
+
+/* the hit area never moves; only what is inside it does */
+.persp {
+  position: relative;
+  width: 100%; aspect-ratio: var(--ar);
+  perspective: 1400px; perspective-origin: 50% 50%;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: grab;
+}
+.persp.is-dragging { cursor: grabbing; }
+
+.card-shadow {
+  position: absolute; inset: 6% 7% -1% 7%;
+  border-radius: 12%;
+  background: rgba(0, 0, 0, .9);
+  filter: blur(30px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+/* laid out K times its size and scaled back inside its own 3D transform, so
+   the tilted card rasters as sharp as the flat one */
+.card {
+  position: absolute; left: 0; top: 0;
+  --k: 1; --r: 6px;
+  border-radius: calc(var(--r) * var(--k));
+  background: var(--frame-color, #009b5c);
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  isolation: isolate;
+}
+.card, .card * { user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+
+/* the site's browser window, inset on the card ground when framed */
+.win {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  overflow: hidden;
+  background: #fff;
+  will-change: transform;
+}
+.win-shadow {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  background: #003a22;
+  filter: blur(calc(var(--card-px, 576px) * .022));
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.card:not(.is-framed) .win-shadow { display: none; }
+
+/* The light, as on an Apple TV poster: one soft round bloom under the pointer,
+   brightest there and fading to nothing, laid over in plain alpha (a blend mode
+   over a card this size costs whole frames). No stripes, no bands. The rim is
+   the same light seen through a thin ring at the card's edge. Transform and
+   opacity only. */
+.bloom, .rim { position: absolute; z-index: 6; pointer-events: none; opacity: 0; will-change: transform, opacity; }
+.bloom {
+  width: var(--bloom-d); height: var(--bloom-d);
+  left: calc(var(--bloom-d) / -2); top: calc(var(--bloom-d) / -2);
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side,
+    rgba(255, 252, 248, .42), rgba(255, 250, 246, .27) 15%, rgba(250, 251, 255, .13) 34%,
+    rgba(250, 251, 255, .05) 56%, rgba(250, 251, 255, .013) 79%, rgba(250, 251, 255, 0));
+}
+.rim {
+  left: 0; top: 0; width: 100%; height: 100%;
+  border-radius: inherit; overflow: hidden;
+  padding: calc(1.5px * var(--k));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.rim i {
+  position: absolute; display: block;
+  width: calc(var(--card-px, 576px) * .9); height: calc(var(--card-px, 576px) * .9);
+  left: calc(var(--card-px, 576px) * -.45); top: calc(var(--card-px, 576px) * -.45);
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side, rgba(255, 252, 248, .8), rgba(255, 252, 248, .22) 45%, rgba(255, 252, 248, 0));
+  will-change: transform;
+}
+
+/* The ruler: a short fine scale beside the card whose notches slide with the
+   miniature's scroll, one brighter mark fixed at the reading position. A fixed
+   scale with sliding notches, nothing sweeps. Outside the card on the page;
+   inside it when framed (in the window's margin) or embedded (on the page's
+   right edge, its ink following the section under the mark: dark ink on
+   Baseten's white and yellow sections, light ink on its black ones). */
+.ruler { position: absolute; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(transparent, #000 24%, #000 76%, transparent); mask: linear-gradient(transparent, #000 24%, #000 76%, transparent); }
+.ruler .ticks { position: absolute; left: 0; right: 0; top: calc(var(--np) * -2); bottom: calc(var(--np) * -2);
+  background: repeating-linear-gradient(to bottom, var(--tick) 0 var(--nw), transparent var(--nw) var(--np)); will-change: transform; }
+.ruler .mark { position: absolute; top: 50%; height: var(--nw); background: var(--mark); }
+.ruler-out { --nw: 1px; --np: 6px; --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .62);
+  width: 5px; height: 34%; top: 33%; right: -16px; }
+.ruler-out .mark { left: -2px; right: -2px; }
+.ruler-in { z-index: 5; --nw: calc(1px * var(--k)); --np: calc(6px * var(--k));
+  width: calc(5px * var(--k)); height: 34%; top: 33%; right: calc(9px * var(--k)); }
+.card.is-framed .ruler-in { right: calc(var(--mx) / 2 - 2.5px * var(--k)); }
+.ruler-in .ink { position: absolute; inset: 0; will-change: opacity; }
+.ruler-in .dark { --tick: rgba(14, 14, 14, .18); --mark: rgba(14, 14, 14, .62); }
+.ruler-in .light { --tick: rgba(255, 255, 255, .16); --mark: rgba(255, 255, 255, .66); opacity: 0; }
+.ruler-in .mark { left: calc(-2px * var(--k)); right: calc(-2px * var(--k)); }
+.slot:not(.is-bleed) .ruler-out, .card:not(.ruler-inside) .ruler-in, .no-ruler .ruler { display: none; }
+
+/* the label row, as on the work grid */
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: clamp(14px, 1.1vw, 16px); }
+.meta h3 {
+  margin: 0;
+  font-family: "Panell Condensed", "KS Panell Condensed", "Arial Narrow", sans-serif; font-weight: 500;
+  font-size: clamp(22px, 1.95vw, 28px); line-height: .94; letter-spacing: -.02em;
+  text-transform: uppercase;
+}
+.meta p {
+  margin: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
+  text-align: right;
+  font-family: "Neue Montreal Mono", "KS Mono", ui-monospace, monospace;
+  font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
+  color: rgba(238, 241, 234, .5);
+}
+
+/* Embed (?embed=1): the card alone, edge to edge at the frame's own aspect, on
+   a transparent page. The site's tile frames it; &bleed=N keeps N px clear. */
+html.is-embed, html.is-embed body { background: transparent; }
+.is-embed .stage { display: block; }
+.is-embed .slot { position: absolute; inset: 0; width: auto; display: block; }
+.is-embed .persp { position: absolute; inset: var(--bleed, 0px); width: auto; height: auto; aspect-ratio: auto; }
+.is-embed .meta, .is-embed .ruler-out { display: none; }
+html.is-embed:not(.has-bleed) .card-shadow { display: none; }
+
+/* ---------- Baseten: the miniature, at its own 1440px design width ---------- */
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  background: #fff;
+  --green: #009959; --grey: #f4f8f8; --line: #eff1f1; --blue: #4ca3ff;
+  font-family: "BT Roobert", Arial, sans-serif;
+  font-size: 16px; line-height: 22.4px; font-weight: 400;   /* the live body is 16/1.4 */
+  color: #000;
+  text-rendering: geometricPrecision;
+}
+.page { position: absolute; left: 0; top: 0; width: 1440px; will-change: transform; }
+.sec { position: relative; width: 1440px; background: #fff; }
+.sec > * { position: absolute; }
+[data-depth] { will-change: transform; }
+.vp h1, .vp h2, .vp h3, .vp p { margin: 0; }
+.vp img { display: block; max-width: none; }
+.vp i { display: block; font-style: normal; }
+.mut { opacity: .6; }
+.ctr { text-align: center; }
+/* the site's type: h1 64/70.4 at -1.6, the mega heads 64/64, h2 48/52.8, h3 32/38.4, small heads 20/28, all 600 */
+.vp h1 { font-size: 64px; line-height: 70.4px; font-weight: 600; letter-spacing: -1.6px; }
+.vp h2 { font-size: 48px; line-height: 52.8px; font-weight: 600; }
+.vp h2.mega { font-size: 64px; line-height: 64px; }
+.vp h3 { font-size: 32px; line-height: 38.4px; font-weight: 600; }
+.vp h3.sm { font-size: 20px; line-height: 28px; }
+.vp h3.lg { font-size: 48px; line-height: 57.6px; }
+.vp .md { font-size: 20px; line-height: 28px; }
+.vp .sm-t { font-size: 14px; line-height: 19.6px; }
+/* the buttons: 12px 20px, radius 8, green with a soft shadow; secondary grey, white on colour */
+.btn { display: flex; align-items: center; justify-content: center; height: 46.4px; border-radius: 8px;
+  background: var(--green); color: #fff; font-weight: 500; white-space: nowrap; box-shadow: 0 4px 16px rgba(0, 0, 0, .1); }
+.btn.sec2 { background: var(--grey); color: #000; box-shadow: none; }
+.btn.wht { background: #fff; color: #000; }
+
+/* the header: the site's sticky bar, 16px from the window's top */
+.hdr-pin { position: absolute; left: 0; top: 0; width: 1440px; height: 0; z-index: 30; will-change: transform; }
+.hdr { position: absolute; left: 80px; top: 16px; width: 1280px; height: 72px; border: 1px solid var(--line); border-radius: 12px;
+  background: #fff; box-shadow: 0 6px 24px rgba(0, 0, 0, .1); }
+.hdr > * { position: absolute; }
+.hdr-logo { left: 16px; top: 22px; width: 112px; height: 26px; }
+.hdr-nav { left: 160px; top: 23.8px; width: 410px; height: 22.4px; color: #222; }
+.hdr-nav span, .hdr-in { position: absolute; top: 0; white-space: nowrap; color: #222; }
+.hdr-in { left: 1104px; top: 23.8px; }
+.hdr-btn { left: 1167.9px; top: 11.8px; width: 94.1px; }
+
+/* ===== the hero (its 1000px section starts under the header's 88px) ===== */
+.hero { height: 1088px; overflow: hidden; }
+.dots { width: 432px; height: 388.8px; }
+.banner { left: 538.2px; top: 136px; width: 363.7px; height: 38.4px; border-radius: 1000px; background: var(--grey);
+  display: flex; align-items: center; justify-content: center; gap: 6.6px; font-size: 13.2px; line-height: 18.48px; white-space: nowrap; }
+.banner b { font-weight: 400; color: var(--green); }
+.h-h1 { left: 336px; top: 190.4px; width: 768px; }
+.h-p { left: 336px; top: 347.2px; width: 768px; }
+.trust { left: 336px; top: 513.6px; width: 768px; }
+.lf { left: 336px; top: 545px; width: 768px; height: 40px; }
+.lf img { position: absolute; opacity: .6; }
+/* the illustration: the app screen, the two notebook cards and the flow, which settle as the page scrolls */
+.h-screen { left: 195px; top: 646.2px; width: 1050px; height: 601.1px; z-index: 3; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, .5); background: #fff; }
+.h-screen > img { position: absolute; left: 0; top: 0; width: 1050px; height: 601.1px; }
+.play { position: absolute; left: 477.05px; top: 191.95px; width: 96px; height: 96px; }
+.play i { position: absolute; inset: 0; border: 4.8px solid #fff; border-radius: 200px; background: var(--blue);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, .29); display: flex; align-items: center; justify-content: center; will-change: transform; }
+.play img { width: 28px; height: 32px; margin-left: 4px; }
+.h-m1, .h-m2 { width: 300px; height: 203.3px; border-radius: 16px; box-shadow: 0 12px 32px rgba(0, 0, 0, .16); }
+.h-m1 { left: -88.5px; top: 748.4px; z-index: 1; }
+.h-m2 { left: -4.5px; top: 616.1px; z-index: 2; }
+.h-flow { left: 1201.5px; top: 526px; width: 285px; height: 717.5px; }
+
+/* ===== less hoop jumping, more model shipping ===== */
+.with { height: 1108.8px; background: #000; color: #fff; overflow: hidden; }
+.w-h { left: 80px; width: 1280px; }
+.w-p { left: 336px; top: 256px; width: 768px; }
+.w-card { top: 376px; width: 624px; height: 636.8px; border-radius: 16px; background: #1a1a1a; }
+.w-card > * { position: absolute; left: 64px; width: 496px; }
+.w-card img { height: 272px; }
+.vp .green { color: var(--green); }
+
+/* ===== serve, integrate, design ===== */
+.feat { height: 2490.9px; overflow: hidden; }
+.mq { left: 0; top: 32px; width: 1440px; height: 161.28px; }
+.mq-strip { position: absolute; left: 0; top: 0; display: flex; white-space: nowrap; will-change: transform; }
+.mq-strip span { display: block; margin-right: 7.2px; font-size: 115.2px; line-height: 161.28px; font-weight: 600; }
+.mq-strip .alt { color: #859290; }
+.f-h { width: 534.8px; }
+.f-h.r { width: 554.7px; }
+.fi { display: flex; align-items: center; gap: 16px; }
+.fi > i { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 1000px; background: var(--grey);
+  display: flex; align-items: center; justify-content: center; font-size: 24.32px; line-height: 34px; }
+.fi h3 + div { font-size: 14px; line-height: 19.6px; }
+.f-img { border-radius: 16px; box-shadow: 0 16px 40px rgba(0, 0, 0, .16); }
+.f-img.flat { box-shadow: none; }
+.f-grid { width: 600px; height: 540px; }
+.logos-row { left: 805.3px; top: 1428.4px; width: 554.7px; height: 71.4px; border-top: 1px solid var(--line); }
+.logos-row img { position: absolute; top: 32px; height: 38.4px; }
+
+/* ===== ship apps, drive outcomes ===== */
+.uses { height: 996.7px; background: #1a1a1a; color: #fff; }
+.uc { width: 394.7px; height: 215.2px; border-radius: 16px; background: #1e2423; }
+.uc > * { position: absolute; left: 32px; }
+.uc h3 { top: 32px; width: 330.7px; }
+.uc p { top: 76px; width: 330.7px; opacity: .6; }
+.uc .btn { top: 136.8px; }
+
+/* ===== the customers ===== */
+.testi { height: 846.3px; background: var(--grey); overflow: hidden; }
+.tm { left: 0; top: 487.2px; width: 1440px; height: 295.1px; }
+.tm-strip { position: absolute; left: 0; top: 0; width: 3686.2px; height: 295.1px; will-change: transform; }
+.tc { position: absolute; top: 0; width: 432px; height: 295.1px; padding: 24px; border-radius: 16px; background: #fff;
+  box-shadow: 0 1px 40px rgba(0, 0, 0, .12); }
+.tc > * { position: absolute; left: 24px; }
+.tc .av { top: 24px; width: 64px; height: 64px; border-radius: 100000px; }
+.tc .lg { left: auto; right: 24px; top: 56px; transform: translateY(-50%); }
+.tc p { top: 104px; width: 384px; }
+.tc p.who { top: 231.9px; font-size: 14px; line-height: 19.6px; opacity: .6; }
+
+/* ===== no more abandoned models ===== */
+.pre { height: 512px; background: #ffdb3b; overflow: hidden; }
+.pre-img { left: 732.8px; top: 96px; width: 1280px; height: 732.8px; border-radius: 16px; box-shadow: 0 50px 80px rgba(0, 0, 0, .32); }
+
+/* ===== the footer ===== */
+.foot { height: 543.3px; background: #000; color: #fff; }
+.ft-col { width: 300px; height: 380px; }
+.ft-col h3 { position: absolute; left: 0; white-space: nowrap; }
+.tag { left: 1076.2px; top: 70.4px; width: 79.8px; height: 23.2px; border-radius: 10000px; background: var(--blue);
+  font-size: 12px; line-height: 16.8px; display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+.ft-rule { left: 80px; top: 438.3px; width: 1280px; height: 1px; background: #1e2423; }
+.legal { left: 80px; top: 487.3px; width: 420px; height: 22.4px; }
+.legal span { position: absolute; top: 0; white-space: nowrap; opacity: .6; }
+.soc { left: 1248px; top: 487.3px; width: 104px; height: 24px; }
+.soc img { position: absolute; top: 0; width: 24px; height: 24px; }
+
+/* debug: layer outlines */
+.show-layers [data-layer] { outline: 3px dashed #009959; outline-offset: -3px; }
+.show-layers [data-layer]::after {
+  content: attr(data-layer) "  z " attr(data-depth);
+  position: absolute; left: var(--lab-x, 6px); top: var(--lab-y, 6px); z-index: 50;
+  padding: 3px 8px 2px; border-radius: 4px;
+  background: #009959; color: #fff;
+  font: 500 20px/1.15 "KS Mono", ui-monospace, monospace;
+  -webkit-text-fill-color: #fff; text-transform: uppercase; letter-spacing: .02em;
+  white-space: nowrap; text-align: left;
+}
+.show-layers img[data-layer]::after { content: none; }
+.card.show-layers > [data-layer] { outline-width: calc(1px * var(--k)); outline-offset: calc(-1px * var(--k)); }
+.card.show-layers > [data-layer]::after { font-size: calc(8px * var(--k)); left: auto; right: calc(4px * var(--k)); top: auto; bottom: calc(4px * var(--k)); padding: calc(2px * var(--k)) calc(4px * var(--k)) calc(1px * var(--k)); border-radius: calc(2px * var(--k)); }
+
+/* shadow twins: a darkened, blurred copy of a lifted layer left on the surface below it */
+.twin { filter: brightness(0) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; will-change: transform, opacity; }
+.twin.box { background: #000 !important; }
+.twin * { will-change: auto !important; }
+.twin, .twin * { box-shadow: none !important; }

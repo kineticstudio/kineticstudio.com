@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Superlink work card, 2026-10-23, built on the Metamag, Happy Droid and
+     Counsel Health cards' engine (a classic script, superlink-card-src/js/card.js,
+     itself from the Ethos and Dawn cards) with Hunter's notes built in from the
+     start: the miniature keeps touring while you hover, the light is one soft
+     round bloom under the pointer, you can drag the page like a phone (up and
+     down) or scrub it sideways (right goes further down the page), a notched
+     ruler slides with the scroll, and there is no Case Study pill.
+
+     Superlink (superlink.me, ours, still live as Kinetic shipped it) is rebuilt
+     here at its 1440px design width as HTML/CSS layers, each at its own depth,
+     with the site's own scroll choreography: the black hero lifts away three
+     times as fast as the page, so Nora's card, which stays with the page, drops
+     out of the row of names and lands under "One address for everything in your
+     digital world", where the four feature cards spread out from her on the
+     tree. Then the names struck through, the ocean (a still of its film), the
+     story (a still of its first frame, paused as on the site), the two rows of
+     posts drifting past, the free name in the row and the footer. Nora's
+     mountain film is a still with a slow drift. The five name cards in the hero
+     sit at fanned depths, after Kinetic's stacked-card film of them. Fonts (GT
+     Planar Regular and Medium) and images are the site's own, in
+     superlink-card-src/. raw/ keeps the fetched HTML, fonts, images and the posts'
+     text for reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched from outside it:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=framed the site in a window on the card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Superlink work card</title>
+<script>
+  /* before first paint: embed or not, and the bleed */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="superlink-card-src/css/card.css">
+</head>
+
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-caret" viewBox="0 0 256 256"><path fill="currentColor" d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 256 256"><path fill="currentColor" d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.5a9.5 9.5 0 1 0 0 19 9.5 9.5 0 0 0 0-19zM1 12C1 5.92 5.92 1 12 1s11 4.92 11 11-4.92 11-11 11S1 18.08 1 12zm10.25-5.5h1.5v1.75h-1.5zm0 3.5h1.5v7.5h-1.5z"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path fill="rgb(249,24,128)" d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></symbol>
+    <symbol id="i-reply" viewBox="0 0 24 24"><path fill="rgb(29,155,240)" d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01z"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path fill="currentColor" d="M18.36 5.64c-1.95-1.96-5.11-1.96-7.07 0L9.88 7.05 8.46 5.64l1.42-1.42c2.73-2.73 7.16-2.73 9.9 0 2.73 2.74 2.73 7.17 0 9.9l-1.42 1.42-1.41-1.42 1.41-1.41c1.96-1.96 1.96-5.12 0-7.07zm-2.12 3.53l-7.07 7.07-1.41-1.41 7.07-7.07 1.41 1.41zm-12.02.71l1.42-1.42 1.41 1.42-1.41 1.41c-1.96 1.96-1.96 5.12 0 7.07 1.95 1.96 5.11 1.96 7.07 0l1.41-1.41 1.42 1.41-1.42 1.42c-2.73 2.73-7.16 2.73-9.9 0-2.73-2.74-2.73-7.17 0-9.9z"/></symbol>
+  </defs>
+</svg>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Superlink, superlink.me, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- the vision, under the hero: it rises a touch faster than the page as the hero lifts off it -->
+              <section class="sec vision" data-stop="vision">
+                <div class="v-pin abs" data-pin="title">
+                  <div class="v-pill pill abs" data-layer="tag" data-depth="0.4" style="--lab-x:150px"><span>Our Vision</span></div>
+                  <h2 class="v-h2 h64 abs" data-layer="headline" data-depth="0.8" data-shadow="0,0.16,16" style="--lab-x:690px">One address for<br>everything in your<br>digital world</h2>
+                </div>
+              </section>
+
+              <!-- the features: the tree from Nora's card, four cards spreading out to it as they arrive -->
+              <section class="sec features" data-stop="features">
+                <div class="f-tree" data-layer="tree" data-depth="0.04" style="--lab-x:660px;--lab-y:40px"><img src="superlink-card-src/img/tree.svg" alt=""></div>
+                <div class="fslot" data-layer="wallet" data-depth="0.3" data-shadow="0.04,0.28,24,box" data-spread="30" style="left:240px;top:124px;height:537px;--lab-x:250px;--lab-y:500px">
+                  <div class="fc">
+                    <span class="fc-t">Wallet</span><span class="fc-tag" style="left:110px">Roadmap Feature</span>
+                    <span class="fc-d">Transact using your name</span>
+                    <div class="fc-img tlr" data-layer="wallet" data-depth="0.44" style="left:33px;top:156px;width:374px;height:381px;--lab-x:10px;--lab-y:10px"><img src="superlink-card-src/img/feature-wallet.svg" alt=""></div>
+                  </div>
+                </div>
+                <div class="fslot" data-layer="website" data-depth="0.3" data-shadow="0.04,0.28,24,box" data-spread="-30" style="left:760px;top:124px;height:464px;--lab-x:250px;--lab-y:430px">
+                  <div class="fc">
+                    <span class="fc-t">Website</span><span class="fc-tag" style="left:126px">Roadmap Feature</span>
+                    <span class="fc-d">Your own personal address</span>
+                    <div class="fc-img tl" data-layer="browser" data-depth="0.44" style="left:39px;top:142px;width:449px;height:379px;--lab-x:10px;--lab-y:10px"><img src="superlink-card-src/img/feature-website.svg" alt=""></div>
+                  </div>
+                </div>
+                <div class="fslot" data-layer="username" data-depth="0.3" data-shadow="0.04,0.28,24,box" data-spread="30" style="left:240px;top:731px;height:287px;--lab-x:250px;--lab-y:250px">
+                  <div class="fc">
+                    <span class="fc-t">Username</span><span class="fc-tag" style="left:143px">Roadmap Feature</span>
+                    <span class="fc-d">Login everywhere with your name</span>
+                    <div class="fc-img tr" data-layer="login" data-depth="0.44" style="left:-97px;top:95px;width:480px;height:318px;--lab-x:110px;--lab-y:70px"><img src="superlink-card-src/img/feature-username.webp" alt=""></div>
+                  </div>
+                </div>
+                <div class="fslot" data-layer="email" data-depth="0.3" data-shadow="0.04,0.28,24,box" data-spread="-30" style="left:760px;top:658px;height:360px;--lab-x:250px;--lab-y:320px">
+                  <div class="fc">
+                    <span class="fc-t">Email</span><span class="fc-tag" style="left:100px">Roadmap Feature</span>
+                    <span class="fc-d">The cleanest email</span>
+                    <div class="fc-img tl" data-layer="message" data-depth="0.44" style="left:39px;top:142px;width:449px;height:275px;--lab-x:10px;--lab-y:10px"><img src="superlink-card-src/img/feature-email.svg" alt=""></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- just you, nothing else: the black band, its violet glow, the names struck through -->
+              <section class="sec names" data-stop="names">
+                <div class="n-glow" data-layer="glow" data-depth="-0.22" style="--lab-x:300px;--lab-y:300px"><i id="nGlow"></i></div>
+                <div class="n-pill pill" data-layer="tag" data-depth="0.4" style="--lab-x:260px"><span>Over 1,000,000 names available</span></div>
+                <h2 class="n-h2" data-layer="headline" data-depth="0.8" style="--lab-x:390px">Just you, nothing<br>else.</h2>
+                <p class="n-body b20" data-layer="body copy" data-depth="0.5" style="--lab-x:460px">The cleanest, simplest domain possible. Your<br>name, no one else's.</p>
+                <div class="n-btn btn sm" data-layer="button" data-depth="0.92" style="--lab-x:180px"><span>Get your name</span><svg><use href="#i-caret"/></svg></div>
+                <div class="n-tlds" data-layer="names" data-depth="0.3" style="--lab-x:30px;--lab-y:180px">
+                  <span style="top:0">.com</span><span style="top:102px">.net</span><span style="top:316px">.eth</span><span style="top:418px">.io</span>
+                </div>
+                <div class="n-strikes" data-layer="strikes" data-depth="0.5" style="--lab-x:640px;--lab-y:300px">
+                  <img src="superlink-card-src/img/strike-com.svg" style="left:1133px;top:130px;width:239px;height:50px" alt="">
+                  <img src="superlink-card-src/img/strike-net.svg" style="left:1183px;top:215px;width:190px;height:67px" alt="">
+                  <img src="superlink-card-src/img/strike-eth.svg" style="left:1178px;top:436px;width:194px;height:47px" alt="">
+                  <img src="superlink-card-src/img/strike-io.svg" style="left:1253px;top:538px;width:117px;height:39px" alt="">
+                </div>
+                <div class="n-me" data-layer="the name" data-depth="0.86" style="--lab-x:20px;--lab-y:-40px">nora.miller</div>
+              </section>
+
+              <!-- build your personal online brand: the ocean (a still of its film), the copy, Nora's name in its field -->
+              <section class="sec brand" data-stop="brand">
+                <div class="b-sea" data-layer="ocean film" data-depth="-0.3" style="--lab-x:120px;--lab-y:90px"><img id="bSea" src="superlink-card-src/img/ocean.webp" alt=""><i></i></div>
+                <h2 class="b-h2 h64 center" data-layer="headline" data-depth="0.8" data-shadow="-0.3,0.3,14" style="--lab-x:820px">Build your personal online<br>brand with your real name</h2>
+                <p class="b-body b20 center" data-layer="body copy" data-depth="0.5" style="--lab-x:540px">Simple and professional. A secure public name. Yours forever, no renewals.</p>
+                <div class="b-field" data-layer="name field" data-depth="0.56" style="--lab-x:420px;--lab-y:-34px"></div>
+                <div class="b-face" data-layer="face" data-depth="0.74" data-shadow="-0.3,0.4,16" style="--lab-x:-80px;--lab-y:-30px"><img src="superlink-card-src/img/face-nora.webp" alt=""></div>
+                <div class="b-name" data-layer="the name" data-depth="0.86" style="--lab-x:380px;--lab-y:20px">
+                  <svg viewBox="0 0 20 20"><path fill="currentColor" fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+                  <span>nora.miller</span>
+                </div>
+              </section>
+
+              <!-- the story of a million names: the copy, the film (a still of its first frame, paused as on the site) -->
+              <section class="sec story" data-stop="story">
+                <h2 class="s-h2 h64" data-layer="headline" data-depth="0.8" data-shadow="0,0.16,16" style="--lab-x:460px">The story of a<br>million names</h2>
+                <p class="s-body b20" data-layer="body copy" data-depth="0.5" style="--lab-x:460px">A glimpse into the three year journey to a million names. The backstory to revolutionizing digital identity.</p>
+                <div class="s-film" data-layer="film" data-depth="0.28" data-shadow="0,0.34,28,box" style="--lab-x:30px;--lab-y:30px">
+                  <img src="superlink-card-src/img/story.webp" alt="">
+                  <div class="s-bar">
+                    <svg class="play" viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.5v15l12-7.5z"/></svg>
+                    <span class="time">0:00 / 2:35</span>
+                    <svg class="vol" viewBox="0 0 24 24"><path fill="currentColor" d="M4 9.5h3.5L12 5v14l-4.5-4.5H4zM15.5 8.3a5 5 0 0 1 0 7.4l-1.1-1.1a3.5 3.5 0 0 0 0-5.2zM18 5.8a8.5 8.5 0 0 1 0 12.4l-1.1-1.1a7 7 0 0 0 0-10.2z"/></svg>
+                    <svg class="full" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+                    <svg class="dots" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="18.5" r="2" fill="currentColor"/></svg>
+                    <div class="track"><i></i></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- what people said: two rows drifting past in opposite directions (the posts' own words; the two that no longer load stay empty, as on the site) -->
+              <section class="sec said" data-stop="said">
+                <div class="t-row" data-layer="posts" data-depth="0.32" style="top:66px;--lab-x:600px;--lab-y:-40px">
+                  <div class="t-mq" id="tRow1">
+                    <!-- one set; the engine lays a second copy after it so the row never runs out -->
+                    <div class="tw" style="left:-104px"><div class="tw-in">
+                      <img class="tw-av" src="superlink-card-src/img/tw-jamila.webp" alt=""><b class="tw-name">Jamila Juma-Ware</b><span class="tw-handle">@Justjampr · <em>Follow</em></span>
+                      <svg class="tw-x"><use href="#i-x"/></svg>
+                      <p class="tw-text">I’ve been renting domains for years. It’s so annoying. This is brilliant news. Superlink are about to change the game!</p>
+                      <span class="tw-time" style="top:177px">5:22 AM · Feb 14, 2023</span><svg class="tw-info" style="top:177px"><use href="#i-info"/></svg>
+                    </div></div>
+                    <div class="tw" style="left:328px"><div class="tw-in">
+                      <img class="tw-av" src="superlink-card-src/img/tw-axlbts.webp" alt=""><b class="tw-name">Axlbts1984</b><span class="tw-handle">@axlbts1984 · <em>Follow</em></span>
+                      <svg class="tw-x"><use href="#i-x"/></svg>
+                      <p class="tw-text">Finally! I have the URL that I need. I can’t believe Superlink didn’t exist before now to be fair. It was so easy!</p>
+                      <span class="tw-time" style="top:153px">4:52 AM · Feb 14, 2023</span><svg class="tw-info" style="top:153px"><use href="#i-info"/></svg><i class="tw-rule" style="top:182px"></i>
+                    </div></div>
+                    <div class="ph" style="left:760px"><img src="superlink-card-src/img/photo-joe.webp" alt=""><p>Buying all my friends their names. Great work Superlink - Joe Carpenter</p></div>
+                    <div class="tw" style="left:1112px"></div>
+                    <div class="tw" style="left:1544px"></div>
+                  </div>
+                </div>
+                <div class="t-row" data-layer="posts" data-depth="0.4" style="top:328px;--lab-x:600px;--lab-y:250px">
+                  <div class="t-mq" id="tRow2">
+                    <div class="tw" style="left:-364px"><div class="tw-in">
+                      <img class="tw-av" src="superlink-card-src/img/tw-mark.webp" alt=""><b class="tw-name">Mark</b><span class="tw-handle">@SmythWithaY · <em>Follow</em></span>
+                      <svg class="tw-x"><use href="#i-x"/></svg>
+                      <p class="tw-text">Really simple and clear - no more renting domains! Thanks Superlink, great service.</p>
+                      <span class="tw-time" style="top:153px">4:44 AM · Feb 14, 2023</span><svg class="tw-info" style="top:153px"><use href="#i-info"/></svg><i class="tw-rule" style="top:182px"></i>
+                    </div></div>
+                    <div class="ph" style="left:68px"><img src="superlink-card-src/img/photo-maddie.webp" alt=""><p>Great to know my identity is secured on the internet! Looking forward to going on this journey with Superlink - Maddie Rees</p></div>
+                    <div class="tw" style="left:420px"><div class="tw-in">
+                      <img class="tw-av" src="superlink-card-src/img/tw-holly.webp" alt=""><b class="tw-name">Holly Wren</b><span class="tw-handle">@holly_wren · <em>Follow</em></span>
+                      <svg class="tw-x"><use href="#i-x"/></svg>
+                      <p class="tw-text">This is a huge step for personal branding! Can’t wait to own my name! Well done Superlink <img src="superlink-card-src/img/emoji-rocket.svg" alt=""></p>
+                      <span class="tw-time" style="top:153px">4:16 AM · Feb 14, 2023</span><svg class="tw-info" style="top:153px"><use href="#i-info"/></svg><i class="tw-rule" style="top:182px"></i>
+                    </div></div>
+                    <div class="ph" style="left:852px"><img src="superlink-card-src/img/photo-jaime-sara.webp" alt=""><p>Absolute no brainer. Bagged our names straight away - Jaime &amp; Sara Milne</p></div>
+                    <div class="tw" style="left:1204px"><div class="tw-in">
+                      <img class="tw-av" src="superlink-card-src/img/tw-fionnuala.webp" alt=""><b class="tw-name">fionnuala o donnell</b><span class="tw-handle">@feeeodeee · <em>Follow</em></span>
+                      <svg class="tw-x"><use href="#i-x"/></svg>
+                      <p class="tw-text">Just got my Superlink at launch today, now I’m FoC online forever</p>
+                      <span class="tw-time" style="top:129px">5:10 AM · Feb 14, 2023</span><svg class="tw-info" style="top:129px"><use href="#i-info"/></svg><i class="tw-rule" style="top:158px"></i>
+                      <div class="tw-acts" style="top:170px"><svg style="left:0"><use href="#i-heart"/></svg><span style="left:28px;color:rgb(15,20,25)">1</span><svg style="left:62px"><use href="#i-reply"/></svg><span style="left:90px">Reply</span><svg style="left:160px"><use href="#i-link"/></svg></div>
+                    </div></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- there is only one you: the copy and the row of names, one of them still free -->
+              <section class="sec one" data-stop="one">
+                <h2 class="o-h2 h64 center" data-layer="headline" data-depth="0.8" data-shadow="0,0.16,16" style="--lab-x:900px">There is only <span class="vio">one you</span>. Don’t miss<br>out on owning it.</h2>
+                <p class="o-body b20 center" data-layer="body copy" data-depth="0.5" style="--lab-x:540px">Up to 50,000 people share the same name. Be the first to claim yours.</p>
+                <div class="o-row" data-layer="names" data-depth="0.3" style="--lab-x:640px;--lab-y:-40px">
+                  <div class="sc light" style="left:-344px">
+                    <span class="sc-name">sarah<i>.james</i></span><span class="sc-real">Sarah James</span><img class="sc-mark" src="superlink-card-src/img/mark-green.svg" alt="">
+                    <div class="sc-land"><img src="superlink-card-src/img/land-sarah-james.webp" alt=""></div>
+                    <img class="sc-face" src="superlink-card-src/img/face-sarah-james.webp" alt=""><span class="sc-first">Sarah</span>
+                  </div>
+                  <div class="sc light" style="left:88px">
+                    <span class="sc-name">ava<i>.patel</i></span><span class="sc-real">Ava Patel</span><img class="sc-mark" src="superlink-card-src/img/mark-blue.svg" alt="">
+                    <div class="sc-land"><img src="superlink-card-src/img/land-ava.webp" alt=""></div>
+                    <img class="sc-face" src="superlink-card-src/img/face-kendall.webp" alt=""><span class="sc-first">Ava</span>
+                  </div>
+                  <div class="o-free" style="left:520px"><p>firstname<i>.lastname</i></p></div>
+                  <div class="sc light" style="left:952px">
+                    <span class="sc-name">beckett<i>.jones</i></span><span class="sc-real">Beckett Jones</span><img class="sc-mark" src="superlink-card-src/img/mark-green.svg" alt="">
+                    <div class="sc-land"><img src="superlink-card-src/img/land-beckett-jones.webp" alt=""></div>
+                    <img class="sc-face" src="superlink-card-src/img/face-beckett.webp" alt=""><span class="sc-first">Beckett</span>
+                  </div>
+                  <div class="sc light" style="left:1384px">
+                    <span class="sc-name">eugene<i>.daniels</i></span><span class="sc-real">Eugene Daniels</span><img class="sc-mark" src="superlink-card-src/img/mark-blue.svg" alt="">
+                    <div class="sc-land"><img src="superlink-card-src/img/land-eugene-daniels.webp" alt=""></div>
+                    <img class="sc-face" src="superlink-card-src/img/face-eugene-daniels.webp" alt=""><span class="sc-first">Eugene</span>
+                  </div>
+                </div>
+                <div class="o-get btn sm" data-layer="button" data-depth="0.92" data-shadow="0.3,0.22,14" style="--lab-x:180px"><span>Get your name</span><svg><use href="#i-caret"/></svg></div>
+              </section>
+
+              <!-- the footer: the mark on black, the links on mint -->
+              <footer class="sec foot" data-stop="footer">
+                <div class="ft-black"></div>
+                <div class="ft-mint"></div>
+                <div class="ft-mark" data-layer="mark" data-depth="0.6" style="--lab-x:330px"><img src="superlink-card-src/img/footer-mark.webp" alt=""></div>
+                <div class="ft-links" data-layer="links" data-depth="0.5" data-shadow="0,0.14,12" style="--lab-x:300px">
+                  <span style="top:0">Get your name<svg><use href="#i-arrow"/></svg></span>
+                  <span style="top:56px">About us<svg><use href="#i-arrow"/></svg></span>
+                  <span style="top:112px">Partner with us<svg><use href="#i-arrow"/></svg></span>
+                  <span style="top:168px">Blog<svg><use href="#i-arrow"/></svg></span>
+                </div>
+                <div class="ft-social" data-layer="social" data-depth="0.4" style="--lab-x:290px">
+                  <img src="superlink-card-src/img/social-facebook.svg" style="left:0" alt="">
+                  <img src="superlink-card-src/img/social-instagram.svg" style="left:61px" alt="">
+                  <img src="superlink-card-src/img/social-x.svg" style="left:122px" alt="">
+                  <img src="superlink-card-src/img/social-linkedin.svg" style="left:183px" alt="">
+                  <img src="superlink-card-src/img/social-youtube.svg" style="left:244px" alt="">
+                </div>
+                <div class="ft-small" data-layer="small print" data-depth="0.26" style="--lab-x:260px">
+                  <span style="top:0">Terms of Service</span><span style="top:24px">Privacy Policy</span><span style="top:48px">Contact us</span>
+                  <span style="top:73px">Cookie Preferences</span><span style="top:101px">Powered by Handshake</span><span style="top:127px">© Superlink Technologies, Inc. 2023</span>
+                </div>
+              </footer>
+
+              <!-- the hero, over the vision: it lifts away three times as fast as the page -->
+              <header class="hero-pin abs" data-pin="hero" data-stop="hero">
+                <div class="h-panel abs" data-layer="hero" data-depth="-0.06" style="--lab-x:600px;--lab-y:620px">
+                  <div class="h-glow abs" data-layer="glow" data-depth="-0.3" style="--lab-x:880px;--lab-y:160px"><img id="hGlow" src="superlink-card-src/img/hero-glow.webp" alt=""></div>
+                  <div class="h-bar abs" data-layer="launch bar" data-depth="0.18" style="--lab-x:20px;--lab-y:12px">
+                    <p>Early Access launch. Claim your name and build with us.</p>
+                    <div class="more"><span>Learn more</span><svg><use href="#i-caret"/></svg></div>
+                  </div>
+                  <div class="h-logo abs" data-layer="logo" data-depth="0.36" style="--lab-x:180px"><img src="superlink-card-src/img/logo.svg" alt=""></div>
+                  <div class="h-links abs" data-layer="nav" data-depth="0.3" style="--lab-x:300px;--lab-y:30px">
+                    <span style="left:0">About us</span><span style="left:117px">Partner</span><span style="left:223px">Blog</span><span style="left:1002px">Sign In</span>
+                  </div>
+                  <h1 class="h-h1 abs" data-layer="headline" data-depth="0.8" style="--lab-x:1000px;--lab-y:-40px">Own the <span class="mint">real</span> you</h1>
+                  <p class="h-sub abs" data-layer="promise" data-depth="0.46" style="--lab-x:940px">A domain that's just your name, nothing else, not even .com.</p>
+                  <p class="h-ask abs" data-layer="question" data-depth="0.54" style="--lab-x:500px">Is your name available?</p>
+                  <div class="h-fields abs" data-layer="search" data-depth="0.62" style="--lab-x:-200px;--lab-y:20px">
+                    <i></i><i></i><b></b><span style="left:15px">First Name</span><span style="left:216px">Last Name</span>
+                  </div>
+                  <div class="h-search btn abs" data-layer="button" data-depth="0.92" style="--lab-x:160px;--lab-y:20px"><span>Search</span><svg><use href="#i-caret"/></svg></div>
+                  <!-- the row of names, fanned at their own depths (Kinetic's stacked-card film of them); their first names sit under the hero's edge, as on the site -->
+                  <div class="sc" data-layer="name card" data-depth="0.14" style="left:-342px;top:695px;--lab-x:300px;--lab-y:200px">
+                    <span class="sc-name">kendall<i>.bennett</i></span><span class="sc-real">Kendall Bennett</span><img class="sc-mark" src="superlink-card-src/img/mark-blue.svg" alt="">
+                    <div class="sc-land"><img src="superlink-card-src/img/land-kendall.webp" alt=""></div>
+                    <img class="sc-face" src="superlink-card-src/img/face-kendall.webp" alt="">
+                  </div>
+                  <div class="sc" data-layer="name card" data-depth="0.26" style="left:78px;top:695px;--lab-x:200px;--lab-y:200px">
+                    <span class="sc-name">sarah<i>.chen</i></span><span class="sc-real">Sarah Chen</span><img class="sc-mark" src="superlink-card-src/img/mark-green.svg" alt="">
+                    <div class="sc-land"><img src="superlink-card-src/img/land-sarah.webp" alt=""></div>
+                    <img class="sc-face" src="superlink-card-src/img/face-sarah.webp" alt="">
+                  </div>
+                  <div class="sc" data-layer="name card" data-depth="0.26" style="left:918px;top:695px;--lab-x:200px;--lab-y:200px">
+                    <span class="sc-name">e<i>.murphy</i></span><span class="sc-real">Eugene Murphy</span><img class="sc-mark" src="superlink-card-src/img/mark-blue.svg" alt="">
+                    <div class="sc-land"><img src="superlink-card-src/img/land-eugene.webp" alt=""></div>
+                    <img class="sc-face" src="superlink-card-src/img/face-eugene.webp" alt="">
+                  </div>
+                  <div class="sc" data-layer="name card" data-depth="0.14" style="left:1338px;top:695px;--lab-x:20px;--lab-y:200px">
+                    <span class="sc-name">beckett<i>.jones</i></span><span class="sc-real">beckett jones</span><img class="sc-mark" src="superlink-card-src/img/mark-green.svg" alt="">
+                    <div class="sc-land"><img src="superlink-card-src/img/land-beckett.webp" alt=""></div>
+                    <img class="sc-face" src="superlink-card-src/img/face-beckett.webp" alt="">
+                  </div>
+                </div>
+              </header>
+
+              <!-- Nora's card, over both: it stays with the page as the hero lifts, so it drops out of the row into the vision -->
+              <div class="nora abs" data-layer="Nora's card" data-depth="0.6" data-shadow="0,0.4,28,box" style="--lab-x:120px;--lab-y:-40px">
+                <div class="n-bg"><div class="n-film"><img id="nFilm" src="superlink-card-src/img/land-nora.webp" alt=""></div></div>
+                <div class="n-head" data-layer="her name" data-depth="0.7" style="--lab-x:220px;--lab-y:100px">
+                  <span class="sc-name">nora<i>.miller</i></span><span class="sc-real">Nora Miller</span><img class="sc-mark" src="superlink-card-src/img/mark-purple.svg" alt="">
+                </div>
+                <div class="sc-face" data-layer="face" data-depth="0.76" style="--lab-x:70px;--lab-y:10px"><img src="superlink-card-src/img/face-nora.webp" alt=""></div>
+                <div class="n-big" data-layer="first name" data-depth="0.84" style="--lab-x:220px;--lab-y:330px"><span class="sc-first">Nora</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>SUPERLINK</h3>
+      <p><span>Consumer</span><span>Brand, Web design</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="superlink-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, the Studio's own Params (defineParams from /shared/params/params.js).
+   Embedded on the site there is no panel and nothing is fetched, so the module
+   is only loaded here, and only when served (opened from disk there is no
+   studio to load it from): the card runs on its defaults without it. */
+const card = window.superlinkCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'superlink work card';
+    const D = card.defaults;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        ambient: [D['motion.ambient'], 0, 3, 0.05],        // the films' drift, the glows and the rows of posts
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        scrub: [D['drag.scrub'], 0.5, 6, 0.1],             // page px per px of a sideways drag (right = further down)
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

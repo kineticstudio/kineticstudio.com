@@ -1,0 +1,10 @@
+---
+// Off for now (Hunter, Oct 24: "lets remove the work page/tab for now"): the
+// underscore keeps Astro from building it; rename back to index.astro to bring /work back.
+import Layout from "@/layouts/BaseLayout.astro";
+import WorkIndex from "@/components/section/WorkIndex.astro";
+---
+
+<Layout title="Work" description="Brand and bespoke websites for the companies building what's next: AI, health, defense, climate and more.">
+  <WorkIndex paddingTop="navoverlap" />
+</Layout>

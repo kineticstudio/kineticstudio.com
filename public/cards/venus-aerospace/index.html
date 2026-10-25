@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Venus Aerospace work card, 2026-10-23, built on the Ethos card's engine
+     (03-Ethos-work-card.html, itself from the Dawn card) with Hunter's notes
+     built in from the start: the miniature keeps touring while you hover,
+     the light is one soft round bloom under the pointer, you can drag the
+     page like a phone (up and down) or scrub it sideways (right goes further
+     down the page), a notched ruler slides with the scroll, and there is no
+     Case Study pill.
+
+     Venus Aerospace (www.venusaero.com, ours) is rebuilt here at its 1440px
+     design width as HTML/CSS layers, each at its own depth: the hero engine
+     and its plume cut apart from the hero video's frame, the headline that
+     tips back as the hero scrolls away, the RDRE engine and the flight test,
+     the VDR cutaway, the team at sunset and the gridded footer. The site's
+     videos are stills here (the plumes flicker in light CSS), and the footer
+     mark's animation is its final frame. Fonts and images are the site's
+     own, in venus-aerospace-card-src/. raw/ keeps the fetched HTML, CSS,
+     fonts and posters for reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched. Like the others:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=framed the site inset on a card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Venus Aerospace work card</title>
+<script>
+  /* before first paint: embed or not, and the studio's own type for the label row
+     (served by the studio; opened from disk the label falls back to system type) */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    } else if (location.protocol !== 'file:') {
+      var l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = '/fonts/kinetic/fonts.css';
+      document.head.appendChild(l);
+    }
+  })();
+</script>
+<link rel="stylesheet" href="venus-aerospace-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Venus Aerospace, venusaero.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- hero: the engine firing straight down over its plume, the headline, the flight film -->
+              <section class="sec hero" data-stop="hero">
+                <div class="hero-art" data-pin="hero">
+                  <div class="plume-glow" id="plumeGlow" data-layer="glow" data-depth="-0.3" style="--lab-x:300px;--lab-y:120px"></div>
+                  <div class="flame" data-layer="plume" data-depth="-0.12" style="--lab-x:180px;--lab-y:300px"><img id="flame" src="venus-aerospace-card-src/img/hero-flame.webp" alt=""></div>
+                  <div class="engine" data-layer="engine" data-depth="0.32" data-shadow="-0.12,0.5,12" style="--lab-x:214px"><img src="venus-aerospace-card-src/img/hero-engine.webp" alt=""></div>
+                </div>
+                <h1 class="h1" data-layer="headline" data-depth="0.78" data-shadow="0,0.45,16" style="--lab-x:830px;--lab-y:-40px"><span class="rv" id="h1">Revolutionizing Rocket<br>Engine Propulsion</span></h1>
+                <div class="thumb" data-layer="flight film" data-depth="0.5" data-shadow="0,0.5,12" style="--lab-y:-34px">
+                  <img src="venus-aerospace-card-src/img/hero-thumb.webp" alt="">
+                  <div class="thumb-txt abs" data-layer="caption" data-depth="0.66">World’s First High-Thrust RDRE Flight</div>
+                  <svg class="thumb-ico abs" data-layer="play" data-depth="0.8" viewBox="0 0 41 41" fill="none"><path d="M28.8896 20.9264L16.127 28.295L16.127 13.5579L28.8896 20.9264Z" fill="currentColor"/></svg>
+                </div>
+              </section>
+
+              <!-- RDRE: the most efficient rocket engine ever built, and its first flight -->
+              <section class="sec rdre" data-stop="rdre">
+                <div class="panel" data-layer="panel" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"></div>
+                <div class="eyebrow" data-layer="eyebrow" data-depth="0.42"><span class="rv" data-reveal>RDRE</span></div>
+                <h2 class="h3" data-layer="headline" data-depth="0.7" data-shadow="0.03,0.4,12"><span class="rv" data-reveal>The Most Efficient Rocket<br>Engine Ever Built</span></h2>
+                <div class="rdre-eng" data-layer="engine" data-depth="0.34" data-shadow="0.03,0.55,18" style="--lab-x:140px;--lab-y:40px"><img id="rdreEng" src="venus-aerospace-card-src/img/rdre-engine.webp" alt=""></div>
+                <p class="lead rdre-p" data-layer="body copy" data-depth="0.46"><span class="rv" data-reveal>The first fundamental improvement in rocket engine<br>technology in 60+ years, the Venus Rotating<br>Detonation Rocket Engine (RDRE) is a proven,<br>breakthrough technology that will revolutionize<br>propulsion for space, defense, and commercial<br>high-speed flight. It boasts historic efficiency, low<br>cost, and a fundamental design that can scale to fit a<br>wide range of performance parameters and modes of<br>employment.</span></p>
+                <div class="btn rdre-btn" data-layer="button" data-depth="0.86" data-shadow="0.03,0.5,8"><span class="rv" data-reveal>Explore the RDRE<i></i><i></i><i></i><i></i></span></div>
+                <div class="flight" data-layer="flight test" data-depth="0.16" data-shadow="0.03,0.6,22" style="--lab-x:30px;--lab-y:30px">
+                  <img src="venus-aerospace-card-src/img/rdre-flight.webp" alt="">
+                  <p class="fl-label abs" data-layer="caption" data-depth="0.6" data-shadow="0.16,0.5,8">World’s First High-Thrust RDRE Flight</p>
+                  <div class="fl-play abs" data-layer="play" data-depth="0.88" data-shadow="0.16,0.6,10" style="--lab-y:60px"><svg viewBox="0 0 14 16" fill="none"><path d="M13.2246 7.69205L0.461931 15.0606L0.461931 0.32351L13.2246 7.69205Z" fill="#fff"/></svg></div>
+                </div>
+              </section>
+
+              <!-- VDR: the holy grail of high-speed flight -->
+              <section class="sec vdr" data-stop="vdr">
+                <div class="panel" data-layer="panel" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"></div>
+                <div class="eyebrow" data-layer="eyebrow" data-depth="0.42"><span class="rv" data-reveal>VDR</span></div>
+                <h2 class="h3" data-layer="headline" data-depth="0.7" data-shadow="0.03,0.45,12"><span class="rv" data-reveal>The Holy Grail of High-Speed<br>Flight</span></h2>
+                <div class="vdr-img" data-layer="cutaway" data-depth="0.22" style="--lab-x:60px;--lab-y:120px"><img id="vdrImg" src="venus-aerospace-card-src/img/vdr.webp" alt=""></div>
+                <div class="vdr-glow" id="vdrGlow" data-layer="glow" data-depth="0.3" style="--lab-y:-30px"></div>
+                <p class="lead vdr-p" data-layer="body copy" data-depth="0.46"><span class="rv" data-reveal>The Venus Detonation Ramjet (VDR) is a breakthrough engine that pairs the Venus RDRE with air-breathing ramjet technology to power flight from takeoff to hypersonic cruise, all with a single system.</span></p>
+                <div class="btn vdr-btn" data-layer="button" data-depth="0.86" data-shadow="0.03,0.55,8"><span class="rv" data-reveal>Explore the VDR<i></i><i></i><i></i><i></i></span></div>
+              </section>
+
+              <!-- built by the best: the team at sunset -->
+              <section class="sec team" data-stop="team">
+                <div class="team-clip">
+                  <div class="team-img abs" data-layer="team at sunset" data-depth="-0.16" style="--lab-x:80px;--lab-y:60px"><img id="teamImg" src="venus-aerospace-card-src/img/team.webp" alt=""></div>
+                </div>
+                <h2 class="team-h" data-layer="headline" data-depth="0.72" data-shadow="-0.16,0.5,14"><span class="rv" data-reveal>Built by the best</span></h2>
+                <p class="team-p" data-layer="body copy" data-depth="0.5" data-shadow="-0.16,0.4,10"><span class="rv" data-reveal>With the best team, a deliberate approach to protecting our intellectual property, committed partners, and Texas’s vibrant innovation ecosystem, Venus is positioned to become the premier rocket engine company in the world.</span></p>
+                <div class="btn team-btn" data-layer="button" data-depth="0.88" data-shadow="-0.16,0.55,8"><span class="rv" data-reveal>View team<i></i><i></i><i></i><i></i></span></div>
+              </section>
+
+              <!-- the footer: mark, engine, links -->
+              <section class="sec foot" data-stop="footer">
+                <div class="f-grid" data-layer="grid" data-depth="0.08" style="--lab-x:20px;--lab-y:20px">
+                  <i style="left:0;top:0;width:1360px;height:1px"></i>
+                  <i style="left:0;top:697px;width:1360px;height:1px"></i>
+                  <i style="left:0;top:0;width:1px;height:698px"></i>
+                  <i style="left:1359px;top:0;width:1px;height:698px"></i>
+                  <i style="left:365px;top:0;width:1px;height:614px"></i>
+                  <i style="left:0;top:393px;width:1360px;height:1px"></i>
+                  <i style="left:365px;top:503px;width:747px;height:1px"></i>
+                  <i style="left:0;top:614px;width:1360px;height:1px"></i>
+                  <i style="left:614px;top:393px;width:1px;height:221px"></i>
+                  <i style="left:862px;top:393px;width:1px;height:221px"></i>
+                  <i style="left:1111px;top:393px;width:1px;height:221px"></i>
+                  <i style="left:1028px;top:614px;width:1px;height:84px"></i>
+                  <i style="left:1138px;top:614px;width:1px;height:84px"></i>
+                  <i style="left:1248px;top:614px;width:1px;height:84px"></i>
+                </div>
+                <div class="f-eng" data-layer="engine" data-depth="0.26" style="--lab-x:20px;--lab-y:20px"><img src="venus-aerospace-card-src/img/footer-engine.webp" alt=""></div>
+                <div class="f-glow" id="fGlow" data-layer="glow" data-depth="0.34" style="--lab-y:-30px"></div>
+                <div class="f-v" data-layer="mark" data-depth="0.56" data-shadow="0.08,0.6,14"><img id="fV" src="venus-aerospace-card-src/img/venus-v.webp" alt=""></div>
+                <div class="f-word" data-layer="wordmark" data-depth="0.46" style="--lab-y:-34px"><img src="venus-aerospace-card-src/img/venus-wordmark.svg" width="139" height="60" alt=""></div>
+                <div class="f-links" data-layer="links" data-depth="0.36" style="--lab-x:20px;--lab-y:80px">
+                  <span style="left:0;top:45px">RDRE</span><span style="left:248px;top:45px">VDR</span><span style="left:497px;top:45px">Newsroom</span>
+                  <span style="left:745px;top:100px">Merch</span>
+                  <span style="left:0;top:155px">Teams</span><span style="left:248px;top:155px">Careers</span><span style="left:497px;top:155px">Investors</span>
+                </div>
+                <div class="f-bottom" data-layer="credits" data-depth="0.3" style="--lab-x:420px;--lab-y:-30px"><span>Copyright © 2025 Venus Aerospace Corp. All Rights Reserved.</span><span>Site by <u>Kinetic Studio</u></span></div>
+                <div class="f-social" data-layer="social" data-depth="0.42" style="--lab-x:20px;--lab-y:-30px">
+                  <svg viewBox="0 0 24 24" fill="none" style="left:45px"><path fill-rule="evenodd" clip-rule="evenodd" d="M16 3H8C5.23858 3 3 5.23858 3 8V16C3 18.7614 5.23858 21 8 21H16C18.7614 21 21 18.7614 21 16V8C21 5.23858 18.7614 3 16 3ZM19.25 16C19.2445 17.7926 17.7926 19.2445 16 19.25H8C6.20735 19.2445 4.75549 17.7926 4.75 16V8C4.75549 6.20735 6.20735 4.75549 8 4.75H16C17.7926 4.75549 19.2445 6.20735 19.25 8V16ZM16.75 8.25C17.3023 8.25 17.75 7.80228 17.75 7.25C17.75 6.69772 17.3023 6.25 16.75 6.25C16.1977 6.25 15.75 6.69772 15.75 7.25C15.75 7.80228 16.1977 8.25 16.75 8.25ZM12 7.5C9.51472 7.5 7.5 9.51472 7.5 12C7.5 14.4853 9.51472 16.5 12 16.5C14.4853 16.5 16.5 14.4853 16.5 12C16.5027 10.8057 16.0294 9.65957 15.1849 8.81508C14.3404 7.97059 13.1943 7.49734 12 7.5ZM9.25 12C9.25 13.5188 10.4812 14.75 12 14.75C13.5188 14.75 14.75 13.5188 14.75 12C14.75 10.4812 13.5188 9.25 12 9.25C10.4812 9.25 9.25 10.4812 9.25 12Z" fill="currentColor"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" style="left:155px"><path d="M17.1761 4H19.9362L13.9061 10.7774L21 20H15.4456L11.0951 14.4066L6.11723 20H3.35544L9.80517 12.7508L3 4H8.69545L12.6279 9.11262L17.1761 4ZM16.2073 18.3754H17.7368L7.86441 5.53928H6.2232L16.2073 18.3754Z" fill="currentColor"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" style="left:265px"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 3C3.67157 3 3 3.67157 3 4.5V19.5C3 20.3284 3.67157 21 4.5 21H19.5C20.3284 21 21 20.3284 21 19.5V4.5C21 3.67157 20.3284 3 19.5 3H4.5ZM8.52076 7.00272C8.52639 7.95897 7.81061 8.54819 6.96123 8.54397C6.16107 8.53975 5.46357 7.90272 5.46779 7.00413C5.47201 6.15897 6.13998 5.47975 7.00764 5.49944C7.88795 5.51913 8.52639 6.1646 8.52076 7.00272ZM12.2797 9.76176H9.75971H9.7583V18.3216H12.4217V18.1219C12.4217 17.742 12.4214 17.362 12.4211 16.9819V16.9818V16.9816V16.9815V16.9812C12.4203 15.9674 12.4194 14.9532 12.4246 13.9397C12.426 13.6936 12.4372 13.4377 12.5005 13.2028C12.7381 12.3253 13.5271 11.7586 14.4074 11.8979C14.9727 11.9864 15.3467 12.3141 15.5042 12.8471C15.6013 13.1803 15.6449 13.5389 15.6491 13.8863C15.6605 14.9339 15.6589 15.9815 15.6573 17.0292V17.0294C15.6567 17.3992 15.6561 17.769 15.6561 18.1388V18.3202H18.328V18.1149C18.328 17.6629 18.3278 17.211 18.3275 16.7591V16.759V16.7588C18.327 15.6293 18.3264 14.5001 18.3294 13.3702C18.3308 12.8597 18.276 12.3563 18.1508 11.8627C17.9638 11.1286 17.5771 10.5211 16.9485 10.0824C16.5027 9.77019 16.0133 9.5691 15.4663 9.5466C15.404 9.54401 15.3412 9.54062 15.2781 9.53721C14.9984 9.52209 14.7141 9.50673 14.4467 9.56066C13.6817 9.71394 13.0096 10.0641 12.5019 10.6814C12.4429 10.7522 12.3852 10.8241 12.2991 10.9314L12.2797 10.9557V9.76176ZM5.68164 18.3244H8.33242V9.76733H5.68164V18.3244Z" fill="currentColor"/></svg>
+                </div>
+              </section>
+            </div>
+
+            <!-- the nav, fixed in the viewport: it slides away as the page goes down and comes back on the way up -->
+            <nav class="abs nav" id="nav">
+              <div class="nav-in" id="navIn">
+                <div class="nav-bg" id="navBg"></div>
+                <img class="abs nav-logo" data-layer="logo" data-depth="0.56" src="venus-aerospace-card-src/img/venus-horizontal.svg" width="112" height="41" alt="" style="--lab-y:44px">
+                <div class="abs nav-links" data-layer="nav" data-depth="0.48" style="--lab-y:46px"><span>RDRE</span><span>VDR</span><span>Team</span><span>Careers</span><span>Investors</span><span>Media</span></div>
+              </div>
+            </nav>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Venus Aerospace</h3>
+      <p><span>Defense &amp; space</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="venus-aerospace-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the Dawn card's way: the studio's own Params,
+   defineParams from /shared/params/params.js. Embedded on the site there is
+   no panel and nothing is fetched, so the module is only loaded here, and
+   only when served (opened from disk there is no studio to load it from). */
+const card = window.venusCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'venus aerospace work card';
+    const D = card.values;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        flicker: [D['motion.flicker'], 0, 2, 0.05],        // the plumes' light CSS flicker
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        scrub: [D['drag.scrub'], 0.5, 6, 0.1],             // page px per px of a sideways drag (right = down the page)
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

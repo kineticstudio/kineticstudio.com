@@ -1,0 +1,126 @@
+/* One button for the whole site: the logo's pill (Hunter, Oct 25: "let's
+   make sure we have a better system for buttons: Contact, Copy Email,
+   Playground, Send. They all look like they're different sizes. Same with
+   the tab system").
+
+   Every button, chip and tab is one height (the nav's pill), one line (the
+   logo's), one type (the nav's words: the display face, uppercase). What
+   changes is how much of it is drawn:
+
+   .pill.is-primary    filled in the text colour: Send, Visit site, the one thing to do
+   .pill.is-accent     lime, filled: the nav's Contact only
+   .pill.is-secondary  the line round it: Copy email, Randomize, Reset
+   .pill.is-tab        the word alone; the line round the one that is on,
+                       as the nav rings the page you are on
+   .pill.is-chip       a fainter line; white when chosen
+
+   The tokens are in base.css; the nav sizes its own links from the same
+   ones. */
+
+@media (width < 40rem) {
+  :root {
+    --pill-logo-h: 1.625rem;
+    --pill-type: 0.9rem;
+    --pill-pad: calc(var(--pill-height) * 0.38);
+  }
+}
+
+.pill {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45em;
+  box-sizing: border-box;
+  height: var(--pill-height);
+  /* the display face sits high on its line: a touch more above it */
+  padding: 0.1rem var(--pill-pad) 0;
+  border: var(--pill-stroke) solid transparent;
+  border-radius: var(--radius-round);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--display-family);
+  font-size: var(--pill-type);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease;
+  &:focus-visible {
+    outline: var(--focus-width, 2px) solid var(--text);
+    outline-offset: var(--focus-offset, 2px);
+  }
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+  & kbd {
+    font: inherit;
+    opacity: 0.5;
+  }
+}
+/* the main thing to do is white; the lime is kept for the nav's Contact alone
+   (Hunter, Oct 25: "Visit site should be white, not the yellow. Let's use the
+   yellow very sparingly") */
+.pill.is-primary {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--background);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      border-color: color-mix(in srgb, var(--text) 82%, transparent);
+      background: color-mix(in srgb, var(--text) 82%, transparent);
+    }
+  }
+}
+.pill.is-accent {
+  border-color: var(--brand-500);
+  background: var(--brand-500);
+  color: var(--brand-text);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      border-color: var(--light-100);
+      background: var(--light-100);
+    }
+  }
+}
+.pill.is-secondary {
+  border-color: var(--text);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: var(--text);
+      color: var(--background);
+    }
+  }
+}
+.pill.is-tab {
+  color: color-mix(in srgb, var(--text) 70%, transparent);
+  @media (hover: hover) {
+    &:hover {
+      color: var(--text);
+    }
+  }
+  &:is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], [aria-expanded="true"]) {
+    border-color: var(--text);
+    color: var(--text);
+  }
+}
+.pill.is-chip {
+  border-color: color-mix(in srgb, var(--text) 35%, transparent);
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(--text);
+    }
+  }
+  &:is([aria-pressed="true"], .is-on) {
+    border-color: #fff;
+    background: #fff;
+    color: #0d0d0d;
+  }
+}

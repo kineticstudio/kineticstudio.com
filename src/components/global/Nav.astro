@@ -1,49 +1,312 @@
 ---
-import lockup from "@/assets/brand/lockup-ink.svg?raw";
+import logoRaw from "@/assets/brand/logo.svg?raw";
 import { SITE_NAME } from "@/consts.ts";
+import { morphAll } from "@/scripts/mark.js";
 
 interface Props {
   /** Set to `false` to omit the component. */
   render?: boolean;
-  /** Hide the lockup until the page hands it over (a hero that owns the logo). */
+  /** Hide the logo and pill until the page's hero hands them over. */
   logoHidden?: boolean;
 }
 
 const { render = true, logoHidden = false } = Astro.props;
+
+// The 2026 logo (Figma "Kinetic Studio Brand" 82:6): the mark's five lines,
+// the word, and the pill, which here is its own element so it can move.
+const markD = logoRaw.match(/id="mark"[^>]*\sd="([^"]+)"/)![1];
+const stripes = markD.split("M").filter(Boolean).map((s) => "M" + s.trim());
+const letters = [...logoRaw.matchAll(/<path d="([^"]+)"\/>/g)].map((m) => m[1]);
+// away from home the lines are drawn straight from the start, so a page never
+// opens curved and snaps straight (Hunter, Oct 23: "the logo jumps")
+const straight = morphAll(stripes).map((m) => m.at(0));
+const [, , vbW, vbH] = logoRaw.match(/viewBox="([^"]+)"/)![1].split(/\s+/).map(Number);
+const rect = logoRaw.match(/<rect id="pill"[^>]*>/)![0];
+const n = (k: string) => Number(rect.match(new RegExp(`\\s${k}="([\\d.]+)"`))![1]);
+// the pill's outer edge (the stroke is centred on the rect), as shares of the logo
+const sw = n("stroke-width");
+const pillVars = [
+  `--logo-ar:${vbW}/${vbH}`,
+  `--pill-left:${((n("x") - sw / 2) / vbW) * 100}%`,
+  `--pill-top:${((n("y") - sw / 2) / vbH) * 100}%`,
+  `--pill-w:${((n("width") + sw) / vbW) * 100}%`,
+  `--pill-h-share:${(n("height") + sw) / vbH}`,
+  `--pill-line-share:${sw / vbH}`,
+].join(";");
+
 const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+// Hunter, Oct 24: "lets remove the work page/tab for now" (the page is kept, unbuilt, at src/pages/work/_index.astro)
 const links = [
-  { href: "/work", label: "Work" },
-  { href: "/playground", label: "Playground" },
-  { href: "/about", label: "About" },
+  { id: "playground", href: "/playground", label: "Playground" },
+  { id: "about", href: "/about", label: "About" },
 ];
+const active =
+  path === "/" || path.startsWith("/directions") ? "home"
+  : path.startsWith("/contact") ? "contact"
+  : (links.find((l) => path.startsWith(l.href))?.id ?? "home");
+// Hunter, Oct 24: "don't move the kinetic pill for contact": Contact is lime
+// already, so on its page the pill stays round KINETIC, as at home
+const pillHome = active === "home" || active === "contact";
+// run under the nav before the first paint (see the script's note on the move between pages)
+const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JSON.parse(sessionStorage.getItem("ks-pill-move")||"null");if(n&&m&&m.at&&m.slot===n.dataset.active&&Date.now()-m.t0<4e3&&!matchMedia("(prefers-reduced-motion: reduce)").matches){var p=n.querySelector(".nav_pill");p.style.transform="translate("+m.at.x+"px, "+m.at.y+"px)";p.style.width=m.at.w+"px";p.style.height=m.at.h+"px";n.classList.add("is-live")}}catch(e){}`;
 ---
 
 {
   render && (
-    <header class:list={["nav_wrap", logoHidden && "logo-hidden"]}>
-      <a class="nav_logo" href="/" aria-label={SITE_NAME} set:html={lockup} />
+    <header class:list={["nav_wrap", logoHidden && "logo-hidden"]} data-nav data-active={active} style={pillVars}>
+      <a class="nav_logo" href="/" aria-label={SITE_NAME} aria-current={active === "home" ? "page" : undefined} data-slot="home">
+        <svg class="nav_logo-svg" viewBox={`0 0 ${vbW} ${vbH}`} fill="none" aria-hidden="true">
+          {stripes.map((d, i) => <path class="nav_stripe" d={pillHome ? d : straight[i]} data-d={d} fill="currentColor" fill-rule="evenodd" />)}
+          <g fill="currentColor">{letters.map((d) => <path d={d} />)}</g>
+        </svg>
+        <span class="nav_logo-pill" data-pill-home />
+      </a>
       <nav class="nav_menu" aria-label="Main">
         <ul class="nav_links">
           {links.map((l) => (
             <li>
-              <a class="nav_link text-style-label" href={l.href} aria-current={path.startsWith(l.href) ? "page" : undefined}>
+              <a class="nav_link" href={l.href} data-slot={l.id} aria-current={active === l.id ? "page" : undefined}>
                 {l.label}
               </a>
             </li>
           ))}
         </ul>
-        <button class="nav_sound text-style-label" type="button" aria-pressed="false" data-sound-toggle aria-label="Sound">
-          <span class="nav_sound_bars" aria-hidden="true"><i /><i /><i /><i /></span>
-        </button>
-        <a class="nav_contact" href="/contact" aria-current={path.startsWith("/contact") ? "page" : undefined}>Contact</a>
+        <a class="nav_contact" href="/contact" data-slot="contact" aria-current={active === "contact" ? "page" : undefined}>Contact</a>
       </nav>
+      <span class="nav_pill" aria-hidden="true" />
     </header>
   )
 }
+{/* before the first paint: a glide the last page started draws its pill where that page left it (the script above finishes it) */}
+{
+  render && (
+    <script is:inline set:html={PILL_EARLY} />
+  )
+}
+
+<script>
+  import { gsap } from "gsap";
+  import { morphAll } from "@/scripts/mark.js";
+
+  /* The pill is the active state. It sits around KINETIC on the homepage and
+     moves to the current page's link anywhere else. Its pull is what bends
+     the mark: near home the five lines curve toward it, so it straightens
+     them as it leaves and pulls them back in on the way home.
+
+     A click and the page change are one move (Hunter, Oct 24: "it should
+     feel like one fluid atomic unit"). The pill sets off on the click, quick
+     to leave and soft to land, and the page changes once it is nearly there
+     (LEAD), so it never waits on a page that is still loading; the moment the
+     page goes, where the pill is gets noted, and the next page draws it right
+     there before anything paints (the inline script under the nav) and
+     finishes the same glide. Before, the next page opened with a ring drawn
+     at the link while the lines flipped curved, straight, curved. */
+  const KEY = "ks-pill"; // where the pill was when the last page closed
+  const MOVE = "ks-pill-move"; // a glide a click started: { from, slot, t0, dur, at }
+  const DUR = 0.55;
+  const LEAD = 300; // ms after the click that the page changes: the pill is about 98% there
+  const read = (k: string) => {
+    try {
+      return JSON.parse(sessionStorage.getItem(k) ?? "null");
+    } catch {
+      return null;
+    }
+  };
+  const write = (k: string, v: unknown) => {
+    try {
+      if (v === null) sessionStorage.removeItem(k);
+      else sessionStorage.setItem(k, JSON.stringify(v));
+    } catch {}
+  };
+
+  document.querySelectorAll<HTMLElement>("[data-nav]").forEach((nav) => {
+    const pill = nav.querySelector<HTMLElement>(".nav_pill")!;
+    const home = nav.querySelector<HTMLElement>("[data-pill-home]")!;
+    const stripes = [...nav.querySelectorAll<SVGPathElement>(".nav_stripe")];
+    const contact = nav.querySelector<HTMLElement>(".nav_contact")!;
+    const first = nav.querySelector<HTMLElement>(".nav_link");
+    const shapes = morphAll(stripes.map((p) => p.dataset.d!));
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const own = nav.dataset.active; // this page's place, for a return from the back/forward cache
+    const target = () => {
+      const at = nav.dataset.active;
+      const slot = at === "home" || at === "contact" ? home : nav.querySelector<HTMLElement>(`[data-slot="${at}"]`);
+      return slot && slot.offsetParent ? slot.getBoundingClientRect() : home.getBoundingClientRect();
+    };
+
+    const box = { x: 0, y: 0, w: 0, h: 0 };
+    // the pull: whole at home, gone by the time the pill reaches the nearest
+    // link (Playground now sits beside the logo, so a fixed distance left the
+    // lines half bent on its page)
+    const pull = () => {
+      const h = home.getBoundingClientRect();
+      const f = first?.getBoundingClientRect();
+      const reach = f && f.width ? Math.max(24, Math.hypot(f.left - h.left, f.top - h.top)) : 240;
+      const k = Math.max(0, 1 - Math.hypot(box.x - h.left, box.y - h.top) / reach);
+      return k * k * (3 - 2 * k);
+    };
+    const paint = () => {
+      pill.style.transform = `translate(${box.x}px, ${box.y}px)`;
+      pill.style.width = `${box.w}px`;
+      pill.style.height = `${box.h}px`;
+      const t = pull();
+      stripes.forEach((p, i) => p.setAttribute("d", shapes[i].at(t)));
+      const c = contact.getBoundingClientRect();
+      const near = Math.max(0, 1 - Math.hypot(box.x - c.left, box.y - c.top) / 90);
+      pill.style.opacity = (1 - near).toFixed(3);
+    };
+    const set = (r: { x: number; y: number; w: number; h: number }) => {
+      Object.assign(box, r);
+      paint();
+      nav.classList.add("is-live"); // the moving pill takes over from the drawn ring
+    };
+    const rectNow = () => {
+      const r = target();
+      return { x: r.left, y: r.top, w: r.width, h: r.height };
+    };
+    const say = (name: string) => window.dispatchEvent(new CustomEvent("ks:sound", { detail: { name, gain: 0.4 } }));
+
+    // from where the pill is to the active place; the place is measured every
+    // frame, so a late font or a shifting layout can't leave it off its link
+    let tween: gsap.core.Tween | null = null;
+    const glide = (duration: number, ease: string) => {
+      tween?.kill();
+      const from = { ...box };
+      const goingHome = nav.dataset.active === "home" || nav.dataset.active === "contact";
+      let landed = false;
+      const p = { t: 0 };
+      tween = gsap.to(p, {
+        t: 1, duration, ease,
+        onUpdate() {
+          const to = rectNow();
+          box.x = from.x + (to.x - from.x) * p.t;
+          box.y = from.y + (to.y - from.y) * p.t;
+          box.w = from.w + (to.w - from.w) * p.t;
+          box.h = from.h + (to.h - from.h) * p.t;
+          paint();
+          // the pull lands as the lines snap into the mark
+          if (goingHome && !landed && p.t > 0.85) {
+            landed = true;
+            say("pull");
+          }
+        },
+        onComplete() {
+          tween = null;
+          set(rectNow());
+        },
+      });
+    };
+
+    let move = read(MOVE);
+    write(MOVE, null);
+    const start = () => {
+      const now = rectNow();
+      // a glide the last page started: on from where it left the pill
+      if (move && move.at && move.slot === own && Date.now() - move.t0 < 4000 && !reduced) {
+        set(move.at);
+        const left = Math.max(0, 1 - (Date.now() - move.t0) / (move.dur * 1000));
+        move = null;
+        glide(Math.max(0.35, DUR * left), "power3.out");
+        return;
+      }
+      move = null;
+      // any other arrival: from the last page's place if it was elsewhere (a link outside the nav), or just there
+      const from = read(KEY);
+      if (from && !reduced && (Math.abs(from.x - now.x) > 1 || Math.abs(from.y - now.y) > 1)) {
+        set(from);
+        say("glide");
+        glide(0.95, "expo.inOut");
+      } else set(now);
+    };
+
+    // a homepage intro owns the logo until it hands over (not on an arrival from the site's own links)
+    if (nav.classList.contains("logo-hidden") && !document.documentElement.classList.contains("is-arrival")) {
+      set(rectNow());
+      const observer = new MutationObserver(() => {
+        if (nav.classList.contains("logo-hidden")) return;
+        observer.disconnect();
+        requestAnimationFrame(start);
+      });
+      observer.observe(nav, { attributes: true, attributeFilter: ["class"] });
+    } else start();
+    // the display face can land after the first measure
+    document.fonts?.ready.then(() => !tween && set(rectNow()));
+
+    addEventListener("resize", () => {
+      tween?.kill();
+      tween = null;
+      set(rectNow());
+    });
+
+    /* A click on a nav link: the pill sets off for it and the link navigates
+       as usual. Any click on one of the site's own links marks the arrival as
+       internal, so the homepage skips its intro and the pill does the pulling. */
+    const ownLink = (a: HTMLAnchorElement) => a.origin === location.origin && !a.target && !a.hasAttribute("download");
+    let leaving: { from: typeof box; slot: string; t0: number; dur: number } | null = null;
+    let go = 0;
+    document.addEventListener("click", (e) => {
+      const a = (e.target as HTMLElement).closest<HTMLAnchorElement>("a[href]");
+      if (!a || !ownLink(a) || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+      try {
+        sessionStorage.setItem("ks-internal", "1");
+      } catch {}
+      const slot = a.dataset.slot;
+      if (!slot || !nav.contains(a) || slot === nav.dataset.active || reduced) return;
+      e.preventDefault();
+      nav.dataset.active = slot;
+      leaving = { from: { ...box }, slot, t0: Date.now(), dur: DUR };
+      say("glide");
+      glide(DUR, "expo.out");
+      clearTimeout(go);
+      go = window.setTimeout(() => location.assign(a.href), LEAD);
+    });
+    // the moment the page goes: where the pill is, for the next page to start from
+    const leave = () => {
+      tween?.pause();
+      write(KEY, box);
+      if (leaving) write(MOVE, { ...leaving, at: { ...box } });
+    };
+    addEventListener("pageswap", leave);
+    addEventListener("pagehide", leave);
+    // back to this page from the back/forward cache: the pill comes home to its own place
+    addEventListener("pageshow", (e) => {
+      if (!e.persisted) return;
+      clearTimeout(go);
+      leaving = null;
+      write(MOVE, null);
+      if (nav.dataset.active === own && !tween) return set(rectNow());
+      nav.dataset.active = own;
+      glide(0.6, "expo.out");
+    });
+    // fetch a nav page as soon as it is hovered, so it opens the moment it is clicked
+    nav.querySelectorAll<HTMLAnchorElement>("a[data-slot]").forEach((a) =>
+      a.addEventListener("pointerenter", () => {
+        if (document.querySelector(`link[rel="prefetch"][href="${a.href}"]`)) return;
+        document.head.append(Object.assign(document.createElement("link"), { rel: "prefetch", href: a.href }));
+      }, { once: true }),
+    );
+    // On a light page, the nav turns dark while a dark section (the Creative
+    // Studio, the footer) runs under it, so its words and its fade match
+    if (document.documentElement.classList.contains("theme-light")) {
+      const under = new Set<Element>();
+      const watch = new IntersectionObserver((entries) => {
+        for (const e of entries) e.isIntersecting ? under.add(e.target) : under.delete(e.target);
+        nav.classList.toggle("theme-dark", under.size > 0);
+      }, { rootMargin: "0px 0px -94% 0px" });
+      document.querySelectorAll("main .theme-dark, footer.theme-dark").forEach((el) => watch.observe(el));
+    }
+  });
+</script>
 
 <style is:global>
   @layer components {
     .nav_wrap {
+      /* the one pill size (base.css), which every button and tab takes too */
+      --logo-h: var(--pill-logo-h);
+      --pill-h: calc(var(--logo-h) * var(--pill-h-share, 0.99));
+      --pill-line: calc(var(--logo-h) * var(--pill-line-share, 0.094));
+      /* the links' pills are the logo's pill: one top line, one bottom line */
+      --link-h: var(--pill-h);
       position: fixed;
       inset: 0 0 auto;
       z-index: 50;
@@ -54,110 +317,137 @@ const links = [
       padding: var(--space-4) var(--site-margin);
       color: var(--text);
       pointer-events: none;
+      transition: color 0.35s ease;
       & > * {
         pointer-events: auto;
       }
-    }
-    .nav_logo {
-      display: block;
-      width: 8.5rem;
-      color: var(--text);
-      transition: opacity 0.4s ease;
-      & svg {
-        width: 100%;
-        height: auto;
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 -2rem;
+        z-index: -1;
+        background: linear-gradient(to bottom, color-mix(in srgb, var(--background) 85%, transparent), transparent);
+        pointer-events: none;
       }
     }
-    .nav_wrap.logo-hidden .nav_logo {
-      opacity: 0;
+    .nav_logo {
+      position: relative;
+      display: block;
+      height: var(--logo-h);
+      aspect-ratio: var(--logo-ar);
+      color: var(--text);
+      transition: opacity 0.4s ease;
     }
-    .nav_menu {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      padding: 0.3rem;
+    /* the homepage intro hands its logo over to this one: no fade, the same frame */
+    .nav_wrap.is-handover .nav_logo {
+      transition: none;
+    }
+    .nav_logo-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    /* where the pill sits at home: the logo's own pill, from the Figma frame */
+    .nav_logo-pill {
+      position: absolute;
+      left: var(--pill-left);
+      top: var(--pill-top);
+      width: var(--pill-w);
+      height: calc(var(--pill-h-share) * 100%);
+      pointer-events: none;
+    }
+    /* Before the script runs, the active place carries a drawn ring where the
+       pill will be, so a new page opens with its pill already there; then the
+       moving pill takes over (.is-live). Contact is lime, so on its page the
+       pill stays round KINETIC. */
+    .nav_wrap:not(.is-live) {
+      & .nav_pill {
+        visibility: hidden;
+      }
+      & .nav_link[aria-current="page"],
+      &:is([data-active="home"], [data-active="contact"]) .nav_logo-pill {
+        border-radius: var(--radius-round);
+        box-shadow: inset 0 0 0 var(--pill-line) var(--text);
+      }
+    }
+    .nav_pill {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      box-sizing: border-box;
+      border: var(--pill-line) solid var(--text);
       border-radius: var(--radius-round);
-      background: color-mix(in srgb, var(--background) 55%, transparent);
-      backdrop-filter: blur(1rem);
-      -webkit-backdrop-filter: blur(1rem);
+      pointer-events: none;
+      will-change: transform;
+    }
+    /* not on an arrival from the site's own links: the intro is skipped
+       then, and hiding the logo and links till the script ran blanked them
+       for a moment and faded them back in */
+    html:not(.is-arrival) .nav_wrap.logo-hidden {
+      .nav_logo,
+      .nav_pill {
+        /* over the pill's own inline opacity (it fades near Contact) */
+        opacity: 0 !important;
+      }
+      /* the links wait for the intro to finish (Hunter, Oct 24) */
+      .nav_menu {
+        opacity: 0;
+        pointer-events: none;
+        transition: none;
+      }
+    }
+    /* Playground and About sit on the left beside the logo, Contact alone on
+       the right (Hunter, Oct 24) */
+    .nav_menu {
+      transition: opacity 0.7s ease 0.25s;
+      display: flex;
+      flex: 1;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.25rem;
+      min-width: 0;
     }
     .nav_links {
       display: flex;
+      gap: 0.25rem;
       margin: 0;
     }
     .nav_link {
-      display: block;
-      padding: 0.6rem 0.8rem;
-      border-radius: var(--radius-round);
+      display: flex;
+      align-items: center;
+      height: var(--link-h);
+      padding: 0.1rem var(--pill-pad) 0;
+      font-family: var(--display-family);
+      font-size: var(--pill-type);
+      line-height: 1;
+      text-transform: uppercase;
       color: color-mix(in srgb, var(--text) 70%, transparent);
-      transition: color var(--hover-duration) var(--hover-ease), background-color var(--hover-duration) var(--hover-ease);
+      transition: color 0.35s ease;
       &:hover,
       &[aria-current="page"] {
         color: var(--text);
-        background: color-mix(in srgb, var(--text) 8%, transparent);
       }
-    }
-    .nav_sound {
-      display: grid;
-      place-items: center;
-      width: 2.25rem;
-      height: 2.25rem;
-      border-radius: 50%;
-      color: color-mix(in srgb, var(--text) 70%, transparent);
-      &:hover {
-        color: var(--text);
-      }
-    }
-    .nav_sound_bars {
-      display: flex;
-      align-items: center;
-      gap: 0.125rem;
-      height: 0.75rem;
-      & i {
-        width: 0.125rem;
-        height: 25%;
-        background: currentColor;
-        border-radius: 1rem;
-        transition: height 0.3s ease;
-      }
-    }
-    .nav_sound[aria-pressed="true"] .nav_sound_bars i {
-      animation: nav-sound 0.9s ease-in-out infinite alternate;
-      &:nth-child(2) { animation-delay: -0.3s; }
-      &:nth-child(3) { animation-delay: -0.6s; }
-      &:nth-child(4) { animation-delay: -0.15s; }
-    }
-    @keyframes nav-sound {
-      from { height: 20%; }
-      to { height: 100%; }
     }
     .nav_contact {
-      display: block;
-      padding: 0.55rem 1.1rem 0.45rem;
+      display: flex;
+      align-items: center;
+      height: var(--link-h);
+      margin-left: 0.25rem;
+      padding: 0.1rem var(--pill-pad) 0;
       border-radius: var(--radius-round);
       background: var(--brand-500);
       color: var(--brand-text);
       font-family: var(--display-family);
-      font-size: 1.125rem;
+      font-size: var(--pill-type);
       line-height: 1;
       text-transform: uppercase;
-      transition: transform var(--hover-duration) var(--hover-ease);
+      transition: background-color 0.35s ease;
       &:hover {
-        transform: scale(1.04);
+        background: var(--light-100);
       }
     }
-    @media (width < 40rem) {
-      .nav_logo {
-        width: 6.5rem;
-      }
-      .nav_links .nav_link {
-        padding-inline: 0.5rem;
-      }
-      .nav_sound {
-        display: none;
-      }
-    }
-    @media (width < 30rem) {
+    @media (width < 24rem) {
       .nav_links li:nth-child(2) {
         display: none;
       }

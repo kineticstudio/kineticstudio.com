@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Metamag work card, 2026-10-23, built on the Venus Aerospace and Epirus
+     cards' engine (a classic script, metamag-card-src/js/card.js, itself from
+     the Ethos and Dawn cards) with Hunter's notes built in from the start:
+     the miniature keeps touring while you hover, the light is one soft round
+     bloom under the pointer, you can drag the page like a phone (up and down)
+     or scrub it sideways (right goes further down the page), a notched ruler
+     slides with the scroll, and there is no Case Study pill.
+
+     Metamag (www.metamag.us, ours) is rebuilt here at its 1440px design width
+     as HTML/CSS layers, each at its own depth: the hero film (a still of its
+     jet over the coast, the jamming rings pulsing in light CSS over it), the
+     noise-to-signal lines (a Lottie on the site, a still here with a light
+     running down the clean line), the auto-tune filter half on the dark and
+     half on the cream, the three film panels (the drone, the board, the
+     counter-UAS humvee: stills of their loops, their RF pulses in light CSS),
+     the circulator and the GNLTL, the moving row of logos, the newsroom, the
+     closing call and the footer. Fonts (PP Neue Montreal, TT Octosquares
+     Condensed) and images are the site's own, in metamag-card-src/. raw/
+     keeps the fetched HTML, CSS, fonts, images and Lottie files for
+     reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched from outside it:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=framed the site in a window on the card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Metamag work card</title>
+<script>
+  /* before first paint: embed or not, and the bleed */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="metamag-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Metamag, metamag.us, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- hero: the film, the headline, the promise, the button -->
+              <header class="sec hero" data-stop="hero">
+                <div class="h-film" data-layer="hero film" data-depth="-0.3" style="--lab-x:160px;--lab-y:120px"><img src="metamag-card-src/img/hero.webp" alt=""><i></i></div>
+                <div class="h-jam" id="hJam" data-layer="jamming rings" data-depth="-0.16" style="--lab-x:560px;--lab-y:640px">
+                  <div class="ring red" style="left:571px;top:474px;width:159px;height:159px"></div>
+                  <div class="ring red" style="left:571px;top:474px;width:159px;height:159px"></div>
+                  <div class="ring red" style="left:733px;top:453px;width:170px;height:170px"></div>
+                  <div class="ring red" style="left:733px;top:453px;width:170px;height:170px"></div>
+                  <div class="ring red thin" style="left:444px;top:310px;width:424px;height:132px"></div>
+                  <div class="ring red thin" style="left:444px;top:310px;width:424px;height:132px"></div>
+                </div>
+                <h1 class="h1" data-layer="headline" data-depth="0.8" data-shadow="-0.3,0.45,16" style="--lab-y:-40px"><span class="rv" data-reveal>Enabling RF<br>Spectrum<br>Dominance</span></h1>
+                <p class="lede" data-layer="promise" data-depth="0.5" data-shadow="-0.3,0.35,10" style="--lab-y:-40px"><span class="rv" data-reveal>Solving the challenges of Electronic Warfare and Assured Communications across mission-critical environments</span></p>
+                <div class="btn" data-layer="button" data-depth="0.92" data-shadow="-0.3,0.45,10" style="--lab-y:56px"><span class="rv" data-reveal>Partner with us</span></div>
+              </header>
+
+              <!-- mission: from noise to one clean signal -->
+              <section class="sec mission" data-stop="mission">
+                <div class="hline" style="top:0"></div>
+                <div class="m-lines" data-layer="signal lines" data-depth="0.06" style="--lab-x:900px;--lab-y:190px"><img src="metamag-card-src/img/mission-lines.webp" alt=""><div class="m-glow" id="mGlow"></div></div>
+                <div class="eyebrow" data-layer="eyebrow" data-depth="0.42" style="--lab-y:-34px"><span class="rv" data-reveal>Electromagnetic spectrum dominance for the evolving battlespace</span></div>
+                <p class="lead" data-layer="body copy" data-depth="0.6" data-shadow="0,0.4,12" style="--lab-x:620px"><span class="rv" data-reveal>Developing advanced magnetic-based technologies and solutions that cut through interference to deliver strong, dependable, and resilient connections, even in the most demanding conditions. In a world full of noise, we bring clarity.</span></p>
+              </section>
+
+              <!-- signals: the auto-tune filter, half on the dark and half on the cream -->
+              <section class="sec signals" data-stop="atf">
+                <div class="s-band"></div>
+                <div class="pin abs" data-pin="cube" style="left:0;top:0;width:1440px;height:1036px">
+                  <div class="cube abs" data-layer="auto-tune filter" data-depth="0.5" data-shadow="0,0.55,22" style="--lab-x:400px;--lab-y:40px"><img src="metamag-card-src/img/cube.webp" alt=""></div>
+                </div>
+                <div class="eyebrow big center" data-layer="eyebrow" data-depth="0.42" style="--lab-x:0px;--lab-y:-34px"><span class="rv" data-reveal>Auto-Tune Filters (ATF<sup>®</sup>)</span></div>
+                <h2 class="h1 center" data-layer="headline" data-depth="0.8" data-shadow="0,0.22,14" style="--lab-x:1120px"><span class="rv" data-reveal>Clear Signals, Instantly</span></h2>
+                <p class="lead center" data-layer="body copy" data-depth="0.5" style="--lab-x:720px;--lab-y:70px"><span class="rv" data-reveal>Cut through interference with a simple, high-performance solution beyond conventional filters or limiters</span></p>
+                <div class="btn dark" data-layer="button" data-depth="0.92" data-shadow="0,0.35,10" style="--lab-x:150px"><span class="rv" data-reveal>Learn More</span></div>
+              </section>
+
+              <!-- the drone, its filter keeping the signal clear (a still of the loop, the pulses in CSS) -->
+              <section class="sec gal" data-stop="drone">
+                <div class="hline" style="top:0"></div>
+                <div class="g-film" data-layer="drone film" data-depth="-0.14" style="--lab-x:40px;--lab-y:40px"><img id="droneImg" src="metamag-card-src/img/drone.webp" alt=""></div>
+                <div class="g-fx" id="droneFx" data-layer="RF pulses" data-depth="-0.04" style="--lab-x:900px;--lab-y:780px">
+                  <div class="ring blue thin" style="left:140px;top:480px;width:600px;height:220px"></div>
+                  <div class="ring blue thin" style="left:140px;top:480px;width:600px;height:220px"></div>
+                  <div class="ring blue thin" style="left:140px;top:480px;width:600px;height:220px"></div>
+                  <div class="ring red thin" style="left:430px;top:520px;width:640px;height:290px"></div>
+                  <div class="ring red thin" style="left:430px;top:520px;width:640px;height:290px"></div>
+                  <div class="ring red thin" style="left:430px;top:520px;width:640px;height:290px"></div>
+                </div>
+              </section>
+
+              <!-- the self-biased circulator -->
+              <section class="sec prod" data-stop="circulator">
+                <div class="hline" style="top:0"></div>
+                <div class="pin abs" data-pin="hex" style="left:0;top:0;width:1440px;height:665px">
+                  <div class="c-rule"></div>
+                  <div class="c-img abs" data-layer="circulator" data-depth="0.34" style="--lab-x:30px;--lab-y:60px"><img id="hexImg" src="metamag-card-src/img/circulator.webp" alt=""></div>
+                </div>
+                <div class="eyebrow big" data-layer="eyebrow" data-depth="0.42" style="top:217px;--lab-y:-34px"><span class="rv" data-reveal>Self-Biased Circulator</span></div>
+                <h2 class="h2" data-layer="headline" data-depth="0.8" data-shadow="0,0.22,14" style="top:273px;--lab-x:420px"><span class="rv" data-reveal>Circulate without<br>Magnets</span></h2>
+                <p class="lead" data-layer="body copy" data-depth="0.5" style="top:405px;--lab-x:420px"><span class="rv" data-reveal>Our self-biased circulators and isolators use an advanced material that eliminates permanent magnets for lighter, more efficient solutions.</span></p>
+                <div class="btn dark" data-layer="button" data-depth="0.92" data-shadow="0,0.35,10" style="top:553px;--lab-x:150px"><span class="rv" data-reveal>Learn More</span></div>
+              </section>
+
+              <!-- the board, the circulators in place (a still of the loop) -->
+              <section class="sec gal" data-stop="board">
+                <div class="hline" style="top:0"></div>
+                <div class="g-film" data-layer="board film" data-depth="-0.14" style="--lab-x:40px;--lab-y:40px"><img id="boardImg" src="metamag-card-src/img/board.webp" alt=""></div>
+              </section>
+
+              <!-- the gyromagnetic nonlinear transmission line -->
+              <section class="sec prod" data-stop="gnltl">
+                <div class="hline" style="top:0"></div>
+                <div class="pin abs" data-pin="tube" style="left:0;top:0;width:1440px;height:665px">
+                  <div class="t-img abs" data-layer="GNLTL" data-depth="0.4" data-shadow="0,0.42,20" style="--lab-x:20px;--lab-y:20px"><img src="metamag-card-src/img/tube.webp" alt=""></div>
+                </div>
+                <div class="eyebrow big" data-layer="eyebrow" data-depth="0.42" style="top:90px;--lab-x:140px"><span class="rv" data-reveal>GNLTL</span></div>
+                <h2 class="h2" data-layer="headline" data-depth="0.8" data-shadow="0,0.22,14" style="top:145px;--lab-x:400px"><span class="rv" data-reveal>Powerful Pulsed<br>Microwave<br>Technology</span></h2>
+                <p class="lead" data-layer="body copy" data-depth="0.5" style="top:331px;--lab-x:420px"><span class="rv" data-reveal>Harness the power of gyromagnetic non-linear transmission lines to deliver compact, solid-state, high-power microwave pulses with unmatched reliability.</span></p>
+                <div class="btn dark" data-layer="button" data-depth="0.92" data-shadow="0,0.35,10" style="top:511px;--lab-x:150px"><span class="rv" data-reveal>Learn More</span></div>
+              </section>
+
+              <!-- counter-UAS: the humvee's pulse taking the drone down (a still of the loop, the pulse in CSS) -->
+              <section class="sec gal" data-stop="humvee">
+                <div class="hline" style="top:0"></div>
+                <div class="g-film" data-layer="counter-UAS film" data-depth="-0.14" style="--lab-x:40px;--lab-y:40px"><img id="humveeImg" src="metamag-card-src/img/humvee.webp" alt=""></div>
+                <div class="g-fx" id="humveeFx" data-layer="RF pulse" data-depth="-0.02" style="--lab-x:440px;--lab-y:560px">
+                  <div class="ring blue" style="left:0;top:0;width:150px;height:190px"></div>
+                  <div class="ring blue" style="left:0;top:0;width:150px;height:190px"></div>
+                  <div class="ring blue" style="left:0;top:0;width:150px;height:190px"></div>
+                  <div class="ring blue" style="left:0;top:0;width:150px;height:190px"></div>
+                </div>
+              </section>
+
+              <!-- trusted by the best -->
+              <section class="sec logos" data-stop="logos">
+                <div class="hatch" data-layer="hatching" data-depth="0.06" style="left:65px;top:1px;height:84px;--lab-x:20px;--lab-y:20px"><img src="metamag-card-src/img/lines-6.svg" alt=""></div>
+                <div class="hatch" data-layer="hatching" data-depth="0.06" style="left:720px;top:360px;height:84px;--lab-x:400px;--lab-y:20px"><img src="metamag-card-src/img/lines-6.svg" alt=""></div>
+                <h2 class="h3 center" data-layer="headline" data-depth="0.66" data-shadow="0,0.4,12" style="--lab-x:1000px"><span class="rv" data-reveal>Trusted by the best</span></h2>
+                <div class="marquee" data-layer="logos" data-depth="0.36" style="--lab-x:40px;--lab-y:-40px">
+                  <div class="mq-row" id="mqRow">
+                    <img src="metamag-card-src/img/logos/lockheed_martin.svg" style="left:0;width:264px;height:66px;margin-top:-33px" alt="">
+                    <img src="metamag-card-src/img/logos/anduril.svg" style="left:344px;width:195px;height:45px;margin-top:-22.5px" alt="">
+                    <img src="metamag-card-src/img/logos/bae_systems.svg" style="left:619px;width:195px;height:30px;margin-top:-15px" alt="">
+                    <img src="metamag-card-src/img/logos/the_boeing_company.svg" style="left:894px;width:195px;height:46px;margin-top:-23px" alt="">
+                    <img src="metamag-card-src/img/logos/honeywell.svg" style="left:1169px;width:195px;height:36px;margin-top:-18px" alt="">
+                    <img src="metamag-card-src/img/logos/seal-44.webp" style="left:1444px;width:78px;height:78px;margin-top:-39px" alt="">
+                    <img src="metamag-card-src/img/logos/caci_international_inc.svg" style="left:1602px;width:102px;height:58px;margin-top:-29px" alt="">
+                    <img src="metamag-card-src/img/logos/seal-46.webp" style="left:1784px;width:78px;height:78px;margin-top:-39px" alt="">
+                    <img src="metamag-card-src/img/logos/l3harris.svg" style="left:1942px;width:176px;height:46px;margin-top:-23px" alt="">
+                    <img src="metamag-card-src/img/logos/seal-45.webp" style="left:2198px;width:140px;height:77px;margin-top:-38.5px" alt="">
+                    <img src="metamag-card-src/img/logos/lockheed_martin.svg" style="left:2418px;width:264px;height:66px;margin-top:-33px" alt="">
+                    <img src="metamag-card-src/img/logos/anduril.svg" style="left:2762px;width:195px;height:45px;margin-top:-22.5px" alt="">
+                    <img src="metamag-card-src/img/logos/bae_systems.svg" style="left:3037px;width:195px;height:30px;margin-top:-15px" alt="">
+                    <img src="metamag-card-src/img/logos/the_boeing_company.svg" style="left:3312px;width:195px;height:46px;margin-top:-23px" alt="">
+                    <img src="metamag-card-src/img/logos/honeywell.svg" style="left:3587px;width:195px;height:36px;margin-top:-18px" alt="">
+                    <img src="metamag-card-src/img/logos/seal-44.webp" style="left:3862px;width:78px;height:78px;margin-top:-39px" alt="">
+                    <img src="metamag-card-src/img/logos/caci_international_inc.svg" style="left:4020px;width:102px;height:58px;margin-top:-29px" alt="">
+                    <img src="metamag-card-src/img/logos/seal-46.webp" style="left:4202px;width:78px;height:78px;margin-top:-39px" alt="">
+                    <img src="metamag-card-src/img/logos/l3harris.svg" style="left:4360px;width:176px;height:46px;margin-top:-23px" alt="">
+                    <img src="metamag-card-src/img/logos/seal-45.webp" style="left:4616px;width:140px;height:77px;margin-top:-38.5px" alt="">
+                  </div>
+                </div>
+              </section>
+
+              <!-- the newsroom -->
+              <section class="sec news" data-stop="news">
+                <div class="hline" style="top:0"></div>
+                <div class="n-list" data-layer="news list" data-depth="0.12" style="--lab-x:460px;--lab-y:-30px">
+                  <i style="left:0;top:0;width:1312px;height:1px"></i>
+                  <i style="left:0;top:483px;width:1312px;height:1px"></i>
+                  <i style="left:438px;top:0;width:1px;height:483px"></i>
+                  <i style="left:438px;top:135px;width:874px;height:1px"></i>
+                  <i style="left:438px;top:242px;width:874px;height:1px"></i>
+                  <i style="left:438px;top:376px;width:874px;height:1px"></i>
+                  <div class="n-item" data-layer="story" data-depth="0.42" style="top:0;height:135px;--lab-x:1000px;--lab-y:100px">
+                    <span class="n-cat" style="top:32px">Event</span>
+                    <h3 class="n-title" style="top:24px">Metamagnetics, Inc. will be exhibiting at the Association of Old Crows International Symposium and Convention December 8th-10th, 2025</h3>
+                    <svg class="n-arrow" style="top:43px" viewBox="0 0 24 24" fill="none"><path d="M16.666 12L10 17V7L16.666 12Z" fill="currentColor"/></svg>
+                  </div>
+                  <div class="n-item" data-layer="story" data-depth="0.42" style="top:135px;height:107px;--lab-x:1000px;--lab-y:70px">
+                    <span class="n-cat" style="top:32px">Company news</span>
+                    <h3 class="n-title" style="top:24px">Metamagnetics, Inc. Introduces Surface-Mount Auto-Tune Filters to Mitigate EMI Interference</h3>
+                    <svg class="n-arrow" style="top:41px" viewBox="0 0 24 24" fill="none"><path d="M16.666 12L10 17V7L16.666 12Z" fill="currentColor"/></svg>
+                  </div>
+                  <div class="n-item" data-layer="story" data-depth="0.42" style="top:242px;height:134px;--lab-x:1000px;--lab-y:100px">
+                    <span class="n-cat" style="top:32px">Company news</span>
+                    <h3 class="n-title" style="top:24px">Metamagnetics leverages SBIR-funded adaptive filtering technology to support Navy reconnaissance mission</h3>
+                    <svg class="n-arrow" style="top:55px" viewBox="0 0 24 24" fill="none"><path d="M16.666 12L10 17V7L16.666 12Z" fill="currentColor"/></svg>
+                  </div>
+                  <div class="n-item" data-layer="story" data-depth="0.42" style="top:376px;height:107px;--lab-x:1000px;--lab-y:70px">
+                    <span class="n-cat" style="top:33px">Company news</span>
+                    <h3 class="n-title" style="top:25px">Metamagnetics Announces Launch of Self-Biased Circulators</h3>
+                    <svg class="n-arrow" style="top:42px" viewBox="0 0 24 24" fill="none"><path d="M16.666 12L10 17V7L16.666 12Z" fill="currentColor"/></svg>
+                  </div>
+                </div>
+                <h2 class="h2" data-layer="headline" data-depth="0.8" data-shadow="0.12,0.22,14" style="--lab-x:280px"><span class="rv" data-reveal>Newsroom</span></h2>
+                <p class="sub" data-layer="caption" data-depth="0.46" style="--lab-x:300px"><span class="rv" data-reveal>Stay Current on News<br>and Events from Metamag</span></p>
+                <div class="btn dark" data-layer="button" data-depth="0.92" data-shadow="0.12,0.35,10" style="--lab-x:130px"><span class="rv" data-reveal>view all</span></div>
+                <div class="hatch" data-layer="hatching" data-depth="0.06" style="left:720px;top:742px;height:50px;--lab-x:400px;--lab-y:10px"><img src="metamag-card-src/img/lines-5.svg" alt=""></div>
+              </section>
+
+              <!-- the closing call -->
+              <section class="sec feature" data-stop="cta">
+                <div class="f-img" data-layer="drone over its rings" data-depth="0.1" style="--lab-x:20px;--lab-y:20px"><img src="metamag-card-src/img/cta.webp" alt=""></div>
+                <div class="f-fx" id="ctaFx" data-layer="RF rings" data-depth="0.22" style="--lab-x:300px;--lab-y:520px">
+                  <div class="ring blue thin" style="left:170px;top:271px;width:320px;height:130px"></div>
+                  <div class="ring blue thin" style="left:170px;top:271px;width:320px;height:130px"></div>
+                  <div class="ring blue thin" style="left:170px;top:271px;width:320px;height:130px"></div>
+                </div>
+                <h2 class="h3" data-layer="headline" data-depth="0.8" data-shadow="0,0.22,14" style="--lab-y:-40px"><span class="rv" data-reveal>Discover how METAMAG delivers<br>RF spectrum dominance across<br>mission-critical environments</span></h2>
+                <p class="sub" data-layer="body copy" data-depth="0.48" style="--lab-x:540px"><span class="rv" data-reveal>Auto-tune Filters® cut through interference with a simple, high-performance alternative to conventional filters and limiters.</span></p>
+                <div class="btn dark" data-layer="button" data-depth="0.92" data-shadow="0,0.35,10" style="--lab-x:190px"><span class="rv" data-reveal>Partner with us</span></div>
+              </section>
+
+              <!-- the footer -->
+              <footer class="sec foot" data-stop="footer">
+                <div class="ft-lines" data-layer="signal lines" data-depth="0.06" style="--lab-x:900px;--lab-y:74px"><img src="metamag-card-src/img/footer-lines.webp" alt=""></div>
+                <div class="ft-rules abs" style="left:0;top:0;width:1440px;height:802px">
+                  <i style="left:65px;top:282px;width:1310px;height:1px"></i>
+                  <i style="left:65px;top:389px;width:655px;height:1px"></i>
+                  <i style="left:720px;top:389px;width:1px;height:254px"></i>
+                  <i style="left:1048px;top:389px;width:1px;height:254px"></i>
+                  <i style="left:65px;top:643px;width:1310px;height:1px"></i>
+                  <i style="left:393px;top:643px;width:1px;height:159px"></i>
+                  <i style="left:1048px;top:643px;width:1px;height:159px"></i>
+                </div>
+                <div class="ft-logo" data-layer="logo" data-depth="0.56" style="--lab-x:210px"><img src="metamag-card-src/img/metamag.svg" alt=""></div>
+                <div class="ft-social" data-layer="social" data-depth="0.5" style="--lab-x:-150px;--lab-y:30px">
+                  <svg style="left:0" viewBox="0 0 23 22" fill="none"><path d="M22.49 22L13.695 9.178L13.71 9.19L21.64 0H18.99L12.53 7.48L7.4 0H0.45L8.661 11.971L8.66 11.97L0 22H2.65L9.832 13.678L15.54 22H22.49ZM6.35 2L18.69 20H16.59L4.24 2H6.35Z" fill="currentColor"/></svg>
+                  <svg style="left:40px" viewBox="0 0 24 25" fill="none"><path d="M22.2236 0.5C23.2032 0.500102 23.9999 1.2734 24 2.22949V22.7705C23.9999 23.7219 23.2032 24.4999 22.2236 24.5H1.77148C0.791977 24.4998 0 23.7217 0 22.7656V2.22949C0.000107885 1.27346 0.792044 0.500205 1.77148 0.5H22.2236ZM3.55762 9.49512V20.9512H7.12012V9.49512H3.55762ZM16.1816 9.20898C14.4521 9.20898 13.2889 10.1606 12.8154 11.0605H12.7686V9.49512H9.35645V20.9512H12.9092V15.2891C12.9092 13.7938 13.1906 12.3458 15.042 12.3457C16.8701 12.3457 16.8936 14.0562 16.8936 15.3828V20.9512H20.4512V14.666C20.4512 11.5818 19.786 9.20916 16.1816 9.20898ZM5.33887 3.80957C4.19521 3.80968 3.27148 4.73307 3.27148 5.87207C3.27159 7.01098 4.19527 7.93446 5.33887 7.93457C6.47786 7.93457 7.40126 7.00636 7.40137 5.87207C7.40137 4.73301 6.47793 3.80957 5.33887 3.80957Z" fill="currentColor"/></svg>
+                  <svg style="left:80px" viewBox="0 0 24 25" fill="none"><path d="M12.0049 4.05811C12.0409 4.05811 17.0562 4.05839 20.4004 4.30127C20.8693 4.35748 21.8908 4.36283 22.8047 5.31885C23.5204 6.0392 23.7567 7.6718 23.7607 7.69971C23.7607 7.69971 24 9.6458 24 11.5864V13.4048C24 15.3412 23.7629 17.2729 23.7607 17.2905C23.7607 17.2905 23.5266 18.9458 22.8047 19.6724C21.8909 20.6281 20.8693 20.6328 20.4004 20.689C17.0441 20.928 12 20.938 12 20.938C12 20.938 5.76074 20.8815 3.83887 20.6987C3.30445 20.5956 2.10439 20.6284 1.19043 19.6724C0.473242 18.9458 0.239258 17.2905 0.239258 17.2905C0.237098 17.2729 4.05406e-06 15.3365 0 13.4048V11.5864C0 9.6458 0.244141 7.69971 0.244141 7.69971C0.248201 7.6708 0.479863 6.03898 1.19531 5.31885C2.10915 4.36283 3.1307 4.35748 3.59961 4.30127C6.94381 4.05839 11.9591 4.05811 11.9951 4.05811H12.0049ZM9.52051 15.6128L16.0029 12.2515L9.52051 8.86768V15.6128Z" fill="currentColor"/></svg>
+                </div>
+                <div class="ft-news" data-layer="newsletter" data-depth="0.36" style="--lab-x:300px;--lab-y:-30px"><span class="lab">Join our newsletter</span></div>
+                <div class="ft-input" data-layer="field" data-depth="0.42" style="--lab-x:300px;--lab-y:10px"><span>Your email address</span></div>
+                <div class="btn ft-sub" data-layer="button" data-depth="0.8" data-shadow="0,0.4,10" style="--lab-y:56px">Subscribe</div>
+                <div class="ft-cols" data-layer="links" data-depth="0.3" style="--lab-x:300px;--lab-y:200px">
+                  <div class="ft-col" style="left:82px"><b>Technology</b><span>Spinwave Technology</span></div>
+                  <div class="ft-col" style="left:409px"><b>Products</b><span>Auto-Tune Filters</span><span>Self-Biased Circulator</span><span>Gyro Nonlinear Transmission Lines</span></div>
+                  <div class="ft-col" style="left:737px"><b>solutions</b><span>Rare-Earth Alternatives</span><span>Interference Mitigation</span><span>Anti-jamming</span><span>Counter-UAS</span></div>
+                  <div class="ft-col" style="left:1065px"><b>Company</b><span>About Us</span><span>Leadership</span><span>Newsroom</span><span>request a quote</span><span>Contact</span></div>
+                </div>
+                <div class="ft-bottom" data-layer="credits" data-depth="0.22" style="--lab-x:500px;--lab-y:70px">
+                  <p style="left:81px;top:0;width:296px">© 2025 Metamagnetics Inc.<br>METAMAG, Auto-Tune Filter, AtF, ATF are trademarks or registered trademarks of Metamagnetics Inc.</p>
+                  <p style="left:410px;top:0;width:622px">261 Cedar Hill Street, Suite 130, Marlborough, MA 01752<br><span class="mail">info@metamag.us</span> • Phone 781-562-0756 • Fax 781-253-3913</p>
+                  <p style="left:1065px;top:0">Privacy Policy</p>
+                  <p style="left:1065px;top:37px">Terms &amp; Conditions</p>
+                  <p style="left:1065px;top:74px">Supplier Terms</p>
+                </div>
+              </footer>
+
+              <!-- the container's two long rules, over everything, as on the site -->
+              <div class="vline" data-layer="rule" data-depth="0.03" style="left:64px;height:9143px;--lab-y:900px"></div>
+              <div class="vline" data-layer="rule" data-depth="0.03" style="left:1375px;height:9143px;--lab-x:-120px;--lab-y:900px"></div>
+            </div>
+
+            <!-- the nav, fixed in the viewport: its dark bar slides in once the page has moved -->
+            <nav class="abs nav" id="nav">
+              <div class="nav-bg" id="navBg"></div>
+              <div class="nav-rule"></div>
+              <div class="nav-v" style="left:64px"></div>
+              <div class="nav-v" style="left:1375px"></div>
+              <div class="abs nav-logo" data-layer="logo" data-depth="0.36" style="--lab-x:200px;--lab-y:44px"><img src="metamag-card-src/img/metamag.svg" width="190" height="39" alt=""></div>
+              <div class="abs nav-links" data-layer="nav" data-depth="0.3" style="--lab-x:-200px;--lab-y:30px">
+                <span style="left:0">Technology</span>
+                <span style="left:126px">Products</span><svg style="left:209px" viewBox="0 0 12 13" fill="none"><path d="M7 9.5H5V8.5H7V9.5ZM9 6.5V7.5H3V6.5H9ZM11 5.5H1V4.5H11V5.5Z" fill="currentColor"/></svg>
+                <span style="left:257px">Solutions</span><svg style="left:346px" viewBox="0 0 12 13" fill="none"><path d="M7 9.5H5V8.5H7V9.5ZM9 6.5V7.5H3V6.5H9ZM11 5.5H1V4.5H11V5.5Z" fill="currentColor"/></svg>
+                <span style="left:394px">Company</span><svg style="left:472px" viewBox="0 0 12 13" fill="none"><path d="M7 9.5H5V8.5H7V9.5ZM9 6.5V7.5H3V6.5H9ZM11 5.5H1V4.5H11V5.5Z" fill="currentColor"/></svg>
+              </div>
+              <div class="abs btn nav-cta" data-layer="contact" data-depth="0.5" data-shadow="0,0.35,8" style="--lab-x:-60px;--lab-y:56px">Contact</div>
+            </nav>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>METAMAG</h3>
+      <p><span>Defense &amp; space</span><span>Brand, Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="metamag-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, the Studio's own Params (defineParams from /shared/params/params.js).
+   Embedded on the site there is no panel and nothing is fetched, so the module
+   is only loaded here, and only when served (opened from disk there is no
+   studio to load it from): the card runs on its defaults without it. */
+const card = window.metamagCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'metamag work card';
+    const D = card.defaults;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        pulses: [D['motion.pulses'], 0, 3, 0.05],          // the RF rings, the signal light and the logo row
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        scrub: [D['drag.scrub'], 0.5, 6, 0.1],             // page px per px of a sideways drag (right = further down)
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

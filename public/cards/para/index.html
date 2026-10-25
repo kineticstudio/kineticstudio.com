@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Para work card, 2026-10-23, built on the Metamag, Happy Droid and
+     Counsel Health cards' engine (a classic script, para-card-src/js/card.js,
+     itself from the Ethos and Dawn cards) with Hunter's notes built in from
+     the start: the miniature keeps touring while you hover, the light is one
+     soft round bloom under the pointer, you can drag the page like a phone
+     (up and down) or scrub it sideways (right goes further down the page), a
+     notched ruler slides with the scroll, and there is no Case Study pill.
+
+     Para (www.usepara.com, ours) is rebuilt here at its 1440px design width
+     as HTML/CSS layers, each at its own depth, with the live page's own
+     scroll choreography: the hero's circle of voice messages opening into a
+     pill and then the whole window as its sheared wall of cards straightens
+     out and its odd rows slide left (the site's numbers, measured frame by
+     frame), "The voice advantage" sliding up over the wall, the starburst's
+     six bars growing as it rises, the bento art rising into its tiles, the
+     four steps stacking over each other (the cloning buttons breathing, the
+     script typing itself in, the performance chart, a Lottie on the site,
+     traced from its last frame), the testimonials, "Hear the difference",
+     the case studies, the questions, "Ready to talk?" and the footer. Fonts
+     (Zagma, Zagma Text) and images are the site's own, in para-card-src/.
+     raw/ keeps the fetched HTML, CSS, fonts, images and animation data for
+     reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched from outside it:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=framed the site in a window on the card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Para work card</title>
+<script>
+  /* before first paint: embed or not, and the bleed */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="para-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Para, usepara.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- hero: held in the window while the circle opens into the wall, then "The voice advantage" slides over it -->
+              <section class="sec hero" data-stop="hero" data-tone="light">
+                <div class="h-frame abs" data-pin="hero">
+                  <div class="h-copy abs">
+                    <h1 class="h1" data-layer="headline" data-depth="0.72" data-shadow="0.04,0.3,16" style="--lab-y:-40px">Voice marketing made personal</h1>
+                    <p class="lede" data-layer="lede" data-depth="0.48" style="--lab-y:60px">Para makes brand interactions as personal as a one-on-one conversation, transforming your messages into moments.</p>
+                    <div class="btns h-btns" data-layer="buttons" data-depth="0.86" data-shadow="0.04,0.3,10" style="--lab-y:56px">
+                      <span class="btn maroon">Book Demo<i class="arw"><svg viewBox="0 0 18 14" fill="none"><path d="M0 7H17M17 7L10.5 0.5M17 7L10.5 13.5" stroke="currentColor"/></svg></i></span>
+                      <span class="abtn"><svg class="pl" viewBox="0 0 12 14" fill="none"><path d="M12 7L0 13.93L0 0.07L12 7Z" fill="currentColor"/></svg><span>Listen</span><span class="time">00:46</span></span>
+                    </div>
+                  </div>
+                  <!-- the circle: the site's wall of voice messages behind an opening mask -->
+                  <div class="h-ovl abs" id="hOvl" data-layer="the wall" data-depth="0.5" style="--lab-x:880px;--lab-y:260px">
+                    <div class="h-oval" id="hOval">
+                      <div class="h-oval-in" id="hOvalIn">
+                        <div class="h-grid" id="hGrid">
+                            <div class="h-row is-odd" style="top:0.00px">
+                              <div class="hc is-black" style="left:16px"><div class="hc-wv"><img src="para-card-src/img/wave-white.svg" alt=""><img src="para-card-src/img/wave-white.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:20, Sent from</span><span class="hc-l"><span class="hc-h">NecterNoon</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Hey Eric, it's Ashley from NecterNook, we couldn’t be happier to have you join the NN family and truly appreciate you being a customer. All the love!"</p></div>
+                              <div class="hc" style="left:592px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:22, Sent from</span><span class="hc-l"><span class="hc-h">Blitz</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Yo Chad, it's Jon from Blitz. Just want to let you know that you are an absolute rockstar and your loyalty next level. Here is a gift card on us for being VIP. You rule!"</p></div>
+                              <div class="hc is-snow" style="left:1168px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:16, Sent from</span><span class="hc-l"><span class="hc-h">Zesty</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Hey Hey! Margaux, it's Jodi from Zesty. Your zest for Zesty is why we do what we do, you embody our mission and we would love to hear from you. Share your experience with our community."</p></div>
+                              <div class="hc" style="left:1744px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:20, Sent from</span><span class="hc-l"><span class="hc-h">InnerZen</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Namaste Adam, it's Brooke from InnerZen. I wanted to send you your daily dose of down time. Let's take a break from the day and focus on you for the next 5 minutes."</p></div>
+                              <div class="hc is-black" style="left:2320px"><div class="hc-wv"><img src="para-card-src/img/wave-white.svg" alt=""><img src="para-card-src/img/wave-white.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:17, Sent from</span><span class="hc-l"><span class="hc-h">Grooove</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Welcome to funky town Lucy, it's Gal from Grooove. I know we normally only interact in cyberspace, but we have a Pop Up event coming to Denver and wanted to send an invite your way."</p></div>
+                            </div>
+                            <div class="h-row" style="top:222.77px">
+                              <div class="hc is-snow" style="left:16px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:29, Sent from</span><span class="hc-l"><span class="hc-h">Sticky Noodles</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Nom Nom Nom Ali, it's Taylor from Sticky Noodles. You are going to love this new flavor we just launched, can I get your feedback ASAP?"</p></div>
+                              <div class="hc" style="left:592px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:25, Sent from</span><span class="hc-l"><span class="hc-h">Axe + Arrow</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"This one’s for dad Chase, it's Archie from Axe + Arrow, and I wanted to share our Dads Day exclusive with you. Raise one to the Dads, Cheers"</p></div>
+                              <div class="hc is-purple" style="left:1168px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:18, Sent from</span><span class="hc-l"><span class="hc-h">Drippin</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Shhhhh, this is an exclusive Pat. It's Dougy from Drippin, and I had to let you know about our private label drop from Drippin. Check it out!"</p></div>
+                              <div class="hc is-snow" style="left:1744px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:19, Sent from</span><span class="hc-l"><span class="hc-h">Grooove</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Welcome to funky town Lucy, it's Gal from Grooove. I know we normally only interact in cyberspace, but we have a Pop Up event coming to Denver and wanted to send an invite your way."</p></div>
+                              <div class="hc" style="left:2320px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:11, Sent from</span><span class="hc-l"><span class="hc-h">NecterNook</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Hey Eric, it's Ashley from NecterNook, we couldn’t be happier to have you join the NN family and truly appreciate you being a customer. All the love!"</p></div>
+                            </div>
+                            <div class="h-row is-odd" style="top:445.54px">
+                              <div class="hc is-snow" style="left:16px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:13, Sent from</span><span class="hc-l"><span class="hc-h">InnterZen</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Namaste Adam, it's Brooke from InnerZen. I wanted to send you your daily dose of down time. Let's take a break from the day and focus on you for the next 5 minutes."</p></div>
+                              <div class="hc is-purple" style="left:592px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:20, Sent from</span><span class="hc-l"><span class="hc-h">Grooove</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Welcome to funky town Lucy, it's Gal from Grooove. I know we normally only interact in cyberspace, but we have a Pop Up event coming to Denver and wanted to send an invite your way."</p></div>
+                              <div class="hc is-pink" style="left:1168px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:18, Sent from</span><span class="hc-l"><span class="hc-h">Zesty</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Hey Hey! Margaux, it's Jodi from Zesty. Your zest for Zesty is why we do what we do, you embody our mission and we would love to hear from you. Share your experience with our community."</p></div>
+                              <div class="hc" style="left:1744px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:16, Sent from</span><span class="hc-l"><span class="hc-h">Echos</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Hey Alice, it's Terry from Echos. Not sure if I ever told you why I started echos, but thought you might be interested to know the true story behind my passion."</p></div>
+                              <div class="hc is-snow" style="left:2320px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:13, Sent from</span><span class="hc-l"><span class="hc-h">Drippin</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Shhhhh, this is an exclusive Pat. It's Dougy from Drippin, and I had to let you know about our private label drop from Drippin. Check it out!"</p></div>
+                            </div>
+                            <div class="h-row" style="top:668.31px">
+                              <div class="hc is-purple" style="left:16px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:15, Sent from</span><span class="hc-l"><span class="hc-h">Good Love</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"You did it Lenox! It's Rachael from Good Love, and it's been 1 year since you joined our squad. This is my favorite message to send out, as it warms my heart to have people like you as customers."</p></div>
+                              <div class="hc" style="left:592px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:23, Sent from</span><span class="hc-l"><span class="hc-h">Blitz</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Yo Chad, it's Jon from Blitz. Just want to let you know that you are an absolute rockstar and your loyalty next level. Here is a gift card on us for being VIP. You rule!"</p></div>
+                              <div class="hc" style="left:1168px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:18, Sent from</span><span class="hc-l"><span class="hc-h">Sticky Noodles</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Nom Nom Nom Beckett, it's Taylor from Sticky Noodles. You are going to love this new flavor we just launched, can I get your feedback ASAP?"</p></div>
+                              <div class="hc is-purple" style="left:1744px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:21, Sent from</span><span class="hc-l"><span class="hc-h">Grooove</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">""Welcome to funky town Lucy, it's Gal from Grooove. I know we normally only interact in cyberspace, but we have a Pop Up event coming to Denver and wanted to send an invite your way.</p></div>
+                              <div class="hc" style="left:2320px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:28, Sent from</span><span class="hc-l"><span class="hc-h">NecterNook</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Hey Eric, it's Ashley from NecterNook, we couldn’t be happier to have you join the NN family and truly appreciate you being a customer. All the love!"</p></div>
+                            </div>
+                            <div class="h-row is-odd" style="top:891.08px">
+                              <div class="hc is-snow" style="left:16px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:29, Sent from</span><span class="hc-l"><span class="hc-h">Sticky Noodles</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Nom Nom Nom Ali, it's Taylor from Sticky Noodles. You are going to love this new flavor we just launched, can I get your feedback ASAP?"</p></div>
+                              <div class="hc" style="left:592px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:25, Sent from</span><span class="hc-l"><span class="hc-h">Axe + Arrow</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"This one’s for dad Chase, it's Archie from Axe + Arrow, and I wanted to share our Dads Day exclusive with you. Raise one to the Dads, Cheers"</p></div>
+                              <div class="hc is-purple" style="left:1168px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:18, Sent from</span><span class="hc-l"><span class="hc-h">Drippin</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Shhhhh, this is an exclusive Pat. It's Dougy from Drippin, and I had to let you know about our private label drop from Drippin. Check it out!"</p></div>
+                              <div class="hc is-snow" style="left:1744px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:19, Sent from</span><span class="hc-l"><span class="hc-h">Grooove</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Welcome to funky town Lucy, it's Gal from Grooove. I know we normally only interact in cyberspace, but we have a Pop Up event coming to Denver and wanted to send an invite your way."</p></div>
+                              <div class="hc" style="left:2320px"><div class="hc-wv"><img src="para-card-src/img/wave.svg" alt=""><img src="para-card-src/img/wave.svg" alt=""></div><div class="hc-t"><span class="hc-h">0:11, Sent from</span><span class="hc-l"><span class="hc-h">NecterNook</span><svg viewBox="0 0 13 11" fill="none"><path d="M0.065506 5.30504H11.8893M11.8893 5.30504L7.36844 0.78418M11.8893 5.30504L7.36844 9.8259" stroke="currentColor" stroke-width="0.695517"/></svg></span></div><p class="hc-p">"Hey Eric, it's Ashley from NecterNook, we couldn’t be happier to have you join the NN family and truly appreciate you being a customer. All the love!"</p></div>
+                            </div>
+                        </div>
+                        <div class="h-btl abs" id="hBtl" data-layer="play buttons" data-depth="0.72" style="--lab-x:1000px;--lab-y:330px">
+                          <div class="h-grid" id="hBtns">
+                            <div class="h-row is-odd" style="top:0.00px">
+                              <div class="hc-b" style="left:32px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:608px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:1184px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:1760px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:2336px"><img src="para-card-src/img/play.svg" alt=""></div>
+                            </div>
+                            <div class="h-row" style="top:222.77px">
+                              <div class="hc-b" style="left:32px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:608px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:1184px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:1760px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:2336px"><img src="para-card-src/img/play.svg" alt=""></div>
+                            </div>
+                            <div class="h-row is-odd" style="top:445.54px">
+                              <div class="hc-b" style="left:32px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:608px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:1184px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:1760px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:2336px"><img src="para-card-src/img/play.svg" alt=""></div>
+                            </div>
+                            <div class="h-row" style="top:668.31px">
+                              <div class="hc-b" style="left:32px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:608px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:1184px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:1760px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:2336px"><img src="para-card-src/img/play.svg" alt=""></div>
+                            </div>
+                            <div class="h-row is-odd" style="top:891.08px">
+                              <div class="hc-b" style="left:32px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:608px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:1184px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:1760px"><img src="para-card-src/img/play.svg" alt=""></div>
+                              <div class="hc-b" style="left:2336px"><img src="para-card-src/img/play.svg" alt=""></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="h-shade" id="hShade"></div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- the nav, at the top of the page -->
+              <nav class="nav abs" id="nav">
+                <div class="nav-logo abs" data-layer="logo" data-depth="0.36" style="--lab-x:100px;--lab-y:4px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 36" fill="none"><path d="M8.10544 28.6315L3.6848 20.9748L3.6848 35.8416H0.0219717L0 0.248312C0.550942 0.188879 1.11056 0.158386 1.67729 0.158386C2.35004 0.158386 3.01275 0.201353 3.66283 0.284691L3.66283 7.9835L8.00883 0.456006C9.13307 0.961275 10.186 1.59696 11.1484 2.34381L7.04184 9.45652L14.1116 5.37481C14.8359 6.35312 15.4475 7.41991 15.9272 8.556L8.87326 12.6286H17.0185C17.0978 13.2632 17.1386 13.9097 17.1386 14.5657C17.1386 15.149 17.1063 15.7249 17.0434 16.2914H8.87323L15.998 20.4049C15.5317 21.5473 14.9328 22.6213 14.2202 23.608L7.04172 19.4635L11.2324 26.7219C10.8005 27.0618 10.3502 27.3792 9.88299 27.6723L8.90037 28.2396C8.63972 28.3776 8.37466 28.5083 8.10544 28.6315Z" fill="currentColor"/><path d="M26.0712 25.4099V5.18811H28.5233L28.826 7.00443H29.2498C30.2185 5.61192 31.7321 4.88539 33.6695 4.88539C37.4838 4.88539 40.2083 8.00341 40.2083 12.4231C40.2083 16.8429 37.4838 19.9609 33.5787 19.9609C31.8532 19.9609 30.4001 19.3554 29.3103 18.1748H29.0379V25.4099H26.0712ZM29.0379 12.4231C29.0379 15.5412 30.5515 17.3878 33.1549 17.3878C35.6675 17.3878 37.1811 15.5412 37.1811 12.4231C37.1811 9.30511 35.6675 7.45851 33.1549 7.45851C30.5515 7.45851 29.0379 9.30511 29.0379 12.4231Z" fill="currentColor"/><path d="M46.6234 19.9609C43.5659 19.9609 41.5074 18.1143 41.5074 15.5109C41.5074 12.7561 43.687 11.0609 47.3196 11.0609H51.1339V10.3344C51.1339 8.30613 49.923 7.3677 47.8948 7.3677C45.9271 7.3677 44.9584 8.42722 44.686 10.0316H41.9615C42.2036 7.00443 44.3832 4.88539 47.9553 4.88539C51.8302 4.88539 54.04 6.76225 54.04 10.0316V15.965C54.04 16.631 54.5547 17.0245 55.3115 17.0245H55.6747V19.6582H54.8271C53.0713 19.6582 51.8604 18.9619 51.3761 17.6299H51.1642C50.256 19.1738 48.7424 19.9609 46.6234 19.9609ZM44.353 15.299C44.353 16.6007 45.3519 17.4786 47.0774 17.4786C49.4992 17.4786 51.1339 15.9347 51.1339 13.6946V13.3616H47.471C45.4125 13.3616 44.353 13.9065 44.353 15.299Z" fill="currentColor"/><path d="M57.2479 19.6582V5.18811H59.9119L60.2146 7.21634H60.4265C61.5466 5.76328 62.7877 4.88539 65.0279 4.88539H65.5727V7.70069H64.4527C61.6979 7.70069 60.2146 9.24457 60.2146 11.7572V19.6582H57.2479Z" fill="currentColor"/><path d="M70.9486 19.9609C67.8912 19.9609 65.8327 18.1143 65.8327 15.5109C65.8327 12.7561 68.0123 11.0609 71.6449 11.0609H75.4592V10.3344C75.4592 8.30613 74.2483 7.3677 72.2201 7.3677C70.2524 7.3677 69.2837 8.42722 69.0112 10.0316H66.2867C66.5289 7.00443 68.7085 4.88539 72.2806 4.88539C76.1554 4.88539 78.3653 6.76225 78.3653 10.0316V15.965C78.3653 16.631 78.8799 17.0245 79.6367 17.0245H80V19.6582H79.1524C77.3966 19.6582 76.1857 18.9619 75.7014 17.6299H75.4895C74.5813 19.1738 73.0677 19.9609 70.9486 19.9609ZM68.6782 15.299C68.6782 16.6007 69.6772 17.4786 71.4027 17.4786C73.8245 17.4786 75.4592 15.9347 75.4592 13.6946V13.3616H71.7963C69.7378 13.3616 68.6782 13.9065 68.6782 15.299Z" fill="currentColor"/></svg></div>
+                <div class="nav-links abs" data-layer="nav" data-depth="0.3" style="--lab-x:-110px;--lab-y:4px"><span>Features</span><span>About</span><span>Customers</span><span>Login</span></div>
+                <span class="btn maroon nav-cta abs" data-layer="book demo" data-depth="0.6" data-shadow="0.04,0.3,8" style="--lab-x:-40px;--lab-y:56px">Book Demo<i class="arw"><svg viewBox="0 0 18 14" fill="none"><path d="M0 7H17M17 7L10.5 0.5M17 7L10.5 13.5" stroke="currentColor"/></svg></i></span>
+              </nav>
+
+              <!-- the voice advantage -->
+              <section class="sec feat" data-stop="features" data-tone="dark">
+                <h2 class="mega abs" data-layer="headline" data-depth="0.8" style="--lab-x:0px;--lab-y:-40px">The <span class="pk">voice</span> advantage</h2>
+                <p class="f-lede abs" data-layer="lede" data-depth="0.5" style="--lab-x:700px">Voice carries emotions, context, and authenticity that text alone can't capture. It's the magic that transforms messages into memorable experiences. With Para, brands can tap into the potential of voice to create stronger bonds, foster loyalty, and drive customer lifetime value.</p>
+                <div class="btns f-btns abs" data-layer="buttons" data-depth="0.9" style="--lab-x:400px;--lab-y:4px">
+                  <span class="btn pink">Book Demo<i class="arw"><svg viewBox="0 0 18 14" fill="none"><path d="M0 7H17M17 7L10.5 0.5M17 7L10.5 13.5" stroke="currentColor"/></svg></i></span>
+                  <span class="abtn pink-o"><svg class="pl" viewBox="0 0 12 14" fill="none"><path d="M12 7L0 13.93L0 0.07L12 7Z" fill="currentColor"/></svg><span>Why Audio</span><span class="time">01:21</span></span>
+                </div>
+                <div class="burst abs" id="burst" data-layer="starburst" data-depth="0.34" style="--lab-x:400px;--lab-y:60px">
+                  <i class="st" data-a="0" data-l0="359" data-l1="509"></i>
+                  <i class="st" data-a="-30" data-l0="320" data-l1="369"></i>
+                  <i class="st" data-a="-60" data-l0="382" data-l1="911"></i>
+                  <i class="st" data-a="60" data-l0="420" data-l1="511"></i>
+                  <i class="st" data-a="30" data-l0="370" data-l1="825"></i>
+                  <i class="st" data-a="90" data-l0="380" data-l1="550"></i>
+                </div>
+                <div class="burst-wave abs" data-layer="waveform" data-depth="0.62" style="--lab-x:90px"><img src="para-card-src/img/burst-wave.svg" width="74" height="86" alt=""></div>
+
+                <!-- the bento: each tile's art rises into it as it arrives -->
+                <div class="fb sand abs" data-layer="tile" data-depth="0.1" style="left:80px;top:1418px;width:845.3px;height:419.2px;--lab-x:620px;--lab-y:20px">
+                  <div class="fb-c" data-layer="copy" data-depth="0.42" style="--lab-x:400px"><h3>Personalized engagement</h3><p>Connect with your customers on a human level</p></div>
+                  <div class="fb-art" data-layer="art" data-depth="0.26" style="height:319.7px;--lab-x:20px;--lab-y:20px"><img class="rise" src="para-card-src/img/engage.webp" alt=""></div>
+                </div>
+                <div class="fb pink abs" data-layer="tile" data-depth="0.1" style="left:949.3px;top:1418px;width:410.7px;height:769px;--lab-x:200px;--lab-y:20px">
+                  <div class="fb-c" data-layer="copy" data-depth="0.42" style="--lab-x:120px;--lab-y:60px"><h3>Scalable outreach</h3><p>Reach your audience with ease using automation</p></div>
+                  <div class="fb-art" data-layer="art" data-depth="0.26" style="height:684.8px;--lab-x:20px;--lab-y:200px"><img class="rise" src="para-card-src/img/outreach.webp" alt=""></div>
+                </div>
+                <div class="fb red abs" data-layer="tile" data-depth="0.1" style="left:80px;top:1861.2px;width:410.7px;height:325.8px;--lab-x:200px;--lab-y:20px">
+                  <div class="fb-c" data-layer="copy" data-depth="0.42" style="--lab-x:120px;--lab-y:60px"><h3>Enhanced relationships</h3><p>Build stronger social bonds through voice</p></div>
+                  <div class="fb-art" data-layer="art" data-depth="0.26" style="height:226.3px;--lab-x:20px;--lab-y:120px"><img class="rise" src="para-card-src/img/venn.webp" alt=""></div>
+                </div>
+                <div class="fb white abs" data-layer="tile" data-depth="0.1" style="left:514.7px;top:1861.2px;width:410.7px;height:325.8px;--lab-x:200px;--lab-y:20px">
+                  <div class="fb-c" data-layer="copy" data-depth="0.42" style="--lab-x:120px;--lab-y:60px"><h3>Unique brand identity</h3><p>Build trust and stand out in a crowded market</p></div>
+                  <div class="fb-art" data-layer="art" data-depth="0.3" style="height:203.1px;--lab-x:20px;--lab-y:120px"><img class="rise" src="para-card-src/img/brand.svg" alt=""></div>
+                </div>
+                <div class="fb white abs" data-layer="tile" data-depth="0.1" style="left:80px;top:2211px;width:845.3px;height:276.7px;--lab-x:620px;--lab-y:20px">
+                  <div class="fb-c" data-layer="copy" data-depth="0.42" style="--lab-x:400px"><h3>Easy to integrate</h3><p>Seamlessly connect to your existing stack</p></div>
+                  <div class="fb-art" data-layer="art" data-depth="0.3" style="height:176.5px;--lab-x:20px;--lab-y:120px"><img class="rise" src="para-card-src/img/stack.webp" alt=""></div>
+                </div>
+                <div class="fb red abs" data-layer="tile" data-depth="0.1" style="left:949.3px;top:2211px;width:410.7px;height:276.7px;--lab-x:200px;--lab-y:20px">
+                  <div class="fb-c" data-layer="copy" data-depth="0.42" style="--lab-x:120px;--lab-y:60px"><h3>Dedicated support</h3><p>Enjoy white-glove onboarding and expert advice</p></div>
+                  <div class="fb-art" data-layer="art" data-depth="0.36" style="height:168.9px;--lab-x:20px;--lab-y:120px"><img class="rise" src="para-card-src/img/heart.webp" alt=""></div>
+                </div>
+              </section>
+
+              <!-- the four steps, each held in the window as the next slides over it -->
+              <section class="sec steps" data-stop="steps" data-tone="dark">
+                <div class="step" data-pin="s0">
+                  <div class="s-count abs" data-layer="count" data-depth="0.5" style="--lab-x:80px">1</div>
+                  <h3 class="s-h abs" data-layer="headline" data-depth="0.8" style="--lab-x:420px">Clone your authentic voice</h3>
+                  <p class="s-p abs" data-layer="copy" data-depth="0.46" style="--lab-x:420px">Create a lifelike replica of your brand's voice, ensuring every message you send embodies your brand's authenticity and character.</p>
+                  <div class="cl-row abs" data-layer="recording" data-depth="0.16" style="top:calc(var(--vh) / 2 - 200.3px);--lab-x:200px;--lab-y:10px"><div class="cl-waves"><img src="para-card-src/img/wave-top.svg" alt=""><img src="para-card-src/img/wave-top.svg" alt=""><img src="para-card-src/img/wave-top.svg" alt=""></div><i class="cl-grad"></i><i class="cl-line"></i></div>
+                  <img class="cl-prof abs" src="para-card-src/img/nora.webp" data-layer="nora" data-depth="0.44" style="top:calc(var(--vh) / 2 - 151.3px);width:160px;height:53px;--lab-y:56px" alt="">
+                  <div class="cl-play abs" data-layer="play" data-depth="0.72" style="top:calc(var(--vh) / 2 - 152.8px);--lab-x:-30px;--lab-y:-34px"><i class="cl-pulse" id="clA"><b><svg class="pl" viewBox="0 0 12 14" fill="none"><path d="M12 7L0 13.93L0 0.07L12 7Z" fill="currentColor"/></svg></b></i></div>
+                  <div class="cl-btn abs" data-layer="cloning" data-depth="0.6" style="--lab-x:-70px;--lab-y:40px"><i class="spin" id="clSpin"><svg viewBox="0 0 16 16" fill="none" stroke="#FE3C6B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.33325V3.99992"/><path d="M8 12V14.6667"/><path d="M3.28662 3.28662L5.17329 5.17329"/><path d="M10.8267 10.8267L12.7133 12.7133"/><path d="M1.33337 8H4.00004"/><path d="M12 8H14.6667"/><path d="M3.28662 12.7133L5.17329 10.8267"/><path d="M10.8267 5.17329L12.7133 3.28662"/></svg></i><span>Cloning Voice</span></div>
+                  <div class="cl-row abs" data-layer="the clone" data-depth="0.16" style="top:calc(var(--vh) / 2 + 18.9px);--lab-x:200px;--lab-y:150px"><div class="cl-waves" style="top:32px"><img src="para-card-src/img/sand-wave.svg" alt=""><img src="para-card-src/img/sand-wave.svg" alt=""><img src="para-card-src/img/sand-wave.svg" alt=""></div><i class="cl-grad"></i><i class="cl-line"></i></div>
+                  <img class="cl-prof abs" src="para-card-src/img/para-ai.webp" data-layer="para ai" data-depth="0.44" style="top:calc(var(--vh) / 2 + 96.8px);width:134.4px;height:59.2px;--lab-y:64px" alt="">
+                  <div class="cl-play abs red" data-layer="play" data-depth="0.72" style="top:calc(var(--vh) / 2 + 66.4px);--lab-x:-30px;--lab-y:96px"><i class="cl-pulse" id="clB"><b><svg class="pl" viewBox="0 0 12 14" fill="none"><path d="M12 7L0 13.93L0 0.07L12 7Z" fill="currentColor"/></svg></b></i></div>
+                </div>
+                <div class="step" data-pin="s1">
+                  <div class="s-count abs" data-layer="count" data-depth="0.5" style="--lab-x:80px">2</div>
+                  <h3 class="s-h abs" data-layer="headline" data-depth="0.8" style="--lab-x:420px">Personalize your voice campaign</h3>
+                  <p class="s-p abs" data-layer="copy" data-depth="0.46" style="--lab-x:420px">Select your audience, write your script, and incorporate dynamic variables like recipient names and product details to create highly tailored messages that resonate with each recipient.</p>
+                  <div class="ty abs" data-layer="script" data-depth="0.18" style="--lab-x:440px;--lab-y:-30px">
+                    <div class="ty-t" data-layer="the words" data-depth="0.4" style="--lab-x:300px;--lab-y:130px">Hey <span class="hl">{first name}</span>!<br><br><span class="ty-main" id="tyMain">We heard you're loving our latest drop. I just wanted to reach out to personally say thanks so much for your kind review and being a long-time customer. I'm sending you a link below for exclusive early access to our upcoming drop. Let us know what you think!</span></div>
+                    <span class="ty-btn abs" data-layer="generate" data-depth="0.66" style="--lab-x:-150px;--lab-y:4px">Generate Audio</span>
+                  </div>
+                </div>
+                <div class="step" data-pin="s2">
+                  <div class="s-count abs" data-layer="count" data-depth="0.5" style="--lab-x:80px">3</div>
+                  <h3 class="s-h abs" data-layer="headline" data-depth="0.8" style="--lab-x:420px">Deliver branded messaging at scale</h3>
+                  <p class="s-p abs" data-layer="copy" data-depth="0.46" style="--lab-x:420px">Transform your script into lifelike human speech. Each message is sent as a branded audio experience, complete with headshot, logo, and brand colors.</p>
+                  <img class="s3-img abs" src="para-card-src/img/zesty.webp" data-layer="branded message" data-depth="0.34" style="--lab-x:120px;--lab-y:120px" alt="">
+                </div>
+                <div class="step" data-pin="s3">
+                  <div class="s-count abs" data-layer="count" data-depth="0.5" style="--lab-x:80px">4</div>
+                  <h3 class="s-h abs" data-layer="headline" data-depth="0.8" style="--lab-x:420px">Track and optimize your performance</h3>
+                  <p class="s-p abs" data-layer="copy" data-depth="0.46" style="--lab-x:420px">Track the performance of each campaign in real-time to help you fine-tune your messaging strategy and create user-generated content that drives results.</p>
+                  <div class="chart abs" data-layer="the chart" data-depth="0.24" style="--lab-x:240px;--lab-y:120px"><svg viewBox="0 0 600 462" fill="none"><g stroke="rgba(224,220,207,.1)" stroke-width="1"><path d="M4.7 93.9H286.7M319.7 93.9H599.7"/><path d="M4.7 114.7H286.7M319.7 114.7H599.7"/><path d="M4.7 135.5H286.7M319.7 135.5H599.7"/><path d="M4.7 156.3H286.7M319.7 156.3H599.7"/><path d="M4.7 177.1H286.7M319.7 177.1H599.7"/><path d="M4.7 197.9H286.7M319.7 197.9H599.7"/><path d="M4.7 218.7H286.7M319.7 218.7H599.7"/><path d="M4.7 239.5H286.7M319.7 239.5H599.7"/><path d="M4.7 260.3H286.7M319.7 260.3H599.7"/><path d="M4.7 281.1H286.7M319.7 281.1H599.7"/><path d="M4.7 301.9H286.7M319.7 301.9H599.7"/><path d="M4.7 322.7H286.7M319.7 322.7H599.7"/><path d="M4.7 343.5H286.7M319.7 343.5H599.7"/><path d="M4.7 364.3H286.7M319.7 364.3H599.7"/><path d="M4.7 385.1H286.7M319.7 385.1H599.7"/><path d="M4.7 405.9H286.7M319.7 405.9H599.7"/><path d="M4.7 426.7H286.7M319.7 426.7H599.7"/><path d="M4.7 447.5H286.7M319.7 447.5H599.7"/></g><path d="M5.7 389.9C8.5 398.6 15.9 442.7 22.7 441.9C29.5 441.1 41.0 393.9 46.7 384.9C52.4 375.9 51.2 395.4 56.7 387.9C62.2 380.4 72.7 342.2 79.7 339.9C86.7 337.6 89.2 382.9 98.7 373.9C108.2 364.9 127.9 299.9 136.7 285.9C145.5 271.9 145.9 290.1 151.7 289.9C157.5 289.7 164.2 282.9 171.7 284.9C179.2 286.9 190.5 300.7 196.7 301.9C202.9 303.1 206.7 293.6 208.7 291.9" stroke="#fe3c6b" stroke-width="2.4" stroke-linecap="round"/><path d="M319.7 308.9C322.5 318.7 329.4 369.2 336.7 367.9C344.0 366.6 354.2 307.7 363.7 300.9C373.2 294.1 379.7 340.7 393.7 326.9C407.7 313.1 434.0 226.6 447.7 217.9C461.4 209.2 469.7 266.4 475.7 274.9C481.7 283.4 482.4 269.9 483.7 268.9" stroke="#fe3c6b" stroke-width="2.4" stroke-linecap="round"/><g fill="#fe3c6b"><circle cx="5.7" cy="389.9" r="5.6"/><circle cx="208.7" cy="291.9" r="5.6"/><circle cx="319.7" cy="308.9" r="5.6"/><circle cx="483.7" cy="268.9" r="5.6"/></g></svg></div>
+                  <div class="chart-n abs" data-layer="the numbers" data-depth="0.56" style="--lab-x:200px;--lab-y:-34px"><span class="n" style="left:8.7px">26</span><span class="u" style="left:112.7px">subscribers</span><span class="n" style="left:310.7px">$759</span><span class="u" style="left:501.7px">revenue</span></div>
+                </div>
+              </section>
+
+              <!-- the best have spoken (the first row of the site's testimonials) -->
+              <section class="sec tms" data-stop="testimonials" data-tone="light">
+                <h2 class="h2 abs" data-layer="headline" data-depth="0.78" data-shadow="0.02,0.24,12" style="left:80px;top:128px;--lab-x:560px">The best have spoken</h2>
+                <p class="sub abs" data-layer="lede" data-depth="0.46" style="left:80px;top:200px;--lab-x:620px">Hear what brands and industry thought leaders have to say</p>
+                <div class="tm abs" data-layer="column" data-depth="0.06" style="left:80px;height:478.2px;--lab-x:120px;--lab-y:10px">
+                  <img class="tm-logo abs" src="para-card-src/img/stag.svg" data-layer="logo" data-depth="0.4" style="width:43.2px;--lab-x:60px" alt="">
+                  <img class="tm-bg abs" src="para-card-src/img/client-wave.svg" data-layer="waveform" data-depth="0.16" style="--lab-y:190px" alt="">
+                  <img class="tm-face abs" src="para-card-src/img/t-ben.webp" data-layer="face" data-depth="0.5" data-shadow="0.04,0.3,14" style="--lab-x:120px" alt="">
+                  <p class="tm-q abs" data-layer="quote" data-depth="0.34" style="--lab-x:200px;--lab-y:60px">Para is building seriously cool stuff, and our customers are really digging the new format.</p>
+                  <p class="tm-a abs" data-layer="name" data-depth="0.26" style="top:428px;--lab-x:180px;--lab-y:-6px">Ben Medalie, Co-Founder</p>
+                </div>
+                <div class="tm abs" data-layer="column" data-depth="0.06" style="left:516px;height:608.2px;--lab-x:120px;--lab-y:10px">
+                  <img class="tm-logo abs" src="para-card-src/img/league.svg" data-layer="logo" data-depth="0.4" style="width:162.8px;--lab-x:180px" alt="">
+                  <img class="tm-bg abs" src="para-card-src/img/client-wave.svg" data-layer="waveform" data-depth="0.16" style="--lab-y:190px" alt="">
+                  <img class="tm-face abs" src="para-card-src/img/t-karolina.webp" data-layer="face" data-depth="0.5" data-shadow="0.04,0.3,14" style="--lab-x:120px" alt="">
+                  <p class="tm-q abs" data-layer="quote" data-depth="0.34" style="--lab-x:200px;--lab-y:180px">Para is so unique and new that people are saying, 'Whoa, this is really interesting.' We've received several messages from people saying, 'Wait, this is so cool. I love this.' It's been a huge hit, and I'm really excited to keep working together.</p>
+                  <p class="tm-a abs" data-layer="name" data-depth="0.26" style="top:558px;--lab-x:270px;--lab-y:-6px">Karolina Swietoniowska, Founder &amp; CEO</p>
+                </div>
+                <div class="tm abs" data-layer="column" data-depth="0.06" style="left:952px;height:556.2px;--lab-x:120px;--lab-y:10px">
+                  <img class="tm-logo abs" src="para-card-src/img/ikonick.webp" data-layer="logo" data-depth="0.4" style="width:293px;--lab-x:300px" alt="">
+                  <img class="tm-bg abs" src="para-card-src/img/client-wave.svg" data-layer="waveform" data-depth="0.16" style="--lab-y:190px" alt="">
+                  <img class="tm-face abs" src="para-card-src/img/t-mark.webp" data-layer="face" data-depth="0.5" data-shadow="0.04,0.3,14" style="--lab-x:120px" alt="">
+                  <!-- the site has "themselves—these"; the dash is a comma here (house rule: no em dashes) -->
+                  <p class="tm-q abs" data-layer="quote" data-depth="0.34" style="--lab-x:200px;--lab-y:130px">As a data-driven company, the results speak for themselves, these voice messages consistently perform better for us. Para is now an essential part of our marketing mix moving forward.</p>
+                  <p class="tm-a abs" data-layer="name" data-depth="0.26" style="top:506px;--lab-x:210px;--lab-y:-6px">Mark Mastrandrea, Co-Founder</p>
+                </div>
+              </section>
+
+              <!-- hear the difference -->
+              <section class="sec wall" data-stop="wall" data-tone="dark">
+                <div class="w-img abs" data-layer="the phone" data-depth="-0.12" style="--lab-x:300px;--lab-y:120px"><img src="para-card-src/img/phone.webp" alt=""></div>
+                <h2 class="h1 w-h abs" data-layer="headline" data-depth="0.8" style="--lab-x:20px;--lab-y:-40px">Hear the difference</h2>
+                <span class="btn pink w-btn abs" data-layer="button" data-depth="0.9" style="--lab-x:180px;--lab-y:4px">All features<i class="arw"><svg viewBox="0 0 18 14" fill="none"><path d="M0 7H17M17 7L10.5 0.5M17 7L10.5 13.5" stroke="currentColor"/></svg></i></span>
+                <div class="w-list abs" data-layer="features" data-depth="0.4" style="--lab-x:360px;--lab-y:10px">
+                  <div><h4>Voice cloning</h4><p>Authentic, lifelike brand voice replication</p></div>
+                  <div><h4>Branded messaging</h4><p>Trust-building brand elements in audio</p></div>
+                  <div><h4>Custom fields</h4><p>Craft one-of-a-kind interactions</p></div>
+                  <div><h4>Pronunication library</h4><p>Precise pronunciation for personalization</p></div>
+                  <div><h4>Campaign attribution</h4><p>Track success with campaign insights</p></div>
+                  <div><h4>Safeguard risk</h4><p>Compliance and risk mitigation assurance</p></div>
+                </div>
+              </section>
+
+              <!-- case studies -->
+              <section class="sec blog" data-stop="cases" data-tone="light">
+                <h2 class="h1 b-h abs" data-layer="headline" data-depth="0.78" data-shadow="0.02,0.24,14" style="--lab-x:520px">Case Studies</h2>
+                <div class="b-img abs" data-layer="immi" data-depth="0.3" data-shadow="0.04,0.32,18" style="left:80px;--lab-x:20px;--lab-y:20px"><img src="para-card-src/img/immi.webp" alt=""></div>
+                <div class="b-img abs" data-layer="maryruth" data-depth="0.3" data-shadow="0.04,0.32,18" style="left:516px;--lab-x:20px;--lab-y:20px"><img src="para-card-src/img/mro.webp" alt=""></div>
+                <div class="b-img abs" data-layer="hexclad" data-depth="0.3" data-shadow="0.04,0.32,18" style="left:952px;--lab-x:20px;--lab-y:20px"><img src="para-card-src/img/hexclad.webp" alt=""></div>
+                <div class="b-txt abs" data-layer="story" data-depth="0.46" style="left:80px;--lab-x:200px;--lab-y:-30px"><h3>How immi increased SMS earnings per message by 4.9x and ROI by 3x using voice messaging</h3><p>See how immi used personalized voice messaging to boost engagement, drive 3x higher ROI, and build deeper community through authentic storytelling.</p><span class="btn outline">View<i class="arw"><svg viewBox="0 0 18 14" fill="none"><path d="M0 7H17M17 7L10.5 0.5M17 7L10.5 13.5" stroke="currentColor"/></svg></i></span></div>
+                <div class="b-txt abs" data-layer="story" data-depth="0.46" style="left:516px;--lab-x:200px;--lab-y:-30px"><h3>How MaryRuth Organics created meaningful moments with customers using voice messaging</h3><p>Discover how MaryRuth Organics used heartfelt voice messages to drive emotional connection and natural conversions during the holidays.</p><span class="btn outline">View<i class="arw"><svg viewBox="0 0 18 14" fill="none"><path d="M0 7H17M17 7L10.5 0.5M17 7L10.5 13.5" stroke="currentColor"/></svg></i></span></div>
+                <div class="b-txt abs" data-layer="story" data-depth="0.46" style="left:952px;--lab-x:200px;--lab-y:-30px"><h3>How HexClad increased SMS click rate by 48% and revenue by 6.7x using voice messaging</h3><p>Learn how HexClad leveraged Para's AI-powered voice messaging featuring Gordon Ramsay, achieving higher CTR and revenue for their SMS campaign.</p><span class="btn outline">View<i class="arw"><svg viewBox="0 0 18 14" fill="none"><path d="M0 7H17M17 7L10.5 0.5M17 7L10.5 13.5" stroke="currentColor"/></svg></i></span></div>
+              </section>
+
+              <!-- frequently asked -->
+              <section class="sec faq" data-stop="faq" data-tone="dark">
+                <h2 class="h1 q-h abs" data-layer="headline" data-depth="0.78" style="--lab-x:20px;--lab-y:-40px">Frequently asked</h2>
+                <div class="q-lines abs" data-layer="rules" data-depth="0.18" style="--lab-x:300px;--lab-y:370px"><i style="top:0"></i><i style="top:73px"></i><i style="top:146px"></i><i style="top:219px"></i><i style="top:292px"></i><i style="top:365px"></i><svg style="top:21px" viewBox="0 0 32 32" fill="none"><path d="M25.3333 15.667V16.3336C25.3333 16.7018 25.0349 17.0003 24.6667 17.0003H17V24.667C17 25.0351 16.7015 25.3336 16.3333 25.3336H15.6667C15.2985 25.3336 15 25.0351 15 24.667V17.0003H7.3333C6.96511 17.0003 6.66663 16.7018 6.66663 16.3336V15.667C6.66663 15.2988 6.96511 15.0003 7.3333 15.0003H15V7.33365C15 6.96546 15.2985 6.66699 15.6667 6.66699H16.3333C16.7015 6.66699 17 6.96546 17 7.33365V15.0003H24.6667C25.0349 15.0003 25.3333 15.2988 25.3333 15.667Z" fill="currentColor"/></svg><svg style="top:94px" viewBox="0 0 32 32" fill="none"><path d="M25.3333 15.667V16.3336C25.3333 16.7018 25.0349 17.0003 24.6667 17.0003H17V24.667C17 25.0351 16.7015 25.3336 16.3333 25.3336H15.6667C15.2985 25.3336 15 25.0351 15 24.667V17.0003H7.3333C6.96511 17.0003 6.66663 16.7018 6.66663 16.3336V15.667C6.66663 15.2988 6.96511 15.0003 7.3333 15.0003H15V7.33365C15 6.96546 15.2985 6.66699 15.6667 6.66699H16.3333C16.7015 6.66699 17 6.96546 17 7.33365V15.0003H24.6667C25.0349 15.0003 25.3333 15.2988 25.3333 15.667Z" fill="currentColor"/></svg><svg style="top:167px" viewBox="0 0 32 32" fill="none"><path d="M25.3333 15.667V16.3336C25.3333 16.7018 25.0349 17.0003 24.6667 17.0003H17V24.667C17 25.0351 16.7015 25.3336 16.3333 25.3336H15.6667C15.2985 25.3336 15 25.0351 15 24.667V17.0003H7.3333C6.96511 17.0003 6.66663 16.7018 6.66663 16.3336V15.667C6.66663 15.2988 6.96511 15.0003 7.3333 15.0003H15V7.33365C15 6.96546 15.2985 6.66699 15.6667 6.66699H16.3333C16.7015 6.66699 17 6.96546 17 7.33365V15.0003H24.6667C25.0349 15.0003 25.3333 15.2988 25.3333 15.667Z" fill="currentColor"/></svg><svg style="top:240px" viewBox="0 0 32 32" fill="none"><path d="M25.3333 15.667V16.3336C25.3333 16.7018 25.0349 17.0003 24.6667 17.0003H17V24.667C17 25.0351 16.7015 25.3336 16.3333 25.3336H15.6667C15.2985 25.3336 15 25.0351 15 24.667V17.0003H7.3333C6.96511 17.0003 6.66663 16.7018 6.66663 16.3336V15.667C6.66663 15.2988 6.96511 15.0003 7.3333 15.0003H15V7.33365C15 6.96546 15.2985 6.66699 15.6667 6.66699H16.3333C16.7015 6.66699 17 6.96546 17 7.33365V15.0003H24.6667C25.0349 15.0003 25.3333 15.2988 25.3333 15.667Z" fill="currentColor"/></svg><svg style="top:313px" viewBox="0 0 32 32" fill="none"><path d="M25.3333 15.667V16.3336C25.3333 16.7018 25.0349 17.0003 24.6667 17.0003H17V24.667C17 25.0351 16.7015 25.3336 16.3333 25.3336H15.6667C15.2985 25.3336 15 25.0351 15 24.667V17.0003H7.3333C6.96511 17.0003 6.66663 16.7018 6.66663 16.3336V15.667C6.66663 15.2988 6.96511 15.0003 7.3333 15.0003H15V7.33365C15 6.96546 15.2985 6.66699 15.6667 6.66699H16.3333C16.7015 6.66699 17 6.96546 17 7.33365V15.0003H24.6667C25.0349 15.0003 25.3333 15.2988 25.3333 15.667Z" fill="currentColor"/></svg></div>
+                <div class="q-qs abs" data-layer="questions" data-depth="0.42" style="--lab-x:420px;--lab-y:-30px"><span style="top:0">What is Para and how does it work?</span><span style="top:73px">How does Para compare to traditional text-based marketing?</span><span style="top:146px">Can I personalize the audio content for my campaigns?</span><span style="top:219px">Can I integrate Para with my existing marketing tools and platforms?</span><span style="top:292px">Is Para suitable for small businesses or larger enterprises?</span></div>
+              </section>
+
+              <!-- ready to talk? -->
+              <section class="sec cta" data-stop="cta" data-tone="light">
+                <div class="c-wave abs" data-layer="waveforms" data-depth="-0.1" style="--lab-x:300px;--lab-y:120px"><img src="para-card-src/img/waveforms.svg" alt=""></div>
+                <h2 class="mega c-h abs" data-layer="headline" data-depth="0.86" data-shadow="0.04,0.3,18" style="--lab-x:300px;--lab-y:-40px"><span class="mr">Ready to</span> talk?</h2>
+                <span class="btn maroon c-btn abs" data-layer="book demo" data-depth="0.94" data-shadow="0.04,0.36,10" style="--lab-x:180px;--lab-y:4px">Book Demo<i class="arw"><svg viewBox="0 0 18 14" fill="none"><path d="M0 7H17M17 7L10.5 0.5M17 7L10.5 13.5" stroke="currentColor"/></svg></i></span>
+              </section>
+
+              <!-- the footer -->
+              <footer class="sec foot" data-stop="footer" data-tone="dark">
+                <div class="ft-links abs" data-layer="links" data-depth="0.42" style="--lab-x:200px;--lab-y:40px"><span>Features</span><span>About</span><span>Customers</span></div>
+                <div class="ft-mark abs" data-layer="mark" data-depth="0.62" style="--lab-x:-160px;--lab-y:90px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 107 222" fill="none"><path d="M50.6039 177.143L23.0049 129.507L23.0049 222H0.137174L0 0.559466C3.43964 0.189706 6.93343 0 10.4717 0C14.6718 0 18.8092 0.267311 22.8678 0.785793L22.8678 48.6832L50.0007 1.85161C57.0196 4.9951 63.5933 8.94998 69.6015 13.5964L43.9636 57.8475L88.1015 32.4535C92.6236 38.5399 96.442 45.1769 99.4369 52.245L55.3976 77.5824H106.25C106.745 81.5301 107 85.5522 107 89.6337C107 93.263 106.798 96.8454 106.405 100.37H55.3974L99.8788 125.962C96.9678 133.069 93.2282 139.751 88.7798 145.89L43.9629 120.105L70.126 165.262C67.43 167.377 64.6182 169.352 61.7015 171.175L55.5668 174.705C53.9395 175.563 52.2847 176.376 50.6039 177.143Z" fill="currentColor"/></svg></div>
+                <div class="ft-bottom abs" data-layer="credits" data-depth="0.22" style="--lab-x:500px;--lab-y:-34px"><i class="ft-rule"></i><span style="left:0">Robin Voice, Inc 2023</span><span style="left:914.6px">Terms of Service</span><span style="left:1042.4px">Privacy Policy</span><span style="left:1153.8px">Services Agreement</span></div>
+              </footer>
+            </div>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>PARA AI</h3>
+      <p><span>AI</span><span>Brand, Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="para-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, the Studio's own Params (defineParams from /shared/params/params.js).
+   Embedded on the site there is no panel and nothing is fetched, so the module
+   is only loaded here, and only when served (opened from disk there is no
+   studio to load it from): the card runs on its defaults without it. */
+const card = window.paraCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'para work card';
+    const D = card.defaults;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        pulse: [D['motion.pulse'], 0, 3, 0.05],            // the cloning buttons breathing and the spinner
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        scrub: [D['drag.scrub'], 0.5, 6, 0.1],             // page px per px of a sideways drag (right = further down)
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

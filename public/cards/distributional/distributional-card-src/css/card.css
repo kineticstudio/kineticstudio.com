@@ -1,0 +1,373 @@
+/* Distributional work card. The page chrome (stage, card, light, ruler, label
+   row) follows the Epirus, Ethos and Dawn cards; everything under .vp is the
+   Distributional site Kinetic built, rebuilt at its own 1440px design width
+   from Kinetic's recording and the archived build (2025-10-13), measured at
+   1440x900 in headless Chromium. */
+
+@font-face { font-family: "DS Display"; src: url("../fonts/FormaDJRDisplay-Medium.woff2") format("woff2"); font-weight: 500; font-display: block; }
+@font-face { font-family: "DS Mono"; src: url("../fonts/FormaDJRMono-Regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: "DS Mono"; src: url("../fonts/FormaDJRMono-Medium.woff2") format("woff2"); font-weight: 500; font-display: block; }
+@font-face { font-family: "DS Graphik"; src: url("../fonts/Graphik-Regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: "KS Panell Condensed"; src: url("../fonts/PanellCondensed-TRIAL-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "KS Mono"; src: url("../fonts/PPNeueMontrealMono-Book.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #0d0d0d;
+  color: #eef1ea;
+  font-family: "KS Mono", ui-monospace, monospace;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Kinetic: the page and the work card ---------- */
+.stage {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  --size: 40;
+  --card-w: min(calc(var(--size) * 1vw), calc((100vh - 150px) * 4 / 3));
+}
+@media (max-width: 700px) { .stage { --card-w: calc(100vw - 32px); } }
+
+.slot { width: var(--card-w); display: flex; flex-direction: column; gap: clamp(14px, 1.1vw, 16px); }
+
+/* the hit area never moves; only what is inside it does */
+.persp {
+  position: relative;
+  width: 100%; aspect-ratio: 4 / 3;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+.persp.is-dragging { cursor: grabbing; }
+.card-shadow {
+  position: absolute; inset: 6% 7% -1% 7%;
+  border-radius: 12%;
+  background: rgba(0, 0, 0, .9);
+  filter: blur(30px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+/* laid out K times its size and scaled back inside its own 3D transform, so
+   the tilted card rasters as sharp as the flat one (see the Dawn card) */
+.card {
+  position: absolute; left: 0; top: 0;
+  --k: 1;
+  border-radius: calc(var(--r, 6px) * var(--k));
+  background: var(--frame-color, #e9e7de);
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  isolation: isolate;
+}
+.card, .card * { user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+
+/* the site's browser window, inset on the card ground when framed */
+.win {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  overflow: hidden;
+  background: #1e1e1e;
+  will-change: transform;
+}
+.win-shadow {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  background: #3b3a36;
+  filter: blur(calc(var(--card-px, 576px) * .022));
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.card:not(.is-framed) .win-shadow { display: none; }
+
+/* The light, as on an Apple TV poster: one soft round bloom of light under
+   the pointer, brightest there and fading to nothing, added on top (screen).
+   No stripes, no bands. It moves by transform only. The rim is a faint
+   brightening of the card edge nearest the pointer, the same bloom seen
+   through a thin ring mask. */
+.bloom, .rim { position: absolute; z-index: 6; pointer-events: none; opacity: 0; will-change: transform, opacity; }
+.bloom {
+  width: calc(var(--card-px, 576px) * 1.3); height: calc(var(--card-px, 576px) * 1.3);
+  left: calc(var(--card-px, 576px) * -.65); top: calc(var(--card-px, 576px) * -.65);
+  background: radial-gradient(circle closest-side,
+    rgba(255, 255, 255, .72), rgba(255, 255, 255, .5) 9%, rgba(255, 255, 255, .26) 22%, rgba(250, 252, 255, .11) 40%,
+    rgba(250, 252, 255, .04) 62%, rgba(250, 252, 255, .01) 82%, rgba(250, 252, 255, 0) 100%);
+  mix-blend-mode: screen;
+}
+.rim {
+  left: 0; top: 0; width: 100%; height: 100%;
+  border-radius: inherit; overflow: hidden;
+  padding: calc(1.5px * var(--k));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  mix-blend-mode: screen;
+}
+.rim i {
+  position: absolute; display: block;
+  width: calc(var(--card-px, 576px) * .9); height: calc(var(--card-px, 576px) * .9);
+  left: calc(var(--card-px, 576px) * -.45); top: calc(var(--card-px, 576px) * -.45);
+  background: radial-gradient(circle closest-side, rgba(255, 255, 255, .85), rgba(255, 255, 255, .22) 45%, rgba(255, 255, 255, 0) 100%);
+  will-change: transform;
+}
+
+/* The scroll ruler: 1px notches every 6px that slide as the miniature
+   scrolls, one brighter mark fixed at the reading position. Full bleed it
+   sits just outside the card; framed, in the window's right margin on the
+   card ground; in a tile, just inside the right edge, its ink following the
+   section under the mark (dark on the white Workflow, light everywhere else). */
+.notches { position: absolute; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); }
+.notches .ticks { position: absolute; left: 0; right: 0; top: calc(var(--np) * -2); bottom: calc(var(--np) * -2);
+  background: repeating-linear-gradient(to bottom, var(--tick) 0 var(--nw), transparent var(--nw) var(--np)); will-change: transform; }
+.notches .mark { position: absolute; top: 50%; height: var(--nw); background: var(--mark); }
+.notches-in { --nw: calc(1px * var(--k)); --np: calc(6px * var(--k));
+  width: calc(5px * var(--k)); height: 46%; top: 27%; right: calc(var(--mx) / 2 - 2.5px * var(--k)); z-index: 2; }
+.notches-in .ink { position: absolute; inset: 0; will-change: opacity; }
+.notches-in .dark { --tick: rgba(30, 30, 30, .15); --mark: rgba(30, 30, 30, .6); }
+.notches-in .light { --tick: rgba(238, 241, 234, .17); --mark: rgba(238, 241, 234, .7); opacity: 0; }
+.notches-in .mark { left: calc(-2px * var(--k)); right: calc(-2px * var(--k)); }
+.notches-out { --nw: 1px; --np: 6px; --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .62);
+  width: 5px; height: 46%; top: 27%; right: -16px; }
+.notches-out .mark { left: -2px; right: -2px; }
+.card.is-framed .notches-in .light { opacity: 0 !important; }
+.card.is-framed .notches-in .dark { opacity: 1 !important; }
+.card.is-framed.is-dark-frame .notches-in .dark { --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .6); }
+.card:not(.is-framed) .notches-in, .slot:not(.full) .notches-out, .no-notches .notches { display: none; }
+
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: clamp(14px, 1.1vw, 16px); }
+.meta h3 {
+  margin: 0;
+  font-family: "KS Panell Condensed", "Arial Narrow", sans-serif; font-weight: 500;
+  font-size: clamp(22px, 1.95vw, 28px); line-height: .94; letter-spacing: -.02em;
+  text-transform: uppercase;
+}
+.meta p {
+  margin: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
+  text-align: right;
+  font-family: "KS Mono", ui-monospace, monospace;
+  font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
+  color: rgba(238, 241, 234, .5);
+}
+
+/* Embed (?embed=1): the card alone, edge to edge at the frame's own aspect,
+   on a transparent page. The site's tile frames it. */
+html.is-embed, html.is-embed body { background: transparent; }
+.is-embed .stage { display: block; }
+.is-embed .slot { position: absolute; inset: 0; width: auto; display: block; }
+.is-embed .persp { position: absolute; inset: var(--bleed, 0px); width: auto; height: auto; aspect-ratio: auto; }
+.is-embed .meta, .is-embed .notches-out, .is-embed .card-shadow { display: none; }
+/* full bleed in a tile there is no margin to sit in, so the ruler rides just inside the right edge */
+.is-embed .card:not(.is-framed) .notches-in { display: block; right: calc(7px * var(--k)); }
+
+/* ---------- Distributional: the miniature, at its own 1440px design width ---------- */
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  background: #1e1e1e;
+  --ink: #1e1e1e; --dark: #323233; --light: #ececec; --stroke: #e1e1e3; --off: #f5f5f7; --mid: #5e5e5e;
+  --pink: #ed77f8; --blue: #6464f1; --green: #85f78f; --yellow: #ffff61; --red: #ec6258;
+  font-family: "DS Graphik", Arial, sans-serif;
+  font-size: 16px; line-height: 25.6px; font-weight: 400;
+  color: #fff;
+  text-rendering: geometricPrecision;
+}
+.page { position: absolute; left: 0; top: 0; width: 1440px; will-change: transform; }
+.sec { position: relative; width: 1440px; }
+.sec > *, .vp .abs, .stack > *, .problem > *, .solution > *, .product > *, .col3 > * { position: absolute; }
+[data-depth] { will-change: transform; }
+:where(.vp h1, .vp h2, .vp h3, .vp p) { margin: 0; font-weight: inherit; }
+.vp img { display: block; }
+
+/* the site's type: Forma DJR Display for headings, Forma DJR Mono for eyebrows and buttons, Graphik for copy */
+.h1 { font-family: "DS Display", Arial, sans-serif; font-size: 80px; line-height: 80px; font-weight: 500; letter-spacing: -.8px; text-align: center; }
+.h2 { font-family: "DS Display", Arial, sans-serif; font-size: 48px; line-height: 48px; font-weight: 500; letter-spacing: -.48px; }
+.h5 { font-family: "DS Display", Arial, sans-serif; font-size: 20px; line-height: 28px; font-weight: 500; }
+.lead { font-size: 20px; line-height: 30px; }
+.eyebrow { font-family: "DS Mono", Arial, sans-serif; font-size: 12.8px; line-height: 15.36px; font-weight: 500; letter-spacing: 1.28px; text-transform: uppercase; white-space: nowrap; }
+.col3 > div { top: 0; }
+.col3 .eyebrow { position: relative; white-space: normal; }
+.col3 p { position: relative; margin-top: 6.6px; opacity: .6; }
+
+/* buttons: mono caps, square, four 2px corner pixels just outside (the site's own .btn) */
+.btn {
+  height: 32px; padding: 0 12px; border: 1px solid transparent;
+  display: flex; align-items: center; white-space: nowrap;
+  font-family: "DS Mono", Arial, sans-serif; font-size: 12px; line-height: 12px; font-weight: 500; letter-spacing: .48px; text-transform: uppercase;
+  --cn: #fff;
+}
+.btn::before, .btn::after, .btn .cn::before, .btn .cn::after { content: ""; position: absolute; width: 2px; height: 2px; background: var(--cn); }
+.btn::before { top: -2px; left: -2px; } .btn::after { top: -2px; right: -2px; }
+.btn .cn::before { bottom: -2px; right: -2px; } .btn .cn::after { bottom: -2px; left: -2px; }
+.btn .cn { position: absolute; inset: 0; pointer-events: none; }
+.btn.pink { background: var(--pink); color: var(--ink); }
+.btn.grey { background: var(--dark); color: #fff; }
+.btn.ink { background: var(--ink); border-color: var(--ink); color: #fff; --cn: var(--mid); }
+.btn.white { background: var(--off); color: var(--ink); --cn: var(--light); }
+
+/* the lottie boxes: the site's dot grid behind (14px, 2px dots), clipped to their box */
+.lot { overflow: hidden; }
+.lot > img, .lot > div { position: absolute; }
+.lot.dots { background-image: url("../img/dot.svg"); background-position: 0 0; background-size: 14px 14px; }
+.lot.dots.grey { background-color: var(--stroke); }
+
+/* the container's vertical lines, as on the site (hero, nav, footer) */
+.hero::before, .hero::after, .foot::before, .foot::after, .nav::before, .nav::after {
+  content: ""; position: absolute; z-index: 20; top: 0; width: 1px; height: 100%; background: var(--dark); pointer-events: none;
+}
+.hero::before, .foot::before, .nav::before { left: 66px; }
+.hero::after, .foot::after, .nav::after { left: 1373px; }
+.hero::before, .hero::after { top: 56px; height: calc(100% - 56px); }
+
+/* hero */
+.hero { height: 1229px; background: var(--ink); }
+/* the dot field: the site's own svg, covered from 573 down by the cube's frame as the iframe covers it there */
+.h-dots { left: 66px; top: 56px; width: 1307px; height: 517px; overflow: hidden; }
+.h-dots img { width: 1307px; height: 587px; object-fit: cover; }
+.h-rule { left: 66px; top: 573px; width: 1307px; height: 1px; background: var(--dark); }
+.h-title { left: 359px; top: 152px; width: 723px; }
+.h-lead { left: 359px; top: 328px; width: 723px; text-align: center; color: rgba(255, 255, 255, .6); }
+.h-btn { left: 668px; top: 419px; }
+
+/* the cube: a 7 x 7 x 7 lattice in CSS 3D (planes of hairlines), coloured blocks inside with their trails */
+.cube-box { left: 66px; top: 574px; width: 1307px; height: 650px; pointer-events: none; }
+.cstage { position: absolute; inset: 0; perspective: 890px; perspective-origin: 50% 50%; }
+.cube { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; will-change: transform; }
+.cube .pl {
+  position: absolute; left: -210px; top: -210px; width: 421px; height: 421px;
+  --ln: rgba(255, 255, 255, .085);
+}
+.cube .pl.z { background-image: linear-gradient(to right, var(--ln) 1px, transparent 1px), linear-gradient(to bottom, var(--ln) 1px, transparent 1px); background-size: 60px 60px; }
+.cube .pl.x { background-image: linear-gradient(to bottom, var(--ln) 1px, transparent 1px); background-size: 60px 60px; }
+.cube .pl.edge { --ln: rgba(255, 255, 255, .22); }
+.cube .pl.z.edge { background-image:
+  radial-gradient(circle at .5px .5px, rgba(255, 255, 255, .9) 0 1.3px, transparent 1.9px),
+  linear-gradient(to right, var(--ln) 1px, transparent 1px), linear-gradient(to bottom, var(--ln) 1px, transparent 1px); background-size: 60px 60px; }
+.blk { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; will-change: transform; }
+.blk i { position: absolute; left: -27px; top: -27px; width: 54px; height: 54px; display: block; background: var(--c); opacity: var(--o, .94); }
+.blk i:nth-child(1) { transform: translateZ(27px); }
+.blk i:nth-child(2) { transform: rotateY(180deg) translateZ(27px); background: color-mix(in srgb, var(--c) 70%, #000); }
+.blk i:nth-child(3) { transform: rotateY(90deg) translateZ(27px); background: color-mix(in srgb, var(--c) 82%, #000); }
+.blk i:nth-child(4) { transform: rotateY(-90deg) translateZ(27px); background: color-mix(in srgb, var(--c) 82%, #000); }
+.blk i:nth-child(5) { transform: rotateX(90deg) translateZ(27px); background: color-mix(in srgb, var(--c) 88%, #fff); }
+.blk i:nth-child(6) { transform: rotateX(-90deg) translateZ(27px); background: color-mix(in srgb, var(--c) 66%, #000); }
+
+/* the nav, sticky in the window */
+.nav { left: 0; top: 0; width: 1440px; height: 56px; z-index: 30; background: var(--ink); border-bottom: 1px solid var(--dark); }
+.nav > * { position: absolute; }
+.nav-band { left: 0; top: 0; width: 1440px; height: 55px; }
+.nav-band > * { position: absolute; }
+.nav-logo { left: 86px; top: 13px; width: 160px; height: 28px; }
+.nav-link {
+  top: 0; height: 55px; padding: 0 12.8px; display: flex; align-items: center; gap: 3.84px;
+  font-family: "DS Mono", Arial, sans-serif; font-size: 12.8px; line-height: 12.8px; font-weight: 400; letter-spacing: 1.28px; text-transform: uppercase;
+  color: #fff; opacity: .6; white-space: nowrap;
+}
+.nav-link img { width: 15.36px; height: 15.36px; }
+.nav-btn { left: 1251px; top: 11px; }
+
+/* the sticky stack: Problem (light), Solution (dark) inset 6%, the Product card inset again */
+.stack { position: relative; margin-left: 66px; width: 1307px; height: 3792px; background: var(--light); }
+.problem { left: 0; top: 0; width: 1307px; height: 1205px; background: var(--light); color: var(--ink); z-index: 1; will-change: transform; }
+.p-eye { left: 80px; top: 39px; }
+.p-h { left: 80px; top: 194px; width: 753px; }
+.p-lot { left: 80px; top: 384px; width: 1149px; height: 567px; }
+.p-shapes { left: 0; top: 0; width: 1149px; height: 561px; }
+.p-shapes img { position: absolute; will-change: transform, opacity; opacity: 0; }
+.p-cols { left: 0; top: 983px; width: 1307px; }
+
+.sol-wrap { left: 80px; top: 1205px; width: 1227px; height: 2587px; z-index: 2; }
+.sol-wrap > * { position: absolute; }
+.solution { left: 0; top: 0; width: 1227px; height: 1159px; background: var(--ink); color: #fff; z-index: 2; will-change: transform; }
+.s-eye { left: 74px; top: 96px; }
+.s-h { left: 74px; top: 250px; width: 706px; }
+.s-lot { left: 74px; top: 393px; width: 1079px; height: 538px; --sc: .9498; }
+.s-lot > img { left: 0; top: 0; width: 1079px; height: 532px; }
+.s-spread { opacity: 0; will-change: opacity; }
+.s-sqs { left: 0; top: 0; width: 1079px; height: 532px; }
+.s-sq { position: absolute; left: calc(var(--x) * var(--sc) * 1px); top: calc(var(--y) * var(--sc) * 1px); width: calc(108px * var(--sc)); opacity: 0; will-change: opacity; }
+.s-cols { left: 0; top: 963px; width: 1227px; }
+
+.prod-wrap { left: 0; top: 1159px; width: 1227px; height: 1428px; background: var(--ink); z-index: 9; }
+.prod-wrap > * { position: absolute; }
+.product { left: 74px; top: 0; width: 1080px; height: 1428px; background: var(--light); color: var(--ink); }
+.o-eye { left: 64px; top: 96px; }
+.o-h { left: 64px; top: 251px; width: 538px; }
+.o-btn { left: 911px; top: 376px; }
+.o-lot { left: 64px; top: 441px; width: 951px; height: 668px; --sc: .9596; }
+.o-base { left: calc(-17px * .9596); top: calc(-13px * .9596); width: calc(942px * .9596); height: calc(667px * .9596); }
+.o-stack, .w-sq { left: calc(var(--x) * var(--sc) * 1px); top: calc(var(--y) * var(--sc) * 1px); width: calc(var(--w) * var(--sc) * 1px); height: calc(var(--h) * var(--sc) * 1px); }
+.o-stack img, .w-sq img { width: 100%; height: 100%; will-change: transform, opacity; }
+.o-cols { left: 0; top: 1148px; width: 1080px; }
+
+/* workflow */
+.work { height: 1019px; background: #fff; color: var(--ink); z-index: 5; }
+.w-eye { left: 86px; top: 96px; }
+.w-h { left: 86px; top: 131px; width: 505px; }
+.w-btn { left: 1250px; top: 194px; }
+.w-lot { left: 86px; top: 259px; width: 1267px; height: 562px; --sc: .9883; background-color: #fff; }
+.w-base { left: calc(179px * .9883); top: calc(99px * .9883); width: calc(882px * .9883); height: calc(345px * .9883); }
+.w-ben { top: 821px; width: 287px; height: 124px; }
+.w-ben > * { position: absolute; left: 0; }
+.w-ben img { top: 0; width: 48px; height: 48px; }
+.w-ben h3 { top: 72px; width: 287px; white-space: normal; }
+
+/* use cases */
+.uses { height: 520px; background: var(--ink); color: #fff; z-index: 4; }
+.u-eye { left: 86px; top: 97px; }
+.u-h { left: 86px; top: 131px; width: 505px; }
+.u-card { top: 226px; width: 396px; height: 198px; color: var(--ink); }
+.u-card img { position: absolute; left: 0; top: 0; width: 396px; height: 198px; }
+.u-card h3 { position: absolute; left: 64px; right: 64px; top: 0; bottom: 12px; display: flex; align-items: center; justify-content: center; text-align: center; }
+.u-px { left: 0; top: 503px; width: 28.8px; height: 28.8px; }
+
+/* elevate your AI testing */
+.cta { height: 702px; background: var(--blue); color: #fff; overflow: hidden; z-index: 5; }
+.c-lattice, .c-lines, .c-sqs { left: -772px; top: 270px; width: 2984px; height: 728.3px; }
+.c-sqs img { width: 100%; height: 100%; will-change: transform; }
+.c-h { left: 413px; top: 96px; width: 614px; text-align: center; }
+.c-p { left: 413px; top: 158px; width: 614px; text-align: center; }
+.c-btn { left: 668px; top: 237px; }
+.c-px-top { left: 1382.4px; top: 0; width: 57.6px; height: 38.4px; }
+.c-px-bot { left: 1411.2px; top: 674.2px; width: 28.8px; height: 28.8px; }
+
+/* the footer */
+.foot { height: 735px; background: var(--ink); color: #fff; z-index: 5; }
+.f-mid { left: 720px; top: 0; width: 1px; height: 634px; background: var(--dark); }
+.f-rule { left: 0; top: 634px; width: 1440px; height: 1px; background: var(--dark); }
+.f-mark { left: 379px; top: 302px; width: 48px; height: 22px; }
+.f-cols { left: 823px; top: 245px; width: 450px; height: 150px; }
+.f-cols > div { position: absolute; top: 0; }
+.f-cols b { display: block; opacity: .6; margin-bottom: 6.4px; }
+.f-cols span { display: block; font-size: 16px; line-height: 25.6px; margin-bottom: 4.8px; white-space: nowrap; }
+.f-legal { left: 86px; top: 667px; width: 820px; height: 22px; }
+.f-legal span { position: absolute; top: 0; font-size: 14.4px; line-height: 21.6px; color: rgba(255, 255, 255, .7); white-space: nowrap; }
+.f-social { left: 1234px; top: 667px; width: 120px; height: 24px; opacity: .6; }
+.f-social img { position: absolute; height: auto; }
+
+/* shadow twins: a darkened, blurred copy of a lifted layer left on the surface below it,
+   composited like the layer it shadows, so a changing scale never re-rasters the blur */
+.twin { filter: brightness(0) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; will-change: transform, opacity; }
+
+/* debug: layer outlines */
+.show-layers [data-layer] { outline: 3px dashed #a8ff66; outline-offset: -3px; }
+.show-layers [data-layer]::after {
+  content: attr(data-layer) "  z " attr(data-depth);
+  position: absolute; left: var(--lab-x, 6px); top: var(--lab-y, 6px); right: auto; bottom: auto; z-index: 50;
+  width: auto; height: auto; padding: 3px 8px 2px; border-radius: 4px;
+  background: #a8ff66; color: #0d0d0d;
+  font: 500 22px/1.15 "KS Mono", ui-monospace, monospace;
+  -webkit-text-fill-color: #0d0d0d; text-transform: uppercase; letter-spacing: .02em;
+  white-space: nowrap; text-align: left;
+}
+.show-layers img[data-layer] { outline-offset: -3px; }
+.card.show-layers > [data-layer] { outline-width: calc(1px * var(--k)); outline-offset: calc(-1px * var(--k)); }
+.card.show-layers > [data-layer]::after { font-size: calc(8px * var(--k)); left: auto; right: calc(4px * var(--k)); top: auto; bottom: calc(4px * var(--k)); padding: calc(2px * var(--k)) calc(4px * var(--k)) calc(1px * var(--k)); border-radius: calc(2px * var(--k)); }

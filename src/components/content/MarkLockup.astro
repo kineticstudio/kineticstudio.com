@@ -1,0 +1,78 @@
+---
+import logoRaw from "@/assets/brand/logo.svg?raw";
+
+interface Props {
+  /** The words in the pill, where the logo has KINETIC. */
+  label: string;
+  /** Utility classes. */
+  class?: string;
+}
+
+const { label, class: className } = Astro.props;
+/* The Kinetic mark with other words in its pill (Hunter, Oct 25: "This should
+   be the Kinetic mark with Studio tool inside of a pill"). The mark is the
+   logo's own five strokes, cut from src/assets/brand/logo.svg; the pill is
+   drawn in HTML so it grows to its words, at the logo's height and line, and
+   starts where the logo's pill starts, so the strokes still wrap its round end.
+   Its font-size is the logo's height. */
+const [, , , vbH] = logoRaw.match(/viewBox="([^"]+)"/)![1].split(/\s+/).map(Number);
+const markD = logoRaw.match(/id="mark"[^>]*\sd="([^"]+)"/)![1];
+const rect = logoRaw.match(/<rect id="pill"[^>]*>/)![0];
+const n = (k: string) => Number(rect.match(new RegExp(`\\s${k}="([\\d.]+)"`))![1]);
+const sw = n("stroke-width");
+const markW = Math.max(...[...markD.matchAll(/-?[\d.]+/g)].filter((_, i) => i % 2 === 0).map((m) => Number(m[0])));
+const vars = [
+  `--mark-ar:${markW}/${vbH}`,
+  // the pill's outer left edge sits this far back inside the mark
+  `--pill-in:${((markW - (n("x") - sw / 2)) / vbH).toFixed(4)}`,
+  `--pill-top:${((n("y") - sw / 2) / vbH).toFixed(4)}`,
+  `--pill-tall:${((n("height") + sw) / vbH).toFixed(4)}`,
+  `--pill-line:${(sw / vbH).toFixed(4)}`,
+].join(";");
+---
+
+<span class:list={["mark-lockup", className]} style={vars}>
+  <svg class="mark-lockup_mark" viewBox={`0 0 ${markW} ${vbH}`} aria-hidden="true">
+    <path d={markD} fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" />
+  </svg>
+  <span class="mark-lockup_pill"><span>{label}</span></span>
+</span>
+
+<style is:global>
+  @layer components {
+    .mark-lockup {
+      --h: 1em;
+      display: inline-flex;
+      align-items: flex-start;
+      height: var(--h);
+      color: currentColor;
+      line-height: 1;
+    }
+    .mark-lockup_mark {
+      flex: none;
+      width: auto;
+      height: var(--h);
+      aspect-ratio: var(--mark-ar);
+    }
+    .mark-lockup_pill {
+      display: inline-flex;
+      align-items: center;
+      box-sizing: border-box;
+      height: calc(var(--pill-tall) * var(--h));
+      margin-top: calc(var(--pill-top) * var(--h));
+      margin-left: calc(var(--pill-in) * var(--h) * -1);
+      padding: 0 calc(var(--h) * 0.3);
+      border: calc(var(--pill-line) * var(--h)) solid currentColor;
+      border-radius: 999px;
+      /* the words at the logo's own letter height */
+      & span {
+        padding-top: 0.08em;
+        font-family: var(--display-family);
+        font-size: calc(var(--h) * 0.54);
+        line-height: 1;
+        white-space: nowrap;
+        text-transform: uppercase;
+      }
+    }
+  }
+</style>

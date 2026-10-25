@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Code-powered work card for Superinterviews (superinterviews.com), 2026-10-24,
+     built on the Wispr Flow card's engine (04-Wispr-Flow-work-card.html), the
+     classic-script way of the Ethos card so it also runs opened from disk:
+     - the miniature is the live home page (Get Hired Faster) rebuilt in HTML and
+       CSS layers at its own 1440px width, scaled into a 16:10 card laid out K
+       times larger so tilted text stays sharp; one spring-driven loop,
+       transforms and opacity only
+     - idle, it tours the page on a fixed ~21 s loop of eased stops that starts
+       and ends on the hero: the hero, the $25,000,000 band, practice questions,
+       hiring signals, the resume builder, the closing call to action. On the
+       way it plays the site's own scroll choreography: the dashboard in the
+       hero lies back at 25 degrees and flattens as the page scrolls, the figure
+       counts up, the feature rows slide in, the logos and quotes run
+       - hover tilts it toward the pointer (10 degrees) and the layers separate by
+       depth with soft shadows that grow with height; the light is one round
+       bloom that follows the pointer; the tour keeps running under the hover
+     - press and drag scrolls the miniature either way: drag up, page goes
+       down (1:1); drag right, it scrubs further down, left back up (2.5x);
+       momentum and clamped ends; the tour picks up from there after a beat
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge,
+       on a transparent page; it pauses when hidden or when the parent posts
+       {type: "ks-card", visible: false}; {type: "ks-card", at: seconds} puts
+       the tour at that time (the site's resting loop is this tour recorded);
+       a click or tap posts {type: "ks-card-open"}. &bleed=N keeps N px of clear
+       frame round the card; &radius=N rounds it; &mat=F frames it (the
+       site's border: the window inset F x the card's width on every side, on a
+       pale sage mat, lifting off it on hover); touch drag is off unless
+       &touchdrag=1, so a swipe over the tile scrolls the site
+
+     Everything Superinterviews-side was taken from the live site on 2026-10-24
+     and lives in superinterviews-card-src/: its Inter, its icons and logos, its
+     clouds, and stills of its background loops. raw/ keeps the fetched HTML,
+     CSS, script and media for reference; nothing in it is executed. -->
+<title>Superinterviews work card</title>
+<script>
+  /* ?embed=1 is the site tile. &radius=N rounds the card's corners. &bleed=N: the site's iframe overhangs the tile by N px on every side
+     (room for the tilt), so the card keeps N px of clear frame round it and sits exactly on the tile at rest.
+     &touchdrag=1 lets a finger drag the miniature; off by default, so a swipe over the tile scrolls the site. */
+  (function () {
+    const q = new URLSearchParams(location.search);
+    if (q.get('embed') !== '1') return;
+    const h = document.documentElement;
+    h.classList.add('embed');
+    const b = parseFloat(q.get('bleed'));
+    if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    const r = parseFloat(q.get('radius'));   // &radius=N: the card's corner radius in px (the site passes 6)
+    if (r >= 0) h.style.setProperty('--card-r', r + 'px');
+  })();
+</script>
+<link rel="stylesheet" href="superinterviews-card-src/css/card.css">
+<link rel="stylesheet" href="superinterviews-card-src/css/site.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Superinterviews, superinterviews.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+              <div class="nav-space"></div>
+
+              <!-- hero -->
+              <section class="hero" id="s-hero" data-tone="light">
+                <div class="hero-clouds" data-layer="clouds" data-depth="-0.2"><img src="superinterviews-card-src/img/clouds2.webp" alt=""></div>
+                <div class="hero-content">
+                  <h1 data-layer="headline" data-depth="0.7" data-shadow="0,0.14,16">Get Hired Faster</h1>
+                  <p class="hero-sub" data-layer="body copy" data-depth="0.5">Your AI job-search copilot that shows you exactly what top companies actually look for, so you stand out and land offers.</p>
+                  <div class="hero-buttons">
+                    <div class="hero-buttons-in" data-layer="buttons" data-depth="0.85" data-shadow="0,0.22,12">
+                      <span class="btn btn-neon">Get Started for Free</span>
+                      <span class="btn btn-neon-outline">Features</span>
+                    </div>
+                  </div>
+                  <div class="hero-image-perspective" data-layer="dashboard" data-depth="0.26">
+                    <div class="hero-image" id="heroImage">
+                      <div class="si-card">
+                        <!-- left sidebar -->
+                        <div class="si-sidebar">
+                          <div class="si-sidebar-icon"><div class="si-ico"><img src="superinterviews-card-src/img/icons/bolt.svg" alt="" style="width:18px;height:18px"></div><span>Start here</span></div>
+                          <div class="si-sidebar-icon"><div class="si-ico"><img src="superinterviews-card-src/img/icons/stories.svg" alt="" style="width:18px;height:18px"></div><span>Stories</span></div>
+                          <div class="si-sidebar-icon"><div class="si-ico"><img src="superinterviews-card-src/img/icons/linkedin.svg" alt="" style="width:16px;height:16px"></div><span>Optimizer</span></div>
+                          <div class="si-sidebar-divider"></div>
+                          <div class="si-sidebar-add"><div class="si-ico"><img src="superinterviews-card-src/img/icons/plus-dark.svg" alt="" style="width:16px;height:16px"></div><span>Add Job</span></div>
+                          <div class="si-sidebar-icon si-active"><div class="si-ico"><img src="superinterviews-card-src/img/icons/google-g.svg" alt="" style="width:24px;height:24px;border-radius:50%"></div><span>Google</span></div>
+                          <div class="si-sidebar-icon"><div class="si-ico"><img src="superinterviews-card-src/img/icons/spotify.svg" alt="" style="width:22px;height:22px"></div><span>Spotify</span></div>
+                          <div class="si-sidebar-icon"><div class="si-ico"><img src="superinterviews-card-src/img/icons/meta.png" alt="" style="width:22px;height:22px;border-radius:50%"></div><span>Meta</span></div>
+                          <div class="si-sidebar-icon"><div class="si-ico"><img src="superinterviews-card-src/img/icons/archive-top.svg" alt="" style="width:16px;height:16px"></div></div>
+                          <div class="si-sidebar-bottom"><div class="si-sidebar-icon"><div class="si-ico"><img src="superinterviews-card-src/img/icons/gear.svg" alt="" style="width:18px;height:18px"></div></div></div>
+                        </div>
+                        <!-- middle panel -->
+                        <div class="si-mid">
+                          <div class="si-mid-header">
+                            <div class="si-mid-logo"><img src="superinterviews-card-src/img/icons/google-g-mid-color.svg" alt="" style="width:32px;height:32px;border-radius:50%"></div>
+                            <div class="si-mid-title"><h3>Google</h3><p>Product Manager</p></div>
+                            <div class="si-mid-dots"><img src="superinterviews-card-src/img/icons/overflow-dot.svg" alt="" style="width:16px;height:16px"></div>
+                          </div>
+                          <div class="si-mid-score">
+                            <div class="si-mid-ring" data-layer="score" data-depth="0.5">
+                              <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" class="si-ring-track"/><circle cx="60" cy="60" r="54" class="si-ring-value" stroke-dasharray="271 377"/></svg>
+                              <div class="si-ring-label">72</div>
+                            </div>
+                          </div>
+                          <div class="si-mid-divider"></div>
+                          <div class="si-mid-nav">
+                            <div class="si-mid-nav-item si-active"><span class="si-nav-ico"><img src="superinterviews-card-src/img/icons/questions-icon.svg" alt="" style="width:16px;height:16px"></span>Practice Questions</div>
+                            <div class="si-mid-nav-item"><span class="si-nav-ico"><img src="superinterviews-card-src/img/icons/company-dive-icon.svg" alt="" style="width:16px;height:16px"></span>Company Deep-Dive</div>
+                          </div>
+                          <div class="si-mid-divider"></div>
+                          <div class="si-mid-interviewers">
+                            <div class="si-add-btn"><div class="si-add-circle"><img src="superinterviews-card-src/img/icons/plus-dark.svg" alt="" style="width:14px;height:14px"></div>Add Interviewer</div>
+                            <div class="si-mid-person"><div class="si-mid-avatar"><img src="superinterviews-card-src/img/icons/user-icon.svg" alt="" style="width:16px;height:16px"></div><div class="si-mid-person-info"><h4>Nora Miller</h4><p>Head of Design</p></div></div>
+                            <div class="si-mid-person"><div class="si-mid-avatar"><img src="superinterviews-card-src/img/icons/user-icon.svg" alt="" style="width:16px;height:16px"></div><div class="si-mid-person-info"><h4>Jeremiah Jones</h4><p>VP of Product</p></div></div>
+                          </div>
+                        </div>
+                        <!-- right panel -->
+                        <div class="si-right">
+                          <div class="si-right-header">
+                            <h3>Practice Questions</h3>
+                            <div class="si-right-actions">
+                              <span class="si-btn-filter"><img src="superinterviews-card-src/img/icons/filter.svg" alt="" style="width:14px;height:14px">Filter</span>
+                              <span class="si-btn-add"><img src="superinterviews-card-src/img/icons/plus-white.svg" alt="" style="width:14px;height:14px">Add Question</span>
+                            </div>
+                          </div>
+                          <h4 class="si-section-heading">Product Design Questions</h4>
+                          <div class="si-questions" data-layer="questions" data-depth="0.42">
+                            <div class="si-q-card">
+                              <p class="si-q-text">In a previous role, can you describe a time when you designed a product feature that significantly improved user engagement?</p>
+                              <div class="si-q-separator"></div>
+                              <div class="si-q-footer">
+                                <div class="si-q-footer-left">
+                                  <div class="si-ring-inline"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(33,35,30,0.1)" stroke-width="2"/><circle cx="18" cy="18" r="15" fill="none" stroke="#C1A100" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="67.86 94.25" transform="rotate(-90 18 18)"/></svg><span class="si-score-num">72</span></div>
+                                  <span class="si-q-badge si-yellow">Average Hire</span><span class="si-q-tries">3 tries</span>
+                                </div>
+                                <div class="si-q-actions"><span class="si-q-action-btn">Feedback</span><span class="si-q-action-btn">Rubric</span><span class="si-q-action-btn si-practice-btn"><img src="superinterviews-card-src/img/icons/practice-mic-dark.svg" alt="" style="width:12px;height:12px">Practice</span></div>
+                              </div>
+                            </div>
+                            <div class="si-q-card">
+                              <p class="si-q-text">Imagine you are the Product Manager for Google TV. How would you prioritize features for the next quarterly release cycle?</p>
+                              <div class="si-q-separator"></div>
+                              <div class="si-q-footer">
+                                <div class="si-q-footer-left">
+                                  <div class="si-ring-inline"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(33,35,30,0.1)" stroke-width="2"/><circle cx="18" cy="18" r="15" fill="none" stroke="#D80902" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="41.47 94.25" transform="rotate(-90 18 18)"/></svg><span class="si-score-num">44</span></div>
+                                  <span class="si-q-badge si-red">Weak Hire</span><span class="si-q-tries">3 tries</span>
+                                </div>
+                                <div class="si-q-actions"><span class="si-q-action-btn">Feedback</span><span class="si-q-action-btn">Rubric</span><span class="si-q-action-btn si-practice-btn"><img src="superinterviews-card-src/img/icons/practice-mic-dark.svg" alt="" style="width:12px;height:12px">Practice</span></div>
+                              </div>
+                            </div>
+                            <div class="si-q-card">
+                              <p class="si-q-text">At a previous company, how did you approach redesigning a core user experience that had become outdated?</p>
+                              <div class="si-q-separator"></div>
+                              <div class="si-q-footer">
+                                <div class="si-q-footer-left">
+                                  <div class="si-ring-inline"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(33,35,30,0.1)" stroke-width="2"/></svg><span class="si-score-num" style="color:rgba(33,35,30,0.3)">&#8211;</span></div>
+                                  <span class="si-q-badge si-gray">No attempts</span>
+                                </div>
+                                <div class="si-q-actions"><span class="si-q-action-btn">Feedback</span><span class="si-q-action-btn">Rubric</span><span class="si-q-action-btn si-practice-btn"><img src="superinterviews-card-src/img/icons/practice-mic-dark.svg" alt="" style="width:12px;height:12px">Practice</span></div>
+                              </div>
+                            </div>
+                            <div class="si-q-card">
+                              <p class="si-q-text">Spotify operates in more than 180 markets worldwide. How would you approach localizing the product experience for emerging markets?</p>
+                              <div class="si-q-separator"></div>
+                              <div class="si-q-footer">
+                                <div class="si-q-footer-left">
+                                  <div class="si-ring-inline"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(33,35,30,0.1)" stroke-width="2"/><circle cx="18" cy="18" r="15" fill="none" stroke="#C1A100" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="67.86 94.25" transform="rotate(-90 18 18)"/></svg><span class="si-score-num">72</span></div>
+                                  <span class="si-q-badge si-yellow">Average Hire</span>
+                                </div>
+                                <div class="si-q-actions"><span class="si-q-action-btn">Feedback</span><span class="si-q-action-btn">Rubric</span><span class="si-q-action-btn si-practice-btn"><img src="superinterviews-card-src/img/icons/practice-mic-dark.svg" alt="" style="width:12px;height:12px">Practice</span></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- the figure and the logos -->
+              <section class="stats" id="s-stats" data-tone="light">
+                <div data-rv="0,64">
+                  <div class="stats-n"><h1 id="statNum" data-countup="25000000" data-layer="figure" data-depth="0.7" data-shadow="0,0.14,18">$25,000,000</h1></div>
+                  <h5 data-layer="caption" data-depth="0.45">worth of jobs landed at the world's top companies</h5>
+                </div>
+                <div class="marquee-container" data-rv="0,64">
+                  <div class="mq" data-layer="logos" data-depth="0.35">
+                    <ul class="marquee-track" id="logoTrack">
+                      <li><img src="superinterviews-card-src/img/meta-logo.svg" alt=""></li><li><img src="superinterviews-card-src/img/apple.svg" alt=""></li><li><img src="superinterviews-card-src/img/uber.svg" alt=""></li><li><img src="superinterviews-card-src/img/google.svg" alt=""></li><li><img src="superinterviews-card-src/img/citi.svg" alt=""></li><li><img src="superinterviews-card-src/img/intuit.svg" alt=""></li>
+                      <li><img src="superinterviews-card-src/img/meta-logo.svg" alt=""></li><li><img src="superinterviews-card-src/img/apple.svg" alt=""></li><li><img src="superinterviews-card-src/img/uber.svg" alt=""></li><li><img src="superinterviews-card-src/img/google.svg" alt=""></li><li><img src="superinterviews-card-src/img/citi.svg" alt=""></li><li><img src="superinterviews-card-src/img/intuit.svg" alt=""></li>
+                      <li><img src="superinterviews-card-src/img/meta-logo.svg" alt=""></li><li><img src="superinterviews-card-src/img/apple.svg" alt=""></li><li><img src="superinterviews-card-src/img/uber.svg" alt=""></li><li><img src="superinterviews-card-src/img/google.svg" alt=""></li><li><img src="superinterviews-card-src/img/citi.svg" alt=""></li><li><img src="superinterviews-card-src/img/intuit.svg" alt=""></li>
+                    </ul>
+                  </div>
+                </div>
+              </section>
+
+              <!-- features -->
+              <section class="features" id="s-features" data-tone="light">
+                <div class="features-clouds" data-layer="clouds" data-depth="-0.2"><img src="superinterviews-card-src/img/clouds1.webp" alt=""></div>
+                <div class="features-inner">
+                  <div class="features-header" id="s-fhead" data-rv="0,64">
+                    <p class="section-label" data-layer="eyebrow" data-depth="0.35">Features</p>
+                    <h2 data-layer="headline" data-depth="0.65" data-shadow="0,0.14,14">Everything you need to<br>land your top offer, fast</h2>
+                  </div>
+
+                  <!-- 1: interview prep -->
+                  <div class="feature-row" id="s-f1">
+                    <div class="feature-image-wrapper" data-rv="-60,0">
+                      <div class="feature-still" data-layer="photo" data-depth="0.06"><img src="superinterviews-card-src/img/leaves-a.jpg" alt=""></div>
+                      <div class="feature-card card-practice" data-layer="card" data-depth="0.4" data-shadow="0.06,0.3,22">
+                        <div class="card-practice-header"><span>Practice Questions</span><div class="right"><span class="card-filter-btn">Filter</span><span class="card-add-btn">+ Add Question</span></div></div>
+                        <h4>Scaling</h4>
+                        <div class="card-question" data-layer="question" data-depth="0.52">
+                          <p>Spotify operates in more than 180 markets with vastly different music cultures. How would you scale a marketing strategy that maintains a cohesive global brand?</p>
+                          <div class="card-question-meta"><span class="card-score-ring green">72</span><span class="card-score-label hire">Average Hire</span><span class="card-tries">3 tries</span><div class="card-action-btns"><span class="card-action-btn">Feedback</span><span class="card-action-btn">Rubric</span><span class="card-action-btn practice-btn">Practice</span></div></div>
+                        </div>
+                        <div class="card-question" data-layer="question" data-depth="0.58">
+                          <p>As Spotify expands beyond music into other verticals like podcasts, audiobooks, and creators, how would you scale marketing efforts?</p>
+                          <div class="card-question-meta"><span class="card-score-ring orange">44</span><span class="card-score-label weak">Weak Hire</span><span class="card-tries">3 tries</span><div class="card-action-btns"><span class="card-action-btn">Feedback</span><span class="card-action-btn">Rubric</span><span class="card-action-btn practice-btn">Practice</span></div></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="feature-text" data-rv="60,0">
+                      <p class="feature-label" data-layer="eyebrow" data-depth="0.2">Interview Prep</p>
+                      <h3 data-layer="headline" data-depth="0.4" data-shadow="0,0.12,12">Tailored practice questions for your target role and company</h3>
+                      <p data-layer="body copy" data-depth="0.28">Not generic questions. Actual practice questions that Google asks for VP of Product roles. Or Anthropic asks for AI-focused GTM roles. Specific, real, recent.</p>
+                      <span class="btn btn-neon" data-layer="button" data-depth="0.52" data-shadow="0.28,0.22,10">Get Started for Free</span>
+                    </div>
+                  </div>
+
+                  <!-- 2: signal coaching -->
+                  <div class="feature-row reverse" id="s-f2" data-tone="dark">
+                    <div class="feature-image-wrapper" data-rv="60,0">
+                      <div class="feature-still" data-layer="photo" data-depth="0.06"><img src="superinterviews-card-src/img/leaves-b.jpg" alt=""></div>
+                      <div class="feature-card card-signals" data-layer="card" data-depth="0.4" data-shadow="0.06,0.4,22">
+                        <h4>Hiring Signals</h4>
+                        <div data-layer="scores" data-depth="0.56">
+                          <div class="signal-row"><span class="signal-score s-red">13</span><span class="signal-label bold">Communicates with Clarity and Confidence</span></div>
+                          <div class="signal-row"><span class="signal-score s-orange">44</span><span class="signal-label">Shows Emotional and Cultural Awareness</span></div>
+                          <div class="signal-row"><span class="signal-score s-green">72</span><span class="signal-label">Demonstrates Clear Career Growth</span></div>
+                          <div class="signal-row"><span class="signal-score s-green">78</span><span class="signal-label">Takes Ownership of Outcomes</span></div>
+                          <div class="signal-row"><span class="signal-score s-bright">98</span><span class="signal-label">Asks Smart, Thoughtful Questions</span></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="feature-text" data-rv="-60,0">
+                      <p class="feature-label" data-layer="eyebrow" data-depth="0.2">Signal Coaching</p>
+                      <h3 data-layer="headline" data-depth="0.4" data-shadow="0,0.12,12">See your gaps, and get better fast</h3>
+                      <p data-layer="body copy" data-depth="0.28">Our AI has been trained on frameworks hiring managers use at places like Meta to hire VP-level talent. Practice your answers and get scored on the exact criteria used by real interviewers. See where you're strong or where you trip red flags, then work with our AI coach to improve your answers, before it costs you the offer.</p>
+                      <span class="btn btn-neon" data-layer="button" data-depth="0.52" data-shadow="0.28,0.22,10">Get Started for Free</span>
+                    </div>
+                  </div>
+
+                  <!-- 3: career stories -->
+                  <div class="feature-row" id="s-f3">
+                    <div class="feature-image-wrapper" data-rv="-60,0">
+                      <div class="feature-still" data-layer="photo" data-depth="0.06"><img src="superinterviews-card-src/img/leaves-c.jpg" alt=""></div>
+                      <div class="feature-card card-star" data-layer="card" data-depth="0.4" data-shadow="0.06,0.4,22">
+                        <div class="card-star-title">STORY</div>
+                        <div class="card-star-summary">How I turned a weakness in Spanish into a strength by proactively seeking help and developing consistent learning habits.</div>
+                        <div class="card-star-meta">Last updated 2 days ago</div>
+                        <div data-layer="story" data-depth="0.54">
+                          <div class="star-section"><div class="star-section-label"><span class="icon">&#9744;</span> Situation</div><p>Despite performing well in other subjects, I struggled to learn and speak Spanish fluently and had never gone to office hours or asked for extra help.</p></div>
+                          <div class="star-section"><div class="star-section-label"><span class="icon">&#9744;</span> Task</div><p>Overcome my weakness in Spanish by seeking help and practicing consistently until I became proficient.</p></div>
+                          <div class="star-section"><div class="star-section-label"><span class="icon">&#9783;</span> Action</div><p>Told my Spanish teacher I was struggling, accepted her guidance to practice hours after school every day, consistently attended office hours.</p></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="feature-text" data-rv="60,0">
+                      <p class="feature-label" data-layer="eyebrow" data-depth="0.2">Career Stories</p>
+                      <h3 data-layer="headline" data-depth="0.4" data-shadow="0,0.12,12">Develop Crisp STAR stories</h3>
+                      <p data-layer="body copy" data-depth="0.28">How you tell your story is the single most important indicator on whether you get the job. We capture your core stories (Situation, Tasks, Actions, Results), quantify your impact, and help you tell your story in the most impactful way, so you can pull the right story in seconds and deliver it with confidence.</p>
+                      <span class="btn btn-neon" data-layer="button" data-depth="0.52" data-shadow="0.28,0.22,10">Get Started for Free</span>
+                    </div>
+                  </div>
+
+                  <!-- 4: linkedin optimizer -->
+                  <div class="feature-row reverse" id="s-f4" data-tone="dark">
+                    <div class="feature-image-wrapper landscape" data-rv="60,0">
+                      <div class="feature-still" data-layer="photo" data-depth="0.06"><img src="superinterviews-card-src/img/leaves-d.jpg" alt=""></div>
+                      <div class="feature-card card-linkedin" data-layer="card" data-depth="0.3">
+                        <div class="refine-btn" data-layer="button" data-depth="0.66"><div class="refine-glow" id="refineGlow"></div><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0l1.5 4.5L14 6l-4.5 1.5L8 12l-1.5-4.5L2 6l4.5-1.5z"/></svg> Refine with AI</div>
+                        <div class="resume-float" data-layer="resume" data-depth="0.86" data-shadow="0.3,0.3,10">
+                          <div class="linkedin-icon"><img src="superinterviews-card-src/img/linkedin-tile.svg" alt="" style="width:34px;height:34px"><span class="cursor-icon" id="cursorIcon"><img src="superinterviews-card-src/img/cursor.svg" alt="" style="width:20px;height:24px"></span></div>
+                          <span class="file-label">resume.pdf</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="feature-text" data-rv="-60,0">
+                      <p class="feature-label" data-layer="eyebrow" data-depth="0.2">Linkedin optimizer</p>
+                      <h3 data-layer="headline" data-depth="0.4" data-shadow="0,0.12,12">Make your unique wins shine on LinkedIn and during interviews</h3>
+                      <p data-layer="body copy" data-depth="0.28">We show you exactly what recruiters and hiring managers look for, and how to position your experience so you show up at your best, stand out with confidence, and become the obvious hire.</p>
+                      <span class="btn btn-neon" data-layer="button" data-depth="0.52" data-shadow="0.28,0.22,10">Get Started for Free</span>
+                    </div>
+                  </div>
+
+                  <!-- 5: company deep dive -->
+                  <div class="feature-row" id="s-f5">
+                    <div class="feature-image-wrapper" data-rv="-60,0">
+                      <div class="feature-still" data-layer="photo" data-depth="0.06"><img src="superinterviews-card-src/img/leaves-e.jpg" alt=""></div>
+                      <div class="feature-card card-deepdive" data-layer="card" data-depth="0.4" data-shadow="0.06,0.4,22">
+                        <div class="card-deepdive-header" data-layer="company" data-depth="0.56"><div class="card-deepdive-logo"><img src="superinterviews-card-src/img/airbnb-logo.jpg" alt=""></div><h4>AirBnb Deep Dive</h4></div>
+                        <p>Airbnb was founded in 2008 with the simple idea of helping people feel like they belong anywhere. Since then, it's evolved into a global platform connecting millions of guests and hosts across more than 220 countries.</p>
+                        <p>The company's culture emphasizes creativity, trust, and the power of community.</p>
+                        <p>When interviewing at Airbnb, expect a strong focus on values alignment, collaboration, and storytelling. Interviewers want to understand how you think, how you solve problems, and how your experiences demonstrate empathy and adaptability.</p>
+                        <p>You should be prepared to:</p>
+                        <ul><li>Describe a time you helped build community or foster inclusion.</li><li>Walk through how you've navigated ambiguity or solved a problem with limited resources.</li></ul>
+                      </div>
+                    </div>
+                    <div class="feature-text" data-rv="60,0">
+                      <p class="feature-label" data-layer="eyebrow" data-depth="0.2">Company Deep Dive</p>
+                      <h3 data-layer="headline" data-depth="0.4" data-shadow="0,0.12,12">Get a deep dive on your target company</h3>
+                      <p data-layer="body copy" data-depth="0.28">Get clear on the challenges, opportunities, and priorities of the company you're targeting. Know exactly what they hire for and what makes them unique. You could spend 20 hours researching, or you could let us do it in one minute.</p>
+                      <span class="btn btn-neon" data-layer="button" data-depth="0.52" data-shadow="0.28,0.22,10">Get Started for Free</span>
+                    </div>
+                  </div>
+
+                  <!-- 6: resume builder -->
+                  <div class="feature-row reverse" id="s-f6" data-tone="dark">
+                    <div class="feature-image-wrapper" data-rv="60,0">
+                      <div class="feature-still" data-layer="photo" data-depth="0.06"><img src="superinterviews-card-src/img/leaves-f.jpg" alt=""></div>
+                      <div class="feature-card card-resume" data-layer="card" data-depth="0.3">
+                        <div class="card-resume-top" data-layer="role" data-depth="0.6"><h4>Lead Product Designer</h4><div class="subtitle">Apple, July 20, 2025 &#8211; Present</div></div>
+                        <div class="card-resume-body" data-layer="resume" data-depth="0.42" data-shadow="0.3,0.3,18"><p>Over 15 years, I've worked the spectrum of design: from agencies and freelance to young startups and Fortune 500s. From brand identity to Webflow development, I love executing a full creative vision from ideation to delivery. Along with deep knowledge in digital product design, I have significant experience in rapid prototyping, usability testing, wireframing, storyboarding, branding, copywriting, motion design, photography, video production, social engagement, HTML, CSS, Javascript and React</p></div>
+                        <div class="refine-btn" data-layer="button" data-depth="0.78" data-shadow="0.3,0.3,12"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0l1.5 4.5L14 6l-4.5 1.5L8 12l-1.5-4.5L2 6l4.5-1.5z"/></svg> Refine with AI</div>
+                      </div>
+                    </div>
+                    <div class="feature-text" data-rv="-60,0">
+                      <p class="feature-label" data-layer="eyebrow" data-depth="0.2">Resume builder</p>
+                      <h3 data-layer="headline" data-depth="0.4" data-shadow="0,0.12,12">Optimize your resume for your target role</h3>
+                      <p data-layer="body copy" data-depth="0.28">We don't just edit your resume. We show you how to reposition your experience using the language and frameworks that resonate with your target role and company. Your Microsoft experience matters to Google, but not the parts you think.</p>
+                      <span class="btn btn-neon" data-layer="button" data-depth="0.52" data-shadow="0.28,0.22,10">Get Started for Free</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- testimonials -->
+              <section class="testimonials" id="s-testi" data-tone="light">
+                <div class="testimonials-inner">
+                  <div data-rv="0,64"><h2 class="testimonial-quote" data-layer="quote" data-depth="0.62" data-shadow="0,0.12,16">"I thought I was good, until I used Superinterviews and realized I was rambling, theoretical, not connecting the dots."</h2></div>
+                  <div class="testimonial-marquee" data-rv="0,64">
+                    <div class="tm" data-layer="quote cards" data-depth="0.36">
+                      <div class="testimonial-track" id="quoteTrack">
+                        <div class="testimonial-card"><div class="stars"><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""></div><blockquote>"Superinterviews helped me land a senior promotion at Apple with a 25% total comp bump, without the hassle of scheduling mock interviews."</blockquote><div class="testimonial-author"><div class="t-av" style="background:#000"><img src="superinterviews-card-src/img/apple-white.svg" alt="" style="width:24px;height:24px"></div><div><p class="hired"><strong>Hired</strong></p><p class="role">Senior Technical Program Manager, Apple</p></div></div></div>
+                        <div class="testimonial-card"><div class="stars"><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""></div><blockquote>"I used Superinterviews for the hour before every interview, which helped me walk in fully warmed up and confident. After not interviewing for almost 10 years, I am positive I wouldn't have gotten the offer without it."</blockquote><div class="testimonial-author"><div class="t-av" style="background:#fff;border:1px solid #e0e0e0"><img src="superinterviews-card-src/img/google-g-color.svg" alt="" style="width:26px;height:26px"></div><div><p class="hired"><strong>Hired</strong></p><p class="role">VP at Google</p></div></div></div>
+                        <div class="testimonial-card"><div class="stars"><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""></div><blockquote>"I got the clarity and support I needed to move confidently through the interview process, show up at my best, and ultimately land the role I was aiming for."</blockquote><div class="testimonial-author"><div class="t-av" style="background:#96bf48"><img src="superinterviews-card-src/img/shopify.svg" alt="" style="width:22px;height:22px"></div><div><p class="hired"><strong>Hired</strong></p><p class="role">Product Leader at Shopify</p></div></div></div>
+                        <div class="testimonial-card"><div class="stars"><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""></div><blockquote>"Superinterviews helped me land a senior promotion at Apple with a 25% total comp bump, without the hassle of scheduling mock interviews."</blockquote><div class="testimonial-author"><div class="t-av" style="background:#000"><img src="superinterviews-card-src/img/apple-white.svg" alt="" style="width:24px;height:24px"></div><div><p class="hired"><strong>Hired</strong></p><p class="role">Senior Technical Program Manager, Apple</p></div></div></div>
+                        <div class="testimonial-card"><div class="stars"><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""></div><blockquote>"I used Superinterviews for the hour before every interview, which helped me walk in fully warmed up and confident. After not interviewing for almost 10 years, I am positive I wouldn't have gotten the offer without it."</blockquote><div class="testimonial-author"><div class="t-av" style="background:#fff;border:1px solid #e0e0e0"><img src="superinterviews-card-src/img/google-g-color.svg" alt="" style="width:26px;height:26px"></div><div><p class="hired"><strong>Hired</strong></p><p class="role">VP at Google</p></div></div></div>
+                        <div class="testimonial-card"><div class="stars"><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""><img src="superinterviews-card-src/img/star.svg" alt=""></div><blockquote>"I got the clarity and support I needed to move confidently through the interview process, show up at my best, and ultimately land the role I was aiming for."</blockquote><div class="testimonial-author"><div class="t-av" style="background:#96bf48"><img src="superinterviews-card-src/img/shopify.svg" alt="" style="width:22px;height:22px"></div><div><p class="hired"><strong>Hired</strong></p><p class="role">Product Leader at Shopify</p></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- the closing call to action -->
+              <section class="cta" id="s-cta" data-tone="light">
+                <div class="cta-clouds" data-layer="clouds" data-depth="-0.2"><img src="superinterviews-card-src/img/clouds2.webp" alt=""></div>
+                <div class="cta-content" data-rv="0,64">
+                  <h2 data-layer="headline" data-depth="0.7" data-shadow="0,0.14,16">You don't have to figure<br>this out alone</h2>
+                  <p class="cta-p" data-layer="body copy" data-depth="0.45">You're legitimately talented. But interviewing is a different skill from doing the job, and nobody prepared you for how much it's changed. The companies you want to work for are hiring; they're just not hiring people who prepare the old way. We'll help you get hired fast.</p>
+                  <div class="cta-btn-row"><span class="btn btn-primary" data-layer="button" data-depth="0.85" data-shadow="0,0.24,12">Get Started for Free</span></div>
+                </div>
+              </section>
+
+              <!-- footer -->
+              <footer class="site-footer" id="s-foot" data-tone="dark">
+                <div class="footer-top">
+                  <div class="footer-brand">
+                    <div class="footer-logo" data-layer="wordmark" data-depth="0.32"><img src="superinterviews-card-src/img/logo-white.svg" alt=""></div>
+                    <p class="footer-tagline" data-layer="tagline" data-depth="0.3">Get hired fast.</p>
+                  </div>
+                  <div class="footer-nav" data-layer="links" data-depth="0.3">
+                    <div class="footer-col"><p class="footer-col-title">Product</p><span>For Candidates</span><span>For Companies</span></div>
+                    <div class="footer-col"><p class="footer-col-title">Get Started</p><span>Book a Demo</span><span>Log In</span></div>
+                  </div>
+                </div>
+                <div class="footer-bar" data-layer="legal" data-depth="0.15">
+                  <p class="footer-copy">&copy; 2026 Superinterviews</p>
+                  <div class="footer-legal-links"><span>Privacy Policy</span><span>Terms of Service</span></div>
+                </div>
+              </footer>
+            </div>
+
+            <!-- the nav, sticky at the top of the viewport -->
+            <nav class="nav" id="nav">
+              <div class="nav-bar" data-layer="nav" data-depth="0.42" data-shadow="0,0.1,14">
+                <img class="nav-logo" src="superinterviews-card-src/img/logo.svg" alt="">
+                <div class="nav-actions">
+                  <span class="btn btn-ghost">For Companies</span>
+                  <span class="btn btn-ghost">Log in</span>
+                  <span class="btn btn-primary" data-layer="nav button" data-depth="0.58" data-shadow="0.42,0.24,8">Get Started for Free</span>
+                </div>
+              </div>
+            </nav>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Superinterviews</h3>
+      <p><span>AI</span><span>Product, Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="superinterviews-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the Dawn card's way: the studio's own Params,
+   defineParams from /shared/params/params.js. Embedded on the site there is
+   no panel and nothing is fetched, so the module is only loaded here, and
+   only when served (opened from disk there is no studio to load it from). */
+const card = window.__superinterviewsCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const D = card.defaults;
+    const TOOL = 'superinterviews work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],        // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],    // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],        // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],        // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],// eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],         // the round light under the pointer
+        bloomSize: [D['light.bloomSize'], 0.4, 2.5, 0.05], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],
+        shadow: [D['light.shadow'], 0, 1, 0.01],
+      },
+      motion: {
+        scrollSpeed: [D['motion.scrollSpeed'], 0, 3, 0.05],
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [D['drag.momentum'], 0, 3, 0.05],      // how far a flick carries
+        scrub: [D['drag.scrub'], 0, 6, 0.1],             // px of page per px of sideways drag
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],     // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: D['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],                // the mat round the window (the site's &mat=F always frames it)
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

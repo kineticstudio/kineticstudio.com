@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Ethos work card, 2026-10-23. The second code-powered work card, built on
+     the Dawn card's architecture (01-Code-powered-work-card.html) with
+     Hunter's feedback on Dawn built in from the start: the miniature keeps
+     touring while you hover, the light is one soft round bloom under the
+     pointer, you can drag the page like a phone, a notched ruler slides with
+     the scroll, and there is no Case Study pill.
+
+     Ethos (www.ethos.network, ours) is rebuilt here at its 1440px design
+     width as HTML/CSS layers, each at its own depth: the cloud video's still
+     with its slit-scan bands redone in code, the hero grid, the headline, the
+     fraud report that folds away, the feature cards over the sky, the
+     reputation graphic (a lottie on the live site, redrawn as SVG), the score
+     marquees, the blue platform section and the footer. Fonts and images are
+     the site's own, in ethos-card-src/. raw/ keeps the fetched HTML, CSS,
+     fonts and images for reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched. Like the Dawn card:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=full   the site edge to edge instead of on the card ground
+       &radius=N     the card's corner radius in screen px (default 6)
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), {type: "ks-card", at:
+     seconds} puts the tour and its ambient motion at that time (the tile's
+     resting loop hands over to the live card), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Ethos work card</title>
+<script>
+  /* before first paint: embed or not, and the studio's own type for the label row
+     (served by the studio; opened from disk the label falls back to system type) */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+      // &radius=N: the card's corner radius in screen px, to match the tile
+      var r = parseFloat(q.get('radius'));
+      if (r >= 0) document.documentElement.style.setProperty('--card-r', r + 'px');
+    } else if (location.protocol !== 'file:') {
+      var l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = '/fonts/kinetic/fonts.css';
+      document.head.appendChild(l);
+    }
+  })();
+</script>
+<link rel="stylesheet" href="ethos-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card is-framed" id="card" role="img" aria-label="Ethos, ethos.network, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0.1">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- hero: the cloud video, the grid, the headline, the nav row -->
+              <section class="sec hero" data-stop="hero">
+                <div class="clouds" data-layer="clouds" data-depth="-0.3" style="--lab-x:120px;--lab-y:700px"></div>
+                <div class="h-grid" data-layer="grid" data-depth="0.12" style="--lab-x:1150px;--lab-y:600px">
+                  <i class="ln" style="left:40px;top:48px;width:1360px;height:1px"></i>
+                  <i class="ln" style="left:40px;top:48px;width:1px;height:calc(var(--vh) - 100px)"></i>
+                  <i class="ln" style="left:1399px;top:48px;width:1px;height:calc(var(--vh) - 100px)"></i>
+                  <i class="ln" style="left:1128px;top:48px;width:1px;height:calc(var(--vh) - 100px)"></i>
+                  <i class="ln" style="left:1128px;top:230px;width:272px;height:1px"></i>
+                  <i class="ln" style="left:1128px;top:366px;width:272px;height:1px"></i>
+                  <i class="ln" style="left:40px;top:calc(var(--vh) - 138px);width:1360px;height:1px"></i>
+                  <i class="ln" style="left:40px;top:calc(var(--vh) - 53px);width:1360px;height:1px"></i>
+                </div>
+                <div class="h-side" data-layer="intro" data-depth="0.42" data-shadow="0.12,0.16,8" style="--lab-y:470px">
+                  <p style="top:108px">Ethos is a credibility platform that creates a more trusted web3 ecosystem.</p>
+                  <p style="top:250px">Contribute &amp; earn by building your reputation, backing others or penalizing bad actors.</p>
+                  <p style="top:386px">Use the Ethos credibility score to better understand who you can trust and who to avoid.</p>
+                </div>
+                <h1 class="queens h-title" data-layer="headline" data-depth="0.78" data-shadow="0.12,0.3,14" style="--lab-x:700px;--lab-y:330px"><span>Reputation</span><span class="mid">&amp; Credibility,</span><span>Onchain</span></h1>
+                <div class="h-logo" data-layer="logo" data-depth="0.5" data-shadow="0.12,0.2,8" data-svg="logo"></div>
+                <div class="h-btn mono" data-layer="button" data-depth="0.9" data-shadow="0.12,0.42,12">&gt; Open ethos.network</div>
+              </section>
+
+              <!-- the fraud report, pinned and folding away, with the features rising over the sky behind it -->
+              <section class="sec track" data-stop="report">
+                <div class="f-pin" data-pin="clouds2">
+                  <div class="clouds" data-layer="clouds" data-depth="-0.3" style="--lab-x:120px;--lab-y:700px"></div>
+                </div>
+                <div class="r-pin" data-pin="report">
+                  <div class="r-fold" id="rFold">
+                    <div class="r-strips" id="rStrips" data-layer="scan strips" data-depth="0.04" style="--lab-x:40px;--lab-y:110px"></div>
+                    <div class="r-ticks" id="rTicks" data-layer="ticks" data-depth="0.24" style="--lab-x:40px;--lab-y:160px"></div>
+                    <div class="r-chips" id="rChips" data-layer="labels" data-depth="0.58" style="--lab-x:40px;--lab-y:210px"></div>
+                    <div class="r-num" id="rNum" data-layer="figure" data-depth="0.8" style="--lab-x:330px;--lab-y:-30px"><span>$35,000,38</span><span class="odo" id="odo"></span></div>
+                    <p class="r-sub" data-layer="caption" data-depth="0.72">Lost in 2025 due to crypto fraud</p>
+                    <p class="r-bottom" data-layer="source" data-depth="0.3">Almost $100m is lost DAILY in crypto due to various types of scams and fraud.   <span>&gt; View reports</span></p>
+                  </div>
+                </div>
+                <h2 class="queens f-head" data-layer="headline" data-depth="0.78" data-shadow="0,0.26,12"><span>We break through this onchain fraud by</span>Decentralizing trust &amp; reputation.</h2>
+                <div class="f-list" data-layer="feature grid" data-depth="0.26" style="--lab-x:20px;--lab-y:300px">
+                  <i class="ln" style="left:386px"></i><i class="ln" style="left:772px"></i>
+                  <h3 class="queens" style="left:20px">Reputation signals stored onchain</h3>
+                  <h3 class="queens" style="left:407px">A unified credibility scoring system</h3>
+                  <h3 class="queens" style="left:793px">Universally visible across the web</h3>
+                  <p style="left:20px">Ethos enables users to easily document and record who can be trusted and who to avoid through novel new onchain mechanisms like reviewing, vouching and slashing.</p>
+                  <p style="left:407px">These mechanisms enable Ethos to calculate meaningful &ldquo;Credibility Scores&rdquo; to help crypto participants better understand reputation at a glance.</p>
+                  <p style="left:793px">The Ethos credibility score can be integrated into any crypto engagement platform, including the Chrome integration that can show scores on Twitter and other sites.</p>
+                </div>
+                <div class="f-img" style="left:141px" data-layer="reviews" data-depth="0.54" data-shadow="0.26,0.3,12"><img src="ethos-card-src/img/feature-reviews.webp" alt=""></div>
+                <div class="f-img" style="left:528px" data-layer="scores" data-depth="0.54" data-shadow="0.26,0.3,12"><img src="ethos-card-src/img/feature-scores.svg" alt=""></div>
+                <div class="f-img" style="left:914px" data-layer="on the web" data-depth="0.54" data-shadow="0.26,0.3,12"><img src="ethos-card-src/img/feature-web.webp" alt=""></div>
+              </section>
+
+              <!-- how reputation is gained or lost: pinned, the tabs change with the scroll -->
+              <section class="sec rep" data-stop="reputation">
+                <div class="rep-pin" data-pin="rep">
+                  <div class="rep-in">
+                    <h2 class="queens rep-h" data-layer="headline" data-depth="0.62">How reputation is gained or lost</h2>
+                    <div class="rep-tabs" id="repTabs" data-layer="tabs" data-depth="0.4" style="--lab-y:-40px">
+                      <div class="st">
+                        <div class="tab on" style="--c:var(--bone)"><h3>Review</h3><p>Leave simple thumbs up, thumbs down or neutral reviews for anyone.<br><br><b>Minor</b> impact on credibility score in isolation, but can have a <b>major</b> impact over time, from the right people, and in volume.</p></div>
+                        <div class="tab"><h3>Vouch</h3></div>
+                        <div class="tab"><h3>Slash</h3></div>
+                      </div>
+                      <div class="st" style="opacity:0">
+                        <div class="tab"><h3>Review</h3></div>
+                        <div class="tab on" style="--c:var(--green)"><h3>Vouch</h3><p>Deposit &amp; stake Ethereum in other participants to show the network who you really believe in through vouching.<br><br><b>Major</b> impact on credibility score.</p></div>
+                        <div class="tab"><h3>Slash</h3></div>
+                      </div>
+                      <div class="st" style="opacity:0">
+                        <div class="tab"><h3>Review</h3></div>
+                        <div class="tab"><h3>Vouch</h3></div>
+                        <div class="tab on" style="--c:var(--red)"><h3>Slash</h3><p>Did someone in crypto step out of line? If they participate in Ethos, you can propose they are slashed and they can lose Ethereum they have staked in the network after a vote.<br><br><b>Major</b> impact on credibility score.</p></div>
+                      </div>
+                    </div>
+                    <div class="rep-g" id="repDots" data-layer="signals" data-depth="0.18" style="--lab-x:20px;--lab-y:20px"></div>
+                    <div class="rep-g" id="repNet" data-layer="network" data-depth="0.44" style="--lab-x:20px;--lab-y:60px"></div>
+                    <div class="rep-g" id="repCore" data-layer="score" data-depth="0.74" style="--lab-x:20px;--lab-y:100px"></div>
+                  </div>
+                </div>
+                <div class="rep-tex" aria-hidden="true"></div>
+              </section>
+
+              <!-- the credibility score and its marquees -->
+              <section class="sec score" data-stop="score">
+                <h2 class="queens sc-h" data-layer="headline" data-depth="0.62">Ethos Credibility Score</h2>
+                <p class="sc-p" data-layer="body copy" data-depth="0.4">The acts of reviewing, slashing and vouching help instrument objective peer-to-peer measurements that combine to create the Ethos Credibility Score.<br><br>An easy-to-read signal if a particular person can be trusted, or not.</p>
+                <div class="mq mq-labels" data-mq="labels" data-dir="-1" data-speed="34" data-layer="signals" data-depth="0.22"></div>
+                <div class="mq mq-scores" data-mq="scores" data-dir="1" data-speed="30" data-layer="scores" data-depth="0.7" style="--lab-x:600px"></div>
+                <div class="mq mq-labels b" data-mq="labels" data-dir="-1" data-speed="34" data-layer="signals" data-depth="0.22"></div>
+              </section>
+
+              <!-- proof of credibility, on the blue -->
+              <section class="sec cred" data-stop="platform">
+                <div class="cr-box" data-layer="frame" data-depth="0.06" style="--lab-x:40px;--lab-y:40px"></div>
+                <h2 class="queens cr-h" data-layer="headline" data-depth="0.64" data-shadow="0.06,0.22,12">We&rsquo;re building an extensible platform for Proof of Credibility.</h2>
+                <p class="cr-p" data-layer="body copy" data-depth="0.4">The Ethos Credibility Score is the first dApp built on the Ethos Network. We&rsquo;ve designed Ethos to be extensible to other interfaces and dApps by building the infrastructure onchain.<br><br>Developers can write reviews, vouches and slashes directly to Ethos&rsquo; smart contract, from any interface.<br><br>Want to create your own credibility score? We support that too.</p>
+                <div class="cr-btn" data-layer="button" data-depth="0.84" data-shadow="0.06,0.34,10">&gt; Developer? Check out the docs</div>
+                <div class="cr-row" style="top:325px" data-layer="interfaces" data-depth="0.46" data-shadow="0.06,0.3,10"><img src="ethos-card-src/img/stack-top.png" alt=""></div>
+                <div class="cr-lines" style="top:389px" data-layer="links" data-depth="0.3" data-svg="lines9"></div>
+                <div class="cr-row" style="top:454px" data-layer="dapps" data-depth="0.56" data-shadow="0.06,0.3,10"><img src="ethos-card-src/img/stack-center.webp" alt=""></div>
+                <div class="cr-lines" style="top:518px" data-layer="links" data-depth="0.3" data-svg="lines3"></div>
+                <div class="cr-row" style="top:584px" data-layer="network" data-depth="0.72" data-shadow="0.06,0.34,12"><img src="ethos-card-src/img/stack-bottom.png" alt=""></div>
+              </section>
+
+              <!-- the footer -->
+              <section class="sec foot" data-stop="footer">
+                <div class="ft-clip"><div class="ft-logo" data-layer="logotype" data-depth="0.1" style="--lab-y:60px"><img src="ethos-card-src/img/logotype.webp" alt=""></div></div>
+                <h2 class="queens ft-h" data-layer="headline" data-depth="0.62"><span>Sound interesting?</span><span>Try it yourself.</span></h2>
+                <div class="ft-btn" data-layer="button" data-depth="0.88">Open ethos</div>
+                <div class="ft-bottom" data-layer="links" data-depth="0.34" style="--lab-x:120px">
+                  <div class="ft-mark" data-svg="mark"></div>
+                  <div class="ft-links"><span data-svg="x"></span><i class="dot"></i><span data-svg="discord"></span><i class="dot"></i><span>Blog</span><i class="dot"></i><span>Whitepaper</span><i class="dot"></i><span>Brand</span><i class="dot"></i><span>Privacy</span><i class="dot"></i><span>Terms</span></div>
+                </div>
+              </section>
+            </div>
+
+            <!-- the nav, docked at the top once the hero has gone -->
+            <nav class="abs cnav" id="cnav">
+              <div class="cn-band" data-layer="nav" data-depth="0.32" style="--lab-x:160px;--lab-y:30px"><div class="abs cn-logo" data-svg="logo"></div></div>
+              <div class="cn-btn mono" data-layer="nav button" data-depth="0.56">&gt; Open ethos.network</div>
+            </nav>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Ethos</h3>
+      <p><span>Fintech &amp; web3</span><span>Brand, Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="ethos-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the Dawn card's way: the studio's own Params,
+   defineParams from /shared/params/params.js. Embedded on the site there is
+   no panel and nothing is fetched, so the module is only loaded here, and
+   only when served (opened from disk there is no studio to load it from). */
+const card = window.ethosCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'ethos work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [1, 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [1, 0, 3, 0.01],         // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [0.4, 0, 1, 0.01],         // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [5, 0, 20, 0.5],         // degrees
+        perspective: [2.4, 1, 6, 0.05],    // eye distance, in card widths
+        hoverScale: [1.012, 1, 1.12, 0.001],
+      },
+      light: {
+        bloom: [0.75, 0, 1.5, 0.01],       // the round bloom under the pointer
+        bloomSize: [1.3, 0.6, 2.4, 0.01],  // its diameter, in card widths
+        rim: [0.45, 0, 1, 0.01],           // the edge nearest the pointer
+        shadow: [0.7, 0, 1, 0.01],         // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [1, 0, 3, 0.05],
+        stiffness: [110, 40, 500, 1],
+        damping: [21, 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [1, 0, 2, 0.05],         // how far a flick carries
+        friction: [0.32, 0.08, 1, 0.01],   // seconds for a flick to lose most of its speed
+        resumeAfter: [1.2, 0.2, 5, 0.1],   // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [40, 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: true },
+        frameColor: '#c1c0b6',
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: true },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

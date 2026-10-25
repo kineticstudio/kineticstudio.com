@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Konvoy work card, 2026-10-23, built on the Metamag, Venus Aerospace and
+     Epirus cards' engine (a classic script, konvoy-card-src/js/card.js,
+     itself from the Ethos and Dawn cards) with Hunter's notes built in from
+     the start: the miniature keeps touring while you hover, the light is one
+     soft round bloom under the pointer, you can drag the page like a phone
+     (up and down) or scrub it sideways (right goes further down the page), a
+     notched ruler slides with the scroll, and there is no Case Study pill.
+
+     Konvoy (www.konvoy.vc, ours: web design and development) has been edited
+     since Kinetic shipped it (the report banner is gone, the grid reads OUR
+     THESES and ABOUT, PLATFORM is hidden, the sign-up is email only), so this
+     is the site as Kinetic shipped it and recorded it (kineticstudio.com's
+     konvoy.mp4 cover loop, and Hunter's longer konvoy.mov walk-through): the
+     June 2025 version, rebuilt at its 1440px design width from the web
+     archive's captures of the home page (2025-06-09) and the portfolio
+     (2025-06-20), their HTML, CSS, fonts (GT America Extended) and logos.
+     The home is one screen on the site, so the card walks it the way the
+     recording does: the green fills running across the grid tiles (the
+     site's own hover, 500 ms, eased as its interactions are), the mark
+     spinning as the cursor passes it, the menu's black sheet coming down
+     with PORTFOLIO filling amber, and then the portfolio itself, scrolling
+     under the same fixed header, banner and rail (both pages share them, and
+     the rail's title changes as the portfolio arrives), every company tile
+     filling green as the cursor rests on it. Over the card, the pointer is
+     the cursor: whatever tile it is over fills, as on the site. Nothing here
+     is a video. Fonts and images are the site's own, in konvoy-card-src/. raw/ keeps
+     the fetched HTML, CSS, fonts, images and interaction data for reference;
+     nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched from outside it:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=1      the site in a window on the card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Konvoy work card</title>
+<script>
+  /* before first paint: embed or not, and the bleed */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="konvoy-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Konvoy, konvoy.vc, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- the home: one screen, the six links of the grid -->
+              <section class="sec home" data-stop="home">
+                <div class="grid hgrid" id="hgrid">
+                    <div class="htile" data-grid="home" data-i="0">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"><i class="wipe"></i></div></div>
+                      <h2 class="h tl" data-layer="link" data-depth="0.44" data-shadow="0,0.26,10" style="--lab-y:-34px">PORTFOLIO</h2>
+                    </div>
+                    <div class="htile" data-grid="home" data-i="1">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"><i class="wipe"></i></div></div>
+                      <h2 class="h tl" data-layer="link" data-depth="0.44" data-shadow="0,0.26,10" style="--lab-y:-34px">OUR THESIS</h2>
+                    </div>
+                    <div class="htile" data-grid="home" data-i="2">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"><i class="wipe"></i></div></div>
+                      <h2 class="h tl" data-layer="link" data-depth="0.44" data-shadow="0,0.26,10" style="--lab-y:-34px">CONTENT</h2>
+                    </div>
+                    <div class="htile" data-grid="home" data-i="3">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"><i class="wipe"></i></div></div>
+                      <h2 class="h tl" data-layer="link" data-depth="0.44" data-shadow="0,0.26,10" style="--lab-y:-34px">ABOUT / CONTACT</h2>
+                    </div>
+                    <div class="htile" data-grid="home" data-i="4">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"><i class="wipe"></i></div></div>
+                      <h2 class="h tl" data-layer="link" data-depth="0.44" data-shadow="0,0.26,10" style="--lab-y:-34px">PRESS</h2>
+                    </div>
+                    <div class="htile" data-grid="home" data-i="5">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"><i class="wipe"></i></div></div>
+                      <h2 class="h tl" data-layer="link" data-depth="0.44" data-shadow="0,0.26,10" style="--lab-y:-34px">PLATFORM</h2>
+                    </div>
+                </div>
+              </section>
+
+              <!-- the portfolio: every company, newest first, as the June 2025 page lists them -->
+              <section class="sec port" data-stop="portfolio">
+                <div class="grid pgrid" id="pgrid">
+                    <div class="ptile" data-grid="port" data-i="0">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>May 2025</p><p class="gap">Location:</p><p>To be announced</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Web-based OS</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/stealth0525.webp" width="34.7" height="43.2" style="width:34.7px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="1">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>April 2025</p><p class="gap">Location:</p><p>To be announced</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Collectibles marketplace</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/stealth0425.webp" width="34.7" height="43.2" style="width:34.7px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="2">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>March 2025</p><p class="gap">Location:</p><p>San Francisco, CA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Diversion is an intuitive version control system built on a modern tech stack for speed, scalability, and efficiency.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/diversion.webp" width="104.8" height="43.2" style="width:104.8px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="3">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>January 2025</p><p class="gap">Location:</p><p>To be announced</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Fan engagement platform</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/stealth0125.webp" width="34.7" height="43.2" style="width:34.7px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="4">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>August 2024</p><p class="gap">Location:</p><p>Nashville, TN</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Minno is an OTT &amp; Entertainment Platform for the Christian kids audience.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/minno.webp" width="106.7" height="25.2" style="width:106.7px;height:25.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="5">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>June 2024</p><p class="gap">Location:</p><p>To be announced</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Autonomous game development</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/stealth0624-2.webp" width="34.7" height="43.2" style="width:34.7px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="6">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>June 2024</p><p class="gap">Location:</p><p>Philadelphia, PA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Nerd Street is building the infrastructure to power the future of esports and competitive gaming.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/nerd-street.webp" width="106.7" height="33.6" style="width:106.7px;height:33.6px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="7">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>May 2024</p><p class="gap">Location:</p><p>Seattle, WA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Ixana is shaping the future of wireless communication through human body communication (HBC).</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/ixana.webp" width="106.7" height="20.8" style="width:106.7px;height:20.8px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="8">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>February 2024</p><p class="gap">Location:</p><p>Irvine, CA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Magic Potion Games is creating a safe and magical online experience for the next generation of gamers. A virtual world where kids can be kids that parents can trust.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/magic-potion-games.webp" width="99.3" height="43.2" style="width:99.3px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="9">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>October 2023</p><p class="gap">Location:</p><p>Boise, ID</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Battle Road is applying cutting edge innovations from the game industry to build the future of planet-scale simulations, modeling, and operations.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/battle-road.webp" width="106.7" height="14.2" style="width:106.7px;height:14.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="10">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>October 2023</p><p class="gap">Location:</p><p>Singapore, Singapore</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">k-ID offers a platform that enhances online safety for children and parents and reduces risks for developers and publishers.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/k-id.webp" width="50.9" height="43.2" style="width:50.9px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="11">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>August 2023</p><p class="gap">Location:</p><p>To be announced</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Social gameplay platform</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/stealth0823.webp" width="34.7" height="43.2" style="width:34.7px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="12">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>April 2023</p><p class="gap">Location:</p><p>To be announced</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Augmented reality infrastructure</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/stealth0423.webp" width="34.7" height="43.2" style="width:34.7px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="13">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>March 2023</p><p class="gap">Location:</p><p>Sydney, Australia</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">A terabit-scale, encryption-proof customer insights platform for telecoms with real-time network traffic analytics.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/canopus-networks.webp" width="106.7" height="30.8" style="width:106.7px;height:30.8px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="14">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>February 2023</p><p class="gap">Location:</p><p>Schenectady, New York</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">The Rocket Science Group specializes in co-development, platform, publishing tech, and live ops for console, PC and mobile.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/rocket-science.webp" width="106.7" height="26.4" style="width:106.7px;height:26.4px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="15">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>November 2022</p><p class="gap">Location:</p><p>Boulder, CO</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Afference creates tactile sensations during digital interactions with an unobtrusive wearable device using neural stimulation.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/afference.webp" width="106.6" height="12.4" style="width:106.6px;height:12.4px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="16">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>October 2022</p><p class="gap">Location:</p><p>To be announced</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Creator platform</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/stealth1022.webp" width="34.7" height="43.2" style="width:34.7px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="17">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>September 2022</p><p class="gap">Location:</p><p>West Hollywood, CA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Root is a next-generation social platform that combines communication tools with a customizable app framework</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/root.webp" width="106.7" height="40.8" style="width:106.7px;height:40.8px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="18">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>August 2022</p><p class="gap">Location:</p><p>San Diego, CA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">ByteBrew is an all-in-one mobile analytics platform that is focused on helping developers grow their games.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/bytebrew.webp" width="106.8" height="30.6" style="width:106.8px;height:30.6px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="19">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>August 2022</p><p class="gap">Location:</p><p>Toronto, Canada</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">An award-winning studio centered around creative, play-based learning experiences for kids.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/pok-pok.webp" width="106.7" height="40.8" style="width:106.7px;height:40.8px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="20">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>May 2022</p><p class="gap">Location:</p><p>Vancouver, Canada</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">A spatial analytics platform that delivers enterprise grade data and insights.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/cognitive3d.webp" width="106.7" height="25.1" style="width:106.7px;height:25.1px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="21">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>May 2022</p><p class="gap">Location:</p><p>San Francisco, CA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Sanlo is building the financial OS for games and apps.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/sanlo.webp" width="95.4" height="43.2" style="width:95.4px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="22">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>January 2022</p><p class="gap">Location:</p><p>Miami, Florida</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">An all-in-one game and game development platform, designed to empower developers and 3D creators with limitless experiences &amp; creativity.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/the-mirror.webp" width="106.8" height="25.4" style="width:106.8px;height:25.4px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="23">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>December 2021</p><p class="gap">Location:</p><p>Montreal, Canada</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Mino Games brings characters and worlds to life through gaming and innovation.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/mino-games.webp" width="96" height="43.2" style="width:96px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="24">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>December 2021</p><p class="gap">Location:</p><p>Baltimore, MD</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Legends of Learning has built a platform for game-based learning in schools that brings together Teachers, School Districts, Game Developers, and Students.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/legends-of-learning.webp" width="106.8" height="39.3" style="width:106.8px;height:39.3px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="25">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>December 2021</p><p class="gap">Location:</p><p>Tallinn, Estonia</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Cross-game Avatar Platform for the Metaverse.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/ready-player-me.webp" width="73.8" height="43.2" style="width:73.8px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="26">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>October 2021</p><p class="gap">Location:</p><p>Ho Chi Minh City, Vietnam</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Sipher is a hybrid PvP and PvE blockchain-enabled game ecosystem that rewards players for their time, performance, and creativity.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/sipher.webp" width="106.7" height="19.6" style="width:106.7px;height:19.6px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="27">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>October 2021</p><p class="gap">Location:</p><p>Los Angeles, USA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Genopets is a free-to-play, move-to-earn NFT game that combines the nurture and evolution of Tamagotchi, the training and battling of Pokemon, and the open world of The Witcher.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/genopets.webp" width="69.9" height="43.2" style="width:69.9px;height:43.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="28">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>October 2021</p><p class="gap">Location:</p><p>San Francisco, USA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Proxima is building a social sandbox game centered around exploration, creativity, and belonging.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/proxima.webp" width="106.7" height="24.5" style="width:106.7px;height:24.5px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="29">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>September 2021</p><p class="gap">Location:</p><p>New York, USA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Echo3D is building a cloud platform for 3D/AR/VR that provides tools and network infrastructure to help developers and companies quickly build and deploy 3D apps, games, and content.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/echo3d.webp" width="106.7" height="17.2" style="width:106.7px;height:17.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="30">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>May 2021</p><p class="gap">Location:</p><p>Ho Chi Minh City, Vietnam</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Axie Infinity is a virtual world full of fierce, adorable pets called Axies. These pets can be battled, collected, and even used to earn cryptocurrencies with real value.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/axie.webp" width="106.7" height="25.9" style="width:106.7px;height:25.9px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="31">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>April 2021</p><p class="gap">Location:</p><p>Helsinki, Finland</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">HTML5 social games for chat platforms.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/quicksave.webp" width="106.7" height="33.5" style="width:106.7px;height:33.5px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="32">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>March 2021</p><p class="gap">Location:</p><p>Cape Town, South Africa</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Carry1st is opening up the African gaming market with payment infrastructure and localized publishing.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/carry1st.webp" width="106.7" height="25.9" style="width:106.7px;height:25.9px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="33">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>January 2021</p><p class="gap">Location:</p><p>Berlin, Germany</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Solsten helps game studios better understand their players through clinical grade psychological assessments.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/solsten.webp" width="106.7" height="19.6" style="width:106.7px;height:19.6px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="34">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>December 2020</p><p class="gap">Location:</p><p>London, United Kingdom</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Goss is a social gaming application that gives women the chance to bet on their interests in a fun, social and gamified way.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/goss.webp" width="106.7" height="36.6" style="width:106.7px;height:36.6px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="35">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>August 2020</p><p class="gap">Location:</p><p>New York City, New York</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Group video chat while playing multiplayer games.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/bunch.webp" width="106.7" height="22.7" style="width:106.7px;height:22.7px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="36">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>July 2020</p><p class="gap">Location:</p><p>Gothenburg, Sweden</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Hiber is a no-code, browser-based, UGC platform for the next generation of creators.</p>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="37">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>July 2020</p><p class="gap">Location:</p><p>Salt Lake City, USA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Blerp lets you find, share, and create short audio clips, meme sounds, and soundboards.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/blerp.webp" width="106.8" height="28" style="width:106.8px;height:28px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="38">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>June 2020</p><p class="gap">Location:</p><p>San Francisco, USA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Dorian has built a user generated content platform for narrative-based gaming.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/dorian.webp" width="106.7" height="23.9" style="width:106.7px;height:23.9px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="39">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>June 2020</p><p class="gap">Location:</p><p>Los Angeles, USA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">GameFam is a publisher and developer of games on the Roblox platform.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/gamefam.webp" width="106.7" height="21.2" style="width:106.7px;height:21.2px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="40">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>November 2019</p><p class="gap">Location:</p><p>Montreal, Canada</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Edgegap helps game studios reduce lag and improve player experience with edge computing.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/edgegap.webp" width="106.7" height="24" style="width:106.7px;height:24px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="41">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>August 2019</p><p class="gap">Location:</p><p>Austin, USA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Muxy enables streamer/audience engagement with a developer framework and toolset for viewers to directly impact gameplay.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/muxy.webp" width="106.7" height="33.4" style="width:106.7px;height:33.4px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="42">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>April 2019</p><p class="gap">Location:</p><p>Vancouver, Canada</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Askott provided a white-label esports betting platform; it was acquired by FansUnite in 2020.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/askott-entertainment.webp" width="106.7" height="34.8" style="width:106.7px;height:34.8px" alt=""></div>
+                    </div>
+                    <div class="ptile" data-grid="port" data-i="43">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:150px"><i class="wipe"></i></div></div>
+                      <div class="pf cap" data-layer="facts" data-depth="0.16" style="--lab-x:120px"><p>Invested:</p><p>April 2019</p><p class="gap">Location:</p><p>San Francisco, USA</p></div>
+                      <p class="pd cap wrap" data-layer="about" data-depth="0.2" style="--lab-y:-34px">Opera Event is a platform that connects content creators and teams with sponsors, enabling influencers to effectively engage and monetize their audience.</p>
+                      <div class="pl" data-layer="logo" data-depth="0.36" data-shadow="0,0.22,7" style="--lab-y:-34px"><img src="konvoy-card-src/img/logos/opera-event.webp" width="106.7" height="27" style="width:106.7px;height:27px" alt=""></div>
+                    </div>
+                </div>
+              </section>
+            </div>
+
+            <!-- the chrome, fixed in the window on both pages: the header, the report banner, the rail -->
+            <div class="chrome" id="chrome">
+              <div class="rail" data-layer="rail" data-depth="0.16" data-shadow="0,0.2,18" style="--lab-x:20px;--lab-y:300px">
+                <div class="rule" style="top:calc(var(--cell) - 1px)"></div>
+                <div class="rule" style="top:calc(var(--cell) * 2 - 1px)"></div>
+                <div class="r-intro cap wrap" id="railIntro" data-layer="intro" data-depth="0.2" style="--lab-x:20px;--lab-y:110px">
+                  <p>Konvoy is a thesis driven investment firm.</p>
+                  <p>We invest in the platforms and technologies at the frontier of gaming.</p>
+                </div>
+                <h1 class="r-title h" id="railTitle" data-layer="title" data-depth="0.25" data-shadow="0,0.26,10" style="--lab-y:36px">PORTFOLIO</h1>
+                <div class="r-news cap wrap" data-layer="newsletter" data-depth="0.2" style="--lab-x:20px;--lab-y:100px">
+                  <p class="b">Konvoy’s Weekly Newsletter:</p>
+                  <p>Your go-to for the latest industry insights and trends. <u>Learn more here.</u></p>
+                </div>
+                <div class="r-form" data-layer="form" data-depth="0.18" style="--lab-x:20px;--lab-y:-34px">
+                  <div class="field cap" style="top:0">First name</div>
+                  <div class="field cap" style="top:37px">Last name</div>
+                  <div class="field cap" style="top:74px">Email</div>
+                </div>
+                <div class="r-form r-btn" data-layer="button" data-depth="0.25" data-shadow="0,0.3,8" style="--lab-x:20px;--lab-y:148px"><div class="btn">Signup for newsletter</div></div>
+                <div class="r-foot cap" data-layer="legal" data-depth="0.18" style="--lab-x:20px;--lab-y:-34px"><p>©KONVOY, 2025.</p><p>Disclosures</p></div>
+              </div>
+              <div class="khs" data-layer="header" data-depth="0.16" data-shadow="0,0.24,18" style="--lab-x:640px;--lab-y:60px">
+                <div class="kh"></div>
+                <div class="ban"></div>
+                <div class="kh-logo" data-layer="logo" data-depth="0.22" data-shadow="0,0.3,8" style="--lab-x:150px"><img src="konvoy-card-src/img/konvoy-logo.svg" width="139.7" height="24.2" alt=""></div>
+                <p class="kh-loc cap" data-layer="location" data-depth="0.2" style="--lab-x:-150px;--lab-y:30px">Denver, CO</p>
+                <div class="kh-mark" data-layer="mark" data-depth="0.24" data-shadow="0,0.3,6" style="--lab-x:-120px;--lab-y:30px"><img id="mark" src="konvoy-card-src/img/konvoy-mark.svg" width="27.9" height="24.1" alt=""></div>
+                <div class="burger" data-layer="menu" data-depth="0.24" data-shadow="0,0.3,6" style="--lab-x:-130px;--lab-y:30px"><i style="top:0"></i><i style="top:8.64px"></i><i style="top:17.28px"></i></div>
+                <p class="ban-t" data-layer="report" data-depth="0.22" style="--lab-x:520px;--lab-y:24px"><span>Q1 2025 Gaming Industry Report Released,</span><span style="margin-left:5px">View Here</span></p>
+              </div>
+
+              <!-- the menu: a black sheet that comes down from the top of the window -->
+              <div class="mclip" id="mclip">
+                <div class="min" id="min">
+                  <div class="m-head"></div>
+                  <div class="m-logo" data-layer="logo" data-depth="0.2" style="--lab-x:150px"><img src="konvoy-card-src/img/konvoy-logo.svg" width="139.7" height="24.2" alt=""></div>
+                  <div class="m-x" data-layer="close" data-depth="0.22" style="--lab-x:-130px;--lab-y:30px"><i></i><i></i></div>
+                  <div class="m-rail" id="mrail">
+                    <div class="rule" style="top:calc(var(--cell) - 1px)"></div>
+                    <div class="rule" style="top:calc(var(--cell) * 2 - 1px)"></div>
+                    <div class="r-intro cap wrap" data-layer="intro" data-depth="0.18" style="--lab-x:20px;--lab-y:110px">
+                      <p>Konvoy is a thesis driven venture capital firm. We invest in the platforms and technologies at the frontier of gaming.</p>
+                    </div>
+                    <div class="r-news cap wrap" data-layer="newsletter" data-depth="0.17" style="--lab-x:20px;--lab-y:100px">
+                  <p class="b">Konvoy’s Weekly Newsletter:</p>
+                  <p>Your go-to for the latest industry insights and trends. <u>Learn more here.</u></p>
+                </div>
+                    <div class="r-form" data-layer="form" data-depth="0.15" style="--lab-x:20px;--lab-y:-34px">
+                  <div class="field cap" style="top:0">First name</div>
+                  <div class="field cap" style="top:37px">Last name</div>
+                  <div class="field cap" style="top:74px">Email</div>
+                </div>
+                <div class="r-form r-btn" data-layer="button" data-depth="0.2" style="--lab-x:20px;--lab-y:148px"><div class="btn">Signup for newsletter</div></div>
+                    <div class="r-foot cap" data-layer="legal" data-depth="0.15" style="--lab-x:20px;--lab-y:-34px"><p>©KONVOY, 2025.</p><p>Disclosures</p></div>
+                  </div>
+                  <div class="grid mgrid" id="mgrid">
+                    <div class="mtile" data-grid="menu" data-i="0">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"><i class="wipe"></i></div></div>
+                      <p class="h tl" data-layer="link" data-depth="0.44" style="--lab-y:-34px">PORTFOLIO</p>
+                    </div>
+                    <div class="mtile" data-grid="menu" data-i="1">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"><i class="wipe"></i></div></div>
+                      <p class="h tl" data-layer="link" data-depth="0.44" style="--lab-y:-34px">OUR THESIS</p>
+                    </div>
+                    <div class="mtile" data-grid="menu" data-i="2">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"><i class="wipe"></i></div></div>
+                      <p class="h tl" data-layer="link" data-depth="0.44" style="--lab-y:-34px">CONTENT</p>
+                    </div>
+                    <div class="mtile" data-grid="menu" data-i="3">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"><i class="wipe"></i></div></div>
+                      <p class="h tl" data-layer="link" data-depth="0.44" style="--lab-y:-34px">ABOUT / CONTACT</p>
+                    </div>
+                    <div class="mtile" data-grid="menu" data-i="4">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"><i class="wipe"></i></div></div>
+                      <p class="h tl" data-layer="link" data-depth="0.44" style="--lab-y:-34px">PRESS</p>
+                    </div>
+                    <div class="mtile" data-grid="menu" data-i="5">
+                      <div class="wc"><div class="wl" data-layer="fill" data-depth="0.03" style="--lab-x:20px;--lab-y:20px"><i class="wipe"></i></div></div>
+                      <p class="h tl" data-layer="link" data-depth="0.44" style="--lab-y:-34px">PLATFORM</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>KONVOY</h3>
+      <p><span>Venture</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="konvoy-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, the Studio's own Params (defineParams from /shared/params/params.js).
+   Embedded on the site there is no panel and nothing is fetched, so the module
+   is only loaded here, and only when served (opened from disk there is no
+   studio to load it from): the card runs on its defaults without it. */
+const card = window.konvoyCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'konvoy work card';
+    const D = card.defaults;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        fill: [D['motion.fill'], 0.15, 1.5, 0.01],         // seconds for a tile's fill to grow in or out (0.5 on the site)
+        menu: { type: 'toggle', labels: ['Scroll to the portfolio', 'Through the menu'], default: D['motion.menu'] },
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        scrub: [D['drag.scrub'], 0.5, 6, 0.1],             // page px per px of a sideways drag (right = further down)
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

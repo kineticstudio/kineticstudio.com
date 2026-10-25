@@ -1,6 +1,11 @@
 # Experiments
 
 One file per live experiment on the Playground: `src/experiments/<slug>.js`.
+Its dials are Hunter's own Params, **ks-params** (`src/scripts/ks-params.js`,
+vendored unchanged from the Creative Studio's `shared/params/params.js`).
+`src/scripts/experiment-host.js` hands the declaration to `defineParams`, so
+framed in the Studio the Studio's Params panel draws it, and on the site the
+ks-params standalone panel does (P opens it).
 The slug matches its entry in `src/data/experiments.js`. Every experiment
 opens on its own page (`/playground/<slug>`) with a Params panel beside it;
 `/lab/<slug>` is the same thing with no site chrome, for building one.
@@ -10,7 +15,7 @@ opens on its own page (`/playground/<slug>`) with a Params panel beside it;
 ```js
 // src/experiments/<slug>.js
 
-/** The dials, in the Creative Studio's ks-params shape (see src/scripts/params.js). */
+/** The dials, declared for Hunter's ks-params (src/scripts/ks-params.js, vendored from the Studio). */
 export const params = {
   count: [12, 1, 40, 1],                 // slider: [value, min, max, step]
   glow: true,                            // on / off

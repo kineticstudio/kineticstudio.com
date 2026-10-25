@@ -1,0 +1,1 @@
+function e(e){return/iPad|iPhone|iPod/.test(e)?`ios`:/android/i.test(e)?`android`:null}export{e as t};

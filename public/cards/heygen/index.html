@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     HeyGen work card, 2026-10-23, built on the Ethos card's engine (by way of
+     the Venus Aerospace card) with Hunter's notes built in from the start: the
+     miniature keeps touring while you hover, the light is one soft round bloom
+     under the pointer, you can drag the page like a phone (up and down) or
+     scrub it sideways (right goes further down the page), a notched ruler
+     slides with the scroll, and there is no Case Study pill.
+
+     heygen.com has been redesigned since Kinetic built it, so this is the site
+     as Kinetic shipped it: the hero follows Kinetic's own recording of it
+     (kineticstudio.com/media/heygen.mp4, frames pulled with ffmpeg), and the
+     rest of the page follows the site as it stood in January 2024, rebuilt at
+     its 1440px design width from that version's own HTML, CSS, fonts (Roobert)
+     and images. The tour runs hero, every team, how it works, the three
+     steps, AI avatars, features for scale, safety, the reviews and the
+     footer; the instant, studio and photo avatar rows, AI voices and Created
+     with HeyGen are left out. The site's videos are stills here (frames
+     pulled from its own files), and its marquees (the logos, the avatar
+     rows, the template rows, the voice wave, the reviews) run in light
+     transforms. raw/ keeps the fetched HTML, CSS, fonts and images for
+     reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched. Like the others:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=framed the site inset on a card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>HeyGen work card</title>
+<script>
+  /* before first paint: embed or not, and the studio's own type for the label row
+     (served by the studio; opened from disk the label falls back to system type) */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    } else if (location.protocol !== 'file:') {
+      var l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = '/fonts/kinetic/fonts.css';
+      document.head.appendChild(l);
+    }
+  })();
+</script>
+<link rel="stylesheet" href="heygen-card-src/css/card.css">
+</head>
+
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-arrow" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.66667 8.00033C2.66667 7.63214 2.96515 7.33366 3.33334 7.33366H12.6667C13.0349 7.33366 13.3333 7.63214 13.3333 8.00033C13.3333 8.36852 13.0349 8.66699 12.6667 8.66699H3.33334C2.96515 8.66699 2.66667 8.36852 2.66667 8.00033Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M7.5286 2.86225C7.78895 2.6019 8.21106 2.6019 8.47141 2.86225L13.1381 7.52892C13.3984 7.78927 13.3984 8.21138 13.1381 8.47173L8.47141 13.1384C8.21106 13.3987 7.78895 13.3987 7.5286 13.1384C7.26825 12.878 7.26825 12.4559 7.5286 12.1956L11.7239 8.00033L7.5286 3.80506C7.26825 3.54471 7.26825 3.1226 7.5286 2.86225Z" fill="currentColor"/></symbol>
+<symbol id="i-play16" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.01389 1.41453C3.22794 1.29767 3.48872 1.30701 3.69386 1.43889L13.0272 7.43889C13.218 7.56156 13.3334 7.77283 13.3334 7.99967C13.3334 8.22652 13.218 8.43779 13.0272 8.56046L3.69386 14.5605C3.48872 14.6923 3.22794 14.7017 3.01389 14.5848C2.79985 14.468 2.66669 14.2435 2.66669 13.9997V1.99967C2.66669 1.7558 2.79985 1.53139 3.01389 1.41453ZM4.00002 3.22079V12.7786L11.4338 7.99967L4.00002 3.22079Z" fill="currentColor"/></symbol>
+<symbol id="i-play18" viewBox="0 0 18 18"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.78189 1.56626C4.00971 1.44188 4.28727 1.45183 4.50561 1.59219L14.4396 7.9783C14.6427 8.10886 14.7654 8.33373 14.7654 8.57517C14.7654 8.81661 14.6427 9.04149 14.4396 9.17205L4.50561 15.5582C4.28727 15.6985 4.00971 15.7085 3.78189 15.5841C3.55407 15.4597 3.41234 15.2208 3.41234 14.9613V2.18906C3.41234 1.9295 3.55407 1.69064 3.78189 1.56626ZM4.83147 3.48875V13.6616L12.7437 8.57517L4.83147 3.48875Z" fill="currentColor"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 22"><path d="M12 0L14.6942 8.2918H23.4127L16.3593 13.4164L19.0534 21.7082L12 16.5836L4.94658 21.7082L7.64074 13.4164L0.587322 8.2918H9.30583L12 0Z" fill="#7559FF"/></symbol>
+<symbol id="i-lock" viewBox="0 0 48 48"><path d="M38 22H10C7.79086 22 6 23.7909 6 26V40C6 42.2091 7.79086 44 10 44H38C40.2091 44 42 42.2091 42 40V26C42 23.7909 40.2091 22 38 22Z" stroke="#00BF8F" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M14 22V14C14 11.3478 15.0536 8.8043 16.9289 6.92893C18.8043 5.05357 21.3478 4 24 4C26.6522 4 29.1957 5.05357 31.0711 6.92893C32.9464 8.8043 34 11.3478 34 14V22" stroke="#00BF8F" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+<symbol id="i-check" viewBox="0 0 28 28"><path d="M4.92543 4.92544C7.24655 2.60436 10.4565 1.16666 14 1.16666C17.5434 1.16666 20.7534 2.60436 23.0745 4.92545C25.3956 7.24657 26.8333 10.4565 26.8333 14C26.8333 17.5435 25.3956 20.7534 23.0745 23.0745C20.7534 25.3956 17.5434 26.8333 14 26.8333C10.4565 26.8333 7.24655 25.3956 4.92542 23.0745C2.60433 20.7534 1.16663 17.5435 1.16663 14C1.16663 10.4565 2.60434 7.24657 4.92543 4.92544Z" fill="#00BF8F"/><path d="M12.0086 18.3251C12.4642 18.7807 13.2029 18.7807 13.6585 18.3251L20.7763 11.2073C21.1668 10.8167 21.1668 10.1836 20.7763 9.79306L20.5406 9.55736C20.1501 9.16683 19.5169 9.16683 19.1264 9.55736L13.5406 15.1431C13.1501 15.5337 12.5169 15.5337 12.1264 15.1431L10.0406 13.0574C9.65009 12.6668 9.01693 12.6668 8.6264 13.0574L8.3907 13.2931C8.00018 13.6836 8.00018 14.3167 8.3907 14.7073L12.0086 18.3251Z" fill="white"/></symbol>
+<symbol id="i-down" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.55806 6.29544C2.46043 6.19781 2.46043 6.03952 2.55806 5.94189L3.44195 5.058C3.53958 4.96037 3.69787 4.96037 3.7955 5.058L8.00001 9.26251L12.2045 5.058C12.3021 4.96037 12.4604 4.96037 12.5581 5.058L13.4419 5.94189C13.5396 6.03952 13.5396 6.19781 13.4419 6.29544L8.17678 11.5606C8.07915 11.6582 7.92086 11.6582 7.82323 11.5606L2.55806 6.29544Z" fill="currentColor"/></symbol>
+<symbol id="i-chev" viewBox="0 0 14 14"><path d="M3 5.25L7 9.25L11 5.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+<symbol id="i-cam" viewBox="0 0 17 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.4717 4.07373C16.6938 4.18799 16.8333 4.41678 16.8333 4.6665V11.3332C16.8333 11.5829 16.6938 11.8117 16.4717 11.9259C16.2497 12.0402 15.9824 12.0208 15.7792 11.8757L11.1125 8.54233C10.9373 8.41719 10.8333 8.21514 10.8333 7.99984C10.8333 7.78454 10.9373 7.58249 11.1125 7.45735L15.7792 4.12401C15.9824 3.97887 16.2497 3.95946 16.4717 4.07373ZM12.647 7.99984L15.5 10.0377V5.96196L12.647 7.99984Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M2.83334 3.99984C2.46515 3.99984 2.16668 4.29831 2.16668 4.6665V11.3332C2.16668 11.7014 2.46515 11.9998 2.83334 11.9998H10.1667C10.5349 11.9998 10.8333 11.7014 10.8333 11.3332V4.6665C10.8333 4.29831 10.5349 3.99984 10.1667 3.99984H2.83334ZM0.833344 4.6665C0.833344 3.56193 1.72877 2.6665 2.83334 2.6665H10.1667C11.2712 2.6665 12.1667 3.56193 12.1667 4.6665V11.3332C12.1667 12.4377 11.2712 13.3332 10.1667 13.3332H2.83334C1.72877 13.3332 0.833344 12.4377 0.833344 11.3332V4.6665Z" fill="currentColor"/></symbol>
+<symbol id="i-left" viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.41681 10C3.41681 9.58579 3.7526 9.25 4.16681 9.25L15.8335 9.25C16.2477 9.25 16.5835 9.58579 16.5835 10C16.5835 10.4142 16.2477 10.75 15.8335 10.75L4.16681 10.75C3.7526 10.75 3.41681 10.4142 3.41681 10Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M3.63648 10.5305C3.34359 10.2376 3.34359 9.76273 3.63648 9.46983L9.46982 3.6365C9.76271 3.34361 10.2376 3.34361 10.5305 3.6365C10.8234 3.92939 10.8234 4.40427 10.5305 4.69716L5.22747 10.0002L10.5305 15.3032C10.8234 15.5961 10.8234 16.0709 10.5305 16.3638C10.2376 16.6567 9.76271 16.6567 9.46981 16.3638L3.63648 10.5305Z" fill="currentColor"/></symbol>
+<symbol id="i-right" viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.5833 10C16.5833 10.4142 16.2475 10.75 15.8333 10.75L4.16658 10.75C3.75237 10.75 3.41658 10.4142 3.41658 10C3.41658 9.58579 3.75237 9.25 4.16658 9.25L15.8333 9.25C16.2475 9.25 16.5833 9.58579 16.5833 10Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M16.3636 9.46951C16.6565 9.7624 16.6565 10.2373 16.3636 10.5302L10.5302 16.3635C10.2374 16.6564 9.76248 16.6564 9.46959 16.3635C9.17669 16.0706 9.17669 15.5957 9.46959 15.3028L14.7726 9.99984L9.46959 4.69683C9.17669 4.40394 9.17669 3.92907 9.46959 3.63617C9.76248 3.34328 10.2374 3.34328 10.5302 3.63617L16.3636 9.46951Z" fill="currentColor"/></symbol>
+<symbol id="i-flag" viewBox="0 0 18 12"><rect width="18" height="12" rx="1.5" fill="#fff"/><rect y="0.00" width="18" height="0.92" fill="#d22f3c"/><rect y="1.85" width="18" height="0.92" fill="#d22f3c"/><rect y="3.69" width="18" height="0.92" fill="#d22f3c"/><rect y="5.54" width="18" height="0.92" fill="#d22f3c"/><rect y="7.38" width="18" height="0.92" fill="#d22f3c"/><rect y="9.23" width="18" height="0.92" fill="#d22f3c"/><rect y="11.08" width="18" height="0.92" fill="#d22f3c"/><rect width="8" height="6.46" fill="#3c3b7a"/></symbol>
+<symbol id="i-s0" viewBox="0 0 16 17"><path d="M13.6314 14.2287H11.2621V10.516C11.2621 9.63066 11.2441 8.49133 10.0274 8.49133C8.79206 8.49133 8.60339 9.45466 8.60339 10.4507V14.2287H6.23406V6.59399H8.51006V7.63466H8.54073C8.85873 7.03466 9.63206 6.40133 10.7874 6.40133C13.1881 6.40133 13.6321 7.98133 13.6321 10.038L13.6314 14.2287ZM3.55806 5.54933C2.79539 5.54933 2.18273 4.93199 2.18273 4.17266C2.18273 3.41399 2.79606 2.79733 3.55806 2.79733C4.31806 2.79733 4.93406 3.41399 4.93406 4.17266C4.93406 4.93199 4.31739 5.54933 3.55806 5.54933ZM4.74606 14.2287H2.37006V6.59399H4.74606V14.2287ZM14.8167 0.593994H1.18073C0.528061 0.593994 6.10352e-05 1.10999 6.10352e-05 1.74666V15.4413C6.10352e-05 16.0787 0.528061 16.594 1.18073 16.594H14.8147C15.4667 16.594 16.0001 16.0787 16.0001 15.4413V1.74666C16.0001 1.10999 15.4667 0.593994 14.8147 0.593994H14.8167Z" fill="currentColor"/></symbol>
+<symbol id="i-s1" viewBox="0 0 16 17"><path d="M8.35004 0.607327C9.22337 0.593994 10.09 0.600661 10.9567 0.593994C11.01 1.61399 11.3767 2.65399 12.1234 3.37399C12.87 4.11399 13.9234 4.45399 14.95 4.56733V7.25399C13.99 7.22066 13.0234 7.02066 12.15 6.60733C11.77 6.43399 11.4167 6.21399 11.07 5.98733C11.0634 7.93399 11.0767 9.88066 11.0567 11.8207C11.0034 12.754 10.6967 13.6807 10.1567 14.4473C9.28337 15.7273 7.77004 16.5607 6.21671 16.5873C5.26337 16.6407 4.31004 16.3807 3.49671 15.9007C2.15004 15.1073 1.20337 13.654 1.06337 12.094C1.05004 11.7607 1.04337 11.4273 1.05671 11.1007C1.17671 9.83399 1.80337 8.62066 2.77671 7.79399C3.88337 6.83399 5.43004 6.37399 6.87671 6.64733C6.89004 7.63399 6.85004 8.62066 6.85004 9.60733C6.19004 9.39399 5.41671 9.45399 4.83671 9.85399C4.41671 10.1273 4.09671 10.5473 3.93004 11.0207C3.79004 11.3607 3.83004 11.734 3.83671 12.094C3.99671 13.1873 5.05004 14.1073 6.17004 14.0073C6.91671 14.0007 7.63004 13.5673 8.01671 12.934C8.14337 12.714 8.28337 12.4873 8.29004 12.2273C8.35671 11.034 8.33004 9.84733 8.33671 8.65399C8.34337 5.96733 8.33004 3.28733 8.35004 0.607327Z" fill="currentColor"/></symbol>
+<symbol id="i-s2" viewBox="0 0 16 17"><path d="M15.6654 4.71794C15.575 4.37746 15.3967 4.0667 15.1485 3.81678C14.9002 3.56687 14.5906 3.38657 14.2507 3.29394C13.0034 2.95728 8.00006 2.95728 8.00006 2.95728C8.00006 2.95728 2.99673 2.95728 1.74873 3.29394C1.409 3.38673 1.09959 3.5671 0.851446 3.817C0.603302 4.0669 0.425122 4.37757 0.334728 4.71794C6.10352e-05 5.97394 6.10352e-05 8.59394 6.10352e-05 8.59394C6.10352e-05 8.59394 6.10352e-05 11.2139 0.334728 12.4699C0.425118 12.8104 0.603378 13.1212 0.851655 13.3711C1.09993 13.621 1.40951 13.8013 1.74939 13.8939C2.99673 14.2306 8.00006 14.2306 8.00006 14.2306C8.00006 14.2306 13.0034 14.2306 14.2514 13.8939C14.5913 13.8014 14.9009 13.6211 15.1492 13.3712C15.3975 13.1212 15.5757 12.8105 15.6661 12.4699C16.0001 11.2139 16.0001 8.59394 16.0001 8.59394C16.0001 8.59394 16.0001 5.97394 15.6654 4.71794ZM6.36339 10.9726V6.21528L10.5454 8.59394L6.36339 10.9726Z" fill="currentColor"/></symbol>
+<symbol id="i-s3" viewBox="0 0 16 17"><path d="M12.6007 1.36255H15.0541L9.69406 7.48922L16.0001 15.8245H11.0627L7.19606 10.7685L2.77073 15.8245H0.316061L6.04939 9.27122L6.10352e-05 1.36322H5.06273L8.55806 5.98455L12.6007 1.36255ZM11.7401 14.3565H13.0994L4.32406 2.75388H2.86539L11.7401 14.3565Z" fill="currentColor"/></symbol>
+<symbol id="i-s4" viewBox="0 0 16 17"><path d="M6.06739 16.388V11.068H4.41806V8.62329H6.06739V7.56996C6.06739 4.84662 7.29939 3.58462 9.97273 3.58462C10.2401 3.58462 10.6094 3.61262 10.9514 3.65329C11.2076 3.67965 11.4617 3.72308 11.7121 3.78329V5.99996C11.5673 5.98646 11.4221 5.97845 11.2767 5.97596C11.1139 5.97173 10.951 5.96973 10.7881 5.96996C10.3167 5.96996 9.94873 6.03396 9.67139 6.17596C9.48495 6.2695 9.32822 6.41308 9.21873 6.59062C9.04673 6.87062 8.96939 7.25396 8.96939 7.75862V8.62329H11.5821L11.3247 10.0253L11.1334 11.068H8.96939V16.5646C12.9307 16.086 16.0001 12.7133 16.0001 8.62329C16.0001 4.20529 12.4181 0.623291 8.00006 0.623291C3.58206 0.623291 6.10352e-05 4.20529 6.10352e-05 8.62329C6.10352e-05 12.3753 2.58273 15.5233 6.06739 16.388Z" fill="currentColor"/></symbol>
+<symbol id="i-s5" viewBox="0 0 16 17"><path d="M13.5447 3.50731C12.5074 3.03115 11.4127 2.69161 10.288 2.49718C10.2778 2.49527 10.2672 2.49663 10.2578 2.50107C10.2484 2.50552 10.2407 2.51281 10.2357 2.52191C10.095 2.77211 9.9392 3.09844 9.83013 3.35491C8.60033 3.17078 7.3768 3.17078 6.17226 3.35491C6.0632 3.09271 5.90173 2.77211 5.76046 2.52191C5.75523 2.51301 5.74744 2.5059 5.7381 2.5015C5.72877 2.4971 5.71832 2.49562 5.70813 2.49724C4.58332 2.69122 3.48853 3.03074 2.45133 3.50724C2.44246 3.51103 2.43498 3.51749 2.42993 3.52571C0.355664 6.62464 -0.212603 9.64738 0.066197 12.6326C0.0669853 12.64 0.0692325 12.647 0.0728053 12.6535C0.0763781 12.6599 0.081204 12.6655 0.086997 12.67C1.45553 13.6751 2.7812 14.2852 4.08226 14.6896C4.09238 14.6927 4.10318 14.6925 4.11321 14.6892C4.12324 14.6859 4.13203 14.6797 4.1384 14.6712C4.44613 14.251 4.72046 13.8078 4.95573 13.3418C4.95896 13.3354 4.96081 13.3284 4.96115 13.3213C4.96148 13.3141 4.9603 13.307 4.95768 13.3003C4.95506 13.2937 4.95106 13.2876 4.94595 13.2826C4.94083 13.2776 4.93471 13.2738 4.928 13.2713C4.4928 13.1062 4.07846 12.905 3.67986 12.6764C3.67259 12.6722 3.66649 12.6662 3.66209 12.659C3.65768 12.6518 3.65512 12.6436 3.65462 12.6352C3.65412 12.6268 3.65569 12.6184 3.65921 12.6107C3.66273 12.6031 3.66809 12.5964 3.6748 12.5913C3.75866 12.5284 3.8426 12.4631 3.92266 12.397C3.92978 12.3912 3.93839 12.3874 3.94753 12.3862C3.95667 12.3849 3.96598 12.3863 3.9744 12.39C6.59293 13.5856 9.42773 13.5856 12.0153 12.39C12.0238 12.386 12.0331 12.3845 12.0424 12.3856C12.0517 12.3867 12.0604 12.3905 12.0677 12.3964C12.1478 12.4624 12.2317 12.5284 12.3162 12.5913C12.3229 12.5964 12.3283 12.603 12.3319 12.6106C12.3354 12.6182 12.3371 12.6266 12.3366 12.635C12.3362 12.6434 12.3337 12.6516 12.3294 12.6588C12.325 12.666 12.319 12.672 12.3118 12.6764C11.9131 12.9093 11.4953 13.1081 11.0631 13.2706C11.0564 13.2732 11.0503 13.2772 11.0452 13.2822C11.0402 13.2873 11.0362 13.2934 11.0337 13.3001C11.0311 13.3069 11.03 13.314 11.0304 13.3212C11.0308 13.3284 11.0327 13.3354 11.036 13.3418C11.2763 13.8071 11.5506 14.2503 11.8527 14.6706C11.8588 14.6792 11.8676 14.6858 11.8777 14.6892C11.8877 14.6926 11.8986 14.6928 11.9088 14.6896C13.2161 14.2852 14.5418 13.675 15.9103 12.67C15.9162 12.6657 15.9211 12.6602 15.9247 12.6539C15.9283 12.6475 15.9305 12.6405 15.9312 12.6332C16.2648 9.18191 15.3724 6.18398 13.5655 3.52631C13.5611 3.51768 13.5537 3.51098 13.5447 3.50731ZM5.34673 10.8149C4.5584 10.8149 3.9088 10.0911 3.9088 9.20224C3.9088 8.31344 4.5458 7.58964 5.3468 7.58964C6.154 7.58964 6.79726 8.31978 6.78466 9.20231C6.78466 10.0911 6.14766 10.8149 5.34673 10.8149ZM10.6633 10.8149C9.87493 10.8149 9.22533 10.0911 9.22533 9.20224C9.22533 8.31344 9.86226 7.58964 10.6633 7.58964C11.4705 7.58964 12.1137 8.31978 12.1011 9.20231C12.1011 10.0911 11.4705 10.8149 10.6633 10.8149Z" fill="currentColor"/></symbol>
+</defs></svg>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="HeyGen, heygen.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- hero, as Kinetic's recording has it: the headline and the logos left, the pitch right,
+                   the avatar picker and the script card over the demo film -->
+              <section class="sec hero" data-stop="hero">
+                <div class="h-glow" data-layer="glow" data-depth="-0.22" style="--lab-x:40px;--lab-y:120px"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div>
+                <h1 class="h1" data-layer="headline" data-depth="0.78" data-shadow="0,0.32,16" style="--lab-y:-40px"><span class="pu">AI-powered video</span>creations at scale</h1>
+                <div class="h-logos" data-layer="logos" data-depth="0.3" style="--lab-y:-30px"><div class="track" id="heroLogos"><img src="heygen-card-src/img/logo01.webp" width="64" height="64" alt=""><img src="heygen-card-src/img/logo02.webp" width="64" height="64" alt=""><img src="heygen-card-src/img/logo03.webp" width="104" height="64" alt=""><img src="heygen-card-src/img/logo11.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo04.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo05.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo07.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo08.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo06.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo10.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo01.webp" width="64" height="64" alt=""><img src="heygen-card-src/img/logo02.webp" width="64" height="64" alt=""><img src="heygen-card-src/img/logo03.webp" width="104" height="64" alt=""><img src="heygen-card-src/img/logo11.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo04.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo05.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo07.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo08.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo06.webp" width="70" height="64" alt=""><img src="heygen-card-src/img/logo10.webp" width="70" height="64" alt=""></div></div>
+                <p class="h-para" data-layer="pitch" data-depth="0.46" style="--lab-y:-34px">Effortlessly produce studio quality videos<br>with AI-generated avatars and voices.</p>
+                <div class="btn h-cta" data-layer="button" data-depth="0.88" data-shadow="0,0.3,16" style="--lab-x:400px">Get Started for free<svg><use href="#i-arrow"/></svg></div>
+                <div class="demo" data-layer="demo film" data-depth="0.22" data-shadow="0,0.5,24" style="--lab-x:140px;--lab-y:60px">
+                  <img id="demoImg" src="heygen-card-src/img/demo.webp" alt="">
+                  <div class="tint"></div>
+                  <div class="pill abs" data-layer="demo" data-depth="0.6" data-shadow="0.22,0.5,8" style="--lab-y:50px"><svg><use href="#i-play16"/></svg>Demo</div>
+                </div>
+                <div class="h-avs" data-layer="avatars" data-depth="0.62" style="--lab-x:90px">
+                  <div class="wire"></div>
+                  <div class="av a1"><img src="heygen-card-src/img/hero-av1.webp" alt=""></div>
+                  <div class="av a2"><img src="heygen-card-src/img/hero-av2.webp" alt=""></div>
+                  <div class="av a3"><img src="heygen-card-src/img/hero-av3.webp" alt=""></div>
+                </div>
+                <div class="script" data-layer="script card" data-depth="0.48" data-shadow="0,0.42,22" style="--lab-x:150px;--lab-y:-34px">
+                  <div class="sc-label">Script</div>
+                  <div class="sc-text" data-layer="script" data-depth="0.6" style="--lab-x:240px;--lab-y:-30px">Hello there, welcome to HeyGen!<br>The modern way to create<i class="caret" id="caret"></i></div>
+                  <div class="sc-lang" data-layer="language" data-depth="0.66" style="--lab-y:52px"><svg class="flag"><use href="#i-flag"/></svg><span>English</span><svg class="chev"><use href="#i-chev"/></svg></div>
+                  <div class="sc-go" data-layer="generate" data-depth="0.88" data-shadow="0.48,0.5,8" style="--lab-y:54px">Generate Video</div>
+                </div>
+              </section>
+
+              <!-- create videos for every team -->
+              <section class="sec teams" data-stop="teams">
+                <h2 class="h2" data-layer="headline" data-depth="0.72" data-shadow="0,0.38,16"><span class="rv" data-reveal>Create videos<br>for every<br>team</span></h2>
+                <p class="lead" data-layer="body copy" data-depth="0.46"><span class="rv" data-reveal>Engage, explain, entertain. AI-powered video creation for any need.</span></p>
+                <div class="uc uc-product" data-layer="use case" data-depth="0.2" data-shadow="0,0.5,20" style="--lab-x:300px">
+                  <img src="heygen-card-src/img/uc-product.webp" alt=""><div class="mask"></div>
+                  <div class="txt" data-layer="title" data-depth="0.5" style="--lab-x:200px"><h3 class="h3">Product marketing<span>that resonates</span></h3><p>Produce engaging &amp; concise product videos</p></div>
+                  <div class="btns" data-layer="buttons" data-depth="0.84" style="--lab-y:-30px"><div class="btn">Get started<svg><use href="#i-arrow"/></svg></div><div class="play"><svg><use href="#i-play16"/></svg></div></div>
+                </div>
+                <div class="uc uc-sales" data-layer="use case" data-depth="0.2" data-shadow="0,0.5,20" style="--lab-x:300px">
+                  <img src="heygen-card-src/img/uc-sales.webp" alt=""><div class="mask"></div>
+                  <div class="txt" data-layer="title" data-depth="0.5" style="--lab-x:200px"><h3 class="h3">Sales outreach<span>that converts</span></h3><p>Create personalized outreach videos at scale</p></div>
+                  <div class="btns" data-layer="buttons" data-depth="0.84" style="--lab-y:-30px"><div class="btn">Get started<svg><use href="#i-arrow"/></svg></div><div class="play"><svg><use href="#i-play16"/></svg></div></div>
+                </div>
+                <div class="uc uc-lnd tall" data-layer="use case" data-depth="0.2" data-shadow="0,0.5,20" style="--lab-x:300px">
+                  <img src="heygen-card-src/img/uc-lnd.webp" alt=""><div class="mask"></div>
+                  <div class="txt" data-layer="title" data-depth="0.5" style="--lab-x:200px"><h3 class="h3">Learning &amp;<br>development<span>that teaches</span></h3><p>Create training videos your team will actually watch</p></div>
+                  <div class="btns" data-layer="buttons" data-depth="0.84" style="--lab-y:-30px"><div class="btn">Get started<svg><use href="#i-arrow"/></svg></div><div class="play"><svg><use href="#i-play16"/></svg></div></div>
+                </div>
+                <div class="uc uc-content" data-layer="use case" data-depth="0.2" data-shadow="0,0.5,20" style="--lab-x:300px">
+                  <img src="heygen-card-src/img/uc-content.webp" alt=""><div class="mask"></div>
+                  <div class="txt" data-layer="title" data-depth="0.5" style="--lab-x:200px"><h3 class="h3">Content marketing<span>that engage</span></h3><p>Supercharge your content calendar with videos</p></div>
+                  <div class="btns" data-layer="buttons" data-depth="0.84" style="--lab-y:-30px"><div class="btn">Get started<svg><use href="#i-arrow"/></svg></div><div class="play"><svg><use href="#i-play16"/></svg></div></div>
+                </div>
+              </section>
+
+              <!-- how it works, and the three steps -->
+              <section class="sec how" data-stop="how">
+                <div class="how-blur" data-layer="glow" data-depth="-0.2" style="--lab-x:200px;--lab-y:200px"></div>
+                <h2 class="h2" data-layer="headline" data-depth="0.72" data-shadow="0,0.3,16"><span class="rv" data-reveal>How it<br>works</span></h2>
+                <div class="editor" data-layer="editor film" data-depth="0.24" data-shadow="0,0.5,24" style="--lab-x:200px;--lab-y:120px">
+                  <img src="heygen-card-src/img/how-editor.webp" alt="">
+                  <div class="pill abs" data-layer="demo" data-depth="0.6" style="--lab-y:62px"><svg><use href="#i-play18"/></svg>Demo</div>
+                </div>
+                <div class="btn how-cta" data-layer="button" data-depth="0.88" data-shadow="0,0.3,16" style="--lab-y:-34px"><img class="faces" src="heygen-card-src/img/btn-faces.webp" alt="">Get started for free<svg><use href="#i-arrow"/></svg></div>
+                <p class="lead" data-layer="body copy" data-depth="0.46" style="--lab-y:-34px"><span class="rv" data-reveal>Whether you're a professional or beginner, you can create stunning videos in minutes instead of hours.</span></p>
+                <div class="step s1" data-layer="step" data-depth="0.12" style="--lab-x:200px;--lab-y:20px">
+                  <div class="num" data-layer="number" data-depth="0.62" style="--lab-x:140px">01</div>
+                  <h3 class="h3" data-layer="title" data-depth="0.5">Create or choose an avatar</h3>
+                  <p class="sp">Choose from over 100+ AI avatars or customize your own.</p>
+                  <div class="vis" data-layer="avatar" data-depth="0.38" style="--lab-y:-30px"><img src="heygen-card-src/img/step1.webp" alt=""></div>
+                </div>
+                <div class="step s2" data-layer="step" data-depth="0.12" style="--lab-x:200px;--lab-y:20px">
+                  <div class="num" data-layer="number" data-depth="0.62" style="--lab-x:160px">02</div>
+                  <h3 class="h3" data-layer="title" data-depth="0.5">Record or choose a voice</h3>
+                  <p class="sp">Choose from a collection of high-quality voices or record your own.</p>
+                  <div class="wave" data-layer="voice" data-depth="0.26" style="--lab-x:20px;--lab-y:150px"><div class="track" id="wave"><img src="heygen-card-src/img/wave.svg" alt=""><img src="heygen-card-src/img/wave.svg" alt=""><img src="heygen-card-src/img/wave.svg" alt=""></div></div>
+                  <div class="fade"></div>
+                  <div class="pills" data-layer="voice picker" data-depth="0.6" style="--lab-y:-30px"><img class="p1" src="heygen-card-src/img/step2-voice.webp" alt=""><img class="p2" src="heygen-card-src/img/step2-lang.webp" alt=""></div>
+                </div>
+                <div class="step s3" data-layer="step" data-depth="0.12" style="--lab-x:200px;--lab-y:20px">
+                  <div class="num" data-layer="number" data-depth="0.62" style="--lab-x:160px">03</div>
+                  <h3 class="h3" data-layer="title" data-depth="0.5">Select a template or start from scratch</h3>
+                  <p class="sp">Select from an extensive array of ready-to-use templates for any scenario, or begin with a clean slate.</p>
+                  <div class="rows" data-layer="templates" data-depth="0.36" style="--lab-y:-30px">
+                    <div class="row r1" id="tplR1"><img src="heygen-card-src/img/step3-row1.webp" width="536" height="75" alt=""><img src="heygen-card-src/img/step3-row1.webp" width="536" height="75" alt=""><img src="heygen-card-src/img/step3-row1.webp" width="536" height="75" alt=""></div>
+                    <div class="row r2" id="tplR2"><img src="heygen-card-src/img/step3-row2.webp" width="399" height="75" alt=""><img src="heygen-card-src/img/step3-row2.webp" width="399" height="75" alt=""><img src="heygen-card-src/img/step3-row2.webp" width="399" height="75" alt=""></div>
+                    <div class="row r3" id="tplR3"><img src="heygen-card-src/img/step3-row3.webp" width="536" height="75" alt=""><img src="heygen-card-src/img/step3-row3.webp" width="536" height="75" alt=""><img src="heygen-card-src/img/step3-row3.webp" width="536" height="75" alt=""></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- AI avatars -->
+              <section class="sec avs" data-stop="avatars">
+                <h2 class="h2 center" data-layer="headline" data-depth="0.72" data-shadow="0,0.5,16" style="--lab-x:460px"><span class="rv" data-reveal>AI avatars</span></h2>
+                <p class="lead center" data-layer="body copy" data-depth="0.46"><span class="rv" data-reveal>Choose your perfect avatar covering different ethnicities, ages, poses and clothes.</span></p>
+                <div class="avs-btns" data-layer="buttons" data-depth="0.86" data-shadow="0,0.32,16" style="--lab-y:-34px">
+                  <div class="btn"><img class="faces" src="heygen-card-src/img/btn-faces.webp" alt="">Get started for free<svg><use href="#i-arrow"/></svg></div>
+                  <span class="or">or</span>
+                  <div class="btn ghost"><svg><use href="#i-cam"/></svg>Create your own custom avatar</div>
+                </div>
+                <div class="av-row ar1" data-layer="avatars" data-depth="0.28" style="--lab-x:180px;--lab-y:-34px"><div class="track" id="avR1"><div class="av-card"><img src="heygen-card-src/img/av01.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av02.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av03.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av04.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av05.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av06.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av07.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av08.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av09.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av10.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av01.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av02.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av03.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av04.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av05.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av06.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av07.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av08.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av09.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av10.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div></div></div>
+                <div class="av-row ar2" data-layer="avatars" data-depth="0.34" style="--lab-x:180px;--lab-y:-34px"><div class="track" id="avR2"><div class="av-card"><img src="heygen-card-src/img/av11.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av12.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av13.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av14.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av15.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av16.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av17.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av18.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av19.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av20.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av11.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av12.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av13.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av14.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av15.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av16.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av17.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av18.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av19.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div><div class="av-card"><img src="heygen-card-src/img/av20.webp" alt=""><b>Customize<svg><use href="#i-arrow"/></svg></b></div></div></div>
+              </section>
+
+              <!-- features for scale -->
+              <section class="sec feat" data-stop="features">
+                <h2 class="h2" data-layer="headline" data-depth="0.72" data-shadow="0,0.4,16"><span class="rv" data-reveal>Features for scale</span></h2>
+                <p class="lead" data-layer="body copy" data-depth="0.46"><span class="rv" data-reveal>A full-featured platform for flawless video creation.</span></p>
+                <div class="fc dark f-tr" data-layer="video translator" data-depth="0.14" data-shadow="0,0.5,22" style="--lab-x:240px">
+                  <img src="heygen-card-src/img/translator.webp" alt=""><div class="shade"></div>
+                  <div class="pill" data-layer="pill" data-depth="0.6" style="--lab-y:62px"><svg><use href="#i-play18"/></svg>Nikki in Spanish</div>
+                  <div class="txt" data-layer="title" data-depth="0.5" style="--lab-x:300px"><h3 class="h3 w">Video translator</h3><p class="fp">Effortlessly translate your videos using our one-click solution that clones your natural speaking voice and style for seamless delivery in other languages.</p></div>
+                  <div class="btn" data-layer="button" data-depth="0.84" style="--lab-x:130px">Learn more</div>
+                </div>
+                <div class="fc f-api" data-layer="api" data-depth="0.14" data-shadow="0,0.5,22" style="--lab-x:400px">
+                  <h3 class="h3" data-layer="title" data-depth="0.5" style="--lab-x:70px">API</h3>
+                  <p class="fp">Integrate HeyGen’s powerful AI capabilities into your product and create amazing avatar videos programmatically with HeyGen's API.</p>
+                  <div class="art" data-layer="api art" data-depth="0.4" style="--lab-x:20px;--lab-y:40px"><img src="heygen-card-src/img/feat-api.webp" alt=""></div>
+                </div>
+                <div class="fc f-sc" data-layer="script writer" data-depth="0.14" data-shadow="0,0.5,22" style="--lab-x:500px">
+                  <h3 class="h3" data-layer="title" data-depth="0.5" style="--lab-x:360px">ChatGPT script writer</h3>
+                  <p class="fp">Accelerate your video creation with our AI writing assistant.</p>
+                  <div class="art" data-layer="script" data-depth="0.36" style="--lab-x:30px;--lab-y:30px"><img src="heygen-card-src/img/feat-script.svg" alt=""></div>
+                </div>
+                <div class="fc dark f-out" data-layer="ai outfits" data-depth="0.14" data-shadow="0,0.5,22" style="--lab-x:180px">
+                  <h3 class="h3" data-layer="title" data-depth="0.5" style="--lab-x:150px">AI outfits</h3>
+                  <p class="fp">Elevate your avatar for any occasion with a wide range of customizable clothing options.</p>
+                  <div class="art" data-layer="outfits" data-depth="0.36" style="--lab-x:20px;--lab-y:40px"><img src="heygen-card-src/img/feat-outfits.webp" alt=""></div>
+                </div>
+                <div class="fc dark f-int" data-layer="integrations" data-depth="0.14" data-shadow="0,0.5,22" style="--lab-x:180px">
+                  <h3 class="h3" data-layer="title" data-depth="0.5" style="--lab-x:180px">Integrations</h3>
+                  <p class="fp">Using HeyGen couldn’t be easier, streamline your video creation process from your favorite platform.</p>
+                  <div class="logos" data-layer="apps" data-depth="0.4" style="--lab-x:20px;--lab-y:200px"><div class="track" id="ints"><img src="heygen-card-src/img/int-zapier.webp" alt="" style="left:0.0px;top:0px"><img src="heygen-card-src/img/int-canva.webp" alt="" style="left:128.5px;top:-20px"><img src="heygen-card-src/img/int-chatgpt.webp" alt="" style="left:257.0px;top:-40px"><img src="heygen-card-src/img/int-discord.webp" alt="" style="left:385.5px;top:-60px"><img src="heygen-card-src/img/int-zapier.webp" alt="" style="left:514.0px;top:-80px"><img src="heygen-card-src/img/int-canva.webp" alt="" style="left:642.5px;top:-100px"><img src="heygen-card-src/img/int-chatgpt.webp" alt="" style="left:771.0px;top:-120px"><img src="heygen-card-src/img/int-discord.webp" alt="" style="left:899.5px;top:-140px"><img src="heygen-card-src/img/int-zapier.webp" alt="" style="left:1028.0px;top:-160px"><img src="heygen-card-src/img/int-canva.webp" alt="" style="left:1156.5px;top:-180px"><img src="heygen-card-src/img/int-chatgpt.webp" alt="" style="left:1285.0px;top:-200px"><img src="heygen-card-src/img/int-discord.webp" alt="" style="left:1413.5px;top:-220px"></div></div>
+                </div>
+                <div class="fc f-tpl" data-layer="templates" data-depth="0.14" data-shadow="0,0.5,22" style="--lab-x:500px">
+                  <h3 class="h3" data-layer="title" data-depth="0.5" style="--lab-x:400px">Templates for everything</h3>
+                  <div class="tabs" data-layer="tabs" data-depth="0.6" style="--lab-x:440px"><span class="on" style="left:0">Popular</span><span style="left:85px">Learning &amp; Development</span><span style="left:285px">Ecommerce</span><svg style="left:654px;color:#b9b5c6"><use href="#i-left"/></svg><svg style="left:678px;color:#0c062c"><use href="#i-right"/></svg></div>
+                  <div class="slides" data-layer="slides" data-depth="0.38" style="--lab-x:200px;--lab-y:-30px"><img src="heygen-card-src/img/tpl-1.webp" alt="" style="left:0"><img src="heygen-card-src/img/tpl-2.webp" alt="" style="left:323px"><img src="heygen-card-src/img/tpl-3.webp" alt="" style="left:646px"></div>
+                </div>
+              </section>
+
+              <!-- safety at the core -->
+              <section class="sec safe" data-stop="safety">
+                <div class="safe-card" data-layer="safety" data-depth="0.16" data-shadow="0,0.45,26" style="--lab-x:900px;--lab-y:30px">
+                  <svg class="lock" data-layer="lock" data-depth="0.7" style="--lab-x:60px"><use href="#i-lock"/></svg>
+                  <h2 class="sh" data-layer="headline" data-depth="0.62" data-shadow="0.16,0.4,10" style="--lab-x:300px">Safety at the core of<br>our technology</h2>
+                  <p class="st" data-layer="body copy" data-depth="0.44" style="--lab-x:300px;--lab-y:-30px">At HeyGen, security isn't just a consideration, it's a commitment. That's why we're proud to be SOC 2 compliant, an industry standard for data protection.<br>Our AI video platform is built with your privacy and protection in mind, so you can trust us with your valuable data.</p>
+                  <div class="line"></div>
+                  <div class="list" data-layer="checklist" data-depth="0.46" style="--lab-x:820px;--lab-y:150px">
+                    <div class="item" style="left:0;top:0"><svg><use href="#i-check"/></svg><h3>Ethics statement</h3><p>Discover our ethical approach to AI, emphasizing acceptable use and transparency. <u>View more.</u></p></div>
+                    <div class="item" style="left:564px;top:0"><svg><use href="#i-check"/></svg><h3>Security portal</h3><p>Learn how we protect your data and secure our AI technology. <u>View more.</u></p></div>
+                    <div class="item" style="left:0;top:111px"><svg><use href="#i-check"/></svg><h3>Privacy policy</h3><p>See how we respect and protect your data in compliance with industry standards. <u>View more.</u></p></div>
+                    <div class="item" style="left:564px;top:111px"><svg><use href="#i-check"/></svg><h3>Content moderation</h3><p>Find out how we promote a safe, respectful digital environment. <u>View more.</u></p></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- a beloved industry leader -->
+              <section class="sec lov" data-stop="reviews">
+                <h2 class="h2 center" data-layer="headline" data-depth="0.72" data-shadow="0,0.3,16" style="--lab-x:260px;--lab-y:40px"><span class="rv" data-reveal>A <span class="pu">beloved</span> industry<br>leader</span></h2>
+                <p class="lead center" data-layer="body copy" data-depth="0.46" style="--lab-x:880px"><span class="rv" data-reveal>Over 15,000 5-star reviews from across the internet</span></p>
+                <div class="badges" data-layer="badges" data-depth="0.58" data-shadow="0,0.35,8" style="--lab-x:590px;--lab-y:30px"><img src="heygen-card-src/img/g2-1.svg" alt="" style="left:0px"><img src="heygen-card-src/img/g2-2.svg" alt="" style="left:83px"><img src="heygen-card-src/img/g2-3.svg" alt="" style="left:166px"><img src="heygen-card-src/img/g2-4.svg" alt="" style="left:249px"><img src="heygen-card-src/img/g2-5.svg" alt="" style="left:331px"><img src="heygen-card-src/img/g2-6.svg" alt="" style="left:414px"><img src="heygen-card-src/img/g2-7.svg" alt="" style="left:497px"></div>
+                <div class="rv-row rr1" data-layer="reviews" data-depth="0.26" style="--lab-x:640px;--lab-y:-30px"><div class="track" id="rvR1"><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"When they perfect this, watch out"</div><p class="rp">I love the user interface, they make it very simple to create short, engaging videos that have proven to be very helpful for our HR and training departments.</p><div class="who"><img src="heygen-card-src/img/rv-11.webp" alt=""><div><b>John I.</b><i>America's EUC Leader at DuPont<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Power of creativity in business"</div><p class="rp">Heygen serves as a valuable resource for businesses aiming to establish a strong online presence and cultivate a unique business identity.</p><div class="who"><img src="heygen-card-src/img/rv-1.webp" alt=""><div><b>Ray S.</b><i>Warehouse Supervisor<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Your Personal Stage Director for Stellar Videos"</div><p class="rp">It's like having a magic wand for video creation. It's not just a tool; it's more like a backstage crew always ready to put on a show.</p><div class="who"><img src="heygen-card-src/img/rv-2.webp" alt=""><div><b>Bently H.</b><i>Mid-Market(51-1000 emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Fantastic tool for creating AI Videos"</div><p class="rp">Whether you want to make a video for your business, your social media, or your personal project, HeyGen can help you turn your ideas into reality.</p><div class="who"><img src="heygen-card-src/img/rv-8.webp" alt=""><div><b>Ernest R.</b><i>Editor In Chief, Journal of Indo-Pacific Affairs<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Super easy to use and great workflow"</div><p class="rp">It is a great product that saves a toon of time for producing a video to either promote your product or a feature that you are working on for your project.</p><div class="who"><img src="heygen-card-src/img/rv-9.webp" alt=""><div><b>Leonardo M.</b><i>Principal Software Engineer<br>Enterprise(&gt; 1000 emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Making a picture talk was cake and fun"</div><p class="rp">I was able to produce a quick talking video from a photo. It was great to add a fun friendly face on-the-fly without any hand-holding required.</p><div class="who"><img src="heygen-card-src/img/rv-10.webp" alt=""><div><b>Christopher S.</b><i>Senior Software Engineer, Designer<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"When they perfect this, watch out"</div><p class="rp">I love the user interface, they make it very simple to create short, engaging videos that have proven to be very helpful for our HR and training departments.</p><div class="who"><img src="heygen-card-src/img/rv-11.webp" alt=""><div><b>John I.</b><i>America's EUC Leader at DuPont<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Power of creativity in business"</div><p class="rp">Heygen serves as a valuable resource for businesses aiming to establish a strong online presence and cultivate a unique business identity.</p><div class="who"><img src="heygen-card-src/img/rv-1.webp" alt=""><div><b>Ray S.</b><i>Warehouse Supervisor<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Your Personal Stage Director for Stellar Videos"</div><p class="rp">It's like having a magic wand for video creation. It's not just a tool; it's more like a backstage crew always ready to put on a show.</p><div class="who"><img src="heygen-card-src/img/rv-2.webp" alt=""><div><b>Bently H.</b><i>Mid-Market(51-1000 emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Fantastic tool for creating AI Videos"</div><p class="rp">Whether you want to make a video for your business, your social media, or your personal project, HeyGen can help you turn your ideas into reality.</p><div class="who"><img src="heygen-card-src/img/rv-8.webp" alt=""><div><b>Ernest R.</b><i>Editor In Chief, Journal of Indo-Pacific Affairs<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Super easy to use and great workflow"</div><p class="rp">It is a great product that saves a toon of time for producing a video to either promote your product or a feature that you are working on for your project.</p><div class="who"><img src="heygen-card-src/img/rv-9.webp" alt=""><div><b>Leonardo M.</b><i>Principal Software Engineer<br>Enterprise(&gt; 1000 emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Making a picture talk was cake and fun"</div><p class="rp">I was able to produce a quick talking video from a photo. It was great to add a fun friendly face on-the-fly without any hand-holding required.</p><div class="who"><img src="heygen-card-src/img/rv-10.webp" alt=""><div><b>Christopher S.</b><i>Senior Software Engineer, Designer<br>Small-Business(50 or fewer emp.)</i></div></div></div></div></div>
+                <div class="rv-row rr2" data-layer="reviews" data-depth="0.32" style="--lab-x:640px;--lab-y:330px"><div class="track" id="rvR2"><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Save time communicating your story"</div><p class="rp">Within seconds you an find an avatar and voice that will clearly position your message. Add your text or use AI to help you craft the perfect message and generate your video.</p><div class="who"><img src="heygen-card-src/img/rv-18.webp" alt=""><div><b>Cath P.</b><i>CCO<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"It’s one fo the best I’ve seen"</div><p class="rp">I like that it's user friendly and it doesn't require a huge learning curve. I also like the customization feature and the wide spread of ethnicities available.</p><div class="who"><img src="heygen-card-src/img/rv-19.webp" alt=""><div><b>Lee-ann P.</b><i>CEO &amp; Founder<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Crazy AI solution with great results"</div><p class="rp">The Avatars are so realistic and the software is easy to understand and to use. I really love it and I have tons of use cases in my head.</p><div class="who"><img src="heygen-card-src/img/rv-14.webp" alt=""><div><b>Rainer L.</b><i>Head of Marketing and Sales<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Amazing"</div><p class="rp">I entered to create an avatar and I found a world of possibilities to delve into and discover.</p><div class="who"><img src="heygen-card-src/img/rv-13.webp" alt=""><div><b>Peb B.</b><i>Production Director<br>Mid-Market(51-1000 emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Amazing and practical"</div><p class="rp">its ease of use, the quality of the generated videos, the variety of templates available, the speed at which it can create videos, and the affordability compared to hiring a professional video editor.</p><div class="who"><img src="heygen-card-src/img/rv-12.webp" alt=""><div><b>Jafer E.</b><i>IT Manager<br>Mid-Market(51-1000 emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Pretty amazing, the result is too good"</div><p class="rp">Heygen is easy, and the result and the quality is amazing, with 2 min of video i get nice results</p><div class="who"><img src="heygen-card-src/img/rv-17.webp" alt=""><div><b>aaron a.</b><i>Creative technologist /Marketing and Advertising<br>Mid-Market(51-1000 emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Save time communicating your story"</div><p class="rp">Within seconds you an find an avatar and voice that will clearly position your message. Add your text or use AI to help you craft the perfect message and generate your video.</p><div class="who"><img src="heygen-card-src/img/rv-18.webp" alt=""><div><b>Cath P.</b><i>CCO<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"It’s one fo the best I’ve seen"</div><p class="rp">I like that it's user friendly and it doesn't require a huge learning curve. I also like the customization feature and the wide spread of ethnicities available.</p><div class="who"><img src="heygen-card-src/img/rv-19.webp" alt=""><div><b>Lee-ann P.</b><i>CEO &amp; Founder<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Crazy AI solution with great results"</div><p class="rp">The Avatars are so realistic and the software is easy to understand and to use. I really love it and I have tons of use cases in my head.</p><div class="who"><img src="heygen-card-src/img/rv-14.webp" alt=""><div><b>Rainer L.</b><i>Head of Marketing and Sales<br>Small-Business(50 or fewer emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Amazing"</div><p class="rp">I entered to create an avatar and I found a world of possibilities to delve into and discover.</p><div class="who"><img src="heygen-card-src/img/rv-13.webp" alt=""><div><b>Peb B.</b><i>Production Director<br>Mid-Market(51-1000 emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Amazing and practical"</div><p class="rp">its ease of use, the quality of the generated videos, the variety of templates available, the speed at which it can create videos, and the affordability compared to hiring a professional video editor.</p><div class="who"><img src="heygen-card-src/img/rv-12.webp" alt=""><div><b>Jafer E.</b><i>IT Manager<br>Mid-Market(51-1000 emp.)</i></div></div></div><div class="rcard"><div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div><div class="rt">"Pretty amazing, the result is too good"</div><p class="rp">Heygen is easy, and the result and the quality is amazing, with 2 min of video i get nice results</p><div class="who"><img src="heygen-card-src/img/rv-17.webp" alt=""><div><b>aaron a.</b><i>Creative technologist /Marketing and Advertising<br>Mid-Market(51-1000 emp.)</i></div></div></div></div></div>
+              </section>
+
+              <!-- start creating -->
+              <section class="sec start" data-stop="start">
+                <div class="st-img" data-layer="editor" data-depth="-0.12" style="--lab-x:20px;--lab-y:20px"><img src="heygen-card-src/img/start-editor.webp" alt=""></div>
+                <h2 class="h2 center" data-layer="headline" data-depth="0.74" data-shadow="-0.12,0.4,16" style="--lab-x:900px;--lab-y:40px"><span class="rv" data-reveal>Start<br>creating</span></h2>
+                <p class="lead center" data-layer="body copy" data-depth="0.48" style="--lab-x:1000px"><span class="rv" data-reveal>Create production-ready videos from text in<br>seconds with AI-generated avatars and voices</span></p>
+                <div class="btn white st-btn" data-layer="button" data-depth="0.88" data-shadow="-0.12,0.32,16" style="--lab-x:210px">Get started for free<svg><use href="#i-arrow"/></svg></div>
+              </section>
+
+              <!-- the footer -->
+              <section class="sec foot" data-stop="footer">
+                <div class="ft-cta" data-layer="avatar" data-depth="0.22" data-shadow="0,0.45,20" style="--lab-x:20px;--lab-y:20px">
+                  <img src="heygen-card-src/img/footer-avatar.webp" alt="">
+                  <img class="logo" src="heygen-card-src/img/heygen-logo-white.svg" data-layer="logo" data-depth="0.5" alt="" style="--lab-y:44px">
+                  <div class="btn" data-layer="button" data-depth="0.84" style="--lab-y:-30px">Get started for free<svg><use href="#i-arrow"/></svg></div>
+                </div>
+                <div class="ft-nav" data-layer="sitemap" data-depth="0.14" data-shadow="0,0.4,20" style="--lab-x:700px;--lab-y:20px">
+                  <div class="ft-cols abs" data-layer="links" data-depth="0.4" style="--lab-x:500px;--lab-y:300px"><div style="left:0px"><h4>Use Cases</h4><span>Explainer &amp; How to</span><span>Marketing</span><span>Training &amp; Onboarding</span></div><div style="left:224px"><h4>Features</h4><span>Instant Avatar</span><span>Studio Avatar</span><span>Video Translate</span><span>Voice Cloning</span><span>Photo Avatar</span><span>Text to Speech</span><span>Personalized Video</span><span>Realtime Avatar</span><span>AI Avatars</span><span>HeyGen API</span><span>Zapier</span></div><div style="left:427px"><h4>Resources</h4><span>FAQ</span><span>Blog</span><span>Tutorial</span><span>Weekly Webinar</span><span>Case Studies</span><span>Help Center</span><span>Alternative</span><span>Ambassador Program</span><span>Creator Fund</span><span>Affiliate Program</span><span>Status</span></div><div style="left:647px"><h4>Company</h4><span>About Us</span><span>Careers</span><span>Privacy Policy</span><span>Terms of Service</span><span>Security Portal</span><span>Ethics</span><span>Moderation Policy</span><span>Contact</span></div></div>
+                </div>
+                <div class="ft-copy" data-layer="credits" data-depth="0.3" style="--lab-x:440px">©Copyright 2023 HeyGen<br>12130 Millennium Drive Suite 300, Los Angeles, CA 90094</div>
+                <div class="ft-marks" data-layer="marks" data-depth="0.36" style="--lab-x:150px"><img src="heygen-card-src/img/cai.svg" alt="" style="left:0;width:79px"><img src="heygen-card-src/img/c2pa.svg" alt="" style="left:97px;width:32px"></div>
+                <div class="ft-social" data-layer="social" data-depth="0.42" style="--lab-x:-120px;--lab-y:-30px"><svg style="left:0px;color:#fff"><use href="#i-s0"/></svg><svg style="left:32px;color:#fff"><use href="#i-s1"/></svg><svg style="left:64px;color:#fff"><use href="#i-s2"/></svg><svg style="left:96px;color:#fff"><use href="#i-s3"/></svg><svg style="left:128px;color:#fff"><use href="#i-s4"/></svg><svg style="left:160px;color:#fff"><use href="#i-s5"/></svg></div>
+              </section>
+            </div>
+
+            <!-- the nav, fixed in the viewport, as on the site -->
+            <nav class="abs nav" id="nav">
+              <div class="nav-bg"></div>
+              <img class="abs nav-logo" data-layer="logo" data-depth="0.56" src="heygen-card-src/img/heygen-logo.svg" width="110" height="36" alt="" style="--lab-y:44px">
+              <div class="abs nav-links" data-layer="nav" data-depth="0.46" style="--lab-y:46px"><span style="left:16px">Use Cases<i><svg><use href="#i-down"/></svg></i></span><span style="left:147px">Features<i><svg><use href="#i-down"/></svg></i></span><span style="left:266px">Resources<i><svg><use href="#i-down"/></svg></i></span><span style="left:399px">Pricing</span></div>
+              <div class="abs nav-cta" data-layer="actions" data-depth="0.6" style="--lab-x:-60px;--lab-y:58px"><span style="left:15px;top:14px">Contact Sales</span><div class="btn">Try for free</div></div>
+            </nav>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>HeyGen</h3>
+      <p><span>AI</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="heygen-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the Dawn card's way: the studio's own Params,
+   defineParams from /shared/params/params.js. Embedded on the site there is
+   no panel and nothing is fetched, so the module is only loaded here, and
+   only when served (opened from disk there is no studio to load it from). */
+const card = window.heygenCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'heygen work card';
+    const D = card.values;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        marquee: [D['motion.marquee'], 0, 3, 0.05],        // the site's own marquees: logos, avatars, templates, reviews
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        scrub: [D['drag.scrub'], 0.5, 6, 0.1],             // page px per px of a sideways drag (right = down the page)
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

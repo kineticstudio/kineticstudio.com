@@ -1,0 +1,134 @@
+---
+import signature from "@/assets/brand/signature.svg?raw";
+import HunterBust from "@/components/content/HunterBust.astro";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+/* The row about Hunter, under the studio's headline (Hunter, Oct 24: "a 3D
+   version of myself that's spinning ... I want my signature to be in here
+   somewhere ... There's just a row that talks about me, so I'm not the
+   hero"). Him turning on the left (HunterBust); on the right his role, his
+   name and what he cares about, in his words (Oct 25: "have a quote ...
+   something that would really capture a founder"), signed: the signature
+   writes itself in, stroke by stroke, as the row comes in. The numbers have
+   a row of their own (AboutStats). */
+const sig = signature.replace(/<svg /, '<svg aria-hidden="true" ');
+---
+
+{
+  render && (
+    <section class="founder_wrap" aria-labelledby="founder-name">
+      <HunterBust class="founder_bust" />
+      <div class="founder_body">
+        <blockquote class="founder_quote" data-reveal>
+          <p class="text-style-quote">“Every company starts as something only its founders can feel. My job is to find the heart and soul of it, and build the brand and the experience that let the world feel it too.”</p>
+        </blockquote>
+        {/* signed under it, the way a letter is (Hunter, Oct 25: "Make Hunter at the bottom. It'd be like a
+            signature: Hunter Thompson, founder and creative director") */}
+        <footer class="founder_sign">
+          <span class="founder_sig" data-reveal set:html={sig} />
+          <h2 id="founder-name" class="founder_name text-style-main" data-reveal style="--reveal-delay:0.1s">Hunter Thompson</h2>
+          <p class="founder_role text-style-label" data-reveal style="--reveal-delay:0.16s">Founder and creative director</p>
+        </footer>
+      </div>
+    </section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .founder_wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: var(--space-8);
+      align-items: center;
+      padding: var(--section-space-large) var(--site-margin);
+      @media (width < 56rem) {
+        grid-template-columns: 1fr;
+        gap: var(--space-6);
+      }
+    }
+    .founder_bust {
+      justify-self: start;
+      max-width: 30rem;
+      @media (width < 56rem) {
+        max-width: 26rem;
+      }
+    }
+    .founder_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+    }
+    .founder_sign {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .founder_name,
+    .founder_role {
+      margin: 0;
+    }
+    .founder_name {
+      font-weight: var(--primary-medium, 500);
+    }
+    .founder_role {
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .founder_quote {
+      margin: 0;
+      max-width: 40ch;
+      & p {
+        margin: 0;
+        /* the opening quote hangs */
+        text-indent: -0.4em;
+      }
+    }
+    /* his signature, a sign-off under the quote (Oct 25: "clean up my signature so it
+       doesn't look like a 5-year-old created it"): his strokes, smoothed, in ink that
+       presses on the downstrokes and tapers at the ends, drawn in a stroke at a time
+       at a pen's pace (each pen path carries its start --d and its length in time --t) */
+    .founder_sig {
+      display: block;
+      width: min(20rem, 60%);
+      margin-top: var(--space-2);
+      rotate: -3deg;
+      color: var(--text);
+      pointer-events: none;
+      & svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+      }
+    }
+    .founder_sig[data-reveal] {
+      opacity: 1;
+      transform: none;
+      /* the ink is drawn through a mask of pen paths, each wiped in along its stroke */
+      & .sig-pen path {
+        stroke-dasharray: 1 2;
+        stroke-dashoffset: 1;
+        opacity: 0;
+      }
+      &.is-in .sig-pen path {
+        stroke-dashoffset: 0;
+        opacity: 1;
+        transition:
+          stroke-dashoffset var(--t) cubic-bezier(0.45, 0.05, 0.55, 0.95) calc(var(--d) + 0.5s),
+          opacity 0s linear calc(var(--d) + 0.5s);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .founder_sig[data-reveal] .sig-pen path {
+        stroke-dashoffset: 0;
+        opacity: 1;
+        transition: none;
+      }
+    }
+  }
+</style>

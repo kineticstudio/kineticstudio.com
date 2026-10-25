@@ -1,0 +1,113 @@
+---
+import { HOME, WORK } from "@/data/work.js";
+
+interface Props {
+  /** Utility classes. */
+  class?: string;
+  /** How many rows of work run past. */
+  rows?: number;
+}
+
+const { class: className, rows = 3 } = Astro.props;
+/* The best of the work, running past in rows, the way the Playground lays
+   its pieces out (Hunter, Oct 25: "a marquee of different projects. Maybe it
+   can be like the playground, where it's a grid of all of the best projects.
+   Maybe it says 'Start a project' in the middle, just smaller"). Each row is
+   the homepage's picks from a different start, every other one running the
+   other way; whatever sits in the slot goes over the middle. */
+const picks = HOME.map((slug) => WORK.find((w) => w.slug === slug)).filter(Boolean) as (typeof WORK)[number][];
+const lines = Array.from({ length: rows }, (_, r) => {
+  const from = Math.round((r * picks.length) / rows);
+  return [...picks.slice(from), ...picks.slice(0, from)];
+});
+---
+
+<div class:list={["wall_wrap", className]}>
+  <div class="wall_rows" aria-hidden="true">
+    {lines.map((line, r) => (
+      <div class="wall_row" style={`--dur:${120 + r * 16}s; --dir:${r % 2 ? "reverse" : "normal"}`}>
+        {[0, 1].map(() => (
+          <ul class="wall_track">
+            {line.map((w) => (
+              <li class="wall_tile">
+                <img src={`/cards/${w.slug}/poster.jpg`} alt="" width="1200" height="750" loading="lazy" decoding="async" />
+              </li>
+            ))}
+          </ul>
+        ))}
+      </div>
+    ))}
+  </div>
+  <div class="wall_middle">
+    <slot />
+  </div>
+</div>
+
+<style is:global>
+  @layer components {
+    .wall_wrap {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      place-items: center;
+      overflow: hidden;
+      padding: var(--space-6) 0;
+    }
+    .wall_rows {
+      grid-area: 1 / 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      /* fade out at the sides, and quieter in the middle where the slot sits */
+      mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+      opacity: 0.85;
+    }
+    .wall_row {
+      display: flex;
+      width: max-content;
+      animation: wall-run var(--dur) linear infinite;
+      animation-direction: var(--dir);
+    }
+    .wall_track {
+      display: flex;
+      gap: var(--space-3);
+      margin: 0;
+      padding: 0 var(--space-3) 0 0;
+      list-style: none;
+    }
+    .wall_tile {
+      width: clamp(12rem, 21vw, 21rem);
+      aspect-ratio: 16 / 10;
+      overflow: hidden;
+      border-radius: var(--radius-media);
+      background: var(--background-2);
+      & img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+    .wall_middle {
+      grid-area: 1 / 1;
+      position: relative;
+      z-index: 1;
+      &:empty {
+        display: none;
+      }
+    }
+    @keyframes wall-run {
+      to {
+        transform: translateX(-50%);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .wall_row {
+        animation: none;
+      }
+    }
+  }
+</style>

@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     IngredientAI work card, 2026-10-23, built on the Ethos card's engine
+     (a classic script, ingredient-ai-card-src/js/card.js, as on the Cambium,
+     Counsel Health and Epirus cards) and the Dawn card's architecture, with
+     Hunter's notes built in from the start: the miniature keeps touring
+     while you hover, the light is one soft round bloom under the pointer,
+     you can drag the page like a phone (and scrub it sideways: drag right
+     to go further down), a notched ruler slides with the scroll, and there
+     is no Case Study pill.
+
+     The site Kinetic built. www.ingredient-ai.com was replaced in
+     September 2026 by a new site that is not ours, so this is the version
+     in Kinetic's own recordings (the portfolio cover loop, media/ingredient
+     on kineticstudio.com, and the full scroll-through in iCloud
+     Kinetic/twitter/ingredient-base.mov), rebuilt from its own page as it
+     was published on 2025-05-30 (the archived copy, with the fonts and
+     images it served) at its 1440px design width as HTML/CSS layers, each
+     at its own depth: the hero's coverflow of five circles stepping every
+     2 s, See IngredientAI in action (its GIF as three stills), the
+     testimonial cards, the early adopters' logo wall fading one cell at a
+     time, the discover stack, Instantly review every claim and Teamwork
+     made seamless (their videos as stills), the supplier cards sliding,
+     the regulators' marquee, the trust cards with the coral and the rock,
+     The IngredientAI difference (its logo Lottie as one still) and the
+     footer the page lifts off. raw/ keeps the fetched HTML, CSS, fonts and
+     media for reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched from outside it:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=1      the site in a window on the card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>IngredientAI work card</title>
+<script>
+  /* before first paint: embed or not, and the bleed */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="ingredient-ai-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="IngredientAI, ingredient-ai.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+
+            <!-- the footer: fixed at the foot of the window, the page lifts off it at the end -->
+            <footer class="fixed foot" id="foot">
+              <div class="f-bg" data-layer="sky" data-depth="-0.22" style="--lab-x:60px;--lab-y:60px"><img src="ingredient-ai-card-src/img/footer-bg.webp" alt=""></div>
+              <h2 class="f-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.3,16">Beta Phase Now Open</h2>
+              <div class="btn f-btn" data-layer="button" data-depth="0.9" data-shadow="0,0.35,10">Join the waitlist</div>
+              <img class="f-mark" src="ingredient-ai-card-src/img/footer-wordmark.svg" alt="" data-layer="wordmark" data-depth="0.5">
+              <div class="f-legal" data-layer="small print" data-depth="0.3" style="--lab-y:-34px"><span style="left:120px">&copy; IngredientAI 2025</span><span style="left:487px">Terms of Service</span><span style="left:826px">Privacy Policy</span><span style="left:1145px">demo@ingredient-ai.com</span></div>
+            </footer>
+
+            <div class="page" id="page">
+              <div class="main">
+
+              <!-- hero: the headline over the coverflow of circles -->
+              <header class="sec hero" data-stop="hero">
+                <h1 class="hero-h h-title" data-layer="headline" data-depth="0.8" data-shadow="0,0.16,16">Turbocharge your<br>innovation process</h1>
+                <div class="h-stage h-circles" data-layer="circles" data-depth="0.36" style="--lab-x:640px;--lab-y:150px" id="hCircles">
+                  <div class="h-img"><img src="ingredient-ai-card-src/img/hero-supply.webp" alt=""></div>
+                  <div class="h-img"><img src="ingredient-ai-card-src/img/hero-collab.webp" alt=""></div>
+                  <div class="h-img"><img src="ingredient-ai-card-src/img/hero-speed.webp" alt=""></div>
+                  <div class="h-img"><img src="ingredient-ai-card-src/img/hero-discovery.webp" alt=""></div>
+                  <div class="h-img"><img src="ingredient-ai-card-src/img/hero-claims.webp" alt=""></div>
+                </div>
+                <div class="h-stage h-titles" data-layer="titles" data-depth="0.56" style="--lab-x:640px;--lab-y:420px" id="hTitles">
+                  <div class="h-t">Supply Chain Management</div>
+                  <div class="h-t">Uninhibited Collaboration</div>
+                  <div class="h-t">Formulations at Speed</div>
+                  <div class="h-t">New Ingredient Discovery</div>
+                  <div class="h-t">Instant Claims Substantiation</div>
+                </div>
+                <div class="h-para" data-layer="caption" data-depth="0.5" id="hPara" style="--lab-y:-34px">
+                  <p>Real-time supplier sourcing and pricing estimates to speed up production timing</p>
+                  <p>have conversations about every aspect of formulation, with the research right at hand</p>
+                  <p>generative AI research and recommendations to rapidly accelerate innovation</p>
+                  <p>explore by health benefit or ingredients to create new formulations at speed</p>
+                  <p>summaries written with exacting detail, linked directly to the relevant research</p>
+                </div>
+              </header>
+
+              <!-- see it in action: the GIF as three stills -->
+              <section class="sec video" data-stop="video">
+                <h2 class="h2 v-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,12">See IngredientAI in action</h2>
+                <div class="v-link" data-layer="link" data-depth="0.6">Watch the video<svg viewBox="0 0 20 20" fill="none"><path d="M9.82003 19.14C14.9673 19.14 19.14 14.9673 19.14 9.82C19.14 4.67271 14.9673 0.5 9.82003 0.5C4.67274 0.5 0.500031 4.67271 0.500031 9.82C0.500031 14.9673 4.67274 19.14 9.82003 19.14Z" stroke="currentColor" stroke-miterlimit="10"/><path d="M14.49 9.81999L6.98001 14.15V5.48999L14.49 9.81999Z" fill="currentColor"/></svg></div>
+                <div class="v-box" data-layer="the film" data-depth="0.14" data-shadow="0,0.16,22" style="--lab-x:30px;--lab-y:30px">
+                  <div class="v-frames" id="vFrames"><img src="ingredient-ai-card-src/img/action-1.webp" alt=""><img src="ingredient-ai-card-src/img/action-2.webp" alt=""><img src="ingredient-ai-card-src/img/action-3.webp" alt=""></div>
+                  <i class="v-dim"></i>
+                  <div class="v-play" data-layer="play" data-depth="0.62"><svg viewBox="0 0 171 171" fill="none"><path d="M85.68 169.36C131.895 169.36 169.36 131.895 169.36 85.68C169.36 39.4648 131.895 2 85.68 2C39.4648 2 2 39.4648 2 85.68C2 131.895 39.4648 169.36 85.68 169.36Z" fill="url(#iaPlay)" fill-opacity="0.3" stroke="white" stroke-opacity="0.7" stroke-width="3" stroke-miterlimit="10"/><path d="M127.61 85.6801L60.1808 124.557V46.803L127.61 85.6801Z" fill="white" fill-opacity="0.7"/><defs><linearGradient id="iaPlay" x1="85.68" y1="2" x2="85.68" y2="169.36" gradientUnits="userSpaceOnUse"><stop stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient></defs></svg></div>
+                </div>
+              </section>
+
+              <!-- join the best: the testimonial cards, stepping on by themselves -->
+              <section class="sec quotes" data-stop="quotes">
+                <h2 class="h2 q-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,12">Join the best in the<br>supplement industry</h2>
+                <p class="body-m q-p" data-layer="body copy" data-depth="0.45">Our product is accelerating the innovation process for multiple leading supplement brands.</p>
+                <div class="q-nav" data-layer="arrows" data-depth="0.55" style="--lab-y:-34px">
+                  <div class="q-num" id="qNum"><span>Testimonial 01</span><span>Testimonial 02</span><span>Testimonial 03</span></div>
+                  <svg class="q-arrow" style="left:1px" viewBox="0 0 44 26" fill="none"><path d="M13.2642 1H30.9751C37.7483 1 43.2391 6.4908 43.2391 13.264V13.2755C43.2391 20.0487 37.7483 25.5395 30.9751 25.5395H13.2642C6.49093 25.5395 1.00013 20.0487 1.00013 13.2755V13.264C1.00013 6.4908 6.49093 1 13.2642 1Z" stroke="currentColor" stroke-width="0.766667" stroke-miterlimit="10"/><path d="M27.7663 13.264H13.6981" stroke="currentColor" stroke-width="0.766667" stroke-miterlimit="10"/><path d="M20.7321 6.29846L13.7665 13.2641L20.7321 20.2297" stroke="currentColor" stroke-width="0.766667" stroke-miterlimit="10"/></svg>
+                  <svg class="q-arrow" style="left:53px" viewBox="0 0 44 26" fill="none"><path d="M30.7361 1H13.0252C6.25194 1 0.761139 6.4908 0.761139 13.264V13.2755C0.761139 20.0487 6.25194 25.5395 13.0252 25.5395H30.7361C37.5093 25.5395 43.0001 20.0487 43.0001 13.2755V13.264C43.0001 6.4908 37.5093 1 30.7361 1Z" stroke="currentColor" stroke-width="0.766667" stroke-miterlimit="10"/><path d="M16.2339 13.264H30.3022" stroke="currentColor" stroke-width="0.766667" stroke-miterlimit="10"/><path d="M23.2681 6.29846L30.2337 13.2641L23.2681 20.2297" stroke="currentColor" stroke-width="0.766667" stroke-miterlimit="10"/></svg>
+                </div>
+                <div class="q-stage" data-layer="testimonials" data-depth="0.5" id="qStage" style="--lab-x:400px;--lab-y:-30px">
+                  <div class="q-slide">
+                    <p class="q-quote">&ldquo;The constraints of traditional research once capped how many projects we could tackle. Thanks to IngredientAI, we expect our R&amp;D team&rsquo;s capacity to increase significantly while streamlining our ability to substantiate claims remarkably.&rdquo;</p>
+                    <div class="q-client"><span class="q-logo"><img src="ingredient-ai-card-src/img/t-logo-bayer.webp" alt=""></span><span class="q-pill"><img src="ingredient-ai-card-src/img/t-kyle.webp" alt=""><span><b>Kyle Garner</b><i>President at The Better Being Co.</i></span></span></div>
+                  </div>
+                  <div class="q-slide">
+                    <p class="q-quote">&ldquo;As a skeptic of technology in supplement research, I was hesitant. But Ingredient AI&rsquo;s precision and speed in delivering actionable insights won me over. It&rsquo;s accuracy at a pace we&rsquo;ve never seen before.&rdquo;</p>
+                    <div class="q-client"><span class="q-logo"><img src="ingredient-ai-card-src/img/t-logo-megafood.webp" alt=""></span><span class="q-pill"><img src="ingredient-ai-card-src/img/t-andy.webp" alt=""><span><b>Andy Dahlen</b><i>CEO at MegaFood</i></span></span></div>
+                  </div>
+                  <div class="q-slide">
+                    <p class="q-quote">&ldquo;Navigating ingredient research used to be a marathon, essential yet time-consuming. We believe Ingredient AI will revolutionize our process, boosting our efficiency massively without compromising on quality.&rdquo;</p>
+                    <div class="q-client"><span class="q-logo"><img src="ingredient-ai-card-src/img/t-logo-ahpa.webp" alt=""></span><span class="q-pill"><img src="ingredient-ai-card-src/img/t-graham.webp" alt=""><span><b>Graham Rigby</b><i>President &amp; CEO at AHPA</i></span></span></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- our early adopters: the logo wall, one cell fading at a time -->
+              <section class="sec adopters" data-stop="adopters">
+                <h2 class="h2 a-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,12">Our early adopters</h2>
+                <div class="btn a-btn" data-layer="button" data-depth="0.88" data-shadow="0,0.3,10">See all brands</div>
+                <div class="a-lines" data-layer="grid" data-depth="0.08" style="--lab-x:12px;--lab-y:-34px"><i style="left:279px"></i><i style="left:557px"></i><i style="left:836px"></i><b></b></div>
+                <div class="a-logos" data-layer="logos" data-depth="0.4" id="aLogos" style="--lab-x:12px;--lab-y:12px">
+                  <div class="a-cell" data-logos="olly megafood perrigo arrae"></div>
+                  <div class="a-cell" data-logos="new-chapter gaia force-factor oregons-wild"></div>
+                  <div class="a-cell" data-logos="thorne nutrabolt iovate vitahustle"></div>
+                  <div class="a-cell" data-logos="bayer nordic-naturals ancient-nutrition biocidin"></div>
+                  <div class="a-cell" data-logos="haleon mary-ruths armra omegabrite"></div>
+                  <div class="a-cell" data-logos="kenvue designs-for-health thesis"></div>
+                  <div class="a-cell" data-logos="amway better-being bobbie"></div>
+                  <div class="a-cell" data-logos="life-extension natures-way true-grace"></div>
+                </div>
+              </section>
+
+              <!-- discover new ingredients faster: the stack, the front card going by every 2 s -->
+              <section class="sec discover" data-stop="discover">
+                <div class="d-stage" data-layer="the stack" data-depth="0.3" id="dStage" style="--lab-x:300px;--lab-y:330px">
+                  <div class="d-card"><img src="ingredient-ai-card-src/img/discover-2.webp" alt=""></div>
+                  <div class="d-card"><img src="ingredient-ai-card-src/img/discover-3.webp" alt=""></div>
+                  <div class="d-card"><img src="ingredient-ai-card-src/img/discover-4.webp" alt=""></div>
+                  <div class="d-card"><img src="ingredient-ai-card-src/img/discover-1.webp" alt=""></div>
+                </div>
+                <h2 class="h2 d-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,12">Discover new<br>ingredients faster</h2>
+                <p class="body-m d-p" data-layer="body copy" data-depth="0.45">No more manual deep-dives. IngredientAI instantly surfaces relevant insights from tens of millions of studies, allowing you to dive right into synthesizing ideas.</p>
+                <div class="list d-list" data-layer="list" data-depth="0.38" style="--lab-y:-34px">
+                  <div class="li" style="top:0"><i class="tick" data-layer="tick" data-depth="0.56"></i><p>Focus your research on a specific ingredient, or a specific health benefit</p></div>
+                  <div class="li" style="top:72px"><i class="tick" data-layer="tick" data-depth="0.56"></i><p>Review summaries at speed, while also retaining access to the relevant research</p></div>
+                </div>
+              </section>
+
+              <!-- instantly review every claim: its video as two stills -->
+              <section class="sec research" data-stop="research">
+                <h2 class="hero-h r-h" data-layer="headline" data-depth="0.8" data-shadow="0,0.14,16">Instantly review<br>every claim</h2>
+                <div class="r-panel" data-layer="the app" data-depth="0.15" data-shadow="0,0.18,24" style="--lab-x:30px;--lab-y:30px">
+                  <div class="r-frames" id="rFrames"><img src="ingredient-ai-card-src/img/research-1.webp" alt=""><img src="ingredient-ai-card-src/img/research-2.webp" alt=""></div>
+                </div>
+                <p class="body r-p" data-layer="body copy" data-depth="0.45">Conduct comprehensive claims substantiation in minutes, with unprecedented accuracy ensuring every claim is reviewed.</p>
+                <div class="btn r-btn" data-layer="button" data-depth="0.88" data-shadow="0,0.3,10">Join the waitlist</div>
+              </section>
+
+              <!-- teamwork made seamless: its video as a still -->
+              <section class="sec team" data-stop="team">
+                <div class="t-panel" data-layer="the thread" data-depth="0.2" data-shadow="0,0.2,22" style="--lab-x:30px;--lab-y:30px"><img src="ingredient-ai-card-src/img/seamless.webp" alt=""></div>
+                <h2 class="h2 t-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,12">Teamwork made<br>seamless</h2>
+                <p class="body-m t-p" data-layer="body copy" data-depth="0.45">Bring your team together to align, analyze, and drive innovations, all with the research right at hand.</p>
+                <div class="list t-list" data-layer="list" data-depth="0.38" style="--lab-y:-34px">
+                  <div class="li" style="top:0"><i class="tick" data-layer="tick" data-depth="0.56"></i><p>Hold collaborative conversations about research, benefits, formulations, costs, compliance, and more</p></div>
+                  <div class="li" style="top:95px"><i class="tick" data-layer="tick" data-depth="0.56"></i><p>Keep the conversation connected to the research, with links directly to relevant studies, summaries, and work</p></div>
+                </div>
+              </section>
+
+              <!-- dynamic company matching: the supplier cards sliding on every 4 s -->
+              <section class="sec match" data-stop="match">
+                <h2 class="h2 m-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,12">Dynamic company<br>matching</h2>
+                <p class="body-m m-p" data-layer="body copy" data-depth="0.45">Our intelligent AI matching pairs qualified buyers with verified suppliers, tailored around specific ingredient requests.<br><br>Then, our platform enables digital NDA exchanges, allowing for seamless, private sharing of proprietary studies and technical data. Plus we have auto-populated forms, auto-generated summaries and documents, and direct RFQ submission, for seamless sourcing from start to finish.</p>
+                <div class="btn m-btn" data-layer="button" data-depth="0.88" data-shadow="0,0.3,10">Learn more</div>
+                <div class="m-panel" data-layer="the glow" data-depth="0.1" style="--lab-x:30px;--lab-y:30px">
+                  <img class="m-bg" src="ingredient-ai-card-src/img/matching-bg.webp" alt="">
+                  <div class="m-stage" data-layer="suppliers" data-depth="0.42" id="mStage" style="--lab-x:120px;--lab-y:480px">
+                    <img class="m-card" src="ingredient-ai-card-src/img/supplier-0.webp" alt="">
+                    <img class="m-card" src="ingredient-ai-card-src/img/supplier-1.webp" alt="">
+                    <img class="m-card" src="ingredient-ai-card-src/img/supplier-2.webp" alt="">
+                    <img class="m-card" src="ingredient-ai-card-src/img/supplier-3.webp" alt="">
+                    <img class="m-card" src="ingredient-ai-card-src/img/supplier-4.webp" alt="">
+                  </div>
+                </div>
+              </section>
+
+              <!-- one-click dossier generation: the regulators going by -->
+              <section class="sec dossier" data-stop="dossier">
+                <h2 class="h2 o-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,12">One-Click Dossier<br>Generation</h2>
+                <p class="body o-p" data-layer="body copy" data-depth="0.45">Reduce the time needed to launch new products with ready-to-review dossiers, seamlessly generated by IngredientAI.</p>
+                <div class="o-row" data-layer="regulators" data-depth="0.3" style="--lab-x:300px;--lab-y:-34px"><div class="o-track" id="oTrack"></div></div>
+              </section>
+
+              <!-- trust and security: three cards, the coral and the rock floating over them -->
+              <section class="sec trust" data-stop="trust">
+                <img class="s-coral" src="ingredient-ai-card-src/img/side-coral.webp" alt="" data-layer="coral" data-depth="1" data-shadow="0,0.22,20" style="--lab-x:40px;--lab-y:40px">
+                <h2 class="h2 s-h" data-layer="headline" data-depth="0.72" data-shadow="0,0.16,12">Trust and security are<br>our gold standard</h2>
+                <div class="s-card" style="left:163px" data-layer="card" data-depth="0.18" data-shadow="0,0.14,18">
+                  <img class="s-icon" src="ingredient-ai-card-src/img/icon-security.webp" alt="" style="width:72px" data-layer="icon" data-depth="0.5">
+                  <h3 class="s-t" data-layer="title" data-depth="0.42">Enterprise-<br>level security</h3>
+                  <p class="body s-d" data-layer="copy" data-depth="0.3">Restricted access that stays within your company's firewalls.</p>
+                </div>
+                <div class="s-card" style="left:538px" data-layer="card" data-depth="0.18" data-shadow="0,0.14,18">
+                  <img class="s-icon" src="ingredient-ai-card-src/img/icon-privacy.webp" alt="" style="width:56px" data-layer="icon" data-depth="0.5">
+                  <h3 class="s-t" data-layer="title" data-depth="0.42">Built with<br>privacy first</h3>
+                  <p class="body s-d" data-layer="copy" data-depth="0.3">All of your team&rsquo;s work stays yours, entirely confidential.</p>
+                </div>
+                <div class="s-card" style="left:913px" data-layer="card" data-depth="0.18" data-shadow="0,0.14,18">
+                  <img class="s-icon" src="ingredient-ai-card-src/img/icon-data.webp" alt="" style="width:72px" data-layer="icon" data-depth="0.5">
+                  <h3 class="s-t" data-layer="title" data-depth="0.42">You own your<br>data</h3>
+                  <p class="body s-d" data-layer="copy" data-depth="0.3">We do not use or train on your data. It's yours (and yours only).</p>
+                </div>
+                <img class="s-rock" src="ingredient-ai-card-src/img/side-rock.webp" alt="" data-layer="rock" data-depth="0.95" data-shadow="0,0.22,20" style="--lab-x:120px;--lab-y:60px">
+              </section>
+
+              <!-- the ingredientai difference -->
+              <section class="sec diff" data-stop="difference">
+                <div class="x-panel" data-layer="panel" data-depth="0.1" data-shadow="0,0.16,24" style="--lab-x:30px;--lab-y:30px"><img src="ingredient-ai-card-src/img/difference-bg.webp" alt=""></div>
+                <img class="x-mark" src="ingredient-ai-card-src/img/difference-mark.webp" alt="" data-layer="the mark" data-depth="0.5" data-shadow="0.1,0.3,14">
+                <i class="x-rule" data-layer="rule" data-depth="0.2"></i>
+                <h2 class="h2 x-h" data-layer="headline" data-depth="0.72" data-shadow="0.1,0.2,12">The IngredientAI<br>difference</h2>
+                <div class="list x-list" data-layer="list" data-depth="0.42" style="--lab-y:-34px">
+                  <div class="li" style="top:0"><i class="tick" data-layer="tick" data-depth="0.6"></i><p>Accurate, comprehensive formulation research at incredible speed</p></div>
+                  <div class="li" style="top:72px"><i class="tick" data-layer="tick" data-depth="0.6"></i><p>Seamless digital collaboration, from claims substantiation to supply chain</p></div>
+                  <div class="li" style="top:143px"><i class="tick" data-layer="tick" data-depth="0.6"></i><p>Hassle-free compliance, with automatic dossier generation</p></div>
+                </div>
+                <div class="btn x-btn" data-layer="button" data-depth="0.88" data-shadow="0.1,0.3,10">Join the waitlist</div>
+              </section>
+              </div>
+            </div>
+
+            <!-- the waitlist pill: fixed near the foot of the window until the page runs out under it -->
+            <div class="fixed pill-slot" id="pillSlot">
+              <div class="pill" data-layer="waitlist" data-depth="0.86" data-shadow="0,0.3,14" style="--lab-y:-34px">
+                <span class="pill-text">Limited access beta phase is<br>now open</span>
+                <span class="btn pill-btn" data-layer="button" data-depth="0.98">Join the waitlist</span>
+              </div>
+            </div>
+
+            <!-- the nav, fixed in the window -->
+            <nav class="fixed nav" id="nav">
+              <div class="nav-band" data-layer="nav" data-depth="0.5" style="--lab-x:400px;--lab-y:70px">
+                <img class="nav-icon" src="ingredient-ai-card-src/img/logo-icon.svg" alt="">
+                <img class="nav-word" src="ingredient-ai-card-src/img/logo-wordmark.svg" alt="">
+                <span class="nav-link" style="left:948px"><sup>1.</sup>Features</span>
+                <span class="nav-link" style="left:1053px"><sup>2.</sup>Capabilities</span>
+                <span class="nav-link" style="left:1179px"><sup>3.</sup>Brands</span>
+                <span class="nav-link" style="left:1273px"><sup>4.</sup>Suppliers</span>
+              </div>
+            </nav>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>IngredientAI</h3>
+      <p><span>AI</span><span>Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="ingredient-ai-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, the Studio's own Params (defineParams from /shared/params/params.js).
+   Embedded on the site there is no panel and nothing is fetched, so the module
+   is only loaded here, and only when served (opened from disk there is no
+   studio to load it from): the card runs on its defaults without it. */
+const card = window.ingredientCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'ingredientai work card';
+    const D = card.defaults;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        carousels: [D['motion.carousels'], 0, 3, 0.05],    // the circles, the testimonials, the stack, the suppliers, the logos
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        scrub: [D['drag.scrub'], 0, 6, 0.1],               // page px per px of a sideways drag (right = further down)
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

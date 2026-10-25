@@ -1,0 +1,288 @@
+/* Konvoy work card. The page chrome (stage, card, light, ruler, label row)
+   follows the Metamag, Venus Aerospace and Epirus cards; everything under .vp
+   is Konvoy rebuilt at its own 1440px design width as Kinetic shipped it
+   (www.konvoy.vc, the June 2025 version: web.archive.org captures of
+   2025-06-09 and 2025-06-20, measured at 1440x900 in headless Chromium and
+   matched against Kinetic's recordings). The site sizes its grid in vh, so
+   every height that is a share of the window there (42vh, 45vh, 91vh) is a
+   share of --vh here, and the miniature fills its window the way the site
+   fills a browser at any aspect. */
+
+@font-face { font-family: "KV GT America Extended"; src: url("../fonts/GT-America-Extended-Regular.otf") format("opentype"); font-weight: 400; font-display: block; }
+@font-face { font-family: "KV GT America Extended"; src: url("../fonts/GT-America-Extended-Bold.otf") format("opentype"); font-weight: 700; font-display: block; }
+@font-face { font-family: "KS Panell Condensed"; src: url("../fonts/PanellCondensed-TRIAL-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "KS Mono"; src: url("../fonts/PPNeueMontrealMono-Book.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #0d0d0d;
+  color: #eef1ea;
+  font-family: "KS Mono", ui-monospace, monospace;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Kinetic: the page and the work card ---------- */
+.stage {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  --size: 40;
+  --card-w: min(calc(var(--size) * 1vw), calc((100vh - 150px) * 4 / 3));
+}
+@media (max-width: 700px) { .stage { --card-w: calc(100vw - 32px); } }
+
+.slot { width: var(--card-w); display: flex; flex-direction: column; gap: clamp(14px, 1.1vw, 16px); }
+
+/* the hit area never moves; only what is inside it does */
+.persp {
+  position: relative;
+  width: 100%; aspect-ratio: 4 / 3;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+.persp.is-dragging { cursor: grabbing; }
+.card-shadow {
+  position: absolute; inset: 6% 7% -1% 7%;
+  border-radius: 12%;
+  background: rgba(0, 0, 0, .9);
+  filter: blur(30px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+/* laid out K times its size and scaled back inside its own 3D transform, so
+   the tilted card rasters as sharp as the flat one (see the Dawn card) */
+.card {
+  position: absolute; left: 0; top: 0;
+  --k: 1;
+  border-radius: calc(var(--r, 6px) * var(--k));
+  background: var(--frame-color, #1b1b18);
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  isolation: isolate;
+}
+.card, .card * { user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+
+/* the site's browser window, inset on the card ground when framed */
+.win {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  overflow: hidden;
+  background: #e6e6e6;
+  will-change: transform;
+}
+.win-shadow {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  background: #000;
+  filter: blur(calc(var(--card-px, 576px) * .022));
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.card:not(.is-framed) .win-shadow { display: none; }
+
+/* The light, as on an Apple TV poster: one soft round bloom of light under
+   the pointer, brightest there and fading to nothing, added on top (screen).
+   No stripes, no bands. It moves by transform only. The rim is a faint
+   brightening of the card edge nearest the pointer, the same bloom seen
+   through a thin ring mask. */
+.bloom, .rim { position: absolute; z-index: 6; pointer-events: none; opacity: 0; will-change: transform, opacity; }
+.bloom {
+  width: calc(var(--card-px, 576px) * 1.3); height: calc(var(--card-px, 576px) * 1.3);
+  left: calc(var(--card-px, 576px) * -.65); top: calc(var(--card-px, 576px) * -.65);
+  background: radial-gradient(circle closest-side,
+    rgba(255, 255, 255, .72), rgba(255, 255, 255, .5) 9%, rgba(255, 255, 255, .26) 22%, rgba(250, 252, 255, .11) 40%,
+    rgba(250, 252, 255, .04) 62%, rgba(250, 252, 255, .01) 82%, rgba(250, 252, 255, 0) 100%);
+  mix-blend-mode: screen;
+}
+.rim {
+  left: 0; top: 0; width: 100%; height: 100%;
+  border-radius: inherit; overflow: hidden;
+  padding: calc(1.5px * var(--k));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  mix-blend-mode: screen;
+}
+.rim i {
+  position: absolute; display: block;
+  width: calc(var(--card-px, 576px) * .9); height: calc(var(--card-px, 576px) * .9);
+  left: calc(var(--card-px, 576px) * -.45); top: calc(var(--card-px, 576px) * -.45);
+  background: radial-gradient(circle closest-side, rgba(255, 255, 255, .85), rgba(255, 255, 255, .22) 45%, rgba(255, 255, 255, 0) 100%);
+  will-change: transform;
+}
+
+/* The scroll ruler: 1px notches every 6px that slide as the miniature
+   scrolls, one brighter mark fixed at the reading position. Full bleed it
+   sits just outside the card; framed, in the window's right margin on the
+   card ground; in a tile, just inside the right edge, its ink following the
+   ground under the mark (dark on Konvoy's grey, light on its black menu). */
+.notches { position: absolute; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); }
+.notches .ticks { position: absolute; left: 0; right: 0; top: calc(var(--np) * -2); bottom: calc(var(--np) * -2);
+  background: repeating-linear-gradient(to bottom, var(--tick) 0 var(--nw), transparent var(--nw) var(--np)); will-change: transform; }
+.notches .mark { position: absolute; top: 50%; height: var(--nw); background: var(--mark); }
+.notches-in { --nw: calc(1px * var(--k)); --np: calc(6px * var(--k));
+  width: calc(5px * var(--k)); height: 46%; top: 27%; right: calc(var(--mx) / 2 - 2.5px * var(--k)); z-index: 2; }
+.notches-in .ink { position: absolute; inset: 0; will-change: opacity; }
+.notches-in .dark { --tick: rgba(0, 0, 0, .17); --mark: rgba(0, 0, 0, .6); opacity: 0; }
+.notches-in .light { --tick: rgba(230, 230, 230, .2); --mark: rgba(230, 230, 230, .72); }
+.notches-in .mark { left: calc(-2px * var(--k)); right: calc(-2px * var(--k)); }
+.notches-out { --nw: 1px; --np: 6px; --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .62);
+  width: 5px; height: 46%; top: 27%; right: -16px; }
+.notches-out .mark { left: -2px; right: -2px; }
+.card.is-framed .notches-in .light { opacity: 1 !important; }
+.card.is-framed .notches-in .dark { opacity: 0 !important; }
+.card.is-framed.is-light-frame .notches-in .light { --tick: rgba(38, 38, 34, .15); --mark: rgba(38, 38, 34, .6); }
+.card:not(.is-framed) .notches-in, .slot:not(.full) .notches-out, .no-notches .notches { display: none; }
+
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: clamp(14px, 1.1vw, 16px); }
+.meta h3 {
+  margin: 0;
+  font-family: "KS Panell Condensed", "Arial Narrow", sans-serif; font-weight: 500;
+  font-size: clamp(22px, 1.95vw, 28px); line-height: .94; letter-spacing: -.02em;
+  text-transform: uppercase;
+}
+.meta p {
+  margin: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
+  text-align: right;
+  font-family: "KS Mono", ui-monospace, monospace;
+  font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
+  color: rgba(238, 241, 234, .5);
+}
+
+/* Embed (?embed=1): the card alone, edge to edge at the frame's own aspect,
+   on a transparent page. The site's tile frames it. */
+html.is-embed, html.is-embed body { background: transparent; }
+.is-embed .stage { display: block; }
+.is-embed .slot { position: absolute; inset: 0; width: auto; display: block; }
+.is-embed .persp { position: absolute; inset: var(--bleed, 0px); width: auto; height: auto; aspect-ratio: auto; }
+.is-embed .meta, .is-embed .notches-out, .is-embed .card-shadow { display: none; }
+/* full bleed in a tile there is no margin to sit in, so the ruler rides just inside the right edge */
+.is-embed .card:not(.is-framed) .notches-in { display: block; right: calc(7px * var(--k)); }
+
+
+/* ---------- Konvoy: the miniature, at its own 1440px design width ---------- */
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  --grey: #e6e6e6; --green: #7ebaa9; --amber: #e09f4e;
+  background: var(--grey);
+  font-family: "KV GT America Extended", Arial, sans-serif;
+  font-size: 14.4px; line-height: 1.4; font-weight: 400;   /* the site's root is 1vw, 14.4px at 1440 */
+  color: #000;
+  text-rendering: geometricPrecision;
+}
+.vp * { position: absolute; }
+.vp :where(h1, h2, p) { margin: 0; font-weight: inherit; }
+.vp img { display: block; }
+.vp u { position: static; text-decoration: underline; text-underline-offset: 1.5px; text-decoration-thickness: 1px; }
+.vp span, .vp i { display: block; }
+[data-depth] { will-change: transform; }
+
+/* the site's type: GT America Extended, captions at .95em, headings at 1.5em */
+.cap { font-size: 13.68px; line-height: 19.152px; white-space: nowrap; }
+.cap.wrap { white-space: normal; }
+.b { font-weight: 700; }
+.h { font-size: 21.6px; line-height: 25.92px; font-weight: 700; white-space: nowrap; }
+
+/* ---- the page: the home grid, then the portfolio grid under the same header and rail ---- */
+.page { left: 0; top: 0; width: 1440px; background: var(--grey); will-change: transform; }
+.sec { position: relative; left: 0; width: 1440px; }
+.home { height: var(--vh, 900px); }
+.port { height: calc(var(--vh, 900px) * .42 * 9); }
+/* a rule along the top of the portfolio, hidden under the banner's own when the grid is up under it */
+.port::before { content: ""; position: absolute; left: 248px; top: -1px; width: 1192px; height: 1px; background: #000; }
+
+.grid { left: 248px; width: 1192px; display: grid; }
+.grid > * { position: relative; border-right: 1px solid #000; border-bottom: 1px solid #000; }
+.hgrid { top: 100.8px; grid-template-columns: repeat(3, 1fr); grid-auto-rows: calc(var(--vh, 900px) * .42); }
+.pgrid { top: 0; grid-template-columns: repeat(5, 1fr); grid-auto-rows: calc(var(--vh, 900px) * .42); }
+
+/* the hover fill: a block of colour that grows in from the tile's left edge (width 0 to 100% on the site, scaleX here) */
+.wc { left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; }
+.wl { left: -4px; top: -4px; right: -4px; bottom: -4px; }
+.wipe { left: 0; top: 0; width: 100%; height: 100%; background: var(--green); transform-origin: 4px 0; transform: scaleX(0); will-change: transform; }
+.mtile .wipe { background: var(--amber); }
+
+.tl { left: 11.9px; bottom: 12.9px; }                 /* a tile's label, on the tile's bottom edge */
+.pf { left: 11.9px; top: 11.9px; width: 213.5px; }     /* invested, location */
+.pf p { position: relative; }
+.pf p.gap { margin-top: 11.95px; }
+.pd { left: 11.9px; top: 140.1px; width: 213.5px; }   /* the line about the company */
+.pl { left: 11.9px; bottom: 12.9px; }                  /* the logo, sat on the tile's bottom edge */
+.pl img { position: relative; }
+
+/* ---- the chrome, fixed in the window: the header with the report banner, and the rail, each a raised slab ---- */
+.chrome { left: 0; top: 0; width: 1440px; height: var(--vh, 900px); }
+.khs { left: 0; top: 0; width: 1440px; height: 100.8px; background: var(--grey); }
+.kh { left: 0; top: 0; width: 1440px; height: 50.4px; background: var(--grey); border-bottom: 1px solid #000; }
+.kh-logo { left: 11.9px; top: 13.2px; width: 139.7px; height: 24.2px; }
+.kh-logo img, .kh-mark img { width: 100%; height: 100%; }
+.kh-loc { left: 1216px; top: 15.8px; }
+.kh-mark { left: 1335.4px; top: 13.4px; width: 27.9px; height: 24.1px; }
+.kh-mark img { position: relative; will-change: transform; }
+.burger { left: 1402.9px; top: 14.6px; width: 25.2px; height: 21.6px; }
+.burger i { left: 0; width: 25.2px; height: 4.32px; background: #000; }
+.ban { left: 0; top: 50.4px; width: 1440px; height: 50.4px; background: var(--green); border-bottom: 1px solid #000; }
+.ban-t { left: 0; top: 65px; width: 1440px; text-align: center; font-size: 14.4px; line-height: 20.16px; white-space: nowrap; }
+.ban-t span { position: static; display: inline-block; }
+
+/* the rail: three cells, the firm (or the page's title), the newsletter, the legal line; --cell is 42vh on the pages, 45vh in the menu */
+.rail { left: 0; top: 100.8px; width: 248px; height: calc(var(--vh, 900px) * .91); background: var(--grey); border-right: 1px solid #000; --cell: calc(var(--vh, 900px) * .42); }
+.rule { left: 0; width: 247px; height: 1px; background: #000; }
+.r-intro { left: 11.9px; top: 11.9px; width: 223.1px; }
+.r-intro p { position: relative; }
+.r-title { left: 11.9px; top: 11.9px; opacity: 0; }
+.r-news { left: 11.9px; top: calc(var(--cell) + 11.9px); width: 223.1px; }
+.r-news p { position: relative; }
+.r-news p + p { margin-top: 5.4px; }
+.r-form { left: 11.9px; top: calc(var(--cell) * 2 - 160.7px); width: 223.1px; height: 147.7px; }
+.field { left: 0; width: 223.1px; height: 38px; border: 1px solid #000; padding: 8px 12px 0; font-size: 13.68px; line-height: 19.54px; color: #999; white-space: nowrap; }
+.btn { left: 0; top: 0; width: 223.1px; height: 36.7px; border: 1px solid #000; padding-top: 9px; text-align: center; font-size: 11.952px; line-height: 16.73px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+.r-btn { top: calc(var(--cell) * 2 - 49.7px); height: 36.7px; }
+.r-foot { left: 11.9px; top: calc(var(--cell) * 2 + 11.9px); width: 223.1px; height: 19.2px; }
+.r-foot p:last-child { left: 138.1px; }
+
+/* ---- the menu: the site's black sheet, revealed from the top, its tiles filling amber ---- */
+.mclip { left: 0; top: 0; width: 1440px; height: var(--vh, 900px); overflow: hidden; visibility: hidden; will-change: transform, opacity; }
+.min { left: 0; top: 0; width: 1440px; height: var(--vh, 900px); background: #000; color: var(--grey); will-change: transform; }
+.m-head { left: 0; top: 0; width: 1440px; height: 50.4px; border-bottom: 1px solid var(--grey); }
+.m-logo { left: 11.9px; top: 13.2px; width: 139.7px; height: 24.2px; }
+.m-logo img { width: 100%; height: 100%; filter: invert(1); }
+.m-x { left: 1402.9px; top: 15.9px; width: 25.2px; height: 21.6px; }
+.m-x i { width: 25.2px; height: 4.32px; background: var(--grey); }
+.m-x i:first-child { left: 0; top: 0; transform-origin: 0 0; transform: rotate(45deg); }
+.m-x i:last-child { left: 0; top: 17.28px; transform-origin: 0 100%; transform: rotate(-45deg); }
+.m-rail { left: 0; top: 50px; width: 248px; height: var(--vh, 900px); border-right: 1px solid var(--grey); --cell: calc(var(--vh, 900px) * .45); will-change: opacity; }
+.m-rail .rule { background: var(--grey); }
+.m-rail .field, .m-rail .btn { border-color: var(--grey); }
+.m-rail .btn { color: var(--grey); }
+.mgrid { left: 248px; top: 50px; grid-template-columns: repeat(3, 1fr); grid-auto-rows: calc(var(--vh, 900px) * .45); }
+.mgrid > * { border-color: var(--grey); }
+
+/* debug: every layer outlined and labelled */
+.show-layers [data-layer] { outline: 3px dashed #a8ff66; outline-offset: -3px; }
+.show-layers [data-layer]::after {
+  content: attr(data-layer) "  z " attr(data-depth);
+  position: absolute; left: var(--lab-x, 6px); top: var(--lab-y, 6px); z-index: 50;
+  padding: 3px 8px 2px; border-radius: 4px;
+  background: #a8ff66; color: #0d0d0d;
+  font: 500 22px/1.15 "KS Mono", ui-monospace, monospace;
+  -webkit-text-fill-color: #0d0d0d; text-transform: uppercase; letter-spacing: .02em;
+  white-space: nowrap; text-align: left;
+}
+.card.show-layers > [data-layer] { outline-width: calc(1px * var(--k)); outline-offset: calc(-1px * var(--k)); }
+.card.show-layers > [data-layer]::after { font-size: calc(8px * var(--k)); left: auto; right: calc(4px * var(--k)); top: auto; bottom: calc(4px * var(--k)); padding: calc(2px * var(--k)) calc(4px * var(--k)) calc(1px * var(--k)); border-radius: calc(2px * var(--k)); }
+
+/* shadow twins: the layer's own shape in black, softened, thrown by the light */
+.twin { pointer-events: none; opacity: 0; filter: brightness(0) blur(var(--blur, 10px)); will-change: transform, opacity; }

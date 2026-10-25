@@ -1,0 +1,22 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import Section from "@/components/wrapper/Section.astro";
+import HeroLines from "@/components/section/HeroLines.astro";
+import WorkWheel from "@/components/section/WorkWheel.astro";
+import WorkIndex from "@/components/section/WorkIndex.astro";
+import ClientWall from "@/components/content/ClientWall.astro";
+import Statement from "@/components/content/Statement.astro";
+---
+
+<Layout title="Wheel" logoHidden noindex>
+  {/* Direction four, Wheel: the Lines intro, then the work on a drum turning up from the fold, the laurels over it */}
+  <HeroLines heading="" />
+  <WorkWheel />
+  <Section paddingTop="large">
+    <ClientWall heading="Top clients" />
+  </Section>
+  <WorkIndex heading="Selected work" limit={12} paddingTop="large" />
+  <Section paddingTop="large" paddingBottom="large">
+    <Statement />
+  </Section>
+</Layout>

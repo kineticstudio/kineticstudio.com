@@ -1,0 +1,302 @@
+/* Venus Aerospace work card. The page chrome (stage, card, light, ruler,
+   label row) follows the Ethos card; everything under .vp is Venus Aerospace
+   rebuilt at its own 1440px design width from the live site
+   (www.venusaero.com, captured 2026-10-23). */
+
+@font-face { font-family: "Venus Grotesk"; src: url("../fonts/SpaceGrotesk-Regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Venus Grotesk"; src: url("../fonts/SpaceGrotesk-Medium.woff2") format("woff2"); font-weight: 500; font-display: block; }
+@font-face { font-family: "Venus Mono"; src: url("../fonts/SpaceMono-Regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #0d0d0d;
+  color: #eef1ea;
+  font-family: "Neue Montreal", "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Kinetic: the page and the work card ---------- */
+.stage {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  --size: 40;
+  --card-w: min(calc(var(--size) * 1vw), calc((100vh - 150px) * 4 / 3));
+}
+@media (max-width: 700px) { .stage { --card-w: calc(100vw - 32px); } }
+
+.slot { width: var(--card-w); display: flex; flex-direction: column; gap: clamp(14px, 1.1vw, 16px); }
+
+/* the hit area never moves; only what is inside it does */
+.persp {
+  position: relative;
+  width: 100%; aspect-ratio: 4 / 3;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+.persp.is-dragging { cursor: grabbing; }
+.card-shadow {
+  position: absolute; inset: 6% 7% -1% 7%;
+  border-radius: 12%;
+  background: rgba(0, 0, 0, .9);
+  filter: blur(30px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+/* laid out K times its size and scaled back inside its own 3D transform, so
+   the tilted card rasters as sharp as the flat one (see the Dawn card) */
+.card {
+  position: absolute; left: 0; top: 0;
+  --k: 1;
+  border-radius: calc(var(--r, 6px) * var(--k));
+  background: var(--frame-color, #1b1d20);
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  isolation: isolate;
+}
+.card, .card * { user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+
+/* the site's browser window, inset on the card ground when framed */
+.win {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  overflow: hidden;
+  background: #0a0c0f;
+  will-change: transform;
+}
+.win-shadow {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  background: #000;
+  filter: blur(calc(var(--card-px, 576px) * .022));
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.card:not(.is-framed) .win-shadow { display: none; }
+
+/* The light, as on an Apple TV poster: one soft round bloom of light under
+   the pointer, brightest there and fading to nothing, added on top (screen).
+   No stripes, no bands. It moves by transform only. The rim is a faint
+   brightening of the card edge nearest the pointer, the same bloom seen
+   through a thin ring mask. */
+.bloom, .rim { position: absolute; z-index: 6; pointer-events: none; opacity: 0; will-change: transform, opacity; }
+.bloom {
+  width: calc(var(--card-px, 576px) * 1.3); height: calc(var(--card-px, 576px) * 1.3);
+  left: calc(var(--card-px, 576px) * -.65); top: calc(var(--card-px, 576px) * -.65);
+  background: radial-gradient(circle closest-side,
+    rgba(255, 255, 255, .72), rgba(255, 255, 255, .5) 9%, rgba(255, 255, 255, .26) 22%, rgba(250, 252, 255, .11) 40%,
+    rgba(250, 252, 255, .04) 62%, rgba(250, 252, 255, .01) 82%, rgba(250, 252, 255, 0) 100%);
+  mix-blend-mode: screen;
+}
+.rim {
+  left: 0; top: 0; width: 100%; height: 100%;
+  border-radius: inherit; overflow: hidden;
+  padding: calc(1.5px * var(--k));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  mix-blend-mode: screen;
+}
+.rim i {
+  position: absolute; display: block;
+  width: calc(var(--card-px, 576px) * .9); height: calc(var(--card-px, 576px) * .9);
+  left: calc(var(--card-px, 576px) * -.45); top: calc(var(--card-px, 576px) * -.45);
+  background: radial-gradient(circle closest-side, rgba(255, 255, 255, .85), rgba(255, 255, 255, .22) 45%, rgba(255, 255, 255, 0) 100%);
+  will-change: transform;
+}
+
+/* The scroll ruler: 1px notches every 6px that slide as the miniature
+   scrolls, one brighter mark fixed at the reading position. Framed, it sits
+   in the window's right margin on the card ground; full bleed, just outside
+   the card (embedded, just inside its right edge). */
+.notches { position: absolute; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); mask: linear-gradient(transparent, #000 22%, #000 78%, transparent); }
+.notches .ticks { position: absolute; left: 0; right: 0; top: calc(var(--np) * -2); bottom: calc(var(--np) * -2);
+  background: repeating-linear-gradient(to bottom, var(--tick) 0 var(--nw), transparent var(--nw) var(--np)); will-change: transform; }
+.notches .mark { position: absolute; top: 50%; height: var(--nw); background: var(--mark); }
+.notches-in { --nw: calc(1px * var(--k)); --np: calc(6px * var(--k)); --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .6);
+  width: calc(5px * var(--k)); height: 46%; top: 27%; right: calc(var(--mx) / 2 - 2.5px * var(--k)); z-index: 2; }
+.notches-in .mark { left: calc(-2px * var(--k)); right: calc(-2px * var(--k)); }
+.notches-out { --nw: 1px; --np: 6px; --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .62);
+  width: 5px; height: 46%; top: 27%; right: -16px; }
+.notches-out .mark { left: -2px; right: -2px; }
+.card.is-light-frame .notches-in { --tick: rgba(10, 12, 15, .15); --mark: rgba(10, 12, 15, .6); }
+.card:not(.is-framed) .notches-in, .slot:not(.full) .notches-out, .no-notches .notches { display: none; }
+
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: clamp(14px, 1.1vw, 16px); }
+.meta h3 {
+  margin: 0;
+  font-family: "Panell Condensed", "Arial Narrow", sans-serif; font-weight: 500;
+  font-size: clamp(22px, 1.95vw, 28px); line-height: .94; letter-spacing: -.02em;
+  text-transform: uppercase;
+}
+.meta p {
+  margin: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
+  text-align: right;
+  font-family: "Neue Montreal Mono", ui-monospace, monospace;
+  font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
+  color: rgba(238, 241, 234, .5);
+}
+
+/* Embed (?embed=1): the card alone, edge to edge at the frame's own aspect,
+   on a transparent page. The site's tile frames it. */
+html.is-embed, html.is-embed body { background: transparent; }
+.is-embed .stage { display: block; }
+.is-embed .slot { position: absolute; inset: 0; width: auto; display: block; }
+.is-embed .persp { position: absolute; inset: var(--bleed, 0px); width: auto; height: auto; aspect-ratio: auto; }
+.is-embed .meta, .is-embed .notches-out, .is-embed .card-shadow { display: none; }
+/* full bleed in a tile there is no margin to sit in, so the ruler rides just inside the right edge */
+.is-embed .card:not(.is-framed) .notches-in { display: block; right: calc(7px * var(--k)); --tick: rgba(238, 241, 234, .2); --mark: rgba(238, 241, 234, .7); }
+
+/* ---------- Venus Aerospace: the miniature, at its own 1440px design width ---------- */
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  background: #0a0c0f;
+  --ink: #0a0c0f; --panel: #131517; --rust: #261b1a; --grey: #343434;
+  --orange: #f2551c; --cyan: #48d4ff; --muted: rgba(255, 255, 255, .7);
+  --hs: 1;   /* the hero video's cover scale for this window height (set by the engine) */
+  font-family: "Venus Grotesk", Arial, sans-serif;
+  font-size: 16px; line-height: 1.3;
+  color: #fff;
+  text-rendering: geometricPrecision;
+}
+.page { position: absolute; left: 0; top: 0; width: 1440px; will-change: transform; }
+.sec { position: relative; width: 1440px; }
+.sec > *, .vp .abs { position: absolute; }
+[data-depth] { will-change: transform; }
+.vp h1, .vp h2, .vp h3, .vp p { margin: 0; font-weight: inherit; }
+.vp img { display: block; }
+.vp svg { display: block; overflow: visible; }
+.mono { font-family: "Venus Mono", ui-monospace, monospace; }
+.center { text-align: center; }
+.rv { display: block; will-change: transform, opacity; }
+
+/* the site's bracket button: Space Mono caps with four 6px corner ticks */
+.btn { left: 0; width: 1440px; text-align: center; padding: 0; font-family: "Venus Mono", ui-monospace, monospace; font-size: 14px; line-height: 18.2px; text-transform: uppercase; white-space: nowrap; color: #fff; }
+.btn i { position: absolute; width: 7px; height: 7px; border-color: #fff; border-style: solid; border-width: 0; }
+.btn i:nth-of-type(1) { left: 0; top: 0; border-left-width: 1px; border-top-width: 1px; }
+.btn i:nth-of-type(2) { right: 0; top: 0; border-right-width: 1px; border-top-width: 1px; }
+.btn i:nth-of-type(3) { right: 0; bottom: 0; border-right-width: 1px; border-bottom-width: 1px; }
+.btn i:nth-of-type(4) { left: 0; bottom: 0; border-left-width: 1px; border-bottom-width: 1px; }
+.btn .rv { display: inline-block; position: relative; padding: 12px; }
+
+.eyebrow { left: 448px; width: 544px; top: 128px; font-size: 20px; line-height: 26px; text-align: center; }
+.h3 { left: 448px; width: 544px; top: 178px; font-size: 40px; line-height: 40px; font-weight: 500; letter-spacing: -.8px; text-align: center; }
+.lead { left: 448px; width: 544px; font-size: 20px; line-height: 26px; color: var(--muted); text-align: center; }
+
+/* hero: the engine firing straight down, its plume, the headline */
+.hero { height: var(--vh); overflow: hidden; background: var(--ink); }
+.hero-art { left: 0; top: 0; width: 1440px; height: var(--vh); }
+.hero-art > * { position: absolute; }
+.plume-glow {
+  left: calc(720px - 260px * var(--hs)); top: calc(380px * var(--hs)); width: calc(520px * var(--hs)); height: calc(620px * var(--hs));
+  background: radial-gradient(closest-side, rgba(255, 120, 50, .07), rgba(255, 110, 40, .025) 45%, rgba(255, 100, 40, 0));
+}
+.flame { left: calc(720px - 85px * var(--hs)); top: calc(415px * var(--hs)); width: calc(170px * var(--hs)); height: calc(485px * var(--hs)); }
+.flame img { width: 100%; height: 100%; transform-origin: 50% 0;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent), linear-gradient(transparent, #000 4%); -webkit-mask-composite: source-in;
+  mask: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent) intersect, linear-gradient(transparent, #000 4%); }
+.engine { left: calc(720px - 102px * var(--hs)); top: calc(150px * var(--hs)); width: calc(204px * var(--hs)); height: calc(280px * var(--hs)); }
+.engine img { width: 100%; height: 100%;
+  -webkit-mask: linear-gradient(#000 92%, transparent); mask: linear-gradient(#000 92%, transparent); }
+.h1 {
+  left: 216px; width: 1008px; top: calc(var(--vh) / 2 - 9px);
+  font-size: 90px; line-height: 85.5px; font-weight: 500; letter-spacing: -3.2px; text-align: center; white-space: nowrap;
+}
+.h1 .rv { transform-origin: 50% 50%; }
+.thumb { right: 16px; bottom: 16px; width: 250px; height: 88px; }
+.thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.thumb-txt { left: 16px; top: 26px; width: 150px; font-size: 14px; line-height: 18.2px; }
+.thumb-ico { left: 186px; top: 20px; width: 48px; height: 48px; color: var(--orange); }
+
+/* the nav, fixed in the viewport: it slides away as the page goes down and back as it comes up */
+.nav { left: 0; top: 0; width: 1440px; height: 72px; }
+.nav-in { position: absolute; inset: 0; will-change: transform; }
+.nav-bg { position: absolute; inset: 0; background: rgba(10, 12, 15, .78); opacity: 0; will-change: opacity; }
+.nav-logo { left: 72px; top: 16px; width: 112px; height: 41px; }
+.nav-links { left: 950px; top: 15px; height: 42px; display: flex; font-family: "Venus Mono", ui-monospace, monospace; font-size: 14px; line-height: 18.2px; text-transform: uppercase; }
+.nav-links span { padding: 12px; }
+
+/* RDRE */
+.rdre { height: 2323px; }
+.panel { left: 16px; top: 0; width: 1408px; }
+.rdre .panel { height: 2307px; background: var(--panel); }
+.rdre .eyebrow { color: var(--cyan); }
+.rdre-eng { left: 420px; top: 346px; width: 600px; height: 640px; }
+.rdre-eng img { width: 100%; height: 100%;
+  -webkit-mask: radial-gradient(closest-side, #000 72%, transparent); mask: radial-gradient(closest-side, #000 72%, transparent); }
+.rdre-p { top: 1034px; }
+.rdre-btn { top: 1308px; }
+.flight { left: 40px; top: 1430px; width: 1360px; height: 765px; overflow: hidden; }
+.flight img { width: 100%; height: 100%; }
+.fl-label { left: 537px; top: 335px; width: 285px; font-size: 16px; line-height: 20.8px; font-weight: 500; text-align: center; white-space: nowrap; }
+.fl-play { left: 654px; top: 379px; width: 51px; height: 51px; background: var(--orange); }
+.fl-play svg { position: absolute; left: 19px; top: 17px; width: 14px; height: 16px; }
+
+/* VDR */
+.vdr { height: 1964px; }
+.vdr .panel { height: 1948px; background: var(--rust); }
+.vdr .eyebrow { color: var(--orange); }
+.vdr-img { left: 16px; top: 354px; width: 1408px; height: 1408px; }
+.vdr-img img { width: 100%; height: 100%;
+  -webkit-mask: linear-gradient(transparent, #000 4%, #000 90%, transparent); mask: linear-gradient(transparent, #000 4%, #000 90%, transparent); }
+.vdr-glow { left: 62px; top: 891px; width: 400px; height: 190px;
+  background: radial-gradient(closest-side, rgba(255, 150, 90, .16), rgba(255, 120, 60, .05) 50%, rgba(255, 110, 50, 0)); }
+.vdr-p { top: 1650px; }
+.vdr-btn { top: 1794px; }
+
+/* the team, at sunset */
+.team { height: 900px; }
+.team-clip { left: 16px; top: 0; width: 1408px; height: 884px; overflow: hidden; background: #050505; }
+.team-img { left: -24px; top: -15px; width: 1456px; height: 914px; }
+.team-img img { width: 100%; height: 100%; transform-origin: 50% 70%; }
+.team-h { left: 463px; width: 514px; top: 328px; font-size: 40px; line-height: 40px; font-weight: 500; letter-spacing: -.8px; text-align: center; }
+.team-p { left: 463px; width: 514px; top: 400px; font-size: 16px; line-height: 20.8px; color: var(--muted); text-align: center; }
+.team-btn { top: 531px; }
+
+/* footer: the gridded sign-off */
+.foot { height: 798px; }
+.f-grid { left: 40px; top: 80px; width: 1360px; height: 698px; }
+.f-grid i { position: absolute; background: var(--grey); }
+.f-v { left: 91px; top: 161px; width: 264px; height: 232px; }
+.f-v img { width: 100%; height: 100%; }
+.f-eng { left: 407px; top: 81px; width: 992px; height: 390px; overflow: hidden; }
+.f-eng img { width: 100%; height: 100%; }
+.f-glow { left: 470px; top: 186px; width: 680px; height: 180px;
+  background: radial-gradient(closest-side, rgba(255, 140, 70, .12), rgba(255, 120, 60, .04) 50%, rgba(255, 110, 50, 0)); }
+.f-word { left: 154px; top: 553px; width: 139px; height: 60px; }
+.f-links { left: 406px; top: 473px; width: 994px; height: 221px; font-size: 16px; line-height: 20.8px; font-weight: 500; }
+.f-links span { position: absolute; width: 249px; text-align: center; }
+.f-bottom { left: 73px; top: 727px; width: 962px; font-size: 14px; line-height: 18.2px; color: rgba(255, 255, 255, .5); }
+.f-bottom span:last-child { position: absolute; right: 0; top: 0; }
+.f-bottom u { color: rgba(255, 255, 255, .5); text-underline-offset: 2px; }
+.f-social { left: 1069px; top: 695px; width: 330px; height: 82px; }
+.f-social svg { position: absolute; top: 31px; width: 20px; height: 20px; color: #fff; }
+
+/* debug: every layer outlined and labelled */
+.show-layers [data-layer] { outline: 3px dashed #a8ff66; outline-offset: -3px; }
+.show-layers [data-layer]::after {
+  content: attr(data-layer) "  z " attr(data-depth);
+  position: absolute; left: var(--lab-x, 6px); top: var(--lab-y, 6px); z-index: 50;
+  padding: 3px 8px 2px; border-radius: 4px;
+  background: #a8ff66; color: #0d0d0d;
+  font: 500 22px/1.15 "Neue Montreal Mono", ui-monospace, monospace;
+  -webkit-text-fill-color: #0d0d0d; text-transform: uppercase; letter-spacing: .02em;
+  white-space: nowrap; text-align: left;
+}
+.card.show-layers > [data-layer] { outline-width: calc(1px * var(--k)); outline-offset: calc(-1px * var(--k)); }
+.card.show-layers > [data-layer]::after { font-size: calc(8px * var(--k)); left: auto; right: calc(4px * var(--k)); top: auto; bottom: calc(4px * var(--k)); padding: calc(2px * var(--k)) calc(4px * var(--k)) calc(1px * var(--k)); border-radius: calc(2px * var(--k)); }
+
+/* shadow twins: the layer's own shape in black, softened, thrown by the light */
+.twin { pointer-events: none; opacity: 0; filter: brightness(0) blur(var(--blur, 10px)); will-change: transform, opacity; }

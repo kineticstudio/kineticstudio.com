@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Reshape Biotech work card, 2026-10-24, built on the Ethos card's engine
+     (a classic script, reshape-card-src/js/card.js, as on the Counsel
+     Health, Happy Droid and IngredientAI cards) and the Dawn card's
+     architecture, with Hunter's notes built in from the start: the
+     miniature keeps touring while you hover, the light is one soft round
+     bloom under the pointer, you can drag the page like a phone (and scrub
+     it sideways: drag right to go further down), a notched ruler slides
+     with the scroll, and there is no Case Study pill.
+
+     The site Kinetic built. reshapebiotech.com has since been replaced by a
+     new dark site that is not ours, so this is the version in Kinetic's own
+     recordings (the portfolio cover loop, media/reshape on kineticstudio.com,
+     and the full scroll-through in iCloud Kinetic/twitter/reshape-wide.mp4),
+     rebuilt from its own page as it was published on 2024-04-09 (the
+     archived copy, with the fonts, images, videos and hero animation it
+     served) at its 1440px design width as HTML/CSS layers, each at its own
+     depth, with the page's own scroll choreography measured on it: the mint
+     circle that shrinks into the nav pill as the hero's copy lifts away, the
+     machine opening, its tray sliding out and a plate rising under the
+     camera (the hero's frame sequence, every other one of its eighty-eight frames,
+     scrubbed by the scroll), the logos, the bento of six features, Never miss
+     a data point with its circle growing and the blue turning lilac, the
+     four analysis tabs stepping every 4 s, the three industries stacking as
+     they pin, the before and after splitter, the testimonials, Let's talk
+     with its form, and the footer the page lifts off. The videos and GIFs are
+     stills cross-faded. raw/ keeps the fetched HTML, CSS, fonts and images,
+     and lists the addresses of the videos and the hero animation, for
+     reference; nothing in it is executed.
+
+     ?embed=1 is the card alone for the site's work grid: no dials, no label,
+     transparent page, edge to edge at the frame's aspect (the miniature is
+     cropped to fit, never letterboxed), nothing fetched from outside it:
+       &bleed=N      the frame overhangs the tile by N px on every side (the
+                     site uses 32); the card keeps N px clear round it, so at
+                     rest it sits exactly on the tile and the tilt has room
+       &radius=N     the card's corner radius in px (the site passes 6)
+       &touchdrag=1  let a finger drag the page; off by default, so a swipe
+                     over the tile scrolls the site (a tap still opens)
+       &frame=1      the site in a window on the card ground instead of edge to edge
+     It pauses when the tab is hidden or the parent posts
+     {type: "ks-card", visible: false} (true resumes), and a click that is not
+     a drag posts {type: "ks-card-open"} to the parent. -->
+<title>Reshape Biotech work card</title>
+<script>
+  /* before first paint: embed or not, and the bleed */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var embed = q.has('embed') && q.get('embed') !== '0';
+    if (embed) {
+      document.documentElement.classList.add('is-embed');
+      // &bleed=N: the site's frame overhangs the tile by N px on every side, room for the tilt
+      var b = parseFloat(q.get('bleed'));
+      if (b > 0) document.documentElement.style.setProperty('--bleed', b + 'px');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="reshape-card-src/css/card.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Reshape Biotech, reshapebiotech.com as Kinetic built it, live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+              <div class="main" id="main">
+
+                <!-- the hero: pinned for 700px while the circle becomes the nav, then the machine's frames scrubbed by the scroll -->
+                <section class="sec hero" id="hero" data-stop="hero">
+                  <div class="h-lottie" id="hLottie" data-pin="lottie">
+                    <div class="h-frames" data-layer="the machine" data-depth="0.04" style="--lab-x:120px;--lab-y:300px">
+                      <img src="reshape-card-src/img/m00.webp" alt=""><img src="reshape-card-src/img/m01.webp" alt=""><img src="reshape-card-src/img/m02.webp" alt=""><img src="reshape-card-src/img/m03.webp" alt=""><img src="reshape-card-src/img/m04.webp" alt=""><img src="reshape-card-src/img/m05.webp" alt=""><img src="reshape-card-src/img/m06.webp" alt=""><img src="reshape-card-src/img/m07.webp" alt=""><img src="reshape-card-src/img/m08.webp" alt=""><img src="reshape-card-src/img/m09.webp" alt=""><img src="reshape-card-src/img/m10.webp" alt=""><img src="reshape-card-src/img/m11.webp" alt=""><img src="reshape-card-src/img/m12.webp" alt=""><img src="reshape-card-src/img/m13.webp" alt=""><img src="reshape-card-src/img/m14.webp" alt=""><img src="reshape-card-src/img/m15.webp" alt=""><img src="reshape-card-src/img/m16.webp" alt=""><img src="reshape-card-src/img/m17.webp" alt=""><img src="reshape-card-src/img/m18.webp" alt=""><img src="reshape-card-src/img/m19.webp" alt=""><img src="reshape-card-src/img/m20.webp" alt=""><img src="reshape-card-src/img/m21.webp" alt=""><img src="reshape-card-src/img/m22.webp" alt=""><img src="reshape-card-src/img/m23.webp" alt=""><img src="reshape-card-src/img/m24.webp" alt=""><img src="reshape-card-src/img/m25.webp" alt=""><img src="reshape-card-src/img/m26.webp" alt=""><img src="reshape-card-src/img/m27.webp" alt=""><img src="reshape-card-src/img/m28.webp" alt=""><img src="reshape-card-src/img/m29.webp" alt=""><img src="reshape-card-src/img/m30.webp" alt=""><img src="reshape-card-src/img/m31.webp" alt=""><img src="reshape-card-src/img/m32.webp" alt=""><img src="reshape-card-src/img/m33.webp" alt=""><img src="reshape-card-src/img/m34.webp" alt=""><img src="reshape-card-src/img/m35.webp" alt=""><img src="reshape-card-src/img/m36.webp" alt=""><img src="reshape-card-src/img/m37.webp" alt=""><img src="reshape-card-src/img/m38.webp" alt="">
+                    </div>
+                  </div>
+                  <div class="h-grad" data-layer="fade" data-depth="0.04" style="--lab-x:120px"></div>
+                  <div class="h-pin" data-pin="hero">
+                    <div class="h-circle" id="hCircle" data-layer="circle" data-depth="0.14" style="--lab-x:1000px;--lab-y:200px">
+                      <i class="c-cap" id="cA"></i><i class="c-cap" id="cB"></i><i class="c-mid" id="cR"></i>
+                    </div>
+                    <div class="h-copy" id="hCopy">
+                      <h1 class="h-h1" data-layer="headline" data-depth="0.64" data-shadow="0.14,0.16,10" style="--lab-x:-80px;--lab-y:-30px">Automate<br>your visual experiments</h1>
+                      <p class="h-p" data-layer="intro" data-depth="0.48" style="--lab-x:-80px;--lab-y:-34px">With Reshape, the world's first AI and robotics powered imaging and analysis platform, researchers can finally automate visual assays and accelerate the pace of research.</p>
+                      <div class="h-btns" data-layer="buttons" data-depth="0.8" data-shadow="0.14,0.3,9" style="--lab-x:-40px;--lab-y:64px">
+                        <span class="btn" style="left:0;width:132.6px">Get in touch</span>
+                        <span class="btn btn-video" style="left:148.6px;width:189px"><img src="reshape-card-src/img/btn-video.webp" alt=""><svg viewBox="0 0 11 14"><path d="M11 7L0.5 13.06L0.5 0.94L11 7Z" fill="currentColor"/></svg><b>See how it works</b></span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- trusted by industry leaders -->
+                <section class="sec clients" data-stop="clients">
+                  <h2 class="cl-h" data-layer="eyebrow" data-depth="0.4" style="--lab-x:740px">Trusted by industry leaders</h2>
+                  <div class="cl-row" data-layer="logos" data-depth="0.55" style="top:176px;--lab-x:520px;--lab-y:-30px">
+                    <img src="reshape-card-src/img/c-syngenta.webp" style="left:39.2px;width:169.7px" alt="">
+                    <img src="reshape-card-src/img/c-dsm.webp" style="left:379.9px;width:112.2px" alt="">
+                    <img src="reshape-card-src/img/c-oxford.webp" style="left:657.2px;width:181.6px" alt="">
+                    <img src="reshape-card-src/img/c-chr-hansen.webp" style="left:997.4px;width:125.1px" alt="">
+                  </div>
+                  <div class="cl-row" data-layer="logos" data-depth="0.55" style="top:296px;--lab-x:520px;--lab-y:60px">
+                    <img src="reshape-card-src/img/c-abf.webp" style="left:71.6px;width:104.9px" alt="">
+                    <img src="reshape-card-src/img/c-copenhagen.webp" style="left:360.8px;width:150.3px" alt="">
+                    <img src="reshape-card-src/img/c-pattern-ag.webp" style="left:665.6px;width:164.7px" alt="">
+                    <img src="reshape-card-src/img/c-novozymes.webp" style="left:965.6px;width:188.7px" alt="">
+                  </div>
+                </section>
+
+                <!-- unlock your lab's potential: the bento -->
+                <section class="sec feat" data-stop="features">
+                  <h2 class="ft-h" data-layer="headline" data-depth="0.62" style="--lab-x:900px">Unlock your lab's potential</h2>
+                  <p class="ft-p" data-layer="intro" data-depth="0.46" style="--lab-x:540px">Our platform combines flexible robotics and machine learning to dramatically accelerate your time to market.</p>
+
+                  <div class="fi" style="left:128px;top:352px;width:578px;height:692px">
+                    <div class="fi-ground" data-layer="image" data-depth="0.12" style="--lab-x:30px;--lab-y:30px"><img class="cover" src="reshape-card-src/img/f-imaging.webp" alt=""></div>
+                    <div class="fi-txt" data-layer="caption" data-depth="0.56" style="--lab-y:-34px"><h3>Automated imaging</h3><p>Run experiments 24/7 and free up time for laboratory technicians.</p></div>
+                  </div>
+                  <div class="fi" style="left:734px;top:352px;width:578px;height:692px">
+                    <div class="fi-ground orange" data-layer="ground" data-depth="0.08" style="--lab-x:30px;--lab-y:30px"></div>
+                    <div class="fi-meter" data-layer="meter" data-depth="0.6" data-shadow="0.08,0.2,10" style="--lab-x:370px;--lab-y:0px">
+                      <span class="fm-val">34° C</span>
+                      <img class="fm-arc" src="reshape-card-src/img/f-arc.webp" alt="">
+                      <span class="fm-t" style="left:0">20° C</span><span class="fm-t" style="left:312.2px">40° C</span>
+                    </div>
+                    <div class="fi-inc" data-layer="incubator" data-depth="0.34" data-shadow="0.08,0.32,22" style="--lab-x:330px;--lab-y:250px"><img src="reshape-card-src/img/f-incubator.webp" alt=""></div>
+                    <div class="fi-txt dark" data-layer="caption" data-depth="0.56" style="--lab-y:-34px"><h3>Built-in incubation</h3><p>Flexible temperature control and accurate logging to ensure repeatability.</p></div>
+                  </div>
+                  <div class="fi" style="left:128px;top:1084px;width:385.3px;height:512px">
+                    <div class="fi-ground lilac" data-layer="ground" data-depth="0.08" style="--lab-x:30px;--lab-y:30px"></div>
+                    <div class="fi-dish" data-layer="the plate" data-depth="0.36" style="--lab-x:120px;--lab-y:150px"><img src="reshape-card-src/img/f-growth-a.webp" alt=""><img class="fx" id="fGrowth" src="reshape-card-src/img/f-growth-b.webp" alt=""></div>
+                    <div class="fi-txt dark" data-layer="caption" data-depth="0.56" style="--lab-y:-34px"><h3>Automated<br>assessment</h3><p>Increase accuracy and repeatability with our image analysis models.</p></div>
+                  </div>
+                  <div class="fi" style="left:541.3px;top:1084px;width:770.7px;height:512px">
+                    <div class="fi-ground" data-layer="image" data-depth="0.12" style="--lab-x:30px;--lab-y:30px"><img class="cover" src="reshape-card-src/img/f-lab.webp" alt=""><i class="fi-grad"></i></div>
+                    <div class="fi-txt" data-layer="caption" data-depth="0.56" style="--lab-y:-34px"><h3>Scalable robotic platform</h3><p>Easily add more machines to supercharge your throughput and get to market faster.</p></div>
+                  </div>
+                  <div class="fi" style="left:128px;top:1636px;width:770.7px;height:512px">
+                    <div class="fi-ground" data-layer="image" data-depth="0.12" style="--lab-x:30px;--lab-y:30px"><img class="cover" src="reshape-card-src/img/f-storage.webp" alt=""></div>
+                    <div class="fi-txt" data-layer="caption" data-depth="0.56" style="--lab-y:-34px"><h3>Managed data storage</h3><p>Keep your data secure with browser-based access for easy collaboration.</p></div>
+                  </div>
+                  <div class="fi" style="left:926.7px;top:1636px;width:385.3px;height:512px">
+                    <div class="fi-ground blue" data-layer="image" data-depth="0.12" style="--lab-x:30px;--lab-y:30px">
+                      <img class="cover" src="reshape-card-src/img/f-plates-0.webp" alt=""><img class="cover fx" src="reshape-card-src/img/f-plates-1.webp" alt=""><img class="cover fx" src="reshape-card-src/img/f-plates-2.webp" alt=""><img class="cover fx" src="reshape-card-src/img/f-plates-3.webp" alt=""><i class="fi-grad"></i>
+                    </div>
+                    <div class="fi-txt" data-layer="caption" data-depth="0.56" style="--lab-y:-34px"><h3>Ultimate assay flexibility</h3><p>Compatible with the plate formats you use today.</p></div>
+                  </div>
+                </section>
+
+                <!-- imaging: never miss a data point, the circle growing, the blue turning lilac -->
+                <section class="sec expl" id="expl" data-stop="imaging">
+                  <i class="ex-lilac" id="exLilac"></i>
+                  <div class="ex-lab" data-layer="eyebrow" data-depth="0.5" style="--lab-x:120px"><span class="o">Imaging</span><span class="b" id="exLabB">Imaging</span></div>
+                  <h2 class="ex-h" data-layer="headline" data-depth="0.62" style="--lab-x:580px"><span class="m">Never miss a data point</span><span class="d">Never miss a data point</span></h2>
+                  <p class="ex-p" data-layer="intro" data-depth="0.46" style="--lab-x:540px"><span class="m">Our imaging system captures everything that happens during incubation with pre-calibrated imaging profiles.</span><span class="d">Our imaging system captures everything that happens during incubation with pre-calibrated imaging profiles.</span></p>
+                  <div class="ex-media" data-layer="camera" data-depth="0.3" data-shadow="0.04,0.26,26" style="--lab-x:500px;--lab-y:300px">
+                    <div class="ex-sc"><div class="ex-clip">
+                      <img src="reshape-card-src/img/x-cam-0.webp" alt=""><img class="fx" src="reshape-card-src/img/x-cam-1.webp" alt=""><img class="fx" src="reshape-card-src/img/x-cam-2.webp" alt="">
+                    </div></div>
+                  </div>
+                </section>
+
+                <!-- analysis: scalable data acquisition, the tabs stepping every 4 s -->
+                <section class="sec ana" data-stop="analysis">
+                  <div class="an-lab" data-layer="eyebrow" data-depth="0.5" style="--lab-x:120px">Analysis</div>
+                  <h2 class="an-h" data-layer="headline" data-depth="0.62" style="--lab-x:600px">Scalable data acquisition</h2>
+                  <p class="an-p" data-layer="intro" data-depth="0.46" style="--lab-x:740px">Increase the quality of your models with our scalable image assessment infrastructure to produce high quality data faster.</p>
+                  <div class="an-menu" data-layer="tabs" data-depth="0.5" style="--lab-x:-10px;--lab-y:-40px">
+                    <div class="an-tab"><b class="hd">Growth</b><b class="hd on">Growth</b><i class="bar first"></i><span class="tx">Measure the growth rate of everything that happens on your plate</span></div>
+                    <div class="an-tab"><b class="hd">Color</b><b class="hd on">Color</b><i class="bar"></i><span class="tx">Quantify color changes accurately and objectively</span></div>
+                    <div class="an-tab"><b class="hd">Count</b><b class="hd on">Count</b><i class="bar"></i><span class="tx">The most accurate CFU enumeration algorithms in the world for bacteria and fungi</span></div>
+                    <div class="an-tab"><b class="hd">Custom</b><b class="hd on">Custom</b><i class="bar"></i><span class="tx">Customized image analysis pipelines for high performance on your specific assays</span></div>
+                  </div>
+                  <div class="an-video" data-layer="the plate" data-depth="0.3" style="--lab-x:260px;--lab-y:40px">
+                    <div class="an-pane"><img src="reshape-card-src/img/a-growth-a.webp" alt=""><img class="fx" src="reshape-card-src/img/a-growth-b.webp" alt=""></div>
+                    <div class="an-pane"><img src="reshape-card-src/img/a-color-a.webp" alt=""><img class="fx" src="reshape-card-src/img/a-color-b.webp" alt=""></div>
+                    <div class="an-pane"><img src="reshape-card-src/img/a-count-a.webp" alt=""><img class="fx" src="reshape-card-src/img/a-count-b.webp" alt=""></div>
+                    <div class="an-pane"><img src="reshape-card-src/img/a-custom-a.webp" alt=""><img class="fx" src="reshape-card-src/img/a-custom-b.webp" alt=""></div>
+                  </div>
+                </section>
+
+                <!-- the industries: each pins at the top as the next slides over it -->
+                <section class="sec scope" id="scope" data-stop="industries">
+                  <div class="sc-item" data-pin="s0" style="top:0;z-index:1">
+                    <h2 class="sc-h" data-layer="headline" data-depth="0.62" style="top:184px;--lab-x:500px">Food &amp;<br>ingredients</h2>
+                    <p class="sc-p" data-layer="text" data-depth="0.46" style="top:352px;--lab-x:500px">Supercharge your functional ingredient characterization, stability testing, acidification and many other assays.</p>
+                    <div class="sc-dish" data-layer="the plate" data-depth="0.32" style="--lab-x:-150px;--lab-y:150px"><img src="reshape-card-src/img/s-food-0.webp" alt=""><img class="fx" src="reshape-card-src/img/s-food-1.webp" alt=""><img class="fx" src="reshape-card-src/img/s-food-2.webp" alt=""></div>
+                  </div>
+                  <div class="sc-item" data-pin="s1" style="top:621px;z-index:2">
+                    <h2 class="sc-h" data-layer="headline" data-depth="0.62" style="top:224px;--lab-x:500px">Agriculture</h2>
+                    <p class="sc-p" data-layer="text" data-depth="0.46" style="top:312px;--lab-x:500px">Automate competition assays for pesticide development across fungi, insects, seed health and more.</p>
+                    <div class="sc-dish" data-layer="the plate" data-depth="0.32" style="--lab-x:-150px;--lab-y:150px"><img src="reshape-card-src/img/s-agri-0.webp" alt=""><img class="fx" src="reshape-card-src/img/s-agri-1.webp" alt=""><img class="fx" src="reshape-card-src/img/s-agri-2.webp" alt=""></div>
+                  </div>
+                  <div class="sc-item last" data-pin="s2" style="top:1242px;z-index:3">
+                    <h2 class="sc-h" data-layer="headline" data-depth="0.62" style="top:224px;--lab-x:500px">Industrials</h2>
+                    <p class="sc-p" data-layer="text" data-depth="0.46" style="top:312px;--lab-x:500px">Enable automated high throughput microbial discovery or do library and enzyme screens with much higher resolution.</p>
+                    <div class="sc-dish" data-layer="before and after" data-depth="0.32" style="--lab-x:-190px;--lab-y:150px">
+                      <div class="sp-before"><img src="reshape-card-src/img/s-ind-b0.webp" alt=""><img class="fx" src="reshape-card-src/img/s-ind-b1.webp" alt=""><img class="fx" src="reshape-card-src/img/s-ind-b2.webp" alt=""></div>
+                      <div class="sp-after" id="spAfter"><div class="sp-in" id="spIn"><img src="reshape-card-src/img/s-ind-a0.webp" alt=""><img class="fx" src="reshape-card-src/img/s-ind-a1.webp" alt=""><img class="fx" src="reshape-card-src/img/s-ind-a2.webp" alt=""></div></div>
+                      <div class="sp-handle" data-layer="handle" data-depth="0.74" data-shadow="0.32,0.3,8" style="--lab-x:30px;--lab-y:120px"><div class="sp-move"><i class="sp-line"></i><i class="sp-knob"></i></div></div>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- accelerating R&D for global companies -->
+                <section class="sec testi" data-stop="testimonials">
+                  <h2 class="ts-h" data-layer="headline" data-depth="0.62" data-shadow="0,0.16,10" style="--lab-x:820px">Accelerating R&amp;D<br>for global companies</h2>
+                  <div class="ts-q" data-layer="quote" data-depth="0.42" style="left:128px;--lab-y:-30px">“The Reshape Imaging System has been transformative for our research. I highly recommend it for any lab involved in synthetic biology and metabolic engineering."</div>
+                  <div class="ts-q" data-layer="quote" data-depth="0.42" style="left:535.5px;--lab-y:-30px">“I would most certainly recommend the Reshape Microbiology Platform. The communication with Reshape has been great, and it has given us a lot of new capabilities we didn’t have before”</div>
+                  <div class="ts-q" data-layer="quote" data-depth="0.42" style="left:942.9px;--lab-y:-30px">"The flexibility of the equipment means that we’ve been able to improve a lot of our other assays as well and even develop new ones based on new functionality."</div>
+                  <div class="ts-c" data-layer="person" data-depth="0.54" style="left:128px;--lab-y:74px"><img src="reshape-card-src/img/t-rodrigo.webp" alt=""><b>Rodrigo Ledesma Amaro</b><span>G<br>Imperial College</span></div>
+                  <div class="ts-c" data-layer="person" data-depth="0.54" style="left:535.5px;--lab-y:74px"><img src="reshape-card-src/img/t-anja.webp" alt=""><b>Anja Kristiansen</b><span>Senior scientist<br>Chr. Hansen</span></div>
+                  <div class="ts-c" data-layer="person" data-depth="0.54" style="left:942.9px;--lab-y:74px"><img src="reshape-card-src/img/t-morten.webp" alt=""><b>Morten Nørholm</b><span>PI, DTU Biosustain<br>CSO, CloneOpt</span></div>
+                </section>
+
+                <!-- let's talk -->
+                <section class="sec contact" data-stop="contact">
+                  <div class="ct-img" data-layer="the machine" data-depth="0.22" data-shadow="0.04,0.16,24" style="--lab-x:120px;--lab-y:300px"><img src="reshape-card-src/img/contact.webp" alt=""></div>
+                  <h2 class="ct-h" data-layer="headline" data-depth="0.62" data-shadow="0,0.14,10" style="--lab-x:340px">Let's talk</h2>
+                  <p class="ct-p" data-layer="intro" data-depth="0.46" style="--lab-x:340px">Leave your details to book a meeting.</p>
+                  <div class="ct-form" data-layer="form" data-depth="0.3" style="--lab-x:500px;--lab-y:200px">
+                    <span class="in" style="top:0">Name*</span>
+                    <span class="in" style="top:70.6px">Company*</span>
+                    <span class="in" style="top:141.2px">Email*</span>
+                    <span class="lb" style="top:211px">Phone number</span>
+                    <span class="in sm" style="top:241px;width:144px">United States</span>
+                    <span class="in sm" style="top:241px;left:154px;width:326px">+1</span>
+                    <span class="lb" style="top:312px">How did you hear about Reshape?*</span>
+                    <span class="in" style="top:343px">Please Select</span>
+                  </div>
+                  <div class="ct-btn" data-layer="button" data-depth="0.72" data-shadow="0.3,0.3,9" style="--lab-x:500px;--lab-y:10px"><span class="btn">Get in touch</span></div>
+                </section>
+              </div>
+
+              <!-- the footer, waiting at the foot of the window under the page -->
+              <footer class="sec foot" id="foot" data-pin="foot" data-stop="footer">
+                <img class="fo-logo" data-layer="logo" data-depth="0.5" src="reshape-card-src/img/logo-foot.webp" alt="" style="--lab-x:160px">
+                <div class="fo-col" data-layer="links" data-depth="0.4" style="left:128px;--lab-x:170px">
+                  <span class="t">Resources</span><span style="top:45px">Applications</span><span style="top:97px">Industries</span><span style="top:149px">Customer Stories</span><span style="top:201px">Documentation</span>
+                </div>
+                <div class="fo-col" data-layer="links" data-depth="0.4" style="left:631.3px;--lab-x:120px">
+                  <span class="t">Company</span><span style="top:45px">About</span><span style="top:97px">Press</span><span style="top:149px">Careers</span><span style="top:201px">Contact</span><span style="top:253px">Blog</span>
+                </div>
+                <div class="fo-addr" data-layer="address" data-depth="0.44" style="--lab-x:-40px;--lab-y:70px"><span>contact@reshapebiotech.com</span><span>CVR: 40 05 61 73</span></div>
+                <i class="fo-rule"></i>
+                <div class="fo-bot" data-layer="legal" data-depth="0.3" style="--lab-x:640px">
+                  <span style="left:0">© 2023 Reshape Biotech</span><span style="left:189.1px">Privacy Policy</span><span style="left:299.4px">MSA</span><span style="left:348.5px">DPA</span><span style="left:393.7px">Cookie Policy</span><span style="left:501.8px">Sub-Processors</span><span style="left:1126px">LinkedIn</span>
+                </div>
+              </footer>
+            </div>
+
+            <!-- the nav, fixed in the window: the mint pill the hero's circle shrinks into -->
+            <nav class="fixed nav" id="nav">
+              <div class="nv-pill" data-layer="nav" data-depth="0.3" style="--lab-x:560px;--lab-y:100px"></div>
+              <div class="nv-items" data-layer="links" data-depth="0.5" style="--lab-x:660px;--lab-y:40px">
+                <img class="nv-logo" src="reshape-card-src/img/logo.webp" alt="">
+                <span style="left:496.2px">Applications</span><span style="left:607.2px">Industries</span><span style="left:700.9px">Customer Stories</span><span style="left:846.6px">Resources</span>
+                <img class="nv-chev" src="reshape-card-src/img/chevron.svg" alt="">
+                <span class="login" style="left:1116px">Login</span>
+              </div>
+              <div class="nv-btn" data-layer="button" data-depth="0.72" data-shadow="0.3,0.28,8" style="--lab-x:-90px;--lab-y:64px"><span class="btn">Get in touch</span></div>
+            </nav>
+          </div>
+        </div>
+        <div class="notches notches-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="notches notches-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Reshape Biotech</h3>
+      <p><span>Health</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="reshape-card-src/js/card.js"></script>
+<script type="module">
+/* The dials, published the Dawn card's way: the studio's own Params,
+   defineParams from /shared/params/params.js. Embedded on the site there is
+   no panel and nothing is fetched, so the module is only loaded here, and
+   only when served (opened from disk there is no studio to load it from). */
+const card = window.reshapeCard;
+if (card && !card.embed && location.protocol !== 'file:') {
+  try {
+    const { defineParams } = await import('/shared/params/params.js');
+    const TOOL = 'reshape biotech work card';
+    const D = card.values;
+    defineParams(TOOL, {
+      layers: {
+        depth: [D['layers.depth'], 0, 2.5, 0.01],          // how far apart the layers sit
+        parallax: [D['layers.parallax'], 0, 3, 0.01],      // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [D['layers.spread'], 0, 1, 0.01],          // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [D['tilt.tiltMax'], 0, 20, 0.5],          // degrees
+        perspective: [D['tilt.perspective'], 1, 6, 0.05],  // eye distance, in card widths
+        hoverScale: [D['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [D['light.bloom'], 0, 1.5, 0.01],           // the round bloom under the pointer
+        bloomSize: [D['light.bloomSize'], 0.6, 2.4, 0.01], // its diameter, in card widths
+        rim: [D['light.rim'], 0, 1, 0.01],                 // the edge nearest the pointer
+        shadow: [D['light.shadow'], 0, 1, 0.01],           // layer shadows and the card's own
+      },
+      motion: {
+        tourSpeed: [D['motion.tourSpeed'], 0, 3, 0.05],
+        loops: [D['motion.loops'], 0, 2, 0.05],            // the page's own loops: the tabs (4 s on the site), the time-lapses, the splitter
+        stiffness: [D['motion.stiffness'], 40, 500, 1],
+        damping: [D['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        scrub: [D['drag.scrub'], 0.5, 6, 0.1],             // page px per px of a sideways drag (right = down the page)
+        momentum: [D['drag.momentum'], 0, 2, 0.05],        // how far a flick carries
+        friction: [D['drag.friction'], 0.08, 1, 0.01],     // seconds for a flick to lose most of its speed
+        resumeAfter: [D['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [D['card.cardSize'], 24, 72, 0.5],       // vw, as on the work grid
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: D['card.frame'] },
+        frameColor: D['card.frameColor'],
+        notches: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: D['card.notches'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  } catch (err) {
+    /* opened from disk, or outside the studio: the dials' defaults hold */
+  }
+}
+</script>
+</body>
+</html>

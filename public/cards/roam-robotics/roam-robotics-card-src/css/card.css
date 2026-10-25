@@ -1,0 +1,365 @@
+/* Roam Robotics work card. The page chrome (stage, card, light, ruler, label
+   row) follows the Ethos engine's cards (Cambium, Counsel Health, Happy
+   Droid); everything under .vp is roamrobotics.com rebuilt at its own 1440px
+   design width from the live site (captured 2026-10-23 at 1440x900 in
+   headless Chromium), in its own ABC Monument Grotesk. The site sets its
+   small caps labels in the system mono stack (ui-monospace), and its buttons
+   in the browser's own Arial; both are kept as the site has them. Every
+   height that is a share of the window on the live page (100vh, 75vh) is a
+   share of --vh here. */
+
+@font-face { font-family: "Roam Monument"; src: url("../fonts/ABCMonumentGrotesk-Light.woff2") format("woff2"); font-weight: 300; font-display: block; }
+@font-face { font-family: "Roam Monument"; src: url("../fonts/ABCMonumentGrotesk-Regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: "KS Panell Condensed"; src: url("../fonts/PanellCondensed-TRIAL-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "KS Mono"; src: url("../fonts/PPNeueMontrealMono-Book.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #0d0d0d;
+  color: #eef1ea;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Kinetic: the page and the work card ---------- */
+.stage {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  --size: 40; --ar: 1.6;
+  --card-w: min(calc(var(--size) * 1vw), calc((100vh - 150px) * var(--ar)));
+}
+@media (max-width: 700px) { .stage { --card-w: calc(100vw - 32px); } }
+.slot { width: var(--card-w); display: flex; flex-direction: column; gap: clamp(14px, 1.1vw, 16px); }
+
+/* the hit area never moves; only what is inside it does */
+.persp {
+  position: relative;
+  width: 100%; aspect-ratio: var(--ar);
+  perspective: 1400px; perspective-origin: 50% 50%;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: grab;
+}
+.persp.is-dragging { cursor: grabbing; }
+
+.card-shadow {
+  position: absolute; inset: 6% 7% -1% 7%;
+  border-radius: 12%;
+  background: rgba(0, 0, 0, .9);
+  filter: blur(30px);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+/* laid out K times its size and scaled back inside its own 3D transform, so
+   the tilted card rasters as sharp as the flat one */
+.card {
+  position: absolute; left: 0; top: 0;
+  --k: 1; --r: 6px;
+  border-radius: calc(var(--r) * var(--k));
+  background: var(--frame-color, #e91404);
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  isolation: isolate;
+}
+.card, .card * { user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+
+/* the site's browser window, inset on the card ground when framed */
+.win {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  overflow: hidden;
+  background: #2d2f30;
+  will-change: transform;
+}
+.win-shadow {
+  position: absolute;
+  left: var(--mx, 0px); top: var(--my, 0px); right: var(--mx, 0px); bottom: var(--my, 0px);
+  border-radius: var(--win-r, 0px);
+  background: #3a0700;
+  filter: blur(calc(var(--card-px, 576px) * .022));
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.card:not(.is-framed) .win-shadow { display: none; }
+
+/* The light, as on an Apple TV poster: one soft round bloom under the pointer,
+   brightest there and fading to nothing, laid over in plain alpha (a blend mode
+   over a card this size costs whole frames). No stripes, no bands. The rim is
+   the same light seen through a thin ring at the card's edge. Transform and
+   opacity only. */
+.bloom, .rim { position: absolute; z-index: 6; pointer-events: none; opacity: 0; will-change: transform, opacity; }
+.bloom {
+  width: var(--bloom-d); height: var(--bloom-d);
+  left: calc(var(--bloom-d) / -2); top: calc(var(--bloom-d) / -2);
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side,
+    rgba(255, 252, 248, .42), rgba(255, 250, 246, .27) 15%, rgba(250, 251, 255, .13) 34%,
+    rgba(250, 251, 255, .05) 56%, rgba(250, 251, 255, .013) 79%, rgba(250, 251, 255, 0));
+}
+.rim {
+  left: 0; top: 0; width: 100%; height: 100%;
+  border-radius: inherit; overflow: hidden;
+  padding: calc(1.5px * var(--k));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.rim i {
+  position: absolute; display: block;
+  width: calc(var(--card-px, 576px) * .9); height: calc(var(--card-px, 576px) * .9);
+  left: calc(var(--card-px, 576px) * -.45); top: calc(var(--card-px, 576px) * -.45);
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side, rgba(255, 252, 248, .8), rgba(255, 252, 248, .22) 45%, rgba(255, 252, 248, 0));
+  will-change: transform;
+}
+
+/* The ruler: a short fine scale beside the card whose notches slide with the
+   miniature's scroll, one brighter mark fixed at the reading position. A fixed
+   scale with sliding notches, nothing sweeps. Outside the card on the page;
+   inside it when framed (in the window's margin) or embedded (on the page's
+   right edge, its ink following the section under the mark: Roam is dark
+   from top to bottom, so it reads light). */
+.ruler { position: absolute; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(transparent, #000 24%, #000 76%, transparent); mask: linear-gradient(transparent, #000 24%, #000 76%, transparent); }
+.ruler .ticks { position: absolute; left: 0; right: 0; top: calc(var(--np) * -2); bottom: calc(var(--np) * -2);
+  background: repeating-linear-gradient(to bottom, var(--tick) 0 var(--nw), transparent var(--nw) var(--np)); will-change: transform; }
+.ruler .mark { position: absolute; top: 50%; height: var(--nw); background: var(--mark); }
+.ruler-out { --nw: 1px; --np: 6px; --tick: rgba(238, 241, 234, .15); --mark: rgba(238, 241, 234, .62);
+  width: 5px; height: 34%; top: 33%; right: -16px; }
+.ruler-out .mark { left: -2px; right: -2px; }
+.ruler-in { z-index: 5; --nw: calc(1px * var(--k)); --np: calc(6px * var(--k));
+  width: calc(5px * var(--k)); height: 34%; top: 33%; right: calc(9px * var(--k)); }
+.card.is-framed .ruler-in { right: calc(var(--mx) / 2 - 2.5px * var(--k)); }
+.ruler-in .ink { position: absolute; inset: 0; will-change: opacity; }
+.ruler-in .dark { --tick: rgba(14, 14, 14, .18); --mark: rgba(14, 14, 14, .62); }
+.ruler-in .light { --tick: rgba(255, 255, 255, .16); --mark: rgba(255, 255, 255, .66); opacity: 0; }
+.ruler-in .mark { left: calc(-2px * var(--k)); right: calc(-2px * var(--k)); }
+.slot:not(.is-bleed) .ruler-out, .card:not(.ruler-inside) .ruler-in, .no-ruler .ruler { display: none; }
+
+/* the label row, as on the work grid */
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: clamp(14px, 1.1vw, 16px); }
+.meta h3 {
+  margin: 0;
+  font-family: "Panell Condensed", "KS Panell Condensed", "Arial Narrow", sans-serif; font-weight: 500;
+  font-size: clamp(22px, 1.95vw, 28px); line-height: .94; letter-spacing: -.02em;
+  text-transform: uppercase;
+}
+.meta p {
+  margin: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
+  text-align: right;
+  font-family: "Neue Montreal Mono", "KS Mono", ui-monospace, monospace;
+  font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
+  color: rgba(238, 241, 234, .5);
+}
+
+/* Embed (?embed=1): the card alone, edge to edge at the frame's own aspect, on
+   a transparent page. The site's tile frames it; &bleed=N keeps N px clear. */
+html.is-embed, html.is-embed body { background: transparent; }
+.is-embed .stage { display: block; }
+.is-embed .slot { position: absolute; inset: 0; width: auto; display: block; }
+.is-embed .persp { position: absolute; inset: var(--bleed, 0px); width: auto; height: auto; aspect-ratio: auto; }
+.is-embed .meta, .is-embed .ruler-out { display: none; }
+html.is-embed:not(.has-bleed) .card-shadow { display: none; }
+
+/* ---------- Roam: the miniature, at its own 1440px design width ---------- */
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  background: #2d2f30;
+  --g1: #0e0e0e; --g2: #2d2f30; --g3: #38393a; --g4: #93a4a9; --g5: #d7e8ed; --orange: #ff2700;
+  --mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro", "Fira Mono", "Droid Sans Mono", "Courier New", monospace;
+  font-family: "Roam Monument", Arial, sans-serif;
+  font-size: 15px; line-height: normal; font-weight: 400;   /* the live body is 15px at 1440 */
+  color: #fff;
+  text-rendering: geometricPrecision;
+}
+.page { position: absolute; left: 0; top: 0; width: 1440px; will-change: transform; }
+.sec { position: relative; width: 1440px; background: var(--g2); }
+.sec > * { position: absolute; }
+[data-depth] { will-change: transform; }
+.vp h1, .vp h2, .vp h3, .vp p { margin: 0; }
+.vp img { display: block; }
+.vp svg { display: block; overflow: visible; }
+.vp i { display: block; font-style: normal; }
+.ctr { left: 0; width: 1440px; text-align: center; }
+.orange { color: var(--orange); }
+/* the site's type: h1 60/66 light, h2 37.5/48.75 light, body 15/19.5, small 13.125, labels in mono */
+.vp h1 { font-size: 60px; line-height: 66px; font-weight: 300; letter-spacing: -.9px; white-space: nowrap; }
+.vp h2 { font-size: 37.5px; line-height: 48.75px; font-weight: 300; letter-spacing: -.28125px; white-space: nowrap; }
+.vp p { font-size: 15px; line-height: 19.5px; }
+.vp h3 { font-family: var(--mono); font-size: 12.5px; line-height: 12.5px; font-weight: 600; letter-spacing: .625px; text-transform: uppercase; color: var(--orange); white-space: nowrap; }
+/* the dashed rules: 1px dots every 8px; the orange ones march to the right as on the site */
+.rule { height: 1px; overflow: hidden; }
+.rule .dash { position: absolute; left: -8px; right: 0; top: 0; height: 1px;
+  background: linear-gradient(90deg, var(--orange), var(--orange) 12.5%, transparent 12.5%) 0 0 / 8px 1px; will-change: transform; }
+.round { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--orange); }
+.round svg { width: 10px; height: 11px; margin-left: 2px; }
+.round.xl { width: 56px; height: 56px; }
+.round.xl svg { width: 12px; height: 13px; }
+
+/* the nav: the site's fixed bar, held at the window's top and slid away on the way down */
+.nav { position: absolute; left: 0; top: 0; width: 1440px; height: 96px; z-index: 30; background: var(--g2); will-change: transform; }
+.nav > * { position: absolute; }
+.nav-logo { left: 24px; top: 35px; width: 116px; height: 26px; }
+.nav-contact { left: 1363.3px; top: 37.5px; font-size: 15px; line-height: 21px; white-space: nowrap; }
+
+/* ===== the hero ===== */
+.hero { height: 840px; }
+.h-panel { left: 24px; top: 96px; width: 1392px; height: 696px; background: var(--g1); }
+.h-rule { left: 72px; top: 488.5px; width: 1296px; }
+/* the cycling headers; the gap each word makes in the rule is cut in the rule itself (card.js) */
+.h-slot { top: 456px; height: 66px; }
+.h-left { left: 54px; width: 330px; }
+.h-right { left: 786px; width: 600px; }
+.h-slot .w { position: absolute; top: 0; height: 66px; white-space: nowrap; will-change: opacity; }
+.h-rule .gap { position: absolute; top: 0; height: 1px; background: var(--g1); will-change: opacity; }
+.h-left .w { left: 0; padding-right: 18px; }
+.h-right .w { right: 0; padding-left: 18px; }
+.h-slot .t { display: block; font-size: 60px; line-height: 66px; font-weight: 300; letter-spacing: -.9px; will-change: transform, opacity; }
+/* 2x Human Strength: the site's video thumbnail, two stills from its clip */
+.thumb { left: 1177.2px; top: 644.6px; width: 208.8px; height: 117.4px; overflow: hidden; }
+.thumb .still { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; will-change: opacity; }
+.thumb-cta { position: absolute; left: 28.6px; top: 42.7px; height: 32px; display: flex; align-items: center; gap: 8px; }
+.thumb-cta span:last-child { font-size: 13.125px; line-height: 17.0625px; white-space: nowrap; }
+/* the Forge render: sticky over the hero, Protecting and Do More, turning 20 to -22 degrees with the scroll */
+.forge-pin { left: 0; top: 0; width: 1440px; height: 0; z-index: 5; }
+.forge { position: absolute; left: 576px; top: 103.2px; width: 288px; height: 616.3px; }
+.forge-rot, .kside-rot { display: block; width: 100%; height: 100%; transform-origin: 50% 50%; will-change: transform; }
+
+/* ===== protecting those going into harm's way ===== */
+.prot { height: 720px; }
+.p-photos { left: 24px; top: 0; width: 1392px; height: 720px; overflow: hidden; background: var(--g1); }
+.p-photos img { position: absolute; left: 0; width: 1392px; will-change: opacity; }
+.p-photos .p1 { top: 0; height: 720px; }
+.p-photos .p2 { top: -3.45px; height: 726.9px; }
+.p-photos .p3 { top: -104px; height: 928px; }
+.p-photos .p4 { top: -72.1px; height: 864.2px; }
+.p-photos .veil { position: absolute; inset: 0; background: rgba(0, 0, 0, .6); }
+.p-h1 { left: 54px; top: 30px; }
+.p-h2 { right: 54px; top: 627.2px; }
+
+/* ===== do more, go farther ===== */
+.more { height: 636px; }
+.m-copy { left: 24px; top: 84px; width: 268.5px; height: 187.5px; }
+.m-copy > * { position: absolute; left: 0; }
+.m-h { top: 0; }
+.m-p { top: 148.5px; white-space: nowrap; }
+.stats { left: 966px; top: 84px; width: 450px; }
+.stat { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--g3); color: var(--g4); }
+.stat span { font-size: 13.125px; line-height: 17.0625px; }
+
+/* ===== a modular system ===== */
+.mod { height: 891.2px; }
+.mod-panel { left: 24px; top: 0; width: 1392px; height: 867.2px; background: var(--g1); }
+.vp .mod-h { top: 90px; line-height: 78px; }
+.volts { left: 559.5px; top: 445px; width: 382.8px; }
+.pack { left: 246.9px; top: 297.6px; width: 360px; height: 320.6px; }
+.knee { left: 915.2px; top: 299.3px; width: 216px; height: 317.1px; }
+.lab { display: flex; align-items: center; gap: 8px; font-size: 10.8px; line-height: 14.04px; color: var(--g4); white-space: pre; }
+.lab hr { flex: 1 1 auto; min-width: 0; height: 1px; margin: 0; border: 0; background: linear-gradient(90deg, var(--g4), var(--g4) 12.5%, transparent 12.5%) 0 0 / 8px 1px; }
+.pcopy { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.pcopy h2 { margin-bottom: 14.0625px !important; }
+.pcopy span { display: block; width: 254.1px; font-size: 13.125px; line-height: 17.0625px; }
+
+/* ===== dual-use technology ===== */
+.dual { height: 843.6px; }
+.d-copy { left: 24px; top: 90px; width: 484.7px; height: 246px; }
+.d-copy > * { position: absolute; left: 0; }
+.vp .d-copy h1 { top: 0; width: 454.7px; white-space: normal; }
+.d-copy p { top: 148.5px; width: 352.2px; }
+.d-ph { overflow: hidden; }
+.d-ph img { position: absolute; left: 50%; top: 0; width: auto; max-width: none; transform-origin: 50% 50%; will-change: transform; }
+.d-ph1 { left: 24px; top: 357.8px; width: 820.8px; height: 461.7px; }
+.d-ph1 img { height: 554.04px; width: 791.5px; }
+.d-ph2 { left: 868.8px; top: 90px; width: 547.2px; height: 729.6px; }
+.d-ph2 img { height: 875.52px; width: 525.3px; }
+
+/* ===== the three components ===== */
+.three { height: 609.5px; }
+.tu { top: 0; width: 448px; height: 561.5px; background: var(--g1); }
+.tu > * { position: absolute; }
+.tu-ph { left: 0; top: 0; width: 448px; height: 448px; overflow: hidden; }
+.tu-r { position: absolute; inset: 0; }
+.tu-r img { position: absolute; left: 0; top: 0; width: 448px; height: 448px; will-change: transform; }
+.tu-copy { left: 30px; top: 448px; width: 388px; }
+.tu-copy > * { position: absolute; left: 0; }
+.tu-copy h3 { top: 0; }
+.tu-copy p { top: 25px; }
+
+/* ===== unlock your potential: a window onto the film, which holds still behind it (on the site the film is
+   fixed under the page, showing through its own section and the 24px gap below it) ===== */
+.vid { height: calc(var(--vh) + 24px); overflow: hidden; }
+.v-pin { left: 0; top: 0; width: 1440px; height: var(--vh); }
+.v-pin > * { position: absolute; }
+.v-film { --fw: max(1920px, calc(var(--vh) * 1.77778)); --fh: max(1080px, var(--vh));
+  width: var(--fw); height: var(--fh); left: calc(720px - var(--fw) / 2); top: calc(var(--vh) / 2 - var(--fh) / 2); }
+.v-film img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; will-change: opacity; }
+.v-btn { left: 692px; top: calc(var(--vh) / 2 - 63.4px); }
+.vp .v-h { top: calc(var(--vh) / 2 + .6px); }
+
+/* ===== enhanced mission assurance ===== */
+.mis { height: 960.3px; }
+.mis-h { left: 24px; top: 144px; }
+.mis-r { left: 24px; width: 1392px; }
+.mis-li { left: 24px; }
+.kside { --kh: calc(var(--vh) * .75); width: calc(var(--kh) * .291667); height: var(--kh);
+  left: calc(720px - var(--kh) * .145833); top: calc(468.1px - var(--kh) / 2); }
+
+/* ===== contact us ===== */
+.con { height: 744px; }
+.c-film { left: 720px; top: 24px; width: 696px; height: 696px; overflow: hidden; background: #000; }
+.c-film img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; will-change: opacity; }
+.form { left: 24px; top: 24px; width: 696px; height: 696px; background: var(--g5); color: var(--g1); }
+.form > * { position: absolute; }
+.f-head { left: 0; top: 0; width: 696px; height: 160px; }
+.f-head > * { position: absolute; }
+.vp .f-head h1 { left: 41.6px; top: 48px; font-size: 64px; line-height: 70.4px; letter-spacing: -.96px; }
+.f-head span { left: 48px; top: 120.4px; font-size: 14px; line-height: 18.2px; white-space: nowrap; }
+.f-in { left: 0; top: 0; width: 696px; height: 696px; }
+.f-in > * { position: absolute; }
+.fld { height: 35px; border-bottom: 1px solid var(--g1); }
+.fld span { position: absolute; left: 2px; top: 6px; font-size: 16px; line-height: 20.8px; white-space: nowrap; }
+.vp .f-q { left: 48px; top: 462px; color: #000; }
+.radio { left: 48px; font-size: 16px; line-height: 20.8px; padding-left: 19.7px; white-space: nowrap; }
+.radio i { position: absolute; left: 0; top: 3px; width: 13px; height: 13px; border-radius: 50%; border: 1px solid #767676; background: #fff; }
+.send { left: 48px; top: 593px; width: 600px; height: 55px; display: flex; align-items: center; justify-content: center;
+  background: var(--g1); color: #fff; font: 400 13.3333px/1 Arial, "Helvetica Neue", sans-serif; }
+
+/* ===== the footer ===== */
+.foot { height: 254.4px; }
+.ft-rule { left: 24px; top: 30px; width: 1392px; height: 1px; background: var(--g3); }
+.ft-logo { left: 24px; top: 79px; width: 116px; height: 26px; }
+.ft-c { left: 24px; top: 112.5px; font-size: 13.125px; line-height: 17.0625px; white-space: nowrap; }
+.ft-d { left: 24px; top: 150.5px; width: 231.1px; font-size: 11.25px; line-height: 14.625px; color: #969696; }
+.ft-soc { left: 1252px; top: 79px; display: flex; gap: 16px; }
+.ft-soc img { width: 20px; height: 20px; }
+
+/* debug: layer outlines */
+.show-layers [data-layer] { outline: 3px dashed #ff2700; outline-offset: -3px; }
+.show-layers [data-layer]::after {
+  content: attr(data-layer) "  z " attr(data-depth);
+  position: absolute; left: var(--lab-x, 6px); top: var(--lab-y, 6px); z-index: 50;
+  padding: 3px 8px 2px; border-radius: 4px;
+  background: #ff2700; color: #0d0d0d;
+  font: 500 20px/1.15 "KS Mono", ui-monospace, monospace;
+  -webkit-text-fill-color: #0d0d0d; text-transform: uppercase; letter-spacing: .02em;
+  white-space: nowrap; text-align: left;
+}
+.show-layers img[data-layer]::after { content: none; }
+.card.show-layers > [data-layer] { outline-width: calc(1px * var(--k)); outline-offset: calc(-1px * var(--k)); }
+.card.show-layers > [data-layer]::after { font-size: calc(8px * var(--k)); left: auto; right: calc(4px * var(--k)); top: auto; bottom: calc(4px * var(--k)); padding: calc(2px * var(--k)) calc(4px * var(--k)) calc(1px * var(--k)); border-radius: calc(2px * var(--k)); }
+
+/* shadow twins: a darkened, blurred copy of a lifted layer left on the surface below it */
+.twin { filter: brightness(0) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; will-change: transform, opacity; }
+.twin.box { background: #000 !important; }
+.twin * { will-change: auto !important; }
+/* before the first frame: only the site's opening words */
+.h-slot .w { opacity: 0; }
+.h-slot .w:nth-child(2) { opacity: 1; }

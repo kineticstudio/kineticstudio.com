@@ -1,0 +1,85 @@
+/* One hover for every button and link-button on the site (Hunter, Oct 23:
+   "make all of the button hover states better"). site.js wraps each label
+   in .roll; on hover the label rolls up out of view and a fresh copy rolls
+   in from below. Lime buttons also lift to light sage; quiet buttons gain a
+   soft fill. Touch screens and reduced motion get the colour change only. */
+
+.roll {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-block: 0.1em;
+  margin-block: -0.1em;
+}
+.roll_a,
+.roll_b {
+  display: block;
+  transition: translate 0.55s cubic-bezier(0.65, 0, 0.25, 1);
+}
+.roll_b {
+  position: absolute;
+  inset: 0.1em 0 auto;
+  translate: 0 110%;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  /* not the page you are on: the link you just clicked opened its page under
+     the pointer and rolled a second time */
+  [data-rolled]:not([aria-current="page"]):hover .roll_a,
+  [data-rolled]:focus-visible .roll_a {
+    translate: 0 -110%;
+  }
+  [data-rolled]:not([aria-current="page"]):hover .roll_b,
+  [data-rolled]:focus-visible .roll_b {
+    translate: 0 0;
+  }
+}
+
+/* Page to page: the browser keeps the old page on screen until the new one is
+   drawn and crossfades them, and the nav is its own layer that does not fade,
+   so the logo and the pill hold still between pages (Hunter, Oct 23: "it
+   refreshes the page, and the logo jumps"). */
+@view-transition {
+  navigation: auto;
+}
+.nav_wrap {
+  view-transition-name: site-nav;
+}
+::view-transition-old(site-nav),
+::view-transition-new(site-nav) {
+  animation: none;
+}
+::view-transition-old(site-nav) {
+  opacity: 0;
+}
+::view-transition-old(root) {
+  animation: 0.3s ease both vt-fade-out;
+}
+::view-transition-new(root) {
+  animation: 0.4s ease both vt-fade-in;
+}
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+
+/* An arrival from one of the site's own links (marked in the head before
+   anything is drawn): the homepage skips its intro, so it never shows, and
+   the nav logo stays where it was instead of hiding for it. */
+html.is-arrival .hero-lines_intro {
+  display: none;
+}
+html.is-arrival .nav_wrap.logo-hidden :is(.nav_logo, .nav_pill) {
+  opacity: 1;
+}

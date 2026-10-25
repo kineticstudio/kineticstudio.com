@@ -1,0 +1,53 @@
+/* Epirus homepage, round two: the only style changes to the live Webflow build.
+
+   Everything else on these pages is Epirus's own published CSS
+   (webflow/webflow.shared.css, unmodified) and their own components.
+   In Webflow these are a handful of edits:
+
+   1. Two size variables, applied to the button class and a few card classes.
+      The footer keeps its square corners.
+   2. Their mono typeface replaced by Inter, the site's main typeface, on the fifteen
+      styles that use it. See mono.css (generated): labels stay in capitals
+      the way the navigation already sets Inter; content headings take
+      Inter's normal case. Sizes and weights are untouched.
+   3. Text wrapping: pretty for copy, balanced headings, so no orphans.
+   4. A fix to existing behavior: a stray scrollbar beside long headlines.
+
+   The new storytelling components in the medium, full-bleed, deep and
+   isometric versions are in story.css. */
+
+/* ---------- 1. corner radius ---------- */
+
+:root {
+  --radius--button: 0.25rem;
+  --radius--card: 0.5rem;
+}
+.button { border-radius: var(--radius--button); }
+.button.is-footer, .footer_submit, .footer_component .button { border-radius: 0; } /* the footer stays exactly as built */
+.cta_component,
+.blog_item-link,
+.home-content_image-wrapper,
+.careers-tab_tab-content,
+.bento-grid_card-large-content,
+.bento-grid_card-image-wrapper {
+  border-radius: var(--radius--card);
+  overflow: hidden;
+}
+.blog_image-wrapper { border-radius: 0; }
+
+/* ---------- 2. The mono typeface to Inter ---------- */
+
+/* Generated into mono.css from their stylesheet. */
+
+/* ---------- 3. text wrapping ---------- */
+
+/* No orphans: copy wraps "pretty", headings balance their lines. */
+p, li, blockquote, figcaption { text-wrap: pretty; }
+h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
+
+/* ---------- 4. a fix to existing behavior ---------- */
+
+/* Their headline reveal clips each split line vertically only, which makes
+   the browser treat sideways overflow as scrollable: any line wider than its
+   column showed a horizontal scrollbar. */
+[slide-in] .line { overflow-x: clip; }

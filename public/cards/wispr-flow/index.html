@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Code-powered work card for Wispr Flow (wisprflow.ai), 2026-10-23, built on
+     the Dawn card's architecture (01-Code-powered-work-card.html) with Hunter's
+     notes on Dawn built in from the start:
+     - the miniature is the live homepage rebuilt in HTML and CSS layers at its
+       own 1440px width, scaled into a 16:10 card laid out K times larger so
+       tilted text stays sharp; one spring-driven loop, transforms and opacity
+       only
+     - idle, it tours the best sections (hero, 4x faster, how it works, the
+       testimonials, the closing call to action) on a ~20 s loop of eased stops
+     - hover tilts it toward the pointer (10 degrees) and the layers separate by
+       depth with soft shadows that grow with height; the light is one round
+       bloom that follows the pointer; the tour keeps running under the hover
+     - press and drag scrolls the miniature either way: drag up, page goes
+       down (1:1); drag right, it scrubs further down, left back up (2.5x);
+       momentum and clamped ends; the tour picks up from there after a beat
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge,
+       on a transparent page; it pauses when hidden or when the parent posts
+       {type: "ks-card", visible: false}; {type: "ks-card", at: seconds} puts
+       the tour at that time (the site's resting loop is this tour recorded,
+       so a hovered tile hands over without a jump); a click or tap posts
+       {type: "ks-card-open"}. &bleed=N keeps N px of clear frame round the card
+       (the site's iframe overhangs the tile by that much); touch drag is off
+       unless &touchdrag=1, so a swipe over the tile scrolls the site
+
+     Everything Wispr-side was taken from the live site on 2026-10-23 and lives
+     in wispr-flow-card-src/: its Figtree and EB Garamond files, its logos and
+     photography, its text paths and waveform. raw/ keeps the fetched HTML, CSS
+     and media for reference; nothing in it is executed. -->
+<title>Wispr Flow work card</title>
+<script>
+  /* ?embed=1 is the site tile. &radius=N rounds the card's corners. &bleed=N: the site's iframe overhangs the tile by N px on every side
+     (room for the tilt), so the card keeps N px of clear frame round it and sits exactly on the tile at rest.
+     &touchdrag=1 lets a finger drag the miniature; off by default, so a swipe over the tile scrolls the site. */
+  (function () {
+    const q = new URLSearchParams(location.search);
+    if (q.get('embed') !== '1') return;
+    const h = document.documentElement;
+    h.classList.add('embed');
+    const b = parseFloat(q.get('bleed'));
+    if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    const r = parseFloat(q.get('radius'));   // &radius=N: the card's corner radius in px (the site passes 6)
+    if (r >= 0) h.style.setProperty('--card-r', r + 'px');
+  })();
+</script>
+<link rel="stylesheet" href="wispr-flow-card-src/css/card.css">
+<link rel="stylesheet" href="wispr-flow-card-src/css/site.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="Wispr Flow, wisprflow.ai, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- hero -->
+              <section class="sec hero" id="s-hero" data-tone="light">
+                <div class="banner">
+                  <div class="banner-txt" data-layer="banner" data-depth="0.3"><strong>Wispr Flow Notetaker is now available on Windows and Mac.</strong><span>Try for free <svg viewBox="0 0 17 16" fill="none"><path d="M7.16675 10.6665L9.59768 8.23557C9.72788 8.10537 9.72788 7.8943 9.59768 7.7641L7.16675 5.33317" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+                </div>
+                <svg class="rib rib-l" data-layer="raw speech" data-depth="0.1" viewBox="0 0 1048 594" fill="none">
+                  <path id="wfCurve1" d="M0.597656 50.924805 C17.4612 143.2965 61.94 299.86 398.60 360.27 C594.00 395.31 772.77 285.92 668.74 149.27 C564.71 12.62 340.74 270.96 667.04 470.42 C719.69 506.55 817.468 561.26 1046.43 565.235"/>
+                  <text><textPath href="#wfCurve1" startOffset="100%" text-anchor="end">I told the team the the new timeline should be ready by Friday, although it’s probably going to slip. There’s been a lot of back and forth and honestly the the whole thing’s been kind of chaotic, like nobody really knows what’s going on so can you check in with them and see if the notes from yesterday’s meeting were sent out, or if they’re still waiting</textPath></text>
+                </svg>
+                <svg class="rib rib-r" data-layer="ribbon" data-depth="0.28" viewBox="0 0 1024 620" fill="none">
+                  <path id="wfCurve2" d="M2.04309 563.872C111.592 558.268 316.491 554.016 517.963 490.064C703.017 431.323 875.319 444.531 1021.88 453.216" stroke="#1A1A1A" stroke-width="30"/>
+                  <text><textPath href="#wfCurve2" startOffset="68">and see if the notes from yesterday’s meeting were sent out, or if they’re still waiting? I think Cheyene mentioned it, but didn’t confirm, and now I’m a little lost!</textPath></text>
+                </svg>
+                <div class="tag full center hero-tag" data-layer="eyebrow" data-depth="0.4">Wispr Flow Dictation</div>
+                <h1 class="h1 full center hero-h" data-layer="headline" data-depth="0.7" data-shadow="0,0.16,14">Don’t type,<br><em>just speak.</em></h1>
+                <p class="lead center hero-p" data-layer="body copy" data-depth="0.55">The voice-to-text AI that turns speech<br>into clear, polished writing in every app.</p>
+                <div class="btn hero-btn" data-layer="button" data-depth="0.85" data-shadow="0,0.24,14"><img src="wispr-flow-card-src/img/apple.png" alt="">Get started on macOS</div>
+                <div class="avail full center" data-layer="small print" data-depth="0.45">Available on Mac, Windows, iPhone, and Android</div>
+                <div class="pill-glow" data-layer="glow" data-depth="0.6"></div>
+                <div class="pill" data-layer="voice pill" data-depth="0.85" data-shadow="0,0.28,12">
+                  <div class="bars"><i style="--h:2.4px"></i><i style="--h:2.4px"></i><i style="--h:2.4px"></i><i style="--h:15px"></i><i style="--h:27px"></i><i style="--h:10px"></i><i style="--h:4px"></i><i style="--h:7px"></i><i style="--h:8px"></i><i style="--h:10px"></i><i style="--h:15px"></i><i style="--h:24px"></i><i style="--h:20px"></i><i style="--h:15px"></i><i style="--h:15px"></i><i style="--h:20px"></i><i style="--h:24px"></i><i style="--h:20px"></i><i style="--h:17px"></i></div>
+                </div>
+              </section>
+
+              <!-- used by professionals at -->
+              <section class="sec logos" id="s-logos" data-tone="dark">
+                <div class="tag full center logos-tag" data-layer="eyebrow" data-depth="0.35">Used by professionals at</div>
+                <div class="marquee" data-layer="logos" data-depth="0.5">
+                  <div class="marquee-track" id="marquee">
+                    <img src="wispr-flow-card-src/img/notion-lumen.svg" width="108" height="31" alt=""><img src="wispr-flow-card-src/img/klarna-lumen.svg" width="78" height="19" alt=""><img src="wispr-flow-card-src/img/groupon-lumen.svg" width="117" height="19" alt=""><img src="wispr-flow-card-src/img/vercel-lumen.svg" width="103" height="21" alt=""><img src="wispr-flow-card-src/img/mercury-lumen.svg" width="141" height="33" alt=""><img src="wispr-flow-card-src/img/microsoft-lumen.svg" width="129" height="28" alt=""><img src="wispr-flow-card-src/img/amazon-lumen.svg" width="104" height="31" alt="">
+                    <img src="wispr-flow-card-src/img/notion-lumen.svg" width="108" height="31" alt=""><img src="wispr-flow-card-src/img/klarna-lumen.svg" width="78" height="19" alt=""><img src="wispr-flow-card-src/img/groupon-lumen.svg" width="117" height="19" alt=""><img src="wispr-flow-card-src/img/vercel-lumen.svg" width="103" height="21" alt=""><img src="wispr-flow-card-src/img/mercury-lumen.svg" width="141" height="33" alt=""><img src="wispr-flow-card-src/img/microsoft-lumen.svg" width="129" height="28" alt=""><img src="wispr-flow-card-src/img/amazon-lumen.svg" width="104" height="31" alt="">
+                  </div>
+                </div>
+                <div class="fade-l"></div><div class="fade-r"></div>
+              </section>
+
+              <!-- 4x faster than typing -->
+              <section class="sec green" id="s-green" data-tone="dark">
+                <h2 class="h1 full center green-h" data-layer="headline" data-depth="0.7" data-shadow="0,0.3,14">4x faster <em>than typing</em></h2>
+                <p class="lead full center green-p" data-layer="body copy" data-depth="0.55">Voice that finally works is here. Flow lets you create, code, message,<br>and write at the speed of thought, 4x faster than your keyboard.</p>
+                <div class="kb" data-layer="keyboard" data-depth="0.22">
+                  <div class="kb-label" data-layer="label" data-depth="0.45"><div class="wpm-l">Keyboard</div><div class="wpm-n">45 wpm</div></div>
+                  <div class="kb-line">I can create a new one from scratch, or pull in something you’re</div>
+                </div>
+                <div class="fc" data-layer="flow card" data-depth="0.3" data-shadow="0,0.4,22">
+                  <div class="fc-img" data-layer="photo" data-depth="0.12"><img src="wispr-flow-card-src/img/flow-card.webp" alt=""></div>
+                  <div class="fc-label" data-layer="label" data-depth="0.55"><div class="wpm-l">Flow</div><div class="wpm-n">220 wpm</div></div>
+                  <svg class="fc-rib" data-layer="words" data-depth="0.68" viewBox="0 0 928 76" fill="none">
+                    <path id="wfCurveFast" d="M0.535156 74.7977C216.035 74.7977 283.147 0.534007 467.535 0.797575C650.383 1.05894 649.035 74.7977 927.535 74.7977"/>
+                    <text><textPath href="#wfCurveFast" startOffset="16">How would you like to set up the file? I can create a new one from scratch, or pull in something you’re already working with. What sounds good?</textPath></text>
+                  </svg>
+                  <div class="fc-pill" data-layer="voice pill" data-depth="0.95" data-shadow="0.3,0.4,10">
+                    <div class="bars"><i style="--h:5.8px"></i><i style="--h:14.6px"></i><i style="--h:11px"></i><i style="--h:18.1px"></i><i style="--h:14.6px"></i><i style="--h:25.2px"></i><i style="--h:18.1px"></i><i style="--h:9.3px"></i><i style="--h:11px"></i><i style="--h:4px"></i></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- how it works -->
+              <section class="sec how" id="s-how" data-tone="light">
+                <svg class="swoosh" data-layer="swoosh" data-depth="-0.12" viewBox="0 0 2143 780" fill="none"><path opacity="0.3" d="M40.0007 698.328C220.318 478.644 343.783 558.525 447.782 653.96C793.107 970.845 855.413 313.802 1164.61 243.92C1473.8 174.039 1575.09 490.162 1408.63 523.595C1242.18 557.027 1155.31 245.367 1454.33 91.2959C1753.34 -62.7747 2102.93 179.338 2102.93 179.338" stroke="currentColor" stroke-width="80" stroke-linecap="round"/></svg>
+                <div class="tag full center how-tag" data-layer="eyebrow" data-depth="0.35">How it works</div>
+                <h2 class="center how-h" data-layer="headline" data-depth="0.7" data-shadow="0,0.14,12">Speak at the speed<br>you think, <em>in every app,</em><br><em>on every device.</em></h2>
+                <div class="tabs" data-layer="steps" data-depth="0.42">
+                  <div class="tabs-line"></div><div class="tabs-ind"></div>
+                  <span style="top:0">Speak naturally</span><span class="on" style="top:35px">Edits as you speak</span><span style="top:70px">Use it anywhere</span>
+                </div>
+                <div class="phone" data-layer="phone" data-depth="0.32" data-shadow="0,0.3,22">
+                  <div class="ph-img" data-layer="photo" data-depth="0.1"><img src="wispr-flow-card-src/img/2nd-bg.webp" alt=""></div>
+                  <div class="ph-words" data-layer="words" data-depth="0.5"><span class="f">Hey so um</span> can you <span class="f">actually wait</span> can you tell the team that <span class="f">the</span> the launch is <span class="o">gonna slip</span> I think to <span class="f">like not Friday</span> the following Monday because we’re still waiting on <span class="f">uh</span> legal to sign off on <span class="f">the</span> the new terms page and <span class="f">uh yeah</span> just let them know we’ll have a real timeline by <span class="f">by end of week sorry</span> end of day Thursday</div>
+                  <div class="msg" data-layer="composer" data-depth="0.78" data-shadow="0.32,0.3,12">
+                    <div class="msg-top">Message...</div>
+                    <div class="msg-bot">
+                      <svg viewBox="0 0 28 28" style="left:12px;top:12px;width:28px;height:28px;color:#e4e4d0"><circle cx="14" cy="14" r="14" fill="currentColor"/><g opacity="0.6" fill="#1a1a1a"><rect x="13.4" y="8" width="1.15" height="12" rx=".58"/><rect x="8" y="13.4" width="12" height="1.15" rx=".58"/></g></svg>
+                      <svg viewBox="0 0 22 22" style="left:50px;top:15px;width:22px;height:22px"><text x="1" y="15.5" font-family="WF Figtree, Arial" font-weight="500" font-size="13" fill="#1a1a1a" fill-opacity="0.5">Aa</text></svg>
+                      <svg viewBox="0 0 22 22" style="left:82px;top:15px;width:22px;height:22px" fill="none" stroke="#1a1a1a" stroke-opacity="0.5" stroke-width="1.4"><circle cx="11" cy="11" r="7.5"/><path d="M7.8 12.6c.8 1.2 1.9 1.8 3.2 1.8s2.4-.6 3.2-1.8" stroke-linecap="round"/><circle cx="8.6" cy="9.2" r=".6" fill="#1a1a1a"/><circle cx="13.4" cy="9.2" r=".6" fill="#1a1a1a"/></svg>
+                      <span class="msg-dots">···</span>
+                      <svg viewBox="0 0 18 18" style="left:222px;top:18px;width:18px;height:18px"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.25 3.50144C2.25 2.59436 3.19025 1.98929 4.02138 2.36153L15.0094 7.57058C15.9749 8.00303 16.0027 9.3573 15.0557 9.8286L4.06766 15.6164C3.23257 16.032 2.25 15.4277 2.25 14.4984V10.9602C2.25 10.3866 2.64223 9.88657 3.20135 9.74752L8.80292 9.35648C9.19155 9.2595 9.19583 8.7276 8.80292 8.64983L3.375 8.25C2.74647 8.17177 2.27481 7.64005 2.27481 7.00963L2.25 3.50144Z" fill="#1A1A1A" fill-opacity="0.5"/></svg>
+                      <div class="msg-div"></div>
+                      <svg viewBox="0 0 16 16" style="left:258px;top:19px;width:16px;height:16px"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.1616 6.17042C4.37706 5.9432 4.72639 5.9432 4.94185 6.17042L8 9.3954L11.0581 6.17042C11.2736 5.9432 11.6229 5.9432 11.8384 6.17042C12.0539 6.39763 12.0539 6.766 11.8384 6.9932L8.39014 10.6296C8.17467 10.8568 7.82533 10.8568 7.60987 10.6296L4.1616 6.9932C3.94614 6.766 3.94614 6.39763 4.1616 6.17042Z" fill="#1A1A1A" fill-opacity="0.5"/></svg>
+                    </div>
+                  </div>
+                  <div class="clean" data-layer="status" data-depth="0.95" data-shadow="0.32,0.3,10">Cleaning up...<svg viewBox="0 0 12 12" fill="#ffffeb"><path d="M6 0l1.3 4.7L12 6 7.3 7.3 6 12 4.7 7.3 0 6l4.7-1.3z"/></svg></div>
+                </div>
+                <div class="how-cap" data-layer="caption" data-depth="0.55"><h3>Flow edits as you speak</h3><p>Text that reads like you wrote it, not like you spoke it. Flow automatically removes filler words, adds punctuation, and formats your writing.</p></div>
+              </section>
+
+              <!-- from the first people to use it -->
+              <section class="sec testi" id="s-testi" data-tone="dark">
+                <div class="tag full center testi-tag" data-layer="eyebrow" data-depth="0.35">Early access, real results</div>
+                <h2 class="full center testi-h" data-layer="headline" data-depth="0.7" data-shadow="0,0.3,14">From the first<br><em>people to use it.</em></h2>
+                <div class="tcard t-elena" data-layer="quote card" data-depth="0.3" data-shadow="0,0.45,20">
+                  <div class="face"><p class="quote">“I feel like I have no time to type anymore. So I just talk to my phone and my laptop all the time.”</p><div class="who">Elena Verna<small>Head of Growth at Lovable</small></div></div>
+                </div>
+                <div class="tcard t-steven" data-layer="case study" data-depth="0.45" data-shadow="0,0.5,24">
+                  <div class="face">
+                    <img class="sb" src="wispr-flow-card-src/img/sb-logo.svg" alt="">
+                    <div class="role">Host of Diary of a CEO</div>
+                    <p class="quote" data-layer="quote" data-depth="0.6">“The thought I have becomes my explanation. The gap between my thought and my delivery of my idea collapses.”</p>
+                    <div class="ph"><img src="wispr-flow-card-src/img/steven.webp" alt=""><div class="stats"><div class="stat"><b>90%</b><span>faster message<br>output</span></div><div class="stat"><b>2</b><span>extra productive<br>hours/day</span></div></div></div>
+                  </div>
+                </div>
+                <div class="tcard t-fc" data-layer="quote card" data-depth="0.55" data-shadow="0,0.5,22">
+                  <div class="face"><p class="quote">“Wispr Flow just gets it right. It is consistently so much better than the standard voice input, it’ll blow your mind.”</p><div class="who"><img src="wispr-flow-card-src/img/fast-company.png" alt="">Fast Company</div></div>
+                </div>
+                <div class="tcard t-alex" data-layer="quote card" data-depth="0.68" data-shadow="0,0.5,24">
+                  <div class="face">
+                    <img src="wispr-flow-card-src/img/alex.webp" alt="">
+                    <div class="bub" data-layer="quote" data-depth="0.86" data-shadow="0.68,0.35,12"><p class="quote">“Wispr Flow is a top 3 favorite AI tool for me. I literally do not use my fingers to type anymore.”</p><div class="who">Alex Lieberman<small>Co-founder of Morning Brew</small></div></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- you have a way with words -->
+              <section class="sec cta" id="s-cta" data-tone="dark">
+                <div class="cta-img" data-layer="photo" data-depth="-0.25"><img src="wispr-flow-card-src/img/cta-bg.jpg" alt=""></div>
+                <h2 class="center cta-h" data-layer="headline" data-depth="0.75" data-shadow="-0.25,0.32,16">You have a way with<br>words. Now, <em>two.</em></h2>
+                <p class="lead center cta-p" data-layer="body copy" data-depth="0.55">Talk thoughts into writing with Flow and conversations into<br>meeting notes with Notetaker. Both are in one app, free.</p>
+                <div class="btn cta-btn" data-layer="button" data-depth="0.85" data-shadow="-0.25,0.34,14"><img src="wispr-flow-card-src/img/apple.png" alt="">Get started on macOS</div>
+              </section>
+
+              <!-- footer -->
+              <section class="sec foot" id="s-foot" data-tone="light">
+                <div class="tag foot-tag" data-layer="eyebrow" data-depth="0.3">Products</div>
+                <div class="prod prod-a" data-layer="product" data-depth="0.35" data-shadow="0,0.14,14">
+                  <div class="prod-g"><img src="wispr-flow-card-src/img/Flowbar.svg" alt=""></div>
+                  <div class="prod-t">Wispr Flow Dictation</div>
+                  <div class="prod-d">The voice-to-text AI that turns speech into clear, polished writing in every app.</div>
+                  <div class="prod-l">Download free <svg viewBox="0 0 17 16" fill="none"><path d="M7.16675 10.6665L9.59768 8.23557C9.72788 8.10537 9.72788 7.8943 9.59768 7.7641L7.16675 5.33317" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                </div>
+                <div class="prod prod-b" data-layer="product" data-depth="0.35" data-shadow="0,0.14,14">
+                  <div class="prod-g"><img src="wispr-flow-card-src/img/transcript-new.png" alt=""></div>
+                  <div class="prod-t">Wispr Flow Notetaker</div>
+                  <div class="prod-new">New</div>
+                  <div class="prod-d">AI meeting notes accurate enough to act on. Works in all meetings.</div>
+                  <div class="prod-l">Download free <svg viewBox="0 0 17 16" fill="none"><path d="M7.16675 10.6665L9.59768 8.23557C9.72788 8.10537 9.72788 7.8943 9.59768 7.7641L7.16675 5.33317" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                </div>
+                <div class="cols" data-layer="links" data-depth="0.25">
+                  <div><b>Get started</b><span>Pricing</span><span>Privacy &amp; Security</span><span>Web demo</span><span>Why Flow vs. Built-in Dictation</span><span>Microphone guide</span><span>Merch store</span></div>
+                  <div><b>Professionals</b><span>Leaders</span><span>Developers</span><span>Marketers</span><span>Creators</span><span>Customer Support</span><span>Students</span></div>
+                  <div><b>Resources</b><span>Case studies</span><span>Blog</span><span>AI prompting guide</span><span>Workflows</span><span>Flow vs Apple Dictation</span><span>What’s new</span></div>
+                  <div><b>Company</b><span>About</span><span>Careers</span><span>Trust Center</span><span>Become an affiliate</span><span>Media Kit</span></div>
+                </div>
+                <div class="biglogo" data-layer="wordmark" data-depth="0.55" data-shadow="0,0.12,16"><img src="wispr-flow-card-src/img/Flow_Logo-black.svg" alt=""></div>
+              </section>
+            </div>
+
+            <!-- the nav, fixed in the viewport -->
+            <nav class="nav abs" id="nav">
+              <div class="nav-shift" id="navShift">
+                <div class="nav-bar abs" data-layer="nav" data-depth="0.55" data-shadow="0,0.16,14">
+                  <img class="nav-logo" src="wispr-flow-card-src/img/Flow_Logo-black.svg" alt="">
+                  <div class="nav-tabs"><span class="on">Dictation</span><span class="off">Notetaker</span></div>
+                  <span class="nav-link" style="left:491px">Business</span>
+                  <span class="nav-link" style="left:570px">Pricing</span>
+                  <span class="nav-link" style="left:637px">Lab</span>
+                  <div class="btn sm nav-cta" data-layer="nav button" data-depth="0.66" data-shadow="0.55,0.26,8"><img src="wispr-flow-card-src/img/apple.png" alt="">Get started on macOS</div>
+                </div>
+              </div>
+            </nav>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>Wispr Flow</h3>
+      <p><span>AI</span><span>Brand, Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { startCard, DEFAULTS } from './wispr-flow-card-src/js/card.js';
+
+const EMBED = document.documentElement.classList.contains('embed');
+const card = startCard({ embed: EMBED });
+window.__wisprCard = card;
+
+/* The dials. Embedded on the site there is no panel at all, and opened straight
+   from disk there is no studio to serve the module, so it loads on demand and the
+   card runs on its defaults without it. */
+if (!EMBED) {
+  import('/shared/params/params.js').then(({ defineParams }) => {
+    const TOOL = 'wispr flow work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [DEFAULTS['layers.depth'], 0, 2.5, 0.01],        // how far apart the layers sit
+        parallax: [DEFAULTS['layers.parallax'], 0, 3, 0.01],    // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [DEFAULTS['layers.spread'], 0, 1, 0.01],        // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [DEFAULTS['tilt.tiltMax'], 0, 20, 0.5],        // degrees
+        perspective: [DEFAULTS['tilt.perspective'], 1, 6, 0.05],// eye distance, in card widths
+        hoverScale: [DEFAULTS['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [DEFAULTS['light.bloom'], 0, 1.5, 0.01],         // the round light under the pointer
+        bloomSize: [DEFAULTS['light.bloomSize'], 0.4, 2.5, 0.05], // its diameter, in card widths
+        rim: [DEFAULTS['light.rim'], 0, 1, 0.01],
+        shadow: [DEFAULTS['light.shadow'], 0, 1, 0.01],
+      },
+      motion: {
+        scrollSpeed: [DEFAULTS['motion.scrollSpeed'], 0, 3, 0.05],
+        stiffness: [DEFAULTS['motion.stiffness'], 40, 500, 1],
+        damping: [DEFAULTS['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [DEFAULTS['drag.momentum'], 0, 3, 0.05],      // how far a flick carries
+        scrub: [DEFAULTS['drag.scrub'], 0, 6, 0.1],             // px of page per px of sideways drag
+        resumeAfter: [DEFAULTS['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [DEFAULTS['card.cardSize'], 24, 72, 0.5],     // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: DEFAULTS['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: DEFAULTS['card.frame'] },
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: DEFAULTS['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  }).catch(() => { /* no studio here: the card runs on its defaults */ });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<html>
+    <head>
+        <meta name="message_payload" content="{&quot;type&quot;:&quot;completed&quot;,&quot;recognized&quot;:false,&quot;recognition_ttl_seconds&quot;:259200}">
+        <meta name="target_origin" content="https://www.neweracap.com">
+        <script type="text/javascript">
+            var target_origin = document.querySelector("meta[name=target_origin]").content;
+            var payload = JSON.parse(document.querySelector("meta[name=message_payload]").content);
+            (window.opener || window.top).postMessage(payload, target_origin);
+        </script>
+    </head>
+</html>
