@@ -102,17 +102,62 @@ const { render = true, label = "Contact", class: className, look } = Astro.props
     .copy-email_wrap.is-open .copy-email_button:not(.pill) {
       border-color: color-mix(in srgb, var(--text) 18%, transparent);
     }
-    /* beside a pill button, the email's pill stands as tall and draws the same line */
+    /* With a pill button the email shows as a tooltip over it, so nothing beside it moves
+       (Hunter, Oct 25: "the button shifts location because we're popping out Copy to the
+       right. Instead, let's have a little tooltip") */
     .copy-email_wrap.is-pill {
       & .copy-email_pill {
-        box-sizing: border-box;
-        height: var(--pill-height);
-        align-content: center;
-        padding-block: 0;
-        border: var(--pill-stroke) solid color-mix(in srgb, var(--text) 30%, transparent);
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 0.6rem);
+        z-index: 5;
+        translate: -50% 0.3rem;
+        transform-origin: 50% 100%;
+        grid-template-columns: 1fr;
+        padding: 0.5rem 0.85rem;
+        border: 0;
+        border-radius: 0.6rem;
+        background: var(--text);
+        color: var(--background);
+        box-shadow: 0 0.6rem 1.6rem -0.6rem rgb(0 0 0 / 0.45);
+        scale: 0.92;
+        white-space: nowrap;
+        pointer-events: none;
+        transition:
+          opacity 0.2s ease,
+          scale 0.3s var(--ease),
+          translate 0.3s var(--ease),
+          visibility 0s linear 0.3s;
+        /* the little point under it */
+        &::after {
+          content: "";
+          position: absolute;
+          left: 50%;
+          top: 100%;
+          translate: -50% -1px;
+          border: 0.35rem solid transparent;
+          border-top-color: var(--text);
+        }
       }
       &.is-open .copy-email_pill {
-        padding-block: 0;
+        padding: 0.5rem 0.85rem;
+        translate: -50% 0;
+        scale: 1;
+      }
+      & .copy-email_text {
+        opacity: 1;
+        filter: none;
+        translate: 0 0;
+      }
+      & .copy-email_address {
+        font-size: var(--text-small);
+      }
+      & .copy-email_action {
+        color: color-mix(in srgb, var(--background) 60%, transparent);
+      }
+      /* the pill's own focus ring only for the keys */
+      & .copy-email_button:focus:not(:focus-visible) {
+        outline: none;
       }
     }
     .copy-email_pill {

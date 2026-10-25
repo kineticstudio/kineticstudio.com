@@ -66,6 +66,7 @@ export function watchReveals(root = document) {
 const KEY = "ks-sound";
 const ROLES = ["hover", "click", "toggle", "line", "glide", "pull", "open", "close", "detent", "confirm", "key"];
 const ALIAS = { tick: "click" };
+const RUMBLE = new Set(["glide", "pull", "open", "close"]);
 const ROOT = document.querySelector('link[rel="site-root"]')?.href ?? `${location.origin}/`;
 let ctx = null;
 let master = null;
@@ -108,10 +109,23 @@ export function sound(name, { rate = 1, gain = 1 } = {}) {
   if (!buf) return;
   const src = c.createBufferSource();
   src.buffer = buf;
-  src.playbackRate.value = rate;
+  // the whooshes (the nav's pill moving, a piece opening or closing) sit low, a rumble more
+  // than a swish (Hunter, Oct 25: "need to be more of a rumble, like a lower bass feel")
+  const rumble = RUMBLE.has(role);
+  src.playbackRate.value = rate * (rumble ? 0.55 : 1);
   const g = c.createGain();
-  g.gain.value = gain;
-  src.connect(g).connect(master);
+  g.gain.value = gain * (rumble ? 1.5 : 1);
+  if (rumble) {
+    const low = c.createBiquadFilter();
+    low.type = "lowpass";
+    low.frequency.value = 520;
+    low.Q.value = 0.9;
+    const body = c.createBiquadFilter();
+    body.type = "lowshelf";
+    body.frequency.value = 140;
+    body.gain.value = 9;
+    src.connect(low).connect(body).connect(g).connect(master);
+  } else src.connect(g).connect(master);
   src.start();
 }
 

@@ -5,7 +5,7 @@
    sent you"; before that, silver, scratched, hyper-realistic, moving less).
 
    Four designs, each with its own settings; `design` picks the one shown:
-     Chrome    a mirror-chrome pill from a matcap, a light circling its edge, bloom and flares
+     Chrome    a mirror-chrome pill from a matcap, raised letters, a light circling its edge, bloom
      Machined  solid aluminium, bead-blasted, a diamond-cut chamfer, the word engraved
      Enamel    polished, lightly brushed steel, the word filled with black enamel
      Ingot     a struck silver bar, a mirror field, soft edges, the word stamped in and frosted
@@ -24,15 +24,17 @@ export const COIN_LOOK = {
     // the matcap it mirrors (public/images/matcaps), a tint over it
     metal: { matcap: "Studio dome", tint: "#ffffff" },
     // the word, raised (Hunter, Oct 25: "like extruded"): cap height, tracking
-    // (em), how wide its rounded shoulders are, the field's smoked colour and how smoked it is
-    word: { size: 0.5, tracking: 0.03, bevel: 0.05, fill: "#101114", field: 0.85 },
+    // (em), how wide its rounded shoulders are and how high it stands (x the
+    // shoulder), the field's smoked colour and how smoked it is
+    word: { size: 0.5, tracking: 0.03, bevel: 0.05, height: 1, fill: "#101114", field: 0.85 },
     // the edge: the rolled radius, how domed the face is (its slope at the edge), the thickness
     edge: { round: 0.14, crown: 0.55, thick: 0.22 },
     // the light round the edge: turns a second, how bright and how tight its shine,
     // how much the matcap turns with it, how far each pill lags the one before (radians)
     light: { orbit: 0.1, highlight: 1.6, tight: 7, spin: 0.35, lag: 0.7 },
-    // bloom on what is over the threshold, how wide, how far it spills onto the paper; the flares and their size
-    glow: { bloom: 0.5, threshold: 1.5, radius: 0.6, spill: 0.5, flare: 0.9, size: 1 },
+    // bloom on what is over the threshold, how wide, how far it spills onto the paper
+    // (no lens flares: Hunter, Oct 25, "They don't look realistic")
+    glow: { bloom: 0.5, threshold: 1.5, radius: 0.6, spill: 0.5 },
     // a few hairlines in the polish
     wear: { scratches: 10, seed: 5 },
     studio: { exposure: 1.3, shadow: 0.5 },

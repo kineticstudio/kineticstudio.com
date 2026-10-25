@@ -1,5 +1,5 @@
 ---
-import logoRaw from "@/assets/brand/logo.svg?raw";
+import MarkLockup from "@/components/content/MarkLockup.astro";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -9,8 +9,6 @@ interface Props {
 }
 
 const { render = true, class: className } = Astro.props;
-// the 2026 lockup, drawn in the text colour (it is all currentColor)
-const logo = logoRaw.replace(/<!--[\s\S]*?-->/g, "").replace(/<svg /, '<svg aria-hidden="true" ');
 ---
 
 {/* Hunter, Oct 24: first a little card on the homepage hero that opens the Studio film with sound;
@@ -30,9 +28,9 @@ const logo = logoRaw.replace(/<!--[\s\S]*?-->/g, "").replace(/<svg /, '<svg aria
           <video src="/media/studio-film-card.mp4" poster="/media/studio-film-card.jpg" muted loop playsinline autoplay preload="metadata" aria-hidden="true" />
         </span>
         <span class="film-card_body">
+          {/* the mark with STUDIO TOOL where KINETIC sits (Hunter, Oct 25: "change this lockup to be Studio Tool") */}
           <span class="film-card_brand">
-            <span class="film-card_logo" set:html={logo} />
-            <span class="film-card_word">Studio tool</span>
+            <MarkLockup class="film-card_logo" label="Studio tool" />
           </span>
           <span class="film-card_text text-style-small">Bleeding-edge tooling for modern brand marketing and interaction. For every client.</span>
           <span class="film-card_play" aria-hidden="true">

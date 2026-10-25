@@ -4,9 +4,12 @@ import CopyEmail from "@/components/content/CopyEmail.astro";
 interface Props {
   /** Set to `false` to omit the component. */
   render?: boolean;
+  /** In the footer: the title is a section heading, not the page's, and it sits under the work. */
+  inFooter?: boolean;
 }
 
-const { render = true } = Astro.props;
+const { render = true, inFooter = false } = Astro.props;
+const Title = inFooter ? "h2" : "h1";
 // Hunter, Oct 25: "Brand, website, product, and launch video should be the only options";
 // then "let's have website design and website dev be two separate pills"
 const needs = ["Brand", "Website design", "Website development", "Product", "Launch video"];
@@ -39,9 +42,9 @@ const timings = Array.from({ length: 53 }, (_, i) => {
 
 {
   render && (
-    <section class="contact_wrap" data-contact>
+    <section class:list={["contact_wrap", inFooter && "is-footer"]} data-contact>
       <div class="contact_intro">
-        <h1 class="contact_title text-style-h3">Contact</h1>
+        <Title class="contact_title text-style-h3">{inFooter ? "Start a project" : "Contact"}</Title>
         <p class="contact_lead text-style-main">Tell us what you're building. Hunter reads every note and replies within a day.</p>
         <CopyEmail class="contact_copy" label="Copy email" look="secondary" />
       </div>
@@ -432,6 +435,21 @@ const timings = Array.from({ length: 53 }, (_, i) => {
       @media (width < 54rem) {
         grid-template-columns: 1fr;
         gap: var(--space-6);
+      }
+      /* at the foot of a page: no room kept for the nav above it */
+      &.is-footer {
+        padding-top: var(--section-space-small);
+        /* its title and Copy email stay beside the form as it scrolls by */
+        & .contact_intro {
+          position: sticky;
+          top: calc(var(--nav-height, 5rem) + var(--space-5));
+          align-self: start;
+        }
+        @media (width < 54rem) {
+          & .contact_intro {
+            position: static;
+          }
+        }
       }
     }
     .contact_intro {

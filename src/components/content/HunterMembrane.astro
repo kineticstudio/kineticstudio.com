@@ -1,0 +1,133 @@
+---
+/* Hunter, pressing through a chrome membrane (Hunter, Oct 25: "I want to
+   poke through some sort of membrane ... this chrome reflective membrane
+   that I'm pushing my head against, and then I'm rotating around it ... My
+   head spins around it as the membrane stays the same"; then "my headshot").
+
+   His head, a stand-in made from his headshot, turns slowly behind a sheet
+   of mirror-chrome latex that stays put; the sheet takes his face, then his
+   profile, then his face again (src/scripts/hunter-membrane.js, every
+   setting in src/data/membrane-look.js, the "About membrane" Params). The
+   photograph is there until the first frame is ready and stays when there
+   is no WebGL; with reduced motion he holds still, three quarters round. */
+
+interface Props {
+  /** Utility classes. */
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={["membrane_wrap", className]} data-membrane>
+  <img class="membrane_still" src="/images/hunter.jpg" alt="Hunter Thompson" width="720" height="720" loading="lazy" />
+  <canvas class="membrane_canvas" aria-hidden="true"></canvas>
+</div>
+
+<script>
+  import { MEMBRANE_LOOK, MEMBRANE_MATCAPS, MEMBRANE_TUNING_KEY } from "@/data/membrane-look.js";
+  import { defineParams } from "@/scripts/ks-params.js";
+
+  type Dial = [number, number, number] | "color" | string[];
+  // each group's dials, [min, max, step] (or a colour, or a list to choose from)
+  const DIALS: Record<string, Record<string, Dial>> = {
+    motion: { speed: [0, 3, 0.01], range: [0, 180, 1], hold: [0, 0.8, 0.01], lean: [0, 20, 0.1] },
+    press: { depth: [0, 0.3, 0.001], follow: [0, 1, 0.01], soft: [0, 6, 0.05] },
+    latex: { spread: [0, 1, 0.01], spring: [0.3, 6, 0.01], damping: [0.05, 1.5, 0.01], pillow: [-0.05, 0.1, 0.001], rim: [0, 2, 0.01] },
+    surface: { texture: [0, 2, 0.01], grain: [5, 250, 1], cavity: [0, 2, 0.01] },
+    look: { matcap: Object.keys(MEMBRANE_MATCAPS), tint: "color", exposure: [0.3, 2.5, 0.01], contrast: [0.5, 2, 0.01] },
+    frame: { fill: [0.6, 1, 0.005], corner: [0, 0.2, 0.001] },
+    glow: { bloom: [0, 2, 0.01], threshold: [0.2, 2, 0.01], radius: [0, 1.5, 0.01] },
+    render: { quality: [0.5, 1.6, 0.05] },
+  };
+
+  document.querySelectorAll<HTMLElement>("[data-membrane]").forEach(async (root) => {
+    const canvas = root.querySelector<HTMLCanvasElement>(".membrane_canvas")!;
+    const probe = document.createElement("canvas").getContext("webgl2");
+    if (!probe) return; // the photo stays
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const mobile = matchMedia("(pointer: coarse), (width < 40rem)").matches;
+    const { mountMembrane } = await import("@/scripts/hunter-membrane.js");
+    const L = MEMBRANE_LOOK as unknown as Record<string, any>;
+    const m = mountMembrane(canvas, L as any, { matcaps: MEMBRANE_MATCAPS, reduced, mobile });
+    if (!m) return;
+    await m.ready;
+    root.classList.add("is-3d");
+    // for checks from a console or a headless browser
+    Object.assign(root, { __membrane: m });
+
+    const save = () => {
+      try {
+        localStorage.setItem(MEMBRANE_TUNING_KEY, JSON.stringify(L));
+      } catch {}
+    };
+    const schema: Record<string, any> = {};
+    for (const [g, spec] of Object.entries(DIALS))
+      schema[g] = Object.fromEntries(
+        Object.entries(spec).map(([k, d]) => [
+          k,
+          d === "color" ? L[g][k] : typeof d[0] === "string" ? { type: "select", options: d, value: L[g][k] } : [L[g][k], ...(d as number[])],
+        ]),
+      );
+    schema.copyProps = { type: "action", label: "Copy props" };
+    schema.reset = { type: "action", label: "Reset" };
+    let timer = 0;
+    defineParams("About membrane", schema, {
+      onChange(values: Record<string, any>, path: string | null) {
+        if (!path) return;
+        const [g, k] = path.split(".");
+        if (!(g in L)) return;
+        L[g][k] = values[path];
+        save();
+        if (g === "render") {
+          clearTimeout(timer);
+          timer = window.setTimeout(() => m.rebuild(L as any), 160);
+        } else m.update(L as any);
+      },
+      onAction(name: string) {
+        if (name === "copyProps") return `export const MEMBRANE_LOOK = ${JSON.stringify(L, null, 2).replace(/"(\w+)":/g, "$1:")};\n`;
+        if (name === "reset") {
+          try {
+            localStorage.removeItem(MEMBRANE_TUNING_KEY);
+          } catch {}
+          location.reload();
+        }
+        return undefined;
+      },
+    });
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .membrane_wrap {
+      position: relative;
+      aspect-ratio: 1;
+      width: 100%;
+    }
+    /* an img takes its own size with auto width, even with every inset set: give it the box */
+    .membrane_still,
+    .membrane_canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+    }
+    .membrane_still {
+      object-fit: cover;
+      border-radius: var(--radius-media);
+      transition: opacity 0.9s ease;
+    }
+    .membrane_canvas {
+      opacity: 0;
+      transition: opacity 0.9s ease;
+    }
+    .membrane_wrap.is-3d .membrane_canvas {
+      opacity: 1;
+    }
+    .membrane_wrap.is-3d .membrane_still {
+      opacity: 0;
+    }
+  }
+</style>

@@ -37,7 +37,7 @@ const { theme = "dark", logoHidden = false, footer = true, ...seo } = Astro.prop
     <main id="main" tabindex="-1">
       <slot />
     </main>
-    {footer && <Footer />}
+    {footer && <Footer form={!Astro.url.pathname.startsWith("/playground")} />}
     <ProjectModal />
     <slot name="after" />
     <script>

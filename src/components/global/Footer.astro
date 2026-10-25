@@ -1,16 +1,17 @@
 ---
 import mark from "@/assets/brand/mark.svg?raw";
 import { CONTACT_EMAIL, SOCIAL } from "@/consts.ts";
-import CopyEmail from "@/components/content/CopyEmail.astro";
-import MarkLockup from "@/components/content/MarkLockup.astro";
+import ContactForm from "@/components/section/ContactForm.astro";
 import ProjectBarrel from "@/components/content/ProjectBarrel.astro";
 
 interface Props {
   /** Set to `false` to omit the component. */
   render?: boolean;
+  /** The contact form at the foot of the page (all but the Playground). */
+  form?: boolean;
 }
 
-const { render = true } = Astro.props;
+const { render = true, form = true } = Astro.props;
 const year = new Date().getFullYear();
 /* The footer, dark on every page, and the end of every page (Hunter, Oct 25:
    "I don't like the footer. There's a card on top of the work, and then the
@@ -18,9 +19,8 @@ const year = new Date().getFullYear();
    the bottom of every page, so really, it could be a part of the footer").
 
    The best of the work goes round a barrel (ProjectBarrel, the Playground's
-   projection); under it, Start a project is set as the logo itself, the
-   mark's strokes wrapping a pill with the words in it, and the pill is the
-   button; then the address, the pages, the sound and the year. */
+   projection); under it the contact form itself (ContactForm, not on the
+   Playground); then the pages, the address, the profiles, the sound and the year. */
 // the marks, drawn in the text colour
 const ICONS: Record<string, string> = {
   X: '<path d="M17.75 3h3.07l-6.71 7.67L22 21h-6.18l-4.84-6.33L5.44 21H2.37l7.18-8.2L2 3h6.34l4.37 5.78L17.75 3Zm-1.08 16.18h1.7L7.4 4.73H5.58l11.09 14.45Z"/>',
@@ -33,24 +33,18 @@ const ICONS: Record<string, string> = {
     <footer class="footer_wrap theme-dark">
       <ProjectBarrel class="footer_barrel" />
 
-      <div class="footer_cta">
-        <p class="footer_eyebrow text-style-label">Have something in mind?</p>
-        <a class="footer_start" href="/contact" aria-label="Start a project">
-          <MarkLockup label="Start a project" />
-        </a>
-        <div class="footer_reach">
-          <p class="text-style-main">Hunter reads every note and replies within a day.</p>
-          <CopyEmail label="Copy email" look="secondary" />
-        </div>
-      </div>
+      {/* the contact form itself at the foot of every page but the Playground (Hunter, Oct 25: "Let's
+          have the contact form on the bottom of every page, as opposed to the Start the Project CTA ...
+          Except for the playground") */}
+      {form && <ContactForm inFooter />}
 
       <div class="footer_bar">
         <a class="footer_mark" href="/" aria-label="Kinetic Studio, home" set:html={mark} />
         <ul class="footer_links">
-          <li><a class="footer_link text-style-label" href="/playground">Playground</a></li>
-          <li><a class="footer_link text-style-label" href="/about">About</a></li>
-          <li><a class="footer_link text-style-label" href="/contact">Contact</a></li>
-          <li><a class="footer_link text-style-label" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li>
+          <li><a class="pill is-tab footer_page" href="/playground">Playground</a></li>
+          <li><a class="pill is-tab footer_page" href="/about">About</a></li>
+          <li><a class="pill is-tab footer_page" href="/contact">Contact</a></li>
+          <li><a class="footer_link footer_mail text-style-label" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li>
         </ul>
         <ul class="footer_social">
           {SOCIAL.map((s) => (
@@ -61,12 +55,12 @@ const ICONS: Record<string, string> = {
             </li>
           ))}
         </ul>
-        <button class="footer_sound text-style-label" type="button" data-sound-toggle aria-pressed="true">
+        <button class="footer_sound pill is-tab" type="button" data-sound-toggle aria-pressed="true">
           <span class="footer_bars" aria-hidden="true"><i /><i /><i /><i /></span>
           Sound
         </button>
         <p class="footer_meta text-style-label">© {year} Kinetic Studio</p>
-        <a class="footer_link footer_top text-style-label" href="#main">Back to top ↑</a>
+        <a class="pill is-tab footer_top" href="#main">Back to top ↑</a>
       </div>
     </footer>
   )
@@ -93,56 +87,6 @@ const ICONS: Record<string, string> = {
       color: var(--text);
       overflow: hidden;
     }
-    /* Start a project, as the logo: the pill fills as you reach for it, and slides a touch,
-       the way the nav's pill moves */
-    .footer_cta {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--space-5);
-      padding: var(--space-6) var(--site-margin) var(--section-space-small);
-      text-align: center;
-    }
-    .footer_eyebrow {
-      margin: 0;
-      color: color-mix(in srgb, var(--text) 60%, transparent);
-    }
-    .footer_start {
-      display: block;
-      max-width: 100%;
-      color: var(--text);
-      font-size: clamp(3rem, 10.5vw, 11rem);
-      text-decoration: none;
-      & .mark-lockup_pill {
-        transition:
-          background-color 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
-          color 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
-          translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-      }
-      @media (hover: hover) {
-        &:hover .mark-lockup_pill {
-          background: var(--text);
-          color: var(--background);
-          translate: 0.03em 0;
-        }
-      }
-      &:focus-visible {
-        outline: var(--focus-width, 2px) solid var(--text);
-        outline-offset: 0.2em;
-        border-radius: 999px;
-      }
-    }
-    .footer_reach {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-3);
-      & p {
-        margin: 0;
-        color: color-mix(in srgb, var(--text) 75%, transparent);
-      }
-    }
     .footer_bar {
       display: flex;
       flex-wrap: wrap;
@@ -165,7 +109,8 @@ const ICONS: Record<string, string> = {
     .footer_links {
       display: flex;
       flex-wrap: wrap;
-      gap: var(--space-2) var(--space-5);
+      align-items: center;
+      gap: 0.25rem;
       margin: 0;
       padding: 0;
       list-style: none;
@@ -204,17 +149,15 @@ const ICONS: Record<string, string> = {
       }
     }
     /* the sound, on or off: four bars that move while it is on */
+    /* the pages, the sound and back to top in the nav's own words and pills */
     .footer_sound {
-      display: inline-flex;
-      align-items: center;
       gap: 0.5rem;
-      padding: 0;
-      border: 0;
-      background: none;
-      color: color-mix(in srgb, var(--text) 70%, transparent);
-      cursor: pointer;
-      &:hover {
-        color: var(--text);
+      /* on or off shows in its bars, not a ring */
+      &.pill.is-tab[aria-pressed] {
+        border-color: transparent;
+      }
+      &[aria-pressed="false"] {
+        color: color-mix(in srgb, var(--text) 50%, transparent);
       }
     }
     .footer_bars {
@@ -244,6 +187,12 @@ const ICONS: Record<string, string> = {
       to {
         height: 100%;
       }
+    }
+    .footer_mail {
+      display: inline-flex;
+      align-items: center;
+      height: var(--pill-height);
+      padding-inline: var(--pill-pad);
     }
     .footer_meta {
       margin: 0;
