@@ -18,6 +18,9 @@ const needs = ["Brand", "Website design", "Website development", "Product", "Lau
    up to 150,000 ... monthly or fixed ... that will adjust the pricing"):
    $10,000 to $150,000+ in $5,000 steps, or $5,000 to $25,000 a month in
    $1,000 steps, starting at the bottom. */
+// the same fine row of lines under both sliders, however many stops each has
+// (Oct 25: "i want more vertical lines for each of these, they should also be the same")
+const TICKS = 81;
 const money = (k: number) => `$${(k * 1000).toLocaleString("en-US")}`;
 const budgets = {
   fixed: Array.from({ length: 29 }, (_, i) => (i === 28 ? "$150,000+" : money(10 + i * 5))),
@@ -106,7 +109,7 @@ const timings = Array.from({ length: 53 }, (_, i) => {
               </span>
               <output class="contact_value" for={`contact-${f.name}-range`}>{f.stops[f.start]}</output>
               <span class="contact_track">
-                <span class="contact_ticks" aria-hidden="true">{f.stops.map(() => <i />)}</span>
+                <span class="contact_ticks" aria-hidden="true">{Array.from({ length: TICKS }, () => <i />)}</span>
                 <span class="contact_thumb" aria-hidden="true" />
                 <input class="contact_range" id={`contact-${f.name}-range`} type="range" min="0" max={f.stops.length - 1} step="1" value={f.start} aria-labelledby={`contact-${f.name}`} aria-valuetext={f.stops[f.start]} />
               </span>
@@ -292,9 +295,10 @@ const timings = Array.from({ length: 53 }, (_, i) => {
       const place = () => {
         const p = shown / last;
         el.style.setProperty("--p", p.toFixed(4));
-        // taller the nearer the pill, on a soft falloff of a few stops
+        // taller the nearer the pill, on a soft falloff of a few lines
+        const at = p * (ticks.length - 1);
         ticks.forEach((t, i) => {
-          const d = (i - shown) / 3.8;
+          const d = (i - at) / 4.5;
           t.style.setProperty("--grow", Math.exp(-d * d).toFixed(3));
         });
       };
@@ -325,6 +329,9 @@ const timings = Array.from({ length: 53 }, (_, i) => {
         if (!raf) raf = requestAnimationFrame(glide);
       };
       range.addEventListener("input", read);
+      // the ring round the pill only for the keys, not after a drag
+      range.addEventListener("keydown", () => el.classList.add("is-keyed"));
+      range.addEventListener("pointerdown", () => el.classList.remove("is-keyed"));
       thumb.style.visibility = "visible";
       place();
 
@@ -337,8 +344,6 @@ const timings = Array.from({ length: 53 }, (_, i) => {
           const share = Number(range.value) / last;
           stops = kinds[b.dataset.kind!];
           last = stops.length - 1;
-          row.replaceChildren(...stops.map(() => document.createElement("i")));
-          ticks = [...row.querySelectorAll<HTMLElement>("i")];
           range.max = String(last);
           range.value = String(Math.round(share * last));
           shown = Number(range.value);
@@ -659,7 +664,7 @@ const timings = Array.from({ length: 53 }, (_, i) => {
     .contact_track:has(.contact_range:active) .contact_thumb {
       scale: 1.12;
     }
-    .contact_track:has(.contact_range:focus-visible) .contact_thumb {
+    .contact_slider.is-keyed .contact_track:has(.contact_range:focus-visible) .contact_thumb {
       outline: var(--focus-width) solid var(--text);
       outline-offset: var(--focus-offset);
     }

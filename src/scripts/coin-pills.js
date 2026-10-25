@@ -361,6 +361,47 @@ const smudging = (count, r, tw, th) => (x) => {
    for the grain and the marks. */
 
 const DESIGNS = {
+  /* Chrome (Hunter, Oct 25: "maybe we try a reflective chrome matcap then
+     have bloom and flares"; "I want them to have a shine around the edges,
+     like a light is rotating around them"). Shaded by a matcap rather than
+     the studio: the face domed a little so it runs through the matcap's
+     reflections, the edge rolled, the word cut in with a bright bevel and
+     filled dark so it reads; a light circles each pill's edge (see
+     chromeMaterial), the hot part blooms and flares. */
+  chrome: {
+    matcap: true,
+    section: ({ edge: e }) => [
+      // the section starts at the dome's own slope, so face and edge meet without a crease
+      [[-0.4, 0.4 * e.crown], [0, 0], [0, -e.thick], [-0.2, -e.thick]],
+      [e.round, e.round * 0.3],
+    ],
+    edge: () => ({ color: [1, 1, 1], rough: 0, metal: 1 }),
+    face({ word: w, edge: e, wear: wr }, sd, tw, th, o, r) {
+      const u = 1 / th, F = srgb(w.fill), W = tw / th, a = W / 2 - 0.5;
+      const bev = Math.max(w.bevel, 1.5 / o.px), k = 1.1;
+      // the bevel at about 48 degrees, then the floor
+      const H = (s) => (s >= 0 ? 0 : s > -bev ? s * k : -bev * k);
+      // the dome: highest along the pill's spine, its slope at the edge = crown
+      const A = e.crown / 4;
+      const scr = marks(tw, th, scratching(wr.scratches, r, tw, th, 0.6));
+      for (let y = 0; y < th; y++) {
+        const Y = 0.5 - (y + 0.5) / th;
+        for (let x = 0; x < tw; x++) {
+          const i = y * tw + x, X = (x + 0.5) / th - W / 2;
+          const dx = Math.max(0, Math.abs(X) - a), rr = Math.min(1.05, Math.sqrt(dx * dx + Y * Y) / 0.5);
+          const s = sd[i] * u, t = -s;
+          o.sl[i] = (H(s + u / 2) - H(s - u / 2)) / u;
+          const floor = clamp01((t - bev) / u + 0.5);
+          for (let c = 0; c < 3; c++) o.col[i * 3 + c] = mix(1, F[c], floor);
+          // (chrome has no roughness: its channel carries where the fill is)
+          o.rough[i] = floor;
+          o.ao[i] = 1 - floor * 0.35 * Math.exp(-Math.max(0, t - bev) / 0.02);
+          // the letters cut into the dome, their floor following it
+          o.hx[i] = A * (1 - rr * rr) - scr[i] * 0.0005 * (1 - floor);
+        }
+      }
+    },
+  },
   machined: {
     // the soft box close by, up and to the left: a gentle fall of light across the blast
     box: { pos: [-1.6, 2.4, 3], size: [4.5, 2.2] },
@@ -696,6 +737,267 @@ function studioEnv(renderer, S, paper = "#f4f6f1") {
   return target;
 }
 
+/* ---- chrome: matcap, bloom, flares ------------------------------------ */
+
+/** The matcaps (public/images/matcaps), by the name the Params panel shows. */
+export const MATCAPS = {
+  Hall: "chrome-hall",
+  Horizon: "chrome-horizon",
+  Room: "chrome-room",
+  Soft: "chrome-soft",
+  "Studio dome": "studio-dome",
+  "Studio rings": "studio-rings",
+};
+const matcapCache = new Map();
+function loadMatcap(name) {
+  const slug = MATCAPS[name] ?? MATCAPS.Hall;
+  if (!matcapCache.has(slug)) {
+    matcapCache.set(slug, new THREE.TextureLoader().loadAsync(`/images/matcaps/${slug}.jpg`).then((t) => {
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 4;
+      return t;
+    }));
+  }
+  return matcapCache.get(slug);
+}
+
+/* Chrome as a matcap: the view-space normal (the face's from its relief map,
+   the edge's from the mesh) looks up the matcap, turned round the view axis
+   as the light goes round (spin); and the light itself, a bright lobe on the
+   part of the edge that faces it, so a shine travels round the pill. Writes
+   linear light, over 1 where it is hot, for the bloom. */
+function chromeMaterial(maps) {
+  return new THREE.ShaderMaterial({
+    defines: maps ? { FACE: "" } : {},
+    uniforms: {
+      matcap: { value: null },
+      nmap: { value: maps?.normal ?? null },
+      cmap: { value: maps?.color ?? null },
+      orm: { value: maps?.orm ?? null },
+      tint: { value: new THREE.Color(1, 1, 1) },
+      spin: { value: 0 },
+      light: { value: new THREE.Vector2(1, 0) },
+      highlight: { value: 1 },
+      tight: { value: 6 },
+      exposure: { value: 1 },
+    },
+    vertexShader: /* glsl */ `
+      varying vec2 vUv;
+      varying vec3 vN, vT, vB, vZ;
+      void main() {
+        vUv = uv;
+        vN = normalMatrix * normal;
+        vT = normalMatrix * vec3(1.0, 0.0, 0.0);
+        vB = normalMatrix * vec3(0.0, 1.0, 0.0);
+        vZ = normalMatrix * vec3(0.0, 0.0, 1.0);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform sampler2D matcap, nmap, cmap, orm;
+      uniform vec3 tint;
+      uniform vec2 light;
+      uniform float spin, highlight, tight, exposure;
+      varying vec2 vUv;
+      varying vec3 vN, vT, vB, vZ;
+      void main() {
+        vec3 base = vec3(1.0);
+        float ao = 1.0, inked = 0.0;
+        #ifdef FACE
+          vec3 m = texture2D(nmap, vUv).xyz * 2.0 - 1.0;
+          vec3 n = normalize(vT * m.x + vB * m.y + vZ * m.z);
+          base = texture2D(cmap, vUv).rgb;
+          vec3 o = texture2D(orm, vUv).rgb;
+          ao = o.r;
+          inked = o.g;
+        #else
+          vec3 n = normalize(vN);
+        #endif
+        float c = cos(spin), s = sin(spin);
+        vec2 q = mat2(c, s, -s, c) * n.xy;
+        vec3 mc = texture2D(matcap, q * 0.49 + 0.5).rgb * tint;
+        // the light round the edge: strongest where the edge turns to face it
+        float edge = smoothstep(0.25, 0.95, length(n.xy));
+        float lobe = pow(max(dot(normalize(n.xy + 1e-5), light), 0.0), tight) * edge;
+        float lum = dot(mc, vec3(0.299, 0.587, 0.114));
+        vec3 col = mc * (1.0 + lobe * highlight * 3.0) + lobe * highlight * (0.25 + lum) * vec3(1.0, 0.985, 0.96);
+        // the fill in the letters is enamel: its own colour, mirroring only faintly
+        col = mix(col, base * (0.6 + mc * 0.5) + mc * 0.05, inked);
+        col *= ao * exposure;
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+}
+
+const QUAD_VS = /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
+const quadMat = (fs, uniforms) => new THREE.ShaderMaterial({ vertexShader: QUAD_VS, fragmentShader: fs, uniforms, depthTest: false, depthWrite: false });
+
+/* The bloom: what is over the threshold, blurred at three sizes and added
+   back; then laid on the page with its own alpha, so the glow spills a
+   little past each pill's edge instead of greying the paper. */
+function makePost(renderer) {
+  const opts = { type: THREE.HalfFloatType, depthBuffer: false };
+  const scene = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
+  const levels = [0, 1, 2].map(() => [new THREE.WebGLRenderTarget(1, 1, opts), new THREE.WebGLRenderTarget(1, 1, opts)]);
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const bright = quadMat(/* glsl */ `
+    uniform sampler2D src; uniform float threshold; varying vec2 vUv;
+    void main() {
+      vec3 c = texture2D(src, vUv).rgb;
+      float l = max(c.r, max(c.g, c.b));
+      float k = smoothstep(threshold, threshold + 0.6, l);
+      gl_FragColor = vec4(c * k, 1.0);
+    }`, { src: { value: null }, threshold: { value: 1 } });
+  const blur = quadMat(/* glsl */ `
+    uniform sampler2D src; uniform vec2 step; varying vec2 vUv;
+    void main() {
+      vec3 c = texture2D(src, vUv).rgb * 0.227;
+      c += (texture2D(src, vUv + step * 1.385).rgb + texture2D(src, vUv - step * 1.385).rgb) * 0.316;
+      c += (texture2D(src, vUv + step * 3.231).rgb + texture2D(src, vUv - step * 3.231).rgb) * 0.070;
+      gl_FragColor = vec4(c, 1.0);
+    }`, { src: { value: null }, step: { value: new THREE.Vector2() } });
+  const comp = quadMat(/* glsl */ `
+    uniform sampler2D src, b0, b1, b2; uniform float strength, radius, spill; varying vec2 vUv;
+    vec3 enc(vec3 c) { return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }
+    void main() {
+      vec4 sc = texture2D(src, vUv);
+      vec3 b = texture2D(b0, vUv).rgb + texture2D(b1, vUv).rgb * radius + texture2D(b2, vUv).rgb * radius * radius;
+      b *= strength;
+      // a soft shoulder, so the hottest chrome rolls into white rather than clipping flat
+      vec3 rgb = sc.rgb + b;
+      rgb = rgb / (1.0 + max(rgb - 0.85, 0.0) * 0.6);
+      float a = max(sc.a, clamp(max(b.r, max(b.g, b.b)) * spill, 0.0, 1.0));
+      rgb = min(rgb, vec3(a));
+      // premultiplied: encode the colour, not the alpha
+      vec3 straight = rgb / max(a, 1e-4);
+      gl_FragColor = vec4(enc(clamp(straight, 0.0, 1.0)) * a, a);
+    }`, { src: { value: null }, b0: { value: null }, b1: { value: null }, b2: { value: null }, strength: { value: 1 }, radius: { value: 0.6 }, spill: { value: 0.5 } });
+  comp.premultipliedAlpha = true;
+  comp.blending = THREE.CustomBlending;
+  comp.blendSrc = THREE.OneFactor;
+  comp.blendDst = THREE.OneMinusSrcAlphaFactor;
+  const pass = (mat, target) => {
+    quad.material = mat;
+    renderer.setRenderTarget(target);
+    renderer.render(quad, cam);
+  };
+  let w = 0, h = 0;
+  return {
+    target: scene,
+    size(W, H) {
+      if (W === w && H === h) return;
+      w = W;
+      h = H;
+      scene.setSize(W, H);
+      levels.forEach(([a, b], i) => {
+        const d = 2 ** (i + 1);
+        a.setSize(Math.max(1, Math.round(W / d)), Math.max(1, Math.round(H / d)));
+        b.setSize(Math.max(1, Math.round(W / d)), Math.max(1, Math.round(H / d)));
+      });
+    },
+    // bloom the scene target and lay it on the canvas
+    finish(G) {
+      const on = G.bloom > 0;
+      if (on) {
+        bright.uniforms.src.value = scene.texture;
+        bright.uniforms.threshold.value = G.threshold;
+        pass(bright, levels[0][0]);
+        levels.forEach(([a, b], i) => {
+          if (i > 0) {
+            blur.uniforms.src.value = levels[i - 1][0].texture;
+            blur.uniforms.step.value.set(0, 0);
+            pass(blur, a);
+          }
+          for (let k = 0; k < 2; k++) {
+            blur.uniforms.src.value = a.texture;
+            blur.uniforms.step.value.set(1 / a.width, 0);
+            pass(blur, b);
+            blur.uniforms.src.value = b.texture;
+            blur.uniforms.step.value.set(0, 1 / a.height);
+            pass(blur, a);
+          }
+        });
+      }
+      comp.uniforms.src.value = scene.texture;
+      comp.uniforms.b0.value = levels[0][0].texture;
+      comp.uniforms.b1.value = levels[1][0].texture;
+      comp.uniforms.b2.value = levels[2][0].texture;
+      comp.uniforms.strength.value = on ? G.bloom : 0;
+      comp.uniforms.radius.value = G.radius;
+      comp.uniforms.spill.value = G.spill;
+      renderer.setRenderTarget(null);
+      renderer.setScissorTest(false);
+      const full = renderer.getSize(new THREE.Vector2());
+      renderer.setViewport(0, 0, full.x, full.y);
+      renderer.clear();
+      quad.material = comp;
+      renderer.render(quad, cam);
+    },
+    dispose() {
+      scene.dispose();
+      for (const [a, b] of levels) a.dispose(), b.dispose();
+      quad.geometry.dispose();
+      for (const m of [bright, blur, comp]) m.dispose();
+    },
+  };
+}
+
+/* The flares where the light catches the edge: a star of a glint and a thin
+   anamorphic streak, drawn once each, laid on with the pill's light. */
+function flareTextures() {
+  const make = (w, h, draw) => {
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    draw(c.getContext("2d"), w, h);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  const glint = make(256, 256, (x, w, h) => {
+    const g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+    g.addColorStop(0, "rgba(255,255,255,1)");
+    g.addColorStop(0.08, "rgba(255,255,255,0.7)");
+    g.addColorStop(0.25, "rgba(220,232,255,0.12)");
+    g.addColorStop(1, "rgba(220,232,255,0)");
+    x.fillStyle = g;
+    x.fillRect(0, 0, w, h);
+    // four long rays and four short ones, thin and fading
+    x.translate(128, 128);
+    for (let k = 0; k < 8; k++) {
+      const len = k % 2 ? 60 : 124, wd = k % 2 ? 1.2 : 2.2;
+      const r = x.createLinearGradient(0, 0, len, 0);
+      r.addColorStop(0, "rgba(255,255,255,0.95)");
+      r.addColorStop(1, "rgba(255,255,255,0)");
+      x.fillStyle = r;
+      x.beginPath();
+      x.moveTo(0, -wd);
+      x.lineTo(len, 0);
+      x.lineTo(0, wd);
+      x.fill();
+      x.rotate(Math.PI / 4);
+    }
+  });
+  const streak = make(512, 32, (x, w, h) => {
+    const g = x.createLinearGradient(0, 0, w, 0);
+    g.addColorStop(0, "rgba(190,215,255,0)");
+    g.addColorStop(0.5, "rgba(235,244,255,1)");
+    g.addColorStop(1, "rgba(190,215,255,0)");
+    x.fillStyle = g;
+    x.fillRect(0, h / 2 - 1.5, w, 3);
+    x.globalAlpha = 0.35;
+    x.fillRect(0, h / 2 - 5, w, 10);
+  });
+  return { glint, streak };
+}
+// laid over (premultiplied), so it whitens what is under it without breaking the canvas's alpha
+const flareMaterial = (map) =>
+  new THREE.SpriteMaterial({
+    map, transparent: true, depthTest: false, depthWrite: false, toneMapped: false,
+    blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+    blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor,
+  });
+
 /* ---- mount ------------------------------------------------------------ */
 
 /** Three made pills drawn over their slots. */
@@ -719,7 +1021,7 @@ export function mountCoins(canvas, slots, look, { font = getComputedStyle(slots[
     return c && c.length >= 3 && (c[3] === undefined || +c[3] > 0) ? `rgb(${c[0]}, ${c[1]}, ${c[2]})` : "#f4f6f1";
   })();
   let L = look;
-  let coins = [], env = null, envKey = "";
+  let coins = [], env = null, envKey = "", post = null, flares = null;
   const fields = new Map(); // the words' fields, kept for the next build while the type is the same
 
   const keyOf = () => {
@@ -745,6 +1047,7 @@ export function mountCoins(canvas, slots, look, { font = getComputedStyle(slots[
   };
 
   const refreshEnv = () => {
+    if (DESIGNS[keyOf()].matcap) return; // chrome mirrors its matcap, not the studio
     const S = L[keyOf()].studio, k = [S.room, S.key, S.sides, S.front, S.flag, S.flagAt, S.floor, S.paper, S.turn, paper].join();
     if (k === envKey) return;
     env?.dispose();
@@ -759,8 +1062,9 @@ export function mountCoins(canvas, slots, look, { font = getComputedStyle(slots[
   async function* makeCoin(slot, i, spec, D) {
     const box = slot.getBoundingClientRect();
     const W = Math.max(1.6, box.width / Math.max(1, box.height));
-    // about twice the pill's pixels on screen, so the word's walls stay crisp
-    const tw = Math.min(2048, Math.max(768, Math.ceil((box.width * dpr * 2) / 128) * 128)), th = Math.round(tw / W);
+    // about twice the pill's pixels on screen, so the word's walls stay crisp (chrome, all bevel and no grain, needs less)
+    const over = spec.matcap ? 1.5 : 2, most = spec.matcap ? 1536 : 2048;
+    const tw = Math.min(most, Math.max(768, Math.ceil((box.width * dpr * over) / 128) * 128)), th = Math.round(tw / W);
     const word = slot.textContent.trim().toUpperCase();
     const fk = [word, tw, th, D.word.size, D.word.tracking, font].join("|");
     if (!fields.has(fk)) {
@@ -781,8 +1085,10 @@ export function mountCoins(canvas, slots, look, { font = getComputedStyle(slots[
       m.envMapRotation = new THREE.Euler();
       return m;
     };
-    const faceMat = metal({ map: maps.color, normalMap: maps.normal, roughnessMap: maps.orm, metalnessMap: maps.orm, aoMap: maps.orm, aoMapIntensity: 1, ...(maps.aniso && { anisotropyMap: maps.aniso }) });
-    const ringMat = metal({ map: edge.color, roughnessMap: edge.orm, metalnessMap: edge.orm });
+    const faceMat = spec.matcap
+      ? chromeMaterial(maps)
+      : metal({ map: maps.color, normalMap: maps.normal, roughnessMap: maps.orm, metalnessMap: maps.orm, aoMap: maps.orm, aoMapIntensity: 1, ...(maps.aniso && { anisotropyMap: maps.aniso }) });
+    const ringMat = spec.matcap ? chromeMaterial(null) : metal({ map: edge.color, roughnessMap: edge.orm, metalnessMap: edge.orm });
     const cap = capGeometry(ol, sec[0][0], W), ring = ringGeometry(ol, sec);
     group.add(new THREE.Mesh(cap, faceMat), new THREE.Mesh(ring, ringMat));
     // the shadow stays on the paper while the pill drifts
@@ -795,15 +1101,18 @@ export function mountCoins(canvas, slots, look, { font = getComputedStyle(slots[
     // a long lens, as a product is shot: the ends barely off the axis, so their edges mirror the side strips
     const camera = new THREE.PerspectiveCamera(6, 1, 0.1, 100);
     // the soft box close by, fixed in the studio: the pill drifts under it, so its light slides across the face
-    const lamp = new THREE.RectAreaLight(0xffffff, D.studio.box, spec.box.size[0], spec.box.size[1]);
-    lamp.position.set(...spec.box.pos);
-    lamp.lookAt(0, 0, 0);
-    scene.add(lamp);
+    let lamp = null;
+    if (spec.box) {
+      lamp = new THREE.RectAreaLight(0xffffff, D.studio.box, spec.box.size[0], spec.box.size[1]);
+      lamp.position.set(...spec.box.pos);
+      lamp.lookAt(0, 0, 0);
+      scene.add(lamp);
+    }
     const texs = [...Object.values(maps), edge.color, edge.orm, sh.texture];
     // up to the GPU now, rather than in the first frame that draws it
     for (const t of texs) renderer.initTexture(t);
     return {
-      slot, scene, group, camera, shadow, lamp, back, field: fk, mats: [faceMat, ringMat], phase: i * 2.1 + 0.4, lx: 0, ly: 0,
+      slot, scene, group, camera, shadow, lamp, back, W, field: fk, matcap: D.metal?.matcap, mats: [faceMat, ringMat], phase: i * 2.1 + 0.4, lx: 0, ly: 0,
       dispose() {
         for (const g of [cap, ring, shGeo]) g.dispose();
         for (const m of [faceMat, ringMat, shMat]) m.dispose();
@@ -834,6 +1143,12 @@ export function mountCoins(canvas, slots, look, { font = getComputedStyle(slots[
         }
       }
     }
+    if (spec.matcap) {
+      const mc = await loadMatcap(D.metal.matcap).catch(() => null);
+      for (const k of next) for (const m of k.mats) m.uniforms.matcap.value = mc;
+      post ??= makePost(renderer);
+      flares ??= flareTextures();
+    }
     // the shaders compiled off the main thread where the browser can, before the first frame needs them
     await renderer.compileAsync?.(next[0].scene, next[0].camera).catch(() => {});
     if (my !== gen) return drop();
@@ -847,14 +1162,31 @@ export function mountCoins(canvas, slots, look, { font = getComputedStyle(slots[
   };
 
   const apply = () => {
-    const S = L[keyOf()].studio;
+    const D = L[keyOf()], S = D.studio, chrome = DESIGNS[keyOf()].matcap;
     renderer.setPixelRatio(Math.min(dpr * L.render.quality, 3));
     renderer.toneMappingExposure = S.exposure;
     refreshEnv();
     for (const k of coins) {
-      for (const m of k.mats) m.envMapIntensity = S.reflect;
       k.shadow.material.opacity = S.shadow;
-      k.lamp.intensity = S.box;
+      if (k.lamp) k.lamp.intensity = S.box;
+      for (const m of k.mats) {
+        if (!chrome) m.envMapIntensity = S.reflect;
+        else if (m.uniforms) {
+          m.uniforms.tint.value.set(D.metal.tint);
+          m.uniforms.highlight.value = D.light.highlight;
+          m.uniforms.tight.value = D.light.tight;
+          m.uniforms.exposure.value = S.exposure;
+        }
+      }
+    }
+    // a new matcap, swapped in live once it has loaded
+    if (chrome && coins.length && coins[0].matcap !== D.metal.matcap) {
+      const name = D.metal.matcap, set = coins;
+      for (const k of set) k.matcap = name;
+      loadMatcap(name).then((mc) => {
+        for (const k of set) for (const m of k.mats) m.uniforms && (m.uniforms.matcap.value = mc);
+        redraw();
+      }, () => {});
     }
   };
   fit();
@@ -870,27 +1202,72 @@ export function mountCoins(canvas, slots, look, { font = getComputedStyle(slots[
   };
   addEventListener("pointermove", onMove, { passive: true });
 
-  let raf = 0, last = 0, t = 0, on = true;
+  /* The flares, two sprites a pill, in the canvas's own pixels. */
+  let overlay = null;
+  const flareSet = () => {
+    if (overlay && overlay.sprites.length === coins.length) return overlay;
+    if (overlay) for (const f of overlay.sprites) f.glint.material.dispose(), f.streak.material.dispose();
+    overlay ??= { scene: new THREE.Scene(), cam: new THREE.OrthographicCamera(0, 1, 1, 0, -1, 1), sprites: [] };
+    overlay.scene.clear();
+    overlay.sprites = coins.map(() => {
+      const glint = new THREE.Sprite(flareMaterial(flares.glint)), streak = new THREE.Sprite(flareMaterial(flares.streak));
+      overlay.scene.add(streak, glint);
+      return { glint, streak };
+    });
+    return overlay;
+  };
+  // where a ray from the pill's middle, at angle a, leaves its edge (pill heights)
+  const edgeAt = (W, a) => {
+    const cx = Math.cos(a), cy = Math.sin(a), half = W / 2 - 0.5;
+    let lo = 0, hi = W / 2 + 0.5;
+    for (let n = 0; n < 14; n++) {
+      const m = (lo + hi) / 2, dx = Math.max(0, Math.abs(cx * m) - half), dy = cy * m;
+      if (dx * dx + dy * dy < 0.25) lo = m;
+      else hi = m;
+    }
+    return [cx * lo, cy * lo];
+  };
+
+  let raf = 0, last = 0, t = 0, orbit = 0, on = true;
   const draw = (now) => {
     raf = 0;
     const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
     last = now;
-    const mo = L.motion;
+    const mo = L.motion, D = L[keyOf()], chrome = DESIGNS[keyOf()].matcap && post && flares;
     t += reduced ? 0 : dt * mo.speed;
     const c = canvas.getBoundingClientRect();
     const cw = canvas.clientWidth, ch = canvas.clientHeight, pr = renderer.getPixelRatio();
     if (canvas.width !== Math.round(cw * pr) || canvas.height !== Math.round(ch * pr)) renderer.setSize(cw, ch, false);
-    renderer.setScissorTest(false);
-    renderer.clear();
-    renderer.setScissorTest(true);
+    const rt = chrome ? post.target : null;
+    if (rt) {
+      post.size(canvas.width, canvas.height);
+      rt.scissorTest = false;
+      renderer.setRenderTarget(rt);
+      renderer.clear();
+      // the light goes round: turns a second; held still, it stays up and to the left
+      orbit += reduced ? 0 : dt * D.light.orbit;
+    } else {
+      renderer.setRenderTarget(null);
+      renderer.setScissorTest(false);
+      renderer.clear();
+      renderer.setScissorTest(true);
+    }
+    const fx = rt && flareSet();
     const ease = 1 - Math.exp(-dt * 2.2);
-    for (const k of coins) {
+    coins.forEach((k, i) => {
       const r = k.slot.getBoundingClientRect();
-      if (!r.width) continue;
+      if (!r.width) return;
       const pad = r.height * 0.5;
       const x = r.left - c.left - pad, y = ch - (r.bottom - c.top) - pad, w = r.width + pad * 2, h = r.height + pad * 2;
-      renderer.setViewport(x, y, w, h);
-      renderer.setScissor(x, y, w, h);
+      if (rt) {
+        rt.viewport.set(x * pr, y * pr, w * pr, h * pr);
+        rt.scissor.copy(rt.viewport);
+        rt.scissorTest = true;
+        renderer.setRenderTarget(rt);
+      } else {
+        renderer.setViewport(x, y, w, h);
+        renderer.setScissor(x, y, w, h);
+      }
       renderer.clearDepth();
       k.camera.aspect = w / h;
       // the pill a touch inside its slot, so the comma beside it keeps its place
@@ -912,7 +1289,36 @@ export function mountCoins(canvas, slots, look, { font = getComputedStyle(slots[
         (Math.sin(t * 0.63 + k.phase * 1.3) * mo.drift + k.lx * mo.lean) * DEG,
         Math.sin(t * 0.41 + k.phase) * mo.drift * 0.08 * DEG,
       );
+      if (rt) {
+        // one light round all three: each pill a little behind the one before it
+        const a = (reduced ? 0.62 : orbit * Math.PI * 2) - i * D.light.lag;
+        for (const m of k.mats) {
+          m.uniforms.light.value.set(Math.cos(a), Math.sin(a));
+          m.uniforms.spin.value = (a - 0.62) * D.light.spin;
+        }
+        // its flare where the light meets the edge: brightest on the round ends, where the shine gathers to a point
+        const [ex, ey] = edgeAt(k.W, a), unit = r.height * 0.95, f = fx.sprites[i], G = D.glow;
+        const px = x + w / 2 + ex * unit * 1.02, py = y + h / 2 + ey * unit * 1.02;
+        const k2 = G.flare * (0.3 + 0.7 * Math.abs(Math.cos(a)) ** 3);
+        f.glint.position.set(px, py, 0);
+        f.glint.scale.setScalar(r.height * 0.9 * G.size);
+        f.glint.material.opacity = Math.min(1, k2);
+        f.glint.material.rotation = a * 0.25 + 0.2;
+        f.streak.position.set(px, py, 0);
+        f.streak.scale.set(r.height * 3.4 * G.size, r.height * 0.2 * G.size, 1);
+        f.streak.material.opacity = Math.min(1, k2 * 0.7);
+      }
       renderer.render(k.scene, k.camera);
+    });
+    if (rt) {
+      post.finish(D.glow);
+      if (D.glow.flare > 0) {
+        fx.cam.right = cw;
+        fx.cam.top = ch;
+        fx.cam.updateProjectionMatrix();
+        renderer.setViewport(0, 0, cw, ch);
+        renderer.render(fx.scene, fx.cam);
+      }
     }
     if (on && !reduced) raf = requestAnimationFrame(draw);
   };
@@ -967,6 +1373,9 @@ export function mountCoins(canvas, slots, look, { font = getComputedStyle(slots[
       removeEventListener("pointermove", onMove);
       for (const k of coins) k.dispose();
       env?.dispose();
+      post?.dispose();
+      if (overlay) for (const f of overlay.sprites) f.glint.material.dispose(), f.streak.material.dispose();
+      if (flares) flares.glint.dispose(), flares.streak.dispose();
       renderer.dispose();
     },
   };

@@ -4,7 +4,8 @@
    unrealistic. I think you're looking too much at the original thing that I
    sent you"; before that, silver, scratched, hyper-realistic, moving less).
 
-   Three designs, each with its own settings; `design` picks the one shown:
+   Four designs, each with its own settings; `design` picks the one shown:
+     Chrome    a mirror-chrome pill from a matcap, a light circling its edge, bloom and flares
      Machined  solid aluminium, bead-blasted, a diamond-cut chamfer, the word engraved
      Enamel    polished, lightly brushed steel, the word filled with black enamel
      Ingot     a struck silver bar, a mirror field, soft edges, the word stamped in and frosted
@@ -16,8 +17,25 @@
    heights (the pill is 1 tall). */
 
 export const COIN_LOOK = {
-  // Enamel by default: its black words carry the headline's own type through the line
-  design: "Enamel",
+  design: "Chrome",
+  // Hunter, Oct 25: "maybe we try a reflective chrome matcap then have bloom
+  // and flares?"; "a shine around the edges, like a light is rotating around them"
+  chrome: {
+    // the matcap it mirrors (public/images/matcaps), a tint over it
+    metal: { matcap: "Studio dome", tint: "#ffffff" },
+    // the word: cap height, tracking (em), the bright bevel cut round it, the fill inside it
+    word: { size: 0.5, tracking: 0.03, bevel: 0.026, fill: "#050506" },
+    // the edge: the rolled radius, how domed the face is (its slope at the edge), the thickness
+    edge: { round: 0.14, crown: 0.55, thick: 0.22 },
+    // the light round the edge: turns a second, how bright and how tight its shine,
+    // how much the matcap turns with it, how far each pill lags the one before (radians)
+    light: { orbit: 0.1, highlight: 1.6, tight: 7, spin: 0.35, lag: 0.7 },
+    // bloom on what is over the threshold, how wide, how far it spills onto the paper; the flares and their size
+    glow: { bloom: 0.9, threshold: 0.95, radius: 0.7, spill: 0.6, flare: 0.9, size: 1 },
+    // a few hairlines in the polish
+    wear: { scratches: 10, seed: 5 },
+    studio: { exposure: 1.3, shadow: 0.5 },
+  },
   machined: {
     // anodize = the body's colour (natural, or dyed), cut = the bare metal the
     // cutter exposes; blast = the bead-blast's roughness, mottle = how uneven it is
@@ -68,7 +86,7 @@ export const COIN_LOOK = {
 };
 
 /** The designs, as the Params panel names them. */
-export const COIN_DESIGNS = ["Machined", "Enamel", "Ingot"];
+export const COIN_DESIGNS = ["Chrome", "Enamel", "Machined", "Ingot"];
 
 /** Where a tuning made with the About page's Params is kept, in this browser. */
 export const COIN_TUNING_KEY = "ks-coin-tuning";

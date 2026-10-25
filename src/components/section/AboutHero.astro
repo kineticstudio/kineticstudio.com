@@ -28,16 +28,14 @@ const LINE = [
 {
   render && (
     <header class="about-hero_wrap">
-      {/* Oct 25: the 3D coins are retired ("I still hate these little Chrome 3D coins ... I want
-          them to have a shine around the edges, like a light is rotating around them"): each value
-          sits in the logo's pill, and a light runs round its line (src/scripts/coin-pills.js stays,
-          unused, for another day) */}
-      <div class="about-hero_line">
+      <div class="about-hero_line" data-coins>
         <h1 class="about-hero_title text-style-display">
           {LINE.map((part, i) => (
-            <span class="about-hero_part" style={`--i:${i}`}>{part.pill ? <span class="about-hero_pill" style={`--n:${LINE.filter((x) => x.pill).findIndex((x) => x.pill === part.pill)}`}>{part.pill}</span> : part.text}{part.after}</span>
+            <span class="about-hero_part" style={`--i:${i}`}>{part.pill ? <span class="about-hero_pill">{part.pill}</span> : part.text}{part.after}</span>
           ))}
         </h1>
+        {/* the three values as made pills over their slots (src/scripts/coin-pills.js) */}
+        <canvas class="about-hero_coins" aria-hidden="true" />
       </div>
       <div class="about-hero_foot">
         <p class="about-hero_lead text-style-large" data-reveal style="--reveal-delay:0.5s">
@@ -54,15 +52,26 @@ const LINE = [
   import { defineParams } from "@/scripts/ks-params.js";
 
   /* Hunter, Oct 25: "Come up with your own designs for the craft, quality,
-     and story pills ... they just feel slightly lazy and unrealistic." Three
-     designs (Machined, Enamel, Ingot), each with its own settings in
+     and story pills ... they just feel slightly lazy and unrealistic"; then
+     "maybe we try a reflective chrome matcap then have bloom and flares?"
+     Four designs (Chrome, Enamel, Machined, Ingot), each with its own settings in
      COIN_LOOK (src/data/coin-look.js); Design picks one and the dials below
      it are that design's (the Studio's Params panel, P on the page by
      itself), kept in this browser until Reset; Copy props hands back the
      whole object to paste over the file. */
-  type Dial = [number, number, number] | "color";
-  // each design's dials, [min, max, step], by group
+  type Dial = [number, number, number] | "color" | string[];
+  const MATCAP_NAMES = ["Hall", "Horizon", "Room", "Soft", "Studio dome", "Studio rings"];
+  // each design's dials, [min, max, step] (or a colour, or a list to choose from), by group
   const DIALS: Record<string, Record<string, Record<string, Dial>>> = {
+    chrome: {
+      metal: { matcap: MATCAP_NAMES, tint: "color" },
+      word: { size: [0.3, 0.75, 0.005], tracking: [-0.05, 0.2, 0.005], bevel: [0.005, 0.05, 0.001], fill: "color" },
+      edge: { round: [0.02, 0.3, 0.001], crown: [0, 1, 0.01], thick: [0.08, 0.4, 0.01] },
+      light: { orbit: [0, 0.6, 0.005], highlight: [0, 4, 0.01], tight: [1, 30, 0.1], spin: [0, 2, 0.01], lag: [-2, 2, 0.01] },
+      glow: { bloom: [0, 3, 0.01], threshold: [0.3, 2.5, 0.01], radius: [0, 1.5, 0.01], spill: [0, 2, 0.01], flare: [0, 2, 0.01], size: [0.2, 3, 0.01] },
+      wear: { scratches: [0, 200, 1], seed: [1, 99, 1] },
+      studio: { exposure: [0.3, 2.5, 0.01], shadow: [0, 1, 0.01] },
+    },
     machined: {
       metal: { anodize: "color", cut: "color", blast: [0.05, 0.9, 0.01], mottle: [0, 2, 0.01] },
       word: { size: [0.3, 0.75, 0.005], tracking: [-0.05, 0.2, 0.005], depth: [0.01, 0.08, 0.001], lip: [0, 0.04, 0.001], floor: [0.02, 0.9, 0.01] },
@@ -111,7 +120,12 @@ const LINE = [
     // where a dial's path lives in COIN_LOOK: motion and render are shared, the rest the design's
     const groupOf = (g: string) => (g in SHARED ? L[g] : L[key()][g]);
     const dials = (values: Record<string, any>, spec: Record<string, Dial>) =>
-      Object.fromEntries(Object.entries(spec).map(([k, d]) => [k, d === "color" ? values[k] : [values[k], ...d]]));
+      Object.fromEntries(
+        Object.entries(spec).map(([k, d]) => [
+          k,
+          d === "color" ? values[k] : typeof d[0] === "string" ? { type: "select", options: d, value: values[k] } : [values[k], ...(d as number[])],
+        ]),
+      );
     const save = () => {
       try {
         localStorage.setItem(COIN_TUNING_KEY, JSON.stringify(L));
@@ -122,7 +136,8 @@ const LINE = [
       const D = L[key()];
       const schema: Record<string, any> = { design: { type: "select", options: COIN_DESIGNS, value: L.design } };
       for (const [g, spec] of Object.entries(DIALS[key()])) schema[g] = dials(D[g], spec);
-      schema.studio = dials(D.studio, STUDIO);
+      // chrome has its own short studio (exposure, shadow); the others the whole one
+      if (!DIALS[key()].studio) schema.studio = dials(D.studio, STUDIO);
       for (const [g, spec] of Object.entries(SHARED)) schema[g] = dials(L[g], spec);
       schema.copyProps = { type: "action", label: "Copy props" };
       schema.reset = { type: "action", label: "Reset" };
@@ -141,7 +156,7 @@ const LINE = [
           groupOf(g)[k] = values[path];
           save();
           // the studio, motion and quality change live; the rest makes the maps and the shape again
-          if (g === "studio" || g in SHARED) coins.update(L);
+          if (g === "studio" || g in SHARED || g === "light" || g === "glow" || path === "metal.matcap" || (key() === "chrome" && path === "metal.tint")) coins.update(L);
           else {
             clearTimeout(timer);
             timer = window.setTimeout(() => coins.rebuild(L), 160);
@@ -224,70 +239,18 @@ const LINE = [
         translate: 0 0.35em;
       }
     }
-    /* the logo's pill round a word: its line is the logo's, against its height; a light runs
-       round the line, each pill a third of a turn behind the one before, as if one lamp circled
-       all three (Oct 25: "a shine around the edges, like a light is rotating around them") */
+    /* the logo's pill round a word: its line is the logo's, against its height */
     .about-hero_pill {
-      --line: 0.075em;
-      position: relative;
       display: inline-block;
       padding: 0.04em 0.26em 0;
-      border: var(--line) solid currentColor;
+      border: 0.075em solid currentColor;
       border-radius: 999px;
       line-height: 0.92;
       margin-right: 0.04em;
-      isolation: isolate;
-      /* the light: a bright arc that travels round the line, then its glow off the edge */
-      &::before,
-      &::after {
-        content: "";
-        position: absolute;
-        inset: calc(var(--line) * -1);
-        border-radius: inherit;
-        padding: var(--line);
-        background: conic-gradient(
-          from var(--orbit),
-          transparent 0deg,
-          transparent 250deg,
-          rgb(255 255 255 / 0.15) 290deg,
-          rgb(255 255 255 / 0.95) 330deg,
-          #fff 342deg,
-          rgb(255 255 255 / 0.4) 352deg,
-          transparent 360deg
-        );
-        mask:
-          linear-gradient(#000 0 0) content-box exclude,
-          linear-gradient(#000 0 0);
-        animation: about-orbit 5.2s linear infinite;
-        animation-delay: calc(var(--n, 0) * -1.73s);
-        pointer-events: none;
-      }
-      /* the glow: the same light, softer and wider, spilling just past the line */
-      &::after {
-        inset: calc(var(--line) * -2.2);
-        padding: calc(var(--line) * 3.4);
-        filter: blur(0.07em);
-        opacity: 0.55;
-        mix-blend-mode: screen;
-        z-index: -1;
-      }
-    }
-    @property --orbit {
-      syntax: "<angle>";
-      inherits: false;
-      initial-value: 0deg;
-    }
-    @keyframes about-orbit {
-      to {
-        --orbit: 360deg;
-      }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .about-hero_pill::before,
-      .about-hero_pill::after {
-        animation: none;
-        --orbit: 300deg;
-      }
+      /* the drawn pill fades out as the made one fades up over it */
+      transition:
+        color 0.4s ease,
+        border-color 0.4s ease;
     }
     .about-hero_foot {
       display: grid;
