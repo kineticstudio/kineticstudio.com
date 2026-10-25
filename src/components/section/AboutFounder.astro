@@ -1,6 +1,6 @@
 ---
 import signature from "@/assets/brand/signature.svg?raw";
-import HunterBust from "@/components/content/HunterBust.astro";
+import HunterMembrane from "@/components/content/HunterMembrane.astro";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -11,7 +11,7 @@ const { render = true } = Astro.props;
 /* The row about Hunter, under the studio's headline (Hunter, Oct 24: "a 3D
    version of myself that's spinning ... I want my signature to be in here
    somewhere ... There's just a row that talks about me, so I'm not the
-   hero"). Him turning on the left (HunterBust); on the right his role, his
+   hero"). Him pressing through a chrome sheet on the left (HunterMembrane); on the right his role, his
    name and what he cares about, in his words (Oct 25: "have a quote ...
    something that would really capture a founder"), signed: the signature
    writes itself in, stroke by stroke, as the row comes in. The numbers have
@@ -22,7 +22,7 @@ const sig = signature.replace(/<svg /, '<svg aria-hidden="true" ');
 {
   render && (
     <section class="founder_wrap" aria-labelledby="founder-name">
-      <HunterBust class="founder_bust" />
+      <HunterMembrane class="founder_bust" />
       <div class="founder_body">
         <blockquote class="founder_quote" data-reveal>
           <p class="text-style-quote">“Every company starts as something only its founders can feel. My job is to find the heart and soul of it, and build the brand and the experience that let the world feel it too.”</p>

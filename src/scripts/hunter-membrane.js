@@ -316,7 +316,7 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-de
         vec2 gn = vec2(skin(p + vec2(e, 0.0)) - n0, skin(p + vec2(0.0, e)) - n0) / e;
         float stretch = clamp(length(s.xy) * 0.8, 0.0, 1.0);
         vec2 slope = s.xy + gn * uTexture * 0.06 * (1.0 - 0.6 * stretch);
-        vec3 n = normalize(normalMatrix * normalize(vec3(-slope, 1.0)));
+        vec3 n = normalize(mat3(viewMatrix) * normalize(vec3(-slope, 1.0))); // the sheet sits at the origin, unturned
         // the matcap, the way MeshMatcapMaterial reads it
         vec3 v = normalize(vView);
         vec3 x = normalize(vec3(v.z, 0.0, -v.x));

@@ -47,6 +47,12 @@ const socialImage = new URL(image, Astro.site);
 
 {/* Scripts build runtime URLs from this, so the site also works from a folder (scripts/relativize.mjs) */}
 <link rel="site-root" href="/" />
+{/* Cloudflare Web Analytics, cookie-free, on the site's own pages only: not on the
+    3D cards' or the client site copies' frames (they were counted as page views), not in
+    the Creative Studio's build, not in development */}
+{import.meta.env.PROD && !process.env.KS_STUDIO_BUILD && (
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "b9c90f71eb6444f7bb599728f27f49de"}'></script>
+)}
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="icon" href="/favicon.ico" />
 <meta name="generator" content={Astro.generator} />
