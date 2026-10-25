@@ -1,11 +1,7 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
-import Section from "@/components/wrapper/Section.astro";
 import HeroLines from "@/components/section/HeroLines.astro";
 import WorkWheel from "@/components/section/WorkWheel.astro";
-import WorkIndex from "@/components/section/WorkIndex.astro";
-import ClientWall from "@/components/content/ClientWall.astro";
-import Statement from "@/components/content/Statement.astro";
 import { HOME } from "@/data/work.js";
 ---
 
@@ -14,13 +10,8 @@ import { HOME } from "@/data/work.js";
       wheel hero (the headline, the laurels, the clients' logos) with the work coming up from below */}
   <HeroLines heading="" />
   <WorkWheel only={HOME} />
-  <Section paddingTop="large">
-    <ClientWall heading="Top clients" />
-  </Section>
-  <WorkIndex heading="Selected work" only={HOME} paddingTop="large" />
-  <Section paddingTop="large" paddingBottom="large">
-    <Statement />
-  </Section>
+  {/* Oct 25: the wheel runs straight into the footer (the work round its barrel, Start a project);
+      the client table, the second work grid and the statement under it were leftovers */}
 </Layout>
 
 <script>

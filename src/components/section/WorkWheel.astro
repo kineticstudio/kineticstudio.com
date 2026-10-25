@@ -254,14 +254,17 @@ const loops = LOOPS as string[];
           const phi = START + turn - (rows[r].at + rows[r + 1].at) / 2;
           if (Math.abs(phi) < Math.abs(nearPhi)) (nearPhi = phi), (near = k);
         });
-        if (near >= 0 && Math.abs(nearPhi) < 70) {
+        // nothing is spelled until the page has been scrolled: a tall window has a gap
+        // on screen from the start (Hunter, Oct 25: "I see the 119 websites built on page load")
+        const scrolled = Math.min(1, Math.max(0, (turn - (reduced ? 0 : st.intro)) / Math.max(1, WHEEL.dissolve)));
+        if (near >= 0 && Math.abs(nearPhi) < 70 && scrolled > 0.02) {
           const r = gaps[near];
           const base = stage.getBoundingClientRect();
           const gapY = (rows[r].el.getBoundingClientRect().bottom + rows[r + 1].el.getBoundingClientRect().top) / 2 - base.top;
           const half = base.height / 2;
           const u = (gapY - half) / half; // 1 at the bottom of the screen, -1 at the top
           const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
-          line = { k: near, x: base.width / 2, y: gapY, a: clamp01((1 - u) / 0.6), d: clamp01((-0.35 - u) / 0.6) };
+          line = { k: near, x: base.width / 2, y: gapY, a: clamp01((1 - u) / 0.6) * scrolled, d: clamp01((-0.35 - u) / 0.6) };
         }
         particles.update({ hero: out, line });
         head.style.opacity = particles.domOpacity(out).toFixed(3);

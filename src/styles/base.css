@@ -377,6 +377,10 @@
   margin: 0;
 }
 
+/* nothing that overhangs the page (a laurel's glow, a marquee) may make a phone scroll sideways */
+html {
+  overflow-x: clip;
+}
 body {
   display: flex;
   flex-direction: column;
