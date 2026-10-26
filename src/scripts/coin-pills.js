@@ -756,10 +756,14 @@ export const MATCAPS = {
   "Studio rings": "studio-rings",
 };
 const matcapCache = new Map();
+// from the site's root, so the matcaps also load where the site is served from a folder (the Creative
+// Studio frames the build at /designs/kinetic/kineticstudio-src/): from "/images/..." they 404 there and
+// the chrome, with nothing to mirror, goes black (Hunter, Oct 25: "what happened to these guys?")
+const ROOT = document.querySelector('link[rel="site-root"]')?.href ?? `${location.origin}/`;
 function loadMatcap(name) {
   const slug = MATCAPS[name] ?? MATCAPS.Hall;
   if (!matcapCache.has(slug)) {
-    matcapCache.set(slug, new THREE.TextureLoader().loadAsync(`/images/matcaps/${slug}.jpg`).then((t) => {
+    matcapCache.set(slug, new THREE.TextureLoader().loadAsync(new URL(`images/matcaps/${slug}.jpg`, ROOT).href).then((t) => {
       t.colorSpace = THREE.SRGBColorSpace;
       t.anisotropy = 4;
       return t;
