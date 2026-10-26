@@ -28,6 +28,13 @@ export const params = {
     size: [0.4, 0.2, 0.75, 0.01],
     speed: [1, 0, 3, 0.05],
   },
+  // Oct 25: "cursor to draw clouds too": the pointer leaves cloud behind it as it moves
+  // (Drag paints only while pressed, as the tool did); fade = seconds a puff lasts (0 = it stays)
+  brush: {
+    paint: { type: "select", options: ["Cursor", "Drag", "Off"] },
+    size: [1, 0.3, 2.5, 0.05],
+    fade: [5, 0, 30, 0.5],
+  },
   colour: {
     skyTop: "#4988cb",
     skyBottom: "#879fb7",
@@ -288,19 +295,30 @@ export function mount(host, values, ctx = {}) {
   let drawing = false, lastX = 0, lastY = 0, acc = 0, next = 7;
   function puff(x, y) {
     const n = document.createElement("div");
-    const s = Math.max(0.45, px / BASE.size);
+    const s = Math.max(0.45, px / BASE.size) * v["brush.size"];
     const w = (12 + Math.pow(Math.random(), 2.4) * 280) * s, h = (10 + Math.pow(Math.random(), 2.4) * 220) * s;
     const r = Array.from({ length: 8 }, () => 25 + Math.random() * 50);
-    const p = { el: n, x: x - w / 2 + (Math.random() - 0.5) * 90 * s, y: y - h / 2 + (Math.random() - 0.5) * 90 * s, w, h, born: time, max: 0.25 + Math.random() * 0.75 };
+    const p = { el: n, x: x - w / 2 + (Math.random() - 0.5) * 90 * s, y: y - h / 2 + (Math.random() - 0.5) * 90 * s, w, h, born: clock, max: 0.25 + Math.random() * 0.75 };
     n.style.cssText = `position:absolute;left:0;top:0;width:${w}px;height:${h}px;background:${v["colour.cloud"]};opacity:0;border-radius:${r[0]}% ${r[1]}% ${r[2]}% ${r[3]}% / ${r[4]}% ${r[5]}% ${r[6]}% ${r[7]}%`;
     puffLayer.append(n);
     puffs.push(p);
     if (puffs.length > 500) puffs.shift().el.remove();
   }
+  // puffs keep wall-clock time, so they fade at the same pace whatever the weather's speed
+  let clock = 0;
   function placePuffs() {
-    for (const p of puffs) {
-      const a = reduced ? 1 : Math.min(1, (time - p.born) / 0.4);
-      p.el.style.opacity = (a * p.max).toFixed(3);
+    const fade = v["brush.fade"];
+    for (let i = puffs.length - 1; i >= 0; i--) {
+      const p = puffs[i], age = clock - p.born;
+      const grow = reduced ? 1 : Math.min(1, age / 0.4);
+      // a fading puff thins out over its last second and a half, then goes
+      const gone = fade > 0 ? Math.min(1, Math.max(0, (age - fade) / 1.5)) : 0;
+      if (gone >= 1) {
+        p.el.remove();
+        puffs.splice(i, 1);
+        continue;
+      }
+      p.el.style.opacity = (grow * (1 - gone) * p.max).toFixed(3);
       p.el.style.transform = `translate(${p.x}px, ${p.y}px)`;
     }
   }
@@ -309,6 +327,7 @@ export function mount(host, values, ctx = {}) {
     return [e.clientX - r.left, e.clientY - r.top];
   };
   const onDown = (e) => {
+    if (v["brush.paint"] === "Off") return;
     drawing = true;
     [lastX, lastY] = local(e);
     acc = 0;
@@ -317,7 +336,10 @@ export function mount(host, values, ctx = {}) {
     if (!raf) draw();
   };
   const onMove = (e) => {
-    if (!drawing) return;
+    // with Cursor, a mouse paints just by moving; a finger or pen still paints by dragging
+    const hovering = v["brush.paint"] === "Cursor" && e.pointerType === "mouse";
+    if (!drawing && !hovering) return;
+    if (!drawing && hovering && lastX === 0 && lastY === 0) [lastX, lastY] = local(e);
     const [x, y] = local(e), dx = x - lastX, dy = y - lastY, len = Math.hypot(dx, dy) || 1;
     acc += len;
     while (acc >= next) {
@@ -336,6 +358,12 @@ export function mount(host, values, ctx = {}) {
     if (!raf) draw();
   };
   const onUp = () => (drawing = false);
+  // leaving the sky ends the stroke, so coming back in doesn't draw a line across it
+  const onLeave = () => {
+    drawing = false;
+    lastX = lastY = 0;
+  };
+  root.addEventListener("pointerleave", onLeave);
   const file = document.createElement("input");
   file.type = "file";
   file.accept = "image/*,.svg";
@@ -389,6 +417,7 @@ export function mount(host, values, ctx = {}) {
     if (last && now - last < 1000 / 30 - 4) return;
     const dt = last ? Math.min(0.08, (now - last) / 1000) : 0;
     last = now;
+    clock += dt;
     const sp = v["marks.speed"];
     time += dt * sp;
     // the tool's marquee crossed 355px marks at about 46px a second
@@ -462,6 +491,7 @@ export function mount(host, values, ctx = {}) {
       root.removeEventListener("pointermove", onMove);
       root.removeEventListener("pointerup", onUp);
       root.removeEventListener("pointercancel", onUp);
+      root.removeEventListener("pointerleave", onLeave);
       root.removeEventListener("dragover", onDragOver);
       root.removeEventListener("drop", onDrop);
       root.remove();

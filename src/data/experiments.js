@@ -48,6 +48,8 @@ export const EXPERIMENTS = [
   { slug: "prism-mark", kind: "live", theme: "dark", title: "Prism", note: "A packet of light split into colour by a turning glass prism.", media: "exp-prism-mark", from: "Rime" },
   { slug: "cloud-logo-live", kind: "live", ground: ["colour.skyTop", "colour.skyBottom"], theme: "light", title: "Cloud generator", note: "Type a word or drop in a logo, and the sky grows it in cloud.", media: "exp-cloud-logo-live", from: "Rylo" },
   { slug: "extra-trace", kind: "live", theme: "dark", title: "Rise", note: "A line climbs a field of dots and lifts the ones it picks.", media: "exp-extra-trace", from: "Trace" },
+  // the circles from under the liquid glass, on their own (Hunter, Oct 25: "find the rime one without the liquid glass thing")
+  { slug: "circle-snake", kind: "live", theme: "light", ground: "colour.paper", title: "Circle snake", note: "Coloured circles multiplied into paper, wandering, and following your cursor.", media: "exp-circle-snake", from: "Rime" },
 
   { slug: "kinetic-lines", kind: "live", theme: "dark", title: "Kinetic lines", note: "The mark's five lines as a field that bends.", media: "exp-kinetic-lines", fallback: "play-kinetic-lines" },
   { slug: "contour-rings", kind: "live", theme: "dark", title: "Contour rings", note: "Concentric rings pushed around by noise.", media: "exp-contour-rings", fallback: "play-rings" },

@@ -171,7 +171,11 @@ const loops = LOOPS as string[];
     const WHEEL = HOME_LOOK.wheel;
     let tileH = 0, zipH = 0;
     let START = -38; // the first row at the top of the page: peeking up at the fold (set in layout)
-    const LEAVE = 78; // gone over the top
+    // the pin lets go with the last row standing level in the middle, and the page carries it off with
+    // the footer under it: there the curve moves at the scroll's own speed, so the hand-off doesn't show
+    // (it used to hold until the last row had turned away over the top, a screen and a half of empty
+    // dark: Hunter, Oct 25: "there is a huge empty, black scroll on the homepage")
+    const LEAVE = 0;
     const st = { scroll: 0, intro: reduced ? 0 : -28 };
 
     const layout = () => {
@@ -212,7 +216,7 @@ const loops = LOOPS as string[];
       START = -Math.asin(drop / R) * (180 / Math.PI);
     };
 
-    const span = () => rows[N - 1].at + LEAVE - START; // degrees of turn until the last row has left
+    const span = () => rows[N - 1].at + LEAVE - START; // degrees of turn until the last row is level
 
     const place = () => {
       const turn = st.scroll * span() + st.intro;

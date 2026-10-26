@@ -20,19 +20,11 @@ const next = live[(at + 1) % live.length];
     <section class="exp_wrap" data-exp={e.slug}>
       <div class="exp_stage" data-stage />
 
+      {/* no card of info on the piece: no title, note or buttons (Hunter, Oct 25: "i don't want any
+          of this info on any of the playground items"), only the way back; the Params are open */}
       <header class="exp_head">
         <a class="exp_back text-style-label" href="/playground">← Playground</a>
-        <h1 class="exp_title text-style-h3">{e.title}</h1>
-        <p class="exp_note text-style-label">{e.note}</p>
-        {/* Hunter, Oct 25: "People don't know what params are, so maybe we
-            have a little label" */}
-        <p class="exp_hint text-style-label">Feel free to play around with the parameters.</p>
-        <div class="exp_actions">
-          <button class="exp_btn pill is-primary" type="button" data-toggle>Parameters <kbd>P</kbd></button>
-          <button class="exp_btn pill is-secondary" type="button" data-randomize>Randomize</button>
-          <button class="exp_btn pill is-secondary" type="button" data-reset>Reset</button>
-          <button class="exp_btn pill is-secondary" type="button" data-share>Copy link</button>
-        </div>
+        <h1 class="exp_title sr-only">{e.title}</h1>
       </header>
 
       <nav class="exp_pager" aria-label="More experiments">
@@ -60,23 +52,13 @@ const next = live[(at + 1) % live.length];
     const mod = (await load()) as { params: object; mount: (...args: unknown[]) => unknown };
     const title = root.querySelector(".exp_title")?.textContent ?? slug;
     // Hunter's Params: the Studio's panel when framed, the standalone one here
-    const host = hostExperiment(stage, mod, { title, slug, open: matchMedia("(width >= 48rem)").matches });
+    const host = hostExperiment(stage, mod, { title, slug, open: true });
     if (host.framed) root.classList.add("is-framed");
 
-    root.querySelector("[data-toggle]")!.addEventListener("click", () => host.togglePanel());
-    root.querySelector("[data-randomize]")!.addEventListener("click", () => host.randomize());
-    root.querySelector("[data-reset]")!.addEventListener("click", () => host.reset());
+    // R still shakes the dials up, P still opens and closes them
     document.addEventListener("keydown", (ev) => {
       if ((ev.target as HTMLElement).closest("input, textarea, select")) return;
       if (ev.key === "r") host.randomize();
-    });
-    const share = root.querySelector<HTMLButtonElement>("[data-share]")!;
-    share.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(location.href);
-        share.textContent = "Copied";
-        setTimeout(() => (share.textContent = "Copy link"), 1400);
-      } catch {}
     });
     addEventListener("pagehide", () => host.destroy());
   });
@@ -120,46 +102,23 @@ const next = live[(at + 1) % live.length];
       top: 5.5rem;
       left: var(--site-margin);
       z-index: 2;
-      max-width: 22rem;
-      padding: 1rem 1.1rem 1.1rem;
-      border-radius: 1rem;
-      background: color-mix(in srgb, var(--glass) 72%, transparent);
-      border: var(--border-width) solid color-mix(in srgb, var(--text) 12%, transparent);
-      backdrop-filter: blur(1.25rem) saturate(1.3);
-      -webkit-backdrop-filter: blur(1.25rem) saturate(1.3);
     }
-    .exp_back {
-      color: color-mix(in srgb, var(--text) 60%, transparent);
-      &:hover {
-        color: var(--text);
-      }
-    }
-    .exp_title {
-      margin: var(--space-3) 0 var(--space-2);
-    }
-    .exp_note {
-      margin: 0;
-      color: color-mix(in srgb, var(--text) 65%, transparent);
-    }
-    /* the invitation, in full ink, says what the button under it opens */
-    .exp_hint {
-      margin: var(--space-3) 0 0;
-      color: var(--text);
-    }
-    .exp_actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.3rem;
-      margin-top: var(--space-4);
-    }
-    .exp_wrap.is-framed [data-toggle] {
-      display: none;
-    }
+    /* the way back, in the pager's own glass pill so it reads over any piece */
+    .exp_back,
     /* Hunter's standalone Params panel, kept as it is, placed under the nav */
     .ksp {
       top: 5rem !important;
       bottom: 4.5rem !important;
       right: var(--space-4) !important;
+      /* on a phone it is open from the start (there is no button to open it), so it sits low over
+         the pager and leaves the piece its top half, as it does in the Playground */
+      @media (width < 48rem) {
+        top: auto !important;
+        left: var(--site-margin) !important;
+        right: var(--site-margin) !important;
+        width: auto !important;
+        max-height: 42svh;
+      }
     }
     .exp_pager {
       position: absolute;
@@ -170,6 +129,7 @@ const next = live[(at + 1) % live.length];
       align-items: center;
     }
     .exp_page {
+      display: inline-block;
       padding: 0.5rem 0.8rem;
       border-radius: var(--radius-round);
       background: color-mix(in srgb, var(--glass) 60%, transparent);

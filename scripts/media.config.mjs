@@ -157,5 +157,6 @@ export const MEDIA = [
   { id: "exp-prism-mark", from: "capture", file: "prism-mark.mp4", ss: 0.2, dur: 4.5 },
   { id: "exp-cloud-logo-live", from: "capture", file: "cloud-logo-live.mp4", ss: 0.2, dur: 4.5 },
   { id: "exp-extra-trace", from: "capture", file: "extra-trace.mp4", ss: 0.2, dur: 4.5 },
+  { id: "exp-circle-snake", from: "capture", file: "circle-snake.mp4", ss: 0.2, dur: 4.5 },
   { id: "exp-ease-grid", from: "capture", file: "ease-grid.mp4", ss: 0.2, dur: 4.5 },
 ];

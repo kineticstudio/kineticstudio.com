@@ -2,7 +2,6 @@
 import mark from "@/assets/brand/mark.svg?raw";
 import { CONTACT_EMAIL, SOCIAL } from "@/consts.ts";
 import ContactForm from "@/components/section/ContactForm.astro";
-import ProjectBarrel from "@/components/content/ProjectBarrel.astro";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -18,9 +17,10 @@ const year = new Date().getFullYear();
    footer just has another set of lines ... The start a project should be at
    the bottom of every page, so really, it could be a part of the footer").
 
-   The best of the work goes round a barrel (ProjectBarrel, the Playground's
-   projection); under it the contact form itself (ContactForm, not on the
-   Playground); then the pages, the address, the profiles, the sound and the year. */
+   The contact form itself (ContactForm, not on the Playground), then the
+   pages, the address, the profiles, the sound and the year. The barrel of
+   work that sat over the form is gone (Hunter, Oct 25: "let's remove the
+   barrel section above the contact field"); ProjectBarrel is kept. */
 // the marks, drawn in the text colour
 const ICONS: Record<string, string> = {
   X: '<path d="M17.75 3h3.07l-6.71 7.67L22 21h-6.18l-4.84-6.33L5.44 21H2.37l7.18-8.2L2 3h6.34l4.37 5.78L17.75 3Zm-1.08 16.18h1.7L7.4 4.73H5.58l11.09 14.45Z"/>',
@@ -31,8 +31,6 @@ const ICONS: Record<string, string> = {
 {
   render && (
     <footer class="footer_wrap theme-dark">
-      <ProjectBarrel class="footer_barrel" />
-
       {/* the contact form itself at the foot of every page but the Playground (Hunter, Oct 25: "Let's
           have the contact form on the bottom of every page, as opposed to the Start the Project CTA ...
           Except for the playground") */}

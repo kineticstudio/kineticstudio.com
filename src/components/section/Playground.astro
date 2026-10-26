@@ -79,18 +79,9 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
           <button class="play_x" type="button" data-close aria-label="Close">
             <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 3l10 10M13 3 3 13" /></svg>
           </button>
-          <div class="play_caption">
-            <p class="play_caption-title text-style-h5" data-title />
-            <p class="play_caption-note text-style-label" data-note />
-            {/* Hunter, Oct 25: "People don't know what params are, so maybe
-                we have a little label" */}
-            <p class="play_caption-hint text-style-label">Feel free to play around with the parameters.</p>
-            <p class="play_caption-actions">
-              <button class="pill is-secondary" type="button" data-random>Randomize</button>
-              <button class="pill is-secondary" type="button" data-reset>Reset</button>
-              <a class="pill is-tab" href="#" data-page>Full page ↗</a>
-            </p>
-          </div>
+          {/* no caption on the piece: no title, note or buttons (Hunter, Oct 25: "i don't want any of
+              this info on any of the playground items"); its name is for screen readers only */}
+          <p class="sr-only" data-title />
         </div>
       </div>
     </section>
@@ -302,7 +293,7 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
 
     // The screen takes the piece's colour: its ground dial if it has one
     // (followed as it's dialled), else the ground sampled from its loop; the
-    // logo, close and caption go dark or light against it.
+    // logo and close go dark or light against it.
     const ink = (hex: string) => {
       const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})/i.exec(hex.trim());
       if (!m) return "var(--light-100)";
@@ -313,9 +304,6 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
       modal.style.setProperty("--play-ground", ground);
       modal.style.setProperty("--play-ink", ink(ground));
     };
-    // on a phone the Params panel sits above the caption: it needs the caption's height
-    const caption = root.querySelector<HTMLElement>(".play_caption")!;
-    new ResizeObserver(() => document.documentElement.style.setProperty("--play-caption-h", `${caption.offsetHeight}px`)).observe(caption);
     // the logo sits exactly where the nav's does
     const placeLogo = () => {
       const r = document.querySelector(".nav_logo-svg")?.getBoundingClientRect();
@@ -346,8 +334,6 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
       poster.style.backgroundImage = `url("${tile.querySelector("video")!.poster}")`;
       poster.style.opacity = "1";
       root.querySelector("[data-title]")!.textContent = e.title;
-      root.querySelector("[data-note]")!.textContent = e.note;
-      root.querySelector<HTMLAnchorElement>("[data-page]")!.href = new URL(`playground/${slug}`, siteRoot).href;
       paint(tile.style.getPropertyValue("--ground") || "#0d0d0d");
       placeLogo();
       modal.hidden = false;
@@ -412,8 +398,6 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
     });
     root.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", close));
     document.addEventListener("keydown", (e) => e.key === "Escape" && close());
-    root.querySelector("[data-random]")!.addEventListener("click", () => host?.randomize());
-    root.querySelector("[data-reset]")!.addEventListener("click", () => host?.reset());
 
     const first = new URLSearchParams(location.search).get("open");
     const tile = first && tiles.find((t) => t.dataset.open === first);
@@ -603,36 +587,6 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
         stroke-linecap: round;
       }
     }
-    .play_caption {
-      /* its pills take the piece's ink as the title and note do, so they
-         still show over a light piece */
-      --text: var(--play-ink);
-      --background: var(--play-ground);
-      position: absolute;
-      left: var(--site-margin);
-      bottom: var(--space-5);
-      max-width: 24rem;
-      & p {
-        margin: 0;
-      }
-    }
-    .play_caption-title {
-      line-height: 1;
-    }
-    .play_caption-note {
-      margin-top: 0.7rem !important;
-      opacity: 0.7;
-    }
-    /* the invitation, in full ink, over the buttons */
-    .play_caption-hint {
-      margin-top: 0.5rem !important;
-    }
-    .play_caption-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-      margin-top: var(--space-3) !important;
-    }
     /* the Params panel on the page, under the close */
     html.is-playing .ksp {
       z-index: 70 !important;
@@ -645,8 +599,6 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
         left: var(--site-margin) !important;
         width: auto !important;
         max-height: 42svh;
-        /* stacked over the caption rather than on it, so its label and buttons show */
-        bottom: calc(var(--space-5) + var(--play-caption-h, 8.5rem) + var(--space-3)) !important;
       }
     }
   }

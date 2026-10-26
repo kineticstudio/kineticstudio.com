@@ -701,6 +701,12 @@
     "ground": "#000000",
     "video": true
   },
+  "exp-circle-snake": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#f1e9dc",
+    "video": true
+  },
   "exp-ease-grid": {
     "w": 1280,
     "h": 800,
