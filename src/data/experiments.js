@@ -25,7 +25,9 @@ export const EXPERIMENTS = [
   /* Oct 25: the Playground leans on the client work (Hunter: "I want it to look all like fun
      client work, like the Counsel Studio button hover effect"), each piece ported from its
      prototype in the Creative Studio (or the older AI Fun folder) onto the standard Params.
-     `from` is whose work it came from. Their themes are set once each piece is built. */
+     `from` is whose work it came from, for us only: the page never names the client or shows
+     their logo (Hunter, Oct 25: "for any of these, we remove logos and names of what client it
+     was for"). */
   { slug: "thread-button", kind: "live", theme: "light", title: "Thread button", note: "Coloured blocks sweep through the button and settle as its new colour.", media: "exp-thread-button", from: "Counsel" },
   { slug: "thread-weave", kind: "live", theme: "dark", title: "Thread weave", note: "A woven thread whose stitches stretch open into cards.", media: "exp-thread-weave", from: "Counsel" },
   { slug: "orb-tabs", kind: "live", theme: "light", title: "Orb tabs", note: "A glass lens that travels between coloured tabs.", media: "exp-orb-tabs", from: "Demi" },
@@ -44,7 +46,7 @@ export const EXPERIMENTS = [
   { slug: "glyph-morph", kind: "live", ground: "colour.paper", theme: "light", title: "Glyph morph", note: "Notation characters on a mirrored grid, building one object after another.", media: "exp-glyph-morph", from: "Natural Capital" },
   { slug: "hero-ribbon", kind: "live", theme: "light", title: "Hero ribbon", note: "Rambling speech goes in, a clean tape of text comes out.", media: "exp-hero-ribbon", from: "Wispr Flow" },
   { slug: "prism-mark", kind: "live", theme: "dark", title: "Prism", note: "A packet of light split into colour by a turning glass prism.", media: "exp-prism-mark", from: "Rime" },
-  { slug: "cloud-logo-live", kind: "live", ground: ["colour.skyTop", "colour.skyBottom"], theme: "light", title: "Cloud logo", note: "A logo grown from weather, live.", media: "exp-cloud-logo-live", from: "Rylo" },
+  { slug: "cloud-logo-live", kind: "live", ground: ["colour.skyTop", "colour.skyBottom"], theme: "light", title: "Cloud generator", note: "Type a word or drop in a logo, and the sky grows it in cloud.", media: "exp-cloud-logo-live", from: "Rylo" },
   { slug: "extra-trace", kind: "live", theme: "dark", title: "Rise", note: "A line climbs a field of dots and lifts the ones it picks.", media: "exp-extra-trace", from: "Trace" },
 
   { slug: "kinetic-lines", kind: "live", theme: "dark", title: "Kinetic lines", note: "The mark's five lines as a field that bends.", media: "exp-kinetic-lines", fallback: "play-kinetic-lines" },
@@ -59,20 +61,14 @@ export const EXPERIMENTS = [
   { slug: "bloom-orb", kind: "live", theme: "dark", title: "Bloom orb", note: "A soft light that breathes.", media: "exp-bloom-orb", fallback: "play-stack-chroma" },
   { slug: "ease-grid", kind: "live", theme: "dark", title: "Ease grid", note: "Timing curves, felt instead of graphed.", media: "exp-ease-grid", fallback: "play-fade-ease" },
 
-  { slug: "cloud-logo", kind: "clip", title: "Cloud logo generator", note: "A logo, grown from weather.", media: "play-cloud-gen", from: "Rylo" },
+  // clips that showed a client's logo, product or copy in frame are out (Oct 25)
   { slug: "stacked-cards", kind: "clip", title: "Stacked cards", note: "A wallet of cards, fanned in 3D.", media: "play-cube", from: "Superlink" },
   { slug: "eclipse", kind: "clip", title: "Eclipse", note: "Colour slipping out from behind a disc.", media: "play-stack-chroma", from: "Motion study" },
-  { slug: "drop-shadow", kind: "clip", title: "Drop shadow", note: "A design panel, live on the page.", media: "play-shadow", from: "HeyGen" },
-  { slug: "particle-type", kind: "clip", title: "Particle bloom", note: "A headline held in a cloud of points.", media: "play-sword", from: "Motion study" },
   { slug: "coffee-bar", kind: "clip", title: "Order counter", note: "An isometric bar that takes your order.", media: "play-dripos", from: "Dripos" },
-  { slug: "goat", kind: "clip", title: "Goat ears", note: "Ears that flop when you scroll.", media: "play-goat", from: "Happy Goat" },
   { slug: "fan-cursor", kind: "clip", title: "Fan cursor", note: "A fan of points that follows you.", media: "play-cursor", from: "Motion study" },
   { slug: "blocks", kind: "clip", title: "Building blocks", note: "Steps that assemble as you read.", media: "play-jiko", from: "Jiko" },
-  { slug: "breakout", kind: "clip", title: "Breakout toast", note: "An invitation that glows its way in.", media: "play-toast", from: "Sidebar" },
   { slug: "timer", kind: "clip", title: "Timer glow", note: "Time, lit from the edge.", media: "play-timer", from: "Sidebar" },
   { slug: "smart-animate", kind: "clip", title: "Smart animate", note: "A heart that refuses to sit still.", media: "play-smart-animate", from: "Figma prototype" },
-  { slug: "coins", kind: "clip", title: "59FIFTY coins", note: "Collectable coins, spun in 3D.", media: "new-era-coins", from: "New Era" },
   { slug: "kinetic-shader", kind: "clip", title: "Kinetic shader", note: "The wordmark, through glass.", media: "play-kinetic-shader", from: "Kinetic" },
-  { slug: "fluid-mark", kind: "clip", title: "Fluid mark", note: "A mark poured, not drawn.", media: "play-fluidstack", from: "Fluidstack" },
   { slug: "fade-ease", kind: "clip", title: "Fade and ease", note: "How a thing arrives.", media: "play-fade-ease", from: "Motion study" },
 ];

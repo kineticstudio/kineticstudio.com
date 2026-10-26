@@ -82,7 +82,6 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
           <div class="play_caption">
             <p class="play_caption-title text-style-h5" data-title />
             <p class="play_caption-note text-style-label" data-note />
-            <p class="play_caption-from pill is-chip" data-from hidden />
             {/* Hunter, Oct 25: "People don't know what params are, so maybe
                 we have a little label" */}
             <p class="play_caption-hint text-style-label">Feel free to play around with the parameters.</p>
@@ -348,9 +347,6 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
       poster.style.opacity = "1";
       root.querySelector("[data-title]")!.textContent = e.title;
       root.querySelector("[data-note]")!.textContent = e.note;
-      const by = root.querySelector<HTMLElement>("[data-from]")!;
-      by.textContent = ("from" in e && e.from) || "";
-      by.hidden = !by.textContent;
       root.querySelector<HTMLAnchorElement>("[data-page]")!.href = new URL(`playground/${slug}`, siteRoot).href;
       paint(tile.style.getPropertyValue("--ground") || "#0d0d0d");
       placeLogo();
@@ -622,13 +618,6 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
     }
     .play_caption-title {
       line-height: 1;
-    }
-    .play_caption-from {
-      margin-top: 0.6rem !important;
-      pointer-events: none;
-      &[hidden] {
-        display: none;
-      }
     }
     .play_caption-note {
       margin-top: 0.7rem !important;

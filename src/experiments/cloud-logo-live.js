@@ -21,7 +21,10 @@ export const params = {
     shadow: [94, 0, 150, 1],
   },
   marks: {
-    mark: { type: "select", options: ["All", "Bolt", "Heart", "Star", "Moon", "Smile", "Spark", "Drop", "Arrow"] },
+    // Oct 25: "make sure we have the cloud generator": your own word, or your own logo
+    // (Upload, or drop an image on the sky), grown into cloud as the tool did
+    mark: { type: "select", options: ["All", "Your word", "Your logo", "Bolt", "Heart", "Star", "Moon", "Smile", "Spark", "Drop", "Arrow"] },
+    word: "Kinetic",
     size: [0.4, 0.2, 0.75, 0.01],
     speed: [1, 0, 3, 0.05],
   },
@@ -30,8 +33,35 @@ export const params = {
     skyBottom: "#879fb7",
     cloud: "#ffffff",
   },
+  upload: { type: "action", label: "Upload a logo" },
   clear: { type: "action", label: "Clear sky" },
 };
+
+/* A logo as cloud wants a silhouette: the picture's own transparency when it
+   has some, or else everything that differs from its corners' colour (a dark
+   mark on a light card, or the reverse), as white on clear. */
+function silhouette(img) {
+  const max = 640, r = Math.min(1, max / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+  const w = Math.max(1, Math.round((img.naturalWidth || img.width) * r)), h = Math.max(1, Math.round((img.naturalHeight || img.height) * r));
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  const g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(img, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h), px = d.data;
+  let clear = 0;
+  for (let i = 3; i < px.length; i += 4) if (px[i] < 200) clear++;
+  const useAlpha = clear > (w * h) / 20;
+  const corner = [0, (w - 1) * 4, (h - 1) * w * 4, ((h - 1) * w + w - 1) * 4].map((i) => [px[i], px[i + 1], px[i + 2]]);
+  const bg = [0, 1, 2].map((k) => corner.reduce((a, c2) => a + c2[k], 0) / 4);
+  for (let i = 0; i < px.length; i += 4) {
+    const a = useAlpha ? px[i + 3] : Math.min(255, Math.max(0, (Math.hypot(px[i] - bg[0], px[i + 1] - bg[1], px[i + 2] - bg[2]) - 40) * 4));
+    px[i] = px[i + 1] = px[i + 2] = 255;
+    px[i + 3] = a;
+  }
+  g.putImageData(d, 0, 0);
+  return { href: c.toDataURL("image/png"), w, h };
+}
 
 const NS = "http://www.w3.org/2000/svg";
 const circle = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0z`;
@@ -118,12 +148,18 @@ export function mount(host, values, ctx = {}) {
   stage.append(puffLayer);
   host.append(root);
 
+  // the word is set in the site's display face, as the headlines are
+  const face = getComputedStyle(document.documentElement).getPropertyValue("--display-family").trim() || "sans-serif";
   const makeMark = () => {
-    const svg = el("svg", { viewBox: "0 0 24 24", style: "position:absolute;left:0;top:0;overflow:visible;will-change:transform" });
+    const svg = el("svg", { viewBox: "0 0 24 24", preserveAspectRatio: "xMidYMid meet", style: "position:absolute;left:0;top:0;overflow:visible;will-change:transform" });
     const path = el("path", { "fill-rule": "evenodd" }, svg);
+    const text = el("text", { x: "0", y: "0", "text-anchor": "middle", "dominant-baseline": "central", "font-size": "100", style: `font-family:${face};text-transform:uppercase;display:none` }, svg);
+    const image = el("image", { x: "0", y: "0", style: "display:none" }, svg);
     stage.append(svg);
-    return { svg, path, name: null, slot: null };
+    return { svg, path, text, image, name: null, slot: null };
   };
+  let logo = null; // an uploaded logo's silhouette: { href, w, h }
+  let picked = null; // "Your logo" right after an upload, until the Mark dial moves
   const pool = [];
   const held = [makeMark(), makeMark()]; // the one on show and the one leaving
 
@@ -131,14 +167,18 @@ export function mount(host, values, ctx = {}) {
   let onScreen = true, tabVisible = !document.hidden;
   let current = null, leaving = null, swap = 1; // the hold's cross-fade, 0..1
 
-  const mode = () => (v["marks.mark"] === "All" ? "drift" : "hold");
+  const markName = () => picked ?? v["marks.mark"];
+  const mode = () => (markName() === "All" ? "drift" : "hold");
 
   function paintSky() {
     const top = v["colour.skyTop"], bottom = v["colour.skyBottom"];
     // the tool's horizon: a stop a shade under the bottom colour, as #708aa4 sits under #879fb7
     const mid = toHex(hex2(bottom).map((c, i) => c - [23, 21, 19][i]));
     sky.style.background = `linear-gradient(180deg, ${top} 29%, ${mid} 87%, ${bottom} 100%)`;
-    for (const m of [...pool, ...held]) m.path.setAttribute("fill", v["colour.cloud"]);
+    for (const m of [...pool, ...held]) {
+      m.path.setAttribute("fill", v["colour.cloud"]);
+      m.text?.setAttribute("fill", v["colour.cloud"]);
+    }
     for (const p of puffs) p.el.style.background = v["colour.cloud"];
   }
 
@@ -172,10 +212,29 @@ export function mount(host, values, ctx = {}) {
     m.svg.style.display = opacity > 0.001 ? "" : "none";
   }
   const setMark = (m, name) => {
-    if (m.name === name) return;
-    m.name = name;
-    m.path.setAttribute("d", MARKS[name]);
-    m.path.setAttribute("fill", v["colour.cloud"]);
+    const key = name === "Your word" ? `word:${v["marks.word"]}` : name === "Your logo" ? `logo:${logo?.href.length ?? 0}` : name;
+    if (m.name === key) return;
+    m.name = key;
+    const word = name === "Your word", pic = name === "Your logo" && logo;
+    m.path.style.display = word || pic ? "none" : "";
+    m.text.style.display = word ? "" : "none";
+    m.image.style.display = pic ? "" : "none";
+    if (word) {
+      m.text.textContent = (v["marks.word"] || "Kinetic").slice(0, 18);
+      m.text.setAttribute("fill", v["colour.cloud"]);
+      // the box fits the word, so a long word sits as wide as a short one
+      const n = m.text.textContent.length;
+      m.svg.setAttribute("viewBox", `${-n * 30} -70 ${n * 60} 140`);
+    } else if (pic) {
+      m.image.setAttribute("href", logo.href);
+      m.image.setAttribute("width", logo.w);
+      m.image.setAttribute("height", logo.h);
+      m.svg.setAttribute("viewBox", `0 0 ${logo.w} ${logo.h}`);
+    } else {
+      m.svg.setAttribute("viewBox", "0 0 24 24");
+      m.path.setAttribute("d", MARKS[name] ?? MARKS.Bolt);
+      m.path.setAttribute("fill", v["colour.cloud"]);
+    }
   };
 
   /* The parade: slots a mark's width and a gap apart, each keeping its mark as it travels. */
@@ -209,17 +268,18 @@ export function mount(host, values, ctx = {}) {
       current = leaving = null;
       return;
     }
-    const name = v["marks.mark"];
-    if (current === name) return;
+    const name = markName();
+    const key = name === "Your word" ? `word:${v["marks.word"]}` : name === "Your logo" ? `logo:${logo?.href.length ?? 0}` : name;
+    if (current === key) return;
     // the old mark fades out of the cloud as the new one fades in
     if (current) {
       [held[0], held[1]] = [held[1], held[0]];
       leaving = current;
       swap = reduced ? 1 : 0;
     } else swap = 1;
-    current = name;
+    current = key;
     setMark(held[0], name);
-    if (leaving) setMark(held[1], leaving);
+    if (leaving) setMark(held[1], leaving.split(":")[0] === "word" ? "Your word" : leaving.split(":")[0] === "logo" ? "Your logo" : leaving);
   }
 
   /* Painted cloud, from the tool's sketch mode: puffs of soft rounded
@@ -276,6 +336,31 @@ export function mount(host, values, ctx = {}) {
     if (!raf) draw();
   };
   const onUp = () => (drawing = false);
+  const file = document.createElement("input");
+  file.type = "file";
+  file.accept = "image/*,.svg";
+  file.style.display = "none";
+  root.append(file);
+  const useFile = (f) => {
+    if (!f || !/^image\//.test(f.type)) return;
+    const img = new Image();
+    img.onload = () => {
+      logo = silhouette(img);
+      URL.revokeObjectURL(img.src);
+      picked = "Your logo";
+      choose();
+      draw();
+    };
+    img.src = URL.createObjectURL(f);
+  };
+  file.addEventListener("change", () => useFile(file.files?.[0]));
+  const onDragOver = (e) => e.preventDefault();
+  const onDrop = (e) => {
+    e.preventDefault();
+    useFile(e.dataTransfer?.files?.[0]);
+  };
+  root.addEventListener("dragover", onDragOver);
+  root.addEventListener("drop", onDrop);
   root.addEventListener("pointerdown", onDown);
   root.addEventListener("pointermove", onMove);
   root.addEventListener("pointerup", onUp);
@@ -352,14 +437,16 @@ export function mount(host, values, ctx = {}) {
   sync();
 
   return {
-    update(values) {
+    update(values, path) {
       Object.assign(v, values);
+      if (path === "marks.mark" || path == null) picked = null;
       paintSky();
       resize();
       choose();
       draw();
     },
     action(name) {
+      if (name === "upload") return file.click();
       if (name !== "clear") return;
       for (const p of puffs) p.el.remove();
       puffs.length = 0;
@@ -375,6 +462,8 @@ export function mount(host, values, ctx = {}) {
       root.removeEventListener("pointermove", onMove);
       root.removeEventListener("pointerup", onUp);
       root.removeEventListener("pointercancel", onUp);
+      root.removeEventListener("dragover", onDragOver);
+      root.removeEventListener("drop", onDrop);
       root.remove();
     },
   };
