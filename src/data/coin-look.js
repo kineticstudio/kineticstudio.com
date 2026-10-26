@@ -31,7 +31,8 @@ export const COIN_LOOK = {
     edge: { round: 0.14, crown: 0.55, thick: 0.22 },
     // the light round the edge: turns a second, how bright and how tight its shine,
     // how much the matcap turns with it, how far each pill lags the one before (radians)
-    light: { orbit: 0.1, highlight: 1.6, tight: 7, spin: 0.35, lag: 0.7 },
+    // (half the speed it was, a lap in 20 s: Hunter, Oct 25, "just make it about half the speed")
+    light: { orbit: 0.05, highlight: 1.6, tight: 7, spin: 0.35, lag: 0.7 },
     // bloom on what is over the threshold, how wide, how far it spills onto the paper
     // (no lens flares: Hunter, Oct 25, "They don't look realistic")
     glow: { bloom: 0.5, threshold: 1.5, radius: 0.6, spill: 0.5 },
@@ -83,7 +84,7 @@ export const COIN_LOOK = {
     studio: { exposure: 1, reflect: 1, room: 4, box: 5, key: 5, sides: 3, front: 2.4, flag: 0.85, flagAt: 0.055, floor: 1.2, paper: 1.2, turn: 0, shadow: 0.5 },
   },
   // how they move: degrees of slow drift, how fast, how far they lean toward the pointer
-  motion: { drift: 1.6, speed: 0.35, lean: 3 },
+  motion: { drift: 1.6, speed: 0.18, lean: 3 },
   // drawn at this many times the screen's pixels (capped at 3)
   render: { quality: 1.25 },
 };
