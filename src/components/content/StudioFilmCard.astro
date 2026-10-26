@@ -205,17 +205,14 @@ const { render = true, class: className } = Astro.props;
     .film-card_wrap {
       container-type: inline-size;
     }
-    /* the lockup: the mark and the KINETIC pill, then STUDIO TOOL at the word's height */
+    /* the lockup: the mark with STUDIO TOOL in its pill (MarkLockup), the mark as tall as the pill, as
+       in the logo (an old rule set the mark to 1.6 times it, so the pill ran into its curves: Hunter,
+       Oct 26, "this logo is broken. make the mark smaller") */
     .film-card_brand {
       display: flex;
       align-items: center;
       gap: 0.5em;
       font-size: clamp(0.85rem, 2.6cqw, 1.25rem);
-      & .film-card_logo svg {
-        display: block;
-        height: 1.6em;
-        width: auto;
-      }
     }
     .film-card_word {
       font-family: var(--display-family);
