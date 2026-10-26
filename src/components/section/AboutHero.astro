@@ -103,7 +103,17 @@ const LINE = [
   document.querySelectorAll<HTMLElement>("[data-coins]").forEach(async (root) => {
     const canvas = root.querySelector<HTMLCanvasElement>("canvas")!;
     const slots = [...root.querySelectorAll<HTMLElement>(".about-hero_pill")];
-    if (!slots.length || !canvas.getContext("webgl2")) return;
+    /* The load (Hunter, Oct 25: "It first shows the pill without the chrome coins, and then the
+       chrome coins kind of snap in"): the line waits for the coins and then rises with them in
+       it (they are drawn over their slots, so they rise with the words). If they are not made
+       in time the line rises with the drawn pills, and the coins fade up over them when they are. */
+    const go = () => root.classList.add("is-go");
+    const drawn = () => {
+      root.classList.add("no-coins");
+      go();
+    };
+    if (!slots.length || !canvas.getContext("webgl2")) return drawn();
+    const late = setTimeout(drawn, 1800);
     // the engine comes down while the fonts load, not after (Hunter, Oct 25: the pills
     // "kind of take forever to load"); the words need the display face to be cut
     const engine = import("@/scripts/coin-pills.js");
@@ -111,10 +121,16 @@ const LINE = [
     const { mountCoins } = await engine;
     const L = COIN_LOOK as unknown as Record<string, any>;
     const coins = mountCoins(canvas, slots, L, { font: getComputedStyle(slots[0]).fontFamily });
-    if (!coins) return;
+    if (!coins) {
+      clearTimeout(late);
+      return drawn();
+    }
     // the pills take the words' place once all three are made
     await coins.ready;
+    clearTimeout(late);
+    root.classList.remove("no-coins");
     root.classList.add("has-coins");
+    go();
 
     const key = () => String(L.design).toLowerCase();
     // where a dial's path lives in COIN_LOOK: motion and render are shared, the rest the design's
@@ -204,19 +220,25 @@ const LINE = [
       max-width: none;
       font-size: clamp(2.9rem, 7.2vw, 8.75rem);
       pointer-events: none;
+      /* nothing shows until all three are made, then it fades up as the pills rise */
+      opacity: 0;
+      transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.12s;
     }
     .about-hero_line.has-coins .about-hero_coins {
-      animation: about-coins-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      opacity: 1;
     }
-    @keyframes about-coins-in {
-      from {
-        opacity: 0;
-      }
-    }
-    /* the coins take the pills' place; the words stay for screen readers and the layout */
-    .about-hero_line.has-coins .about-hero_pill {
+    /* the coins take the pills' place; the words stay for screen readers and the layout. While
+       they are coming the slots are empty (the line has not risen yet); the drawn pills show only
+       if the coins can't be made, or are late, or there is no script */
+    .about-hero_line:not(.no-coins) .about-hero_pill {
       color: transparent;
       border-color: transparent;
+    }
+    @media (scripting: none) {
+      .about-hero_line .about-hero_pill {
+        color: inherit;
+        border-color: currentColor;
+      }
     }
     .about-hero_title {
       display: flex;
@@ -228,14 +250,31 @@ const LINE = [
       font-size: clamp(2.9rem, 7.2vw, 8.75rem);
       line-height: 0.88;
     }
-    /* each part rises into place, one after another */
+    /* each part rises into place, one after another, once the coins are made (is-go); held
+       until then, or a few seconds at most if the script never runs */
     .about-hero_part {
       display: inline-block;
       white-space: nowrap;
       animation: about-rise 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
-      animation-delay: calc(0.12s + var(--i) * 0.045s);
+      animation-delay: calc(2.4s + var(--i) * 0.045s);
+    }
+    @media (scripting: none) {
+      .about-hero_part {
+        animation-delay: calc(0.12s + var(--i) * 0.045s);
+      }
+    }
+    /* (another name, so it starts from the beginning when the line goes) */
+    .about-hero_line.is-go .about-hero_part {
+      animation-name: about-rise-go;
+      animation-delay: calc(var(--i) * 0.045s);
     }
     @keyframes about-rise {
+      from {
+        opacity: 0;
+        translate: 0 0.35em;
+      }
+    }
+    @keyframes about-rise-go {
       from {
         opacity: 0;
         translate: 0 0.35em;
@@ -282,7 +321,8 @@ const LINE = [
       }
     }
     @media (prefers-reduced-motion: reduce) {
-      .about-hero_part {
+      .about-hero_part,
+      .about-hero_line.is-go .about-hero_part {
         animation: none;
       }
     }
