@@ -24,6 +24,8 @@ const next = live[(at + 1) % live.length];
         <a class="exp_back text-style-label" href="/playground">← Playground</a>
         <h1 class="exp_title text-style-h3">{e.title}</h1>
         <p class="exp_note text-style-label">{e.note}</p>
+        {/* whose work it came from (Oct 25: the Playground leans on the client work) */}
+        {"from" in e && e.from && <p class="exp_from pill is-chip">{e.from}</p>}
         {/* Hunter, Oct 25: "People don't know what params are, so maybe we
             have a little label" */}
         <p class="exp_hint text-style-label">Feel free to play around with the parameters.</p>
@@ -136,6 +138,10 @@ const next = live[(at + 1) % live.length];
     }
     .exp_title {
       margin: var(--space-3) 0 var(--space-2);
+    }
+    .exp_from {
+      margin: var(--space-3) 0 0;
+      pointer-events: none;
     }
     .exp_note {
       margin: 0;

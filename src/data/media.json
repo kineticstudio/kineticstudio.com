@@ -581,6 +581,126 @@
     "ground": "#141414",
     "video": true
   },
+  "exp-thread-button": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#f5faf4",
+    "video": true
+  },
+  "exp-thread-weave": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#111f42",
+    "video": true
+  },
+  "exp-orb-tabs": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#bdbdbd",
+    "video": true
+  },
+  "exp-object-stipple": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#f7efe2",
+    "video": true
+  },
+  "exp-supply-network": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#251204",
+    "video": true
+  },
+  "exp-topo-3d": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#0e130e",
+    "video": true
+  },
+  "exp-island": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#110e11",
+    "video": true
+  },
+  "exp-agent-orbs": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#fdfdf3",
+    "video": true
+  },
+  "exp-brushstrokes": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#478b9a",
+    "video": true
+  },
+  "exp-cosmos-bloom": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#425b69",
+    "video": true
+  },
+  "exp-cloud-shader": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#bec9c8",
+    "video": true
+  },
+  "exp-hatch-shadow": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#f0f1e9",
+    "video": true
+  },
+  "exp-ink-world": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#a5a5a5",
+    "video": true
+  },
+  "exp-glowing-arches": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#8a979f",
+    "video": true
+  },
+  "exp-hero-stars": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#f8f8f8",
+    "video": true
+  },
+  "exp-glyph-morph": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#e4e1d8",
+    "video": true
+  },
+  "exp-hero-ribbon": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#faffeb",
+    "video": true
+  },
+  "exp-prism-mark": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#2e2b24",
+    "video": true
+  },
+  "exp-cloud-logo-live": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#4b88c9",
+    "video": true
+  },
+  "exp-extra-trace": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#000000",
+    "video": true
+  },
   "exp-ease-grid": {
     "w": 1280,
     "h": 800,

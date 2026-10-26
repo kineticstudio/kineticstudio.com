@@ -24,6 +24,8 @@ const BASE = process.env.SITE ?? "http://localhost:8758";
 const { chromium } = await import(pathToFileURL(PW).href);
 
 const only = process.argv.slice(2);
+// seconds to wait before the clip starts, for pieces that open on an intro or load slowly
+const LEAD = { "ink-world": 8, "hero-ribbon": 10, island: 4, "glyph-morph": 3, "object-stipple": 3 };
 const todo = EXPERIMENTS.filter((e) => e.kind === "live" && (!only.length || only.includes(e.slug)));
 await fs.mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ args: ["--use-angle=metal", "--enable-gpu", "--ignore-gpu-blocklist"] });
@@ -33,11 +35,13 @@ for (const e of todo) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, recordVideo: { dir, size: { width: 1280, height: 800 } } });
   const page = await ctx.newPage();
   await page.goto(`${BASE}/lab/${e.slug}?bare`, { waitUntil: "networkidle" });
-  await page.waitForTimeout(7000);
+  // most pieces are alive within 2 s; a few open on an intro or a slow load
+  const lead = LEAD[e.slug] ?? 2;
+  await page.waitForTimeout((lead + 5) * 1000);
   await ctx.close();
   const [webm] = (await fs.readdir(dir)).filter((f) => f.endsWith(".webm"));
-  // Drop the first 2 s (page load), keep the next 5.
-  execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-ss", "2", "-t", "5", "-i", path.join(dir, webm), "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", path.join(OUT, `${e.slug}.mp4`)]);
+  // Drop the lead (page load, an intro), keep the next 5 s.
+  execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-ss", String(lead), "-t", "5", "-i", path.join(dir, webm), "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", path.join(OUT, `${e.slug}.mp4`)]);
   await fs.rm(dir, { recursive: true });
   console.log(`${e.slug} captured`);
 }
