@@ -19,24 +19,28 @@ const needs = ["Brand", "Website design", "Website development", "Product", "Lau
    little slots"): right away to 6 months in half weeks, starting at 6 months;
    the budget under it, fixed or monthly (Oct 25: "the ceiling of the budget go
    up to 150,000 ... monthly or fixed ... that will adjust the pricing"):
-   $10,000 to $150,000+ in $5,000 steps, or $5,000 to $25,000 a month in
-   $1,000 steps, starting at the bottom. */
+   $10,000 to $150,000+ in $5,000 steps, or $5,000 to $20,000 a month in
+   $1,000 steps. */
 // the same fine row of lines under both sliders, however many stops each has
 // (Oct 25: "i want more vertical lines for each of these, they should also be the same")
 const TICKS = 81;
 const money = (k: number) => `$${(k * 1000).toLocaleString("en-US")}`;
 const budgets = {
   fixed: Array.from({ length: 29 }, (_, i) => (i === 28 ? "$150,000+" : money(10 + i * 5))),
-  // Oct 25: "a minimum of 5,000 per month and a maximum of 25,000 per month"
-  monthly: Array.from({ length: 21 }, (_, i) => `${money(5 + i)} a month`),
+  // Oct 29: "the budget monthly is 5k to 20k. sitting at 10k by default"
+  monthly: Array.from({ length: 16 }, (_, i) => `${money(5 + i)} a month`),
 };
-const timings = Array.from({ length: 53 }, (_, i) => {
-  const days = i * 3.5, weeks = Math.round(days / 7);
-  if (i === 0) return "Right away";
-  if (weeks < 2) return "In a week";
-  if (weeks < 9) return `In ${weeks} weeks`;
+// where each kind sits until the slider is moved: $10,000 fixed, $10,000 a month
+const budgetStarts = { fixed: 0, monthly: 5 };
+// Oct 29: "let's make the whole be a range from 1 week to 3 months, then the title is 'need to launch in...'",
+// "the time slider is sitting at 3 weeks by default": a week to 13 weeks in half weeks, read on from the title
+// ("Need to launch in" 3 weeks)
+const timings = Array.from({ length: 25 }, (_, i) => {
+  const days = 7 + i * 3.5, weeks = Math.round(days / 7);
+  if (weeks < 2) return "1 week";
+  if (weeks < 9) return `${weeks} weeks`;
   const months = Math.round((days / 30.44) * 2) / 2;
-  return `In ${months % 1 ? `${Math.floor(months)} and a half` : months} months`;
+  return `${months % 1 ? `${Math.floor(months)} and a half` : months} months`;
 });
 ---
 
@@ -97,10 +101,10 @@ const timings = Array.from({ length: 53 }, (_, i) => {
 
         <div class="contact_stack">
           {[
-            { name: "when", label: "Timing", stops: timings, start: timings.length - 1 },
-            { name: "budget", label: "Budget", stops: budgets.fixed, start: 0, kinds: budgets },
+            { name: "when", label: "Need to launch in…", stops: timings, start: 4 },
+            { name: "budget", label: "Budget", stops: budgets.fixed, start: budgetStarts.fixed, kinds: budgets, starts: budgetStarts },
           ].map((f) => (
-            <div class="contact_field contact_slider" data-slider data-stops={JSON.stringify(f.stops)} data-kinds={f.kinds ? JSON.stringify(f.kinds) : undefined}>
+            <div class="contact_field contact_slider" data-slider data-stops={JSON.stringify(f.stops)} data-kinds={f.kinds ? JSON.stringify(f.kinds) : undefined} data-starts={f.starts ? JSON.stringify(f.starts) : undefined}>
               <span class="contact_slider-head">
                 <span class="text-style-label" id={`contact-${f.name}`}>{f.label}</span>
                 {f.kinds && (
@@ -124,7 +128,7 @@ const timings = Array.from({ length: 53 }, (_, i) => {
         <label class="contact_field" data-magnet>
           <span class="text-style-label">The project</span>
           <span class="contact_control">
-            <textarea name="message" rows="4" placeholder="What you're building, and what success looks like." />
+            <textarea name="message" rows="4" placeholder="Tell me about what you're looking to build…" />
             <svg class="contact_line" aria-hidden="true" />
           </span>
         </label>
@@ -331,15 +335,22 @@ const timings = Array.from({ length: 53 }, (_, i) => {
         }
         if (!raf) raf = requestAnimationFrame(glide);
       };
-      range.addEventListener("input", read);
+      // moved by hand: from then on a change of kind keeps the pill's place along the line
+      let moved = false;
+      range.addEventListener("input", () => {
+        moved = true;
+        read();
+      });
       // the ring round the pill only for the keys, not after a drag
       range.addEventListener("keydown", () => el.classList.add("is-keyed"));
       range.addEventListener("pointerdown", () => el.classList.remove("is-keyed"));
       thumb.style.visibility = "visible";
       place();
 
-      // the budget, fixed or monthly: its stops change and the pill keeps its place along the line
+      // the budget, fixed or monthly: its stops change; untouched, it sits at that kind's own start,
+      // once moved, the pill keeps its place along the line
       const kinds = el.dataset.kinds ? (JSON.parse(el.dataset.kinds) as Record<string, string[]>) : null;
+      const starts = el.dataset.starts ? (JSON.parse(el.dataset.starts) as Record<string, number>) : {};
       el.querySelectorAll<HTMLButtonElement>("[data-kind]").forEach((b) => {
         b.addEventListener("click", () => {
           if (!kinds || b.getAttribute("aria-pressed") === "true") return;
@@ -348,7 +359,7 @@ const timings = Array.from({ length: 53 }, (_, i) => {
           stops = kinds[b.dataset.kind!];
           last = stops.length - 1;
           range.max = String(last);
-          range.value = String(Math.round(share * last));
+          range.value = String(moved || starts[b.dataset.kind!] == null ? Math.round(share * last) : starts[b.dataset.kind!]);
           shown = Number(range.value);
           said = shown;
           read();
@@ -374,7 +385,7 @@ const timings = Array.from({ length: 53 }, (_, i) => {
         const body = [
           `What: ${what}`,
           `Budget: ${data.get("budget") || "Not said"}`,
-          `Timing: ${data.get("when") || "Not said"}`,
+          `Launch in: ${data.get("when") || "Not said"}`,
           `Company: ${data.get("company") || ""}`,
           `Website: ${data.get("site") || ""}`,
           "",
@@ -398,7 +409,7 @@ const timings = Array.from({ length: 53 }, (_, i) => {
       send.set("Website", String(data.get("site") || ""));
       send.set("Looking to create", what);
       send.set("Budget", String(data.get("budget") || "Not said"));
-      send.set("Timing", String(data.get("when") || "Not said"));
+      send.set("Launch in", String(data.get("when") || "Not said"));
       send.set("The project", String(data.get("message") || ""));
       if ((form.querySelector("[name=botcheck]") as HTMLInputElement).checked) send.set("botcheck", "on");
       const button = form.querySelector<HTMLButtonElement>(".contact_submit")!;
