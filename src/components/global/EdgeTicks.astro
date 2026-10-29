@@ -5,15 +5,17 @@
 interface Props {
   /** Set to `false` to omit the component. */
   render?: boolean;
+  /** The left edge's ticks (off on the homepage, Hunter, Oct 29: "remove the hatch lines on the left-hand side of the home page"). */
+  left?: boolean;
 }
 
-const { render = true } = Astro.props;
+const { render = true, left = true } = Astro.props;
 ---
 
 {
   render && (
     <>
-      <div class="ticks_wrap is-left" aria-hidden="true" />
+      {left && <div class="ticks_wrap is-left" aria-hidden="true" />}
       <div class="ticks_wrap is-right" aria-hidden="true" />
     </>
   )

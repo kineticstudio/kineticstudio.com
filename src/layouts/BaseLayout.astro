@@ -33,7 +33,7 @@ const { theme = "dark", logoHidden = false, footer = true, ...seo } = Astro.prop
   <body>
     <SkipLink />
     <Nav logoHidden={logoHidden} />
-    <EdgeTicks />
+    <EdgeTicks left={Astro.url.pathname !== "/"} />
     <main id="main" tabindex="-1">
       <slot />
     </main>

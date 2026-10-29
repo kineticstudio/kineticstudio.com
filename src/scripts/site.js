@@ -246,8 +246,8 @@ console.log(
 
 /* ---- button hovers ------------------------------------------------- */
 
-// every text-only button gets the rolling label (styles/hover.css)
-const ROLL = ".nav_link, .nav_contact, .contact_submit, .exp_btn, .work-index_view, .work-index_chip, .play_caption-actions > *, .footer_link, .copy-email_button";
+// every text-only button gets the rolling label (styles/hover.css); the nav's links lean toward the pill instead (Nav.astro)
+const ROLL = ".nav_contact,.contact_submit, .exp_btn, .work-index_view, .work-index_chip, .play_caption-actions > *, .footer_link, .copy-email_button";
 
 /** @param {ParentNode} [root] */
 export function rollLabels(root = document) {

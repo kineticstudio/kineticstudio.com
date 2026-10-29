@@ -42,6 +42,16 @@ export function morph(d) {
   };
 }
 
+/** The mark's weight: a straight bar's width (the narrowest stripe at its top), in the logo's units. The pill's
+    line is drawn at this, so the pill and the mark are one weight (Hunter, Oct 29: "We need to be more careful
+    that the pill is the same weight as the mark"; the Figma stroke, 18.9, is 7% heavier than a bar, 17.64). */
+export function barWidth(ds) {
+  return Math.min(...ds.map((d) => {
+    const t = tokens(d);
+    return t[t.indexOf("H") + 1] - t[1];
+  }));
+}
+
 /* The five stripes together. Straightening each arc on its own keeps its
    width at the top, and the outer arcs are widest there, so the last line
    came out twice as heavy as the first (Hunter, Oct 23: "the last one is

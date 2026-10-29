@@ -1,7 +1,7 @@
 ---
 import logoRaw from "@/assets/brand/logo.svg?raw";
 import { SITE_NAME } from "@/consts.ts";
-import { morphAll } from "@/scripts/mark.js";
+import { barWidth, morphAll } from "@/scripts/mark.js";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -31,7 +31,8 @@ const pillVars = [
   `--pill-top:${((n("y") - sw / 2) / vbH) * 100}%`,
   `--pill-w:${((n("width") + sw) / vbW) * 100}%`,
   `--pill-h-share:${(n("height") + sw) / vbH}`,
-  `--pill-line-share:${sw / vbH}`,
+  // the line is the mark's own weight, not the Figma stroke (see barWidth); the outer edge stays where it was
+  `--pill-line-share:${barWidth(stripes) / vbH}`,
 ].join(";");
 
 const path = Astro.url.pathname.replace(/\/$/, "") || "/";
@@ -48,7 +49,8 @@ const active =
 // already, so on its page the pill stays round KINETIC, as at home
 const pillHome = active === "home" || active === "contact";
 // run under the nav before the first paint (see the script's note on the move between pages)
-const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JSON.parse(sessionStorage.getItem("ks-pill-move")||"null");if(n&&m&&m.at&&m.slot===n.dataset.active&&Date.now()-m.t0<4e3&&!matchMedia("(prefers-reduced-motion: reduce)").matches){var p=n.querySelector(".nav_pill");p.style.transform="translate("+m.at.x+"px, "+m.at.y+"px)";p.style.width=m.at.w+"px";p.style.height=m.at.h+"px";n.classList.add("is-live")}}catch(e){}`;
+// (and the label the pill caught, still leaning toward where it came from: see the script's note on the hover)
+const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JSON.parse(sessionStorage.getItem("ks-pill-move")||"null");if(n&&m&&m.at&&m.slot===n.dataset.active&&Date.now()-m.t0<4e3&&!matchMedia("(prefers-reduced-motion: reduce)").matches){var p=n.querySelector(".nav_pill");p.style.transform="translate("+m.at.x+"px, "+m.at.y+"px)";p.style.width=m.at.w+"px";p.style.height=m.at.h+"px";n.classList.add("is-live");var L=m.lean;if(L){var u=Math.min(1,Math.max(0,(Date.now()-L.t0)/(L.d*1e3))),x=L.x*(1-u)*(1-u);if(m.slot==="home"){var s=n.querySelector(".nav_logo-svg");n.querySelector("[data-pill-home]").style.translate=x+"px 0";n.querySelector(".nav_word").setAttribute("transform","translate("+x*s.viewBox.baseVal.width/s.getBoundingClientRect().width+" 0)")}else n.querySelector('.nav_link[data-slot="'+m.slot+'"]').style.translate=x+"px 0"}}}catch(e){}`;
 ---
 
 {
@@ -57,7 +59,7 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
       <a class="nav_logo" href="/" aria-label={SITE_NAME} aria-current={active === "home" ? "page" : undefined} data-slot="home">
         <svg class="nav_logo-svg" viewBox={`0 0 ${vbW} ${vbH}`} fill="none" aria-hidden="true">
           {stripes.map((d, i) => <path class="nav_stripe" d={pillHome ? d : straight[i]} data-d={d} fill="currentColor" fill-rule="evenodd" />)}
-          <g fill="currentColor">{letters.map((d) => <path d={d} />)}</g>
+          <g class="nav_word" fill="currentColor">{letters.map((d) => <path d={d} />)}</g>
         </svg>
         <span class="nav_logo-pill" data-pill-home />
       </a>
@@ -103,8 +105,20 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
      at the link while the lines flipped curved, straight, curved. */
   const KEY = "ks-pill"; // where the pill was when the last page closed
   const MOVE = "ks-pill-move"; // a glide a click started: { from, slot, t0, dur, at }
-  const DUR = 0.55;
-  const LEAD = 300; // ms after the click that the page changes: the pill is about 98% there
+  /* The click's glide (Hunter, Oct 29). First: "make this feel a little bit like it comes in faster and
+     then settles in a little bit slower", which two springs did (most of the way in a blink, then a long
+     crawl); then: "now it feels like it goes really fast and then slows down. It goes really slow. It
+     should kind of be like a fluid movement. Make it happen a little faster." So one critically damped
+     spring: it leaves with a little speed (up to full in three frames, where expo.out jumped a fifth of
+     the way on its first), slows the whole way in one curve, and is home in about half a second. */
+  const DUR = 0.7;
+  const kinetic = (() => {
+    const TAU = 0.075; // s
+    const f = (u: number) => 1 - (1 + (0.7 * u * DUR) / TAU) * Math.exp((-u * DUR) / TAU);
+    const end = f(1);
+    return (u: number) => (u <= 0 ? 0 : u >= 1 ? 1 : f(u) / end);
+  })();
+  const LEAD = 300; // ms after the click that the page changes: the pill is about 93% there, the next page lands it
   const read = (k: string) => {
     try {
       return JSON.parse(sessionStorage.getItem(k) ?? "null");
@@ -168,24 +182,28 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
 
     // from where the pill is to the active place; the place is measured every
     // frame, so a late font or a shifting layout can't leave it off its link
+    // (a glide can also pick up partway along its curve, `u0` of the way in, from where it set off: the next page
+    // carries on the very glide the click started, so the pill never changes pace at the page change)
     let tween: gsap.core.Tween | null = null;
-    const glide = (duration: number, ease: string) => {
+    const glide = (duration: number, ease: string | ((u: number) => number), start = { ...box }, u0 = 0) => {
       tween?.kill();
-      const from = { ...box };
+      const from = { ...start };
       const goingHome = nav.dataset.active === "home" || nav.dataset.active === "contact";
-      let landed = false;
-      const p = { t: 0 };
+      const curve = typeof ease === "function" ? ease : gsap.parseEase(ease);
+      let landed = curve(u0) > 0.85;
+      const p = { u: u0 };
       tween = gsap.to(p, {
-        t: 1, duration, ease,
+        u: 1, duration: duration * (1 - u0), ease: "none",
         onUpdate() {
+          const k = curve(p.u);
           const to = rectNow();
-          box.x = from.x + (to.x - from.x) * p.t;
-          box.y = from.y + (to.y - from.y) * p.t;
-          box.w = from.w + (to.w - from.w) * p.t;
-          box.h = from.h + (to.h - from.h) * p.t;
+          box.x = from.x + (to.x - from.x) * k;
+          box.y = from.y + (to.y - from.y) * k;
+          box.w = from.w + (to.w - from.w) * k;
+          box.h = from.h + (to.h - from.h) * k;
           paint();
           // the pull lands as the lines snap into the mark
-          if (goingHome && !landed && p.t > 0.85) {
+          if (goingHome && !landed && k > 0.85) {
             landed = true;
             say("pull");
           }
@@ -197,6 +215,59 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
       });
     };
 
+    /* The hover (Hunter, Oct 29, in place of the rolling label): "it will just move that label closer
+       to where the pill is. If I click, the pill will come over, attach to the label, and then settle
+       into a spot. It'll all be very, very subtle." A label leans a few px toward the pill. On a click
+       it starts home at once, on the pill's own curve, while the pill flies at it (the glide aims at the
+       slot as it is each frame), so the pill lands on the label as both come to rest: one move, its
+       speed only ever falling (Hunter: "when the pill comes in, it needs to settle back to its resting
+       state"; caught first and settled after, it read as two). The settle runs on the clock from the
+       click, so the next page carries it on. At home the word leans and the mark stays put. */
+    const LEAN = 4; // px, at most
+    const SETTLE = DUR; // s, the label's way home from a click (on the pill's own curve, so they land together)
+    const word = nav.querySelector<SVGGElement>(".nav_word")!;
+    const svg = nav.querySelector<SVGSVGElement>(".nav_logo-svg")!;
+    const lean: Record<string, { x: number; tw: gsap.core.Tween | null }> = {};
+    const leanEl = (slot: string) => (slot === "home" ? home : nav.querySelector<HTMLElement>(`.nav_link[data-slot="${slot}"]`));
+    const applyLean = (slot: string, x: number) => {
+      const el = leanEl(slot);
+      if (!el) return;
+      el.style.translate = x ? `${x.toFixed(2)}px 0` : "";
+      if (slot === "home") {
+        const k = svg.viewBox.baseVal.width / (svg.getBoundingClientRect().width || 1);
+        x ? word.setAttribute("transform", `translate(${(x * k).toFixed(3)} 0)`) : word.removeAttribute("transform");
+      }
+    };
+    const leanTo = (slot: string, x: number, duration: number, ease: string, delay = 0) => {
+      const s = (lean[slot] ??= { x: 0, tw: null });
+      s.tw?.kill();
+      s.tw = gsap.to(s, {
+        x, duration, ease, delay,
+        onUpdate() {
+          applyLean(slot, s.x);
+          // the pill holds on to the label it caught (a glide already aims at it every frame)
+          if (!tween && nav.dataset.active === slot) set(rectNow());
+        },
+        onComplete() {
+          s.tw = null;
+        },
+      });
+    };
+    // a clicked label's way home: from x at the click (t0, ms) to 0 over d s, on the wall clock so a page can join it
+    type Settle = { x: number; t0: number; d: number };
+    const settle = (slot: string, { x, t0, d }: Settle) => {
+      const s = (lean[slot] ??= { x: 0, tw: null });
+      s.tw?.kill();
+      const p = { u: Math.min(1, Math.max(0, (Date.now() - t0) / (d * 1000))) };
+      const step = () => {
+        s.x = x * (1 - kinetic(p.u));
+        applyLean(slot, s.x);
+        if (!tween && nav.dataset.active === slot) set(rectNow());
+      };
+      step();
+      s.tw = gsap.to(p, { u: 1, duration: d * (1 - p.u), ease: "none", onUpdate: step, onComplete: () => (s.tw = null) });
+    };
+
     let move = read(MOVE);
     write(MOVE, null);
     const start = () => {
@@ -204,9 +275,14 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
       // a glide the last page started: on from where it left the pill
       if (move && move.at && move.slot === own && Date.now() - move.t0 < 4000 && !reduced) {
         set(move.at);
-        const left = Math.max(0, 1 - (Date.now() - move.t0) / (move.dur * 1000));
+        const u0 = (Date.now() - move.t0) / (move.dur * 1000);
+        const held: Settle | null = move.lean ?? null;
+        // the same curve from where it set off, if the page came in time; after a slow load, a short glide from where it waited
+        if (move.from && u0 < 0.98) glide(move.dur, kinetic, move.from, u0);
+        else glide(0.35, "power3.out");
         move = null;
-        glide(Math.max(0.35, DUR * left), "power3.out");
+        // the label it went for, on its way home (drawn where it was before the first paint)
+        if (held) settle(own, held);
         return;
       }
       move = null;
@@ -242,7 +318,7 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
        as usual. Any click on one of the site's own links marks the arrival as
        internal, so the homepage skips its intro and the pill does the pulling. */
     const ownLink = (a: HTMLAnchorElement) => a.origin === location.origin && !a.target && !a.hasAttribute("download");
-    let leaving: { from: typeof box; slot: string; t0: number; dur: number } | null = null;
+    let leaving: { from: typeof box; slot: string; t0: number; dur: number; lean: Settle | null } | null = null;
     let go = 0;
     document.addEventListener("click", (e) => {
       const a = (e.target as HTMLElement).closest<HTMLAnchorElement>("a[href]");
@@ -254,18 +330,38 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
       if (!slot || !nav.contains(a) || slot === nav.dataset.active || reduced) return;
       e.preventDefault();
       nav.dataset.active = slot;
-      leaving = { from: { ...box }, slot, t0: Date.now(), dur: DUR };
+      const t0 = Date.now();
+      // the label starts home as the pill sets off for it, so they come to rest together
+      const held = lean[slot]?.x ? { x: lean[slot].x, t0, d: SETTLE } : null;
+      leaving = { from: { ...box }, slot, t0, dur: DUR, lean: held };
       say("glide");
-      glide(DUR, "expo.out");
+      glide(DUR, kinetic);
+      if (held) settle(slot, held);
       clearTimeout(go);
       go = window.setTimeout(() => location.assign(a.href), LEAD);
     });
-    // the moment the page goes: where the pill is, for the next page to start from
+    // the moment the page goes: where the pill is (and its glide and its label's settle), for the next page to carry on
     const leave = () => {
       tween?.pause();
       write(KEY, box);
       if (leaving) write(MOVE, { ...leaving, at: { ...box } });
     };
+    // the lean on hover: toward the pill, a little more the further it is; back when the pointer goes
+    nav.querySelectorAll<HTMLElement>("a[data-slot]").forEach((a) => {
+      const slot = a.dataset.slot!;
+      if (slot === "contact") return;
+      a.addEventListener("pointerenter", (e) => {
+        if (reduced || e.pointerType !== "mouse" || slot === nav.dataset.active) return;
+        const r = leanEl(slot)!.getBoundingClientRect();
+        const dx = box.x + box.w / 2 - (r.left - (lean[slot]?.x ?? 0) + r.width / 2);
+        if (Math.abs(dx) < 1) return;
+        leanTo(slot, Math.sign(dx) * Math.min(LEAN, 1.5 + Math.abs(dx) * 0.02), 0.45, "power3.out");
+      });
+      a.addEventListener("pointerleave", () => {
+        if (slot === nav.dataset.active) return; // clicked: the pill has it, and they settle together
+        leanTo(slot, 0, 0.5, "power2.out");
+      });
+    });
     addEventListener("pageswap", leave);
     addEventListener("pagehide", leave);
     // back to this page from the back/forward cache: the pill comes home to its own place
@@ -274,6 +370,7 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
       clearTimeout(go);
       leaving = null;
       write(MOVE, null);
+      for (const slot in lean) leanTo(slot, 0, 0.3, "power2.out");
       if (nav.dataset.active === own && !tween) return set(rectNow());
       nav.dataset.active = own;
       glide(0.6, "expo.out");
@@ -304,7 +401,7 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
       /* the one pill size (base.css), which every button and tab takes too */
       --logo-h: var(--pill-logo-h);
       --pill-h: calc(var(--logo-h) * var(--pill-h-share, 0.99));
-      --pill-line: calc(var(--logo-h) * var(--pill-line-share, 0.094));
+      --pill-line: calc(var(--logo-h) * var(--pill-line-share, 0.0877));
       /* the links' pills are the logo's pill: one top line, one bottom line */
       --link-h: var(--pill-h);
       position: fixed;
@@ -376,7 +473,9 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
       left: 0;
       z-index: 1;
       box-sizing: border-box;
-      border: var(--pill-line) solid var(--text);
+      /* the line as an inset shadow, not a border: a border's width is rounded down to whole pixels (2.82 px
+         drew at 2, a quarter lighter than the mark), a shadow is drawn at its true width, as the drawn ring is */
+      box-shadow: inset 0 0 0 var(--pill-line) var(--text);
       border-radius: var(--radius-round);
       pointer-events: none;
       will-change: transform;

@@ -61,7 +61,8 @@
      tabs all stand the same (Hunter, Oct 25). src/styles/pill.css draws it. */
   --pill-logo-h: 1.875rem;
   --pill-height: calc(var(--pill-logo-h) * 0.9915);
-  --pill-stroke: calc(var(--pill-logo-h) * 0.094);
+  /* the mark's own weight: a bar of the logo, 17.64 of its 201 (Nav.astro, mark.js barWidth) */
+  --pill-stroke: calc(var(--pill-logo-h) * 0.0877);
   --pill-pad: calc(var(--pill-height) * 0.5);
   --pill-type: 1rem;
   --radius-media: 0.375rem;
