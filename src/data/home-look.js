@@ -17,8 +17,9 @@ export const HOME_LOOK = {
   // point, it scales down" (logo-intro.js pillPath): pillFor = s to its place, overshoot = logo units past it,
   // recoil = s from there back to its place, pillBounce = how far past the other way, a share of the
   // overshoot; collapseAt = s from the pill's far point that the lines let go; dockFor = the move into the nav's corner
+  // (clearance 30: the mark's own space round the pill, so the bent lines, cropped to the logo, are its arcs)
   intro: {
-    logo: 44, reach: 0.6, softness: 0.25, clearance: 16, response: 0.4, wobble: 0.38, ripple: 0.4,
+    logo: 44, reach: 0.6, softness: 0.25, clearance: 30, response: 0.4, wobble: 0.38, ripple: 0.4,
     riseFor: 0.6, riseSpread: 0.35, pillAt: 0.25, pillFor: 0.6, overshoot: 50, recoil: 0.5, pillBounce: 0.12, collapseAt: -0.2, collapseFor: 0.85, collapseSpread: 0, bounce: 0.2, dockLead: 0.5, dockFor: 1.15,
   },
   // a tile's 3D card under the pointer: tilt (degrees), lift, depth of the view,

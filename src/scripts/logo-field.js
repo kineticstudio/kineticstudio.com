@@ -27,7 +27,7 @@
 
      const f = createLogoField(canvas, settings)
      f.layout({ width, height, fieldLeft, fieldRight, logo: { left, top, unit }, strokes, lines?, keep? })
-     f.frame(dt, { body: { x, y, r }, rise: (i) => 0..1, collapse: (i) => 0..1, color, land: 0..1 })
+     f.frame(dt, { body: { x, y, r }, rise: (i) => 0..1, collapse: (i) => 0..1, color, land: 0..1, shift: (i) => px })
      f.count()                          // how many lines there are */
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
@@ -37,7 +37,7 @@ const lerp = (a, b, t) => a + (b - a) * t;
    stream function X * (1 - q^(k/2)) equals X0, with q = a^2 / (X^2 + Y^2 + s^2 a^2).
    That function only ever rises with X, which is why lines never cross. k sets the
    reach (2 is classic flow past a cylinder), s the softness. (The tool's own words.) */
-function bendPush(X0, Y, a, k, s) {
+export function bendPush(X0, Y, a, k, s) {
   const ax = Math.abs(X0), sg = X0 < 0 ? -1 : 1, e = k / 2, a2 = a * a, s2a2 = s * s * a2, Y2 = Y * Y;
   const r2 = X0 * X0 + Y2;
   if (r2 > 25 * a2) return X0 * Math.pow(a2 / (r2 + s2a2), e);
@@ -82,7 +82,8 @@ export const FIELD = {
 export function createLogoField(canvas, S = FIELD) {
   const ctx = canvas.getContext("2d");
   let W = 1, H = 1, dpr = 1, N = 0, M = 0, pitch = 1;
-  let x0 = new Float32Array(0), ys = new Float32Array(0);
+  // each line's anchor (px) as laid out, and where it is now: carried by frame's shift
+  let x0 = new Float32Array(0), xb = new Float32Array(0), ys = new Float32Array(0);
   let d, v, target, free, colTmp, colPre, bSum, bW, bCnt, bVel;
   // where each line ends: its stroke, its x at each row of the stroke's height, its width
   let finalX = new Float32Array(0), finalY = new Float32Array(0), finalW = new Float32Array(0);
@@ -117,8 +118,9 @@ export function createLogoField(canvas, S = FIELD) {
     bCnt = new Int32Array(N);
     bVel = new Float64Array(N);
     x0 = new Float32Array(N);
+    xb = new Float32Array(N);
     ys = new Float32Array(M);
-    for (let i = 0; i < N; i++) x0[i] = lines ? lines[i].x : fieldLeft + (i + 0.5) * pitch;
+    for (let i = 0; i < N; i++) xb[i] = x0[i] = lines ? lines[i].x : fieldLeft + (i + 0.5) * pitch;
     ownW = lines ? Float32Array.from(lines, (l) => l.w) : null;
     keepPx = lines ? keep : 0;
     if (lines && N > 1) pitch = (x0[N - 1] - x0[0]) / (N - 1);
@@ -303,7 +305,7 @@ export function createLogoField(canvas, S = FIELD) {
     // over D (Hunter, Oct 29, of the line nearest the pill: "this kink right here ... that far-right line needs
     // to actually push off to the right more"; carrying on along the bent line instead met the arc's end, which
     // leans out at about 60 degrees, in a corner)
-    const row = i * M, step = (spanBot - spanTop) / (M - 1);
+    const row = i * M, step = (spanBot - spanTop) / (M - 1), carried = x0[i] - xb[i];
     const endSlope = (k0, k1) => ((finalL[row + k1] + finalR[row + k1]) - (finalL[row + k0] + finalR[row + k0])) / 2 / ((k1 - k0) * step);
     const sTop = endSlope(0, 2), sBot = endSlope(M - 3, M - 1), D = 0.45 * (spanBot - spanTop);
     const reach = (u) => D * (1 - Math.exp(-u / D)); // the distance it leans out over a run of u, at most D
@@ -319,8 +321,8 @@ export function createLogoField(canvas, S = FIELD) {
         (aL = finalL[row + M - 1] + off), (aR = finalR[row + M - 1] + off);
       } else (aL = strokeAt(finalL, i, y)), (aR = strokeAt(finalR, i, y));
       py[j] = y;
-      lx[j] = lerp(sx - half, aL, w);
-      rx[j] = lerp(sx + half, aR, w);
+      lx[j] = lerp(sx - half, aL + carried, w);
+      rx[j] = lerp(sx + half, aR + carried, w);
     }
     ctx.globalAlpha = Math.min(1, r * 1.6);
     ctx.beginPath();
@@ -412,9 +414,11 @@ export function createLogoField(canvas, S = FIELD) {
     count: () => N,
     /** Where line i stands across the field, 0 at the left .. 1 nearest the pill. */
     across: (i) => (N > 1 ? i / (N - 1) : 0),
-    frame(dt, { body, rise, collapse, color, land = 1 }) {
+    frame(dt, { body, rise, collapse, color, land = 1, shift = null }) {
       if (!N) return;
       landNow = clamp(land, 0, 1);
+      // the lines carried along (px), anchor and stroke together: each one moves as a whole
+      for (let i = 0; i < N; i++) x0[i] = xb[i] + (shift ? shift(i) : 0);
       computeTargets(body);
       const h = Math.min(1 / 30, Math.max(0, dt));
       stepLines(h);

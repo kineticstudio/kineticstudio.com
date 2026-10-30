@@ -17,7 +17,7 @@
 
 import { gsap } from "gsap";
 import { morphAll } from "./mark.js";
-import { createLogoField } from "./logo-field.js";
+import { bendPush, createLogoField } from "./logo-field.js";
 
 export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} }) {
   const INTRO = look;
@@ -104,6 +104,7 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
   const exactly = () => {
     for (const L of lines) {
       L.p.setAttribute("d", L.p.dataset.d); // the logo's own drawing
+      L.p.removeAttribute("transform");
       gsap.set(L.p, { clearProps: "transform,opacity" });
     }
   };
@@ -149,6 +150,7 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     } else Ta = start / vc;
     return {
       over,
+      at: Ta,
       turn: Ta + ac / wd,
       still: Ta + Math.log(vc / wd / 0.2) / (z * w),
       x: (t) => {
@@ -176,23 +178,39 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     const W = innerWidth, Hh = innerHeight;
     // the pill from just past the window's right edge, and how far past its place it goes
     const start = Math.max(420, (W - box.left) / unit - (PILL.cx - PILL.r) + 40);
-    const path = pillPath(start), past = path.over;
+    const path = pillPath(start);
     Object.assign(canvas.style, { left: `${-wrap.left}px`, top: `${-wrap.top}px`, width: `${W}px`, height: `${Hh}px`, display: "block", opacity: "1" });
     /* Five lines, the logo's five strokes, each at its own weight. Each one
-       starts where the pill's push, once the pill is in its place, carries
-       its middle exactly onto the logo stroke's middle: the push is the
-       stream function X (1 - q^(k/2)), q = a^2 / (X^2 + s^2 a^2), run from
-       the stroke's middle X to where its line has to start. So the lines
-       land on the mark and the collapse is only the shrink to its height. */
+       starts where the pill's push, once the pill is in its place, bends it
+       closest to its stroke over the logo's whole height (the push is the
+       stream function X (1 - q^(k/2)), q = a^2 / (X^2 + Y^2 + s^2 a^2), as
+       logo-field.js bends the lines), so cropped to the logo the bent lines
+       already are the mark (Hunter, Oct 29: "I wonder if the lines need to be
+       wider apart at the beginning ... If the far-right line was further off
+       to the right at the beginning, then whenever they get collapsed in, it
+       would look more like the mark if you were to crop it"; landing only the
+       middles on the strokes left the arcs too flat at their ends). */
     const a = PILL.r + FIELD.clearance, k = 3.6 + (1.3 - 3.6) * FIELD.reach, sft = FIELD.softness;
     const mids = lines.map((L) => (L.e.left(L.H / 2) + L.e.right(L.H / 2)) / 2);
-    const own = lines.map((L, i) => {
-      const X = mids[i] - PILL.cx;
-      const X0 = X * (1 - Math.pow((a * a) / (X * X + sft * sft * a * a), k / 2));
-      // (and never past where the pill's centre gets to as it springs past, or the line would flip round inside it)
-      const x = Math.min(PILL.cx + X0, PILL.cx - past - 3 - (lines.length - 1 - i) * 2);
-      return { x: box.left + x * unit, w: (L.e.right(L.H / 2) - L.e.left(L.H / 2)) * unit };
-    });
+    const fitStart = (L) => {
+      const S = [];
+      for (let q = 0; q <= 20; q++) {
+        const y = (q / 20) * L.H;
+        S.push([y - PILL.cy, (L.e.left(y) + L.e.right(y)) / 2 - PILL.cx]);
+      }
+      const err = (X0) => S.reduce((e, [Y, T]) => e + (X0 + bendPush(X0, Y, a, k, sft) - T) ** 2, 0);
+      let best = -4, be = Infinity;
+      for (let X0 = -6 * a; X0 <= -4; X0 += 3) {
+        const e = err(X0);
+        if (e < be) (be = e), (best = X0);
+      }
+      for (let X0 = best - 3; X0 <= Math.min(-4, best + 3); X0 += 0.2) {
+        const e = err(X0);
+        if (e < be) (be = e), (best = X0);
+      }
+      return best;
+    };
+    const own = lines.map((L) => ({ x: box.left + (PILL.cx + fitStart(L)) * unit, w: (L.e.right(L.H / 2) - L.e.left(L.H / 2)) * unit }));
     let pitchMid = Infinity;
     for (let i = 1; i < mids.length; i++) pitchMid = Math.min(pitchMid, mids[i] - mids[i - 1]);
     fieldEdge = own[own.length - 1].x;
@@ -209,14 +227,37 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     const n = field.count();
     const color = getComputedStyle(root).color;
     const T = INTRO;
-    let t = 0, saidGlide = false, saidPull = false, saidBuilt = false, done = false, landed = 0;
+    let t = 0, saidGlide = false, saidPull = false, saidBuilt = false, done = false;
     // the lines let go at the pill's far point (give or take collapseAt), so they shrink as it comes back
     const collapseFrom = T.pillAt + path.turn + (T.collapseAt ?? 0);
     const endOf = collapseFrom + T.collapseFor + T.collapseSpread;
+    /* The lines ride the pill past its place and back (Hunter, Oct 29: "If we overshoot, though, then
+       the lines need to also overshoot"): the nearest all the way, held to it, each farther one a little
+       less and a little later (a damped follower), so the stack squeezes as the pill presses in and
+       springs back out with it. ride[i] in logo units, the pill's own offset past its place times share. */
+    const nL = lines.length, step = Math.min(0.15, 10 / path.over);
+    const share = lines.map((_, i) => 1 - (nL - 1 - i) * step);
+    const rate = lines.map((_, i) => 44 - (nL - 1 - i) * 7); // the followers, rad/s
+    const ride = new Float64Array(nL), rideV = new Float64Array(nL);
+    const carry = (dt, tp) => {
+      const o = tp > path.at ? path.x(tp) : 0;
+      for (let i = 0; i < nL; i++) {
+        if (i === nL - 1) {
+          ride[i] = share[i] * o;
+          continue;
+        }
+        const w = rate[i], h = dt / 4;
+        for (let q = 0; q < 4; q++) {
+          rideV[i] += (w * w * (share[i] * o - ride[i]) - 2 * w * rideV[i]) * h;
+          ride[i] += rideV[i] * h;
+        }
+      }
+    };
     const rest = () => {
       stopTick();
       slide.x = 0;
       pillAt();
+      for (const L of lines) L.p.removeAttribute("transform");
     };
     // snap: at once, the pill in its place too (a replay, a resize, the page skipping it)
     const finish = (snap) => {
@@ -226,7 +267,7 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
       exactly();
       // the SVG takes over from the field in one frame: by now the field draws
       // the strokes exactly (a crossfade dimmed both halfway through it); the
-      // pill, the SVG's own all along, carries on to rest
+      // pill, the SVG's own all along, carries on to rest, the strokes with it
       for (const L of lines) gsap.set(L.p, { opacity: 1 });
       canvas.style.display = "none";
       built();
@@ -236,11 +277,13 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     tick = (_now, ms) => {
       const dt = Math.min(0.05, ms / 1000);
       t += dt;
-      // the pill: in, past its place, and back
+      // the pill: in, past its place, and back, and the lines with it
       slide.x = path.x(t - T.pillAt);
       pillAt();
+      carry(dt, t - T.pillAt);
       if (done) {
-        if (t - T.pillAt >= path.still) rest();
+        if (t - T.pillAt >= path.still + 0.2) return rest();
+        lines.forEach((L, i) => L.p.setAttribute("transform", `translate(${ride[i]} 0)`));
         return;
       }
       if (t >= T.pillAt && !saidGlide) {
@@ -253,13 +296,10 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
         saidPull = true;
         say("pull", 1, 0.5);
       }
-      // how far it has come back from its far point: the lines take the mark's shape no faster
-      if (t - T.pillAt >= path.turn) landed = Math.max(landed, unit01(1 + slide.x / past));
       field.frame(dt, {
         body,
         color,
-        // the pill coming back: the lines' bend becomes the mark's arcs as it does (logo-field.js)
-        land: landed,
+        shift: (i) => ride[i] * unit,
         // the lines rise in from the left, one after another
         rise: (i) => expoOut(unit01((t - (i / Math.max(1, n - 1)) * T.riseSpread) / T.riseFor)),
         // and collapse into the strokes from the pill outward
