@@ -427,7 +427,7 @@ export function createLogoField(canvas, S = FIELD) {
         : mB + lerp(sBot * (y - spanBot), streamAt(i, y) - bandB, ease(y - spanBot));
     for (let j = 0; j < M; j++) {
       const y = lerp(yt, yb, j / (M - 1));
-      const sx = streamAt(i, y), sl = slopeAt(i, y), half = (ownW[i] / 2) * Math.sqrt(1 + sl * sl);
+      const sx = streamAt(i, y), sl = slopeAt(i, y), half = (bandW(i) / 2) * Math.sqrt(1 + sl * sl);
       let aL, aR;
       if (bands && (y < spanTop || y > spanBot)) {
         const top = y < spanTop, c = tail(y, top), e = (0.5 * (spanBot - spanTop)) / (M - 1), ts = (tail(y + e, top) - tail(y - e, top)) / (2 * e);
@@ -456,6 +456,10 @@ export function createLogoField(canvas, S = FIELD) {
   const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
   // one edge of a filled line, down (or back up) its rows as curves through their midpoints, so a band
   // drawn row by row has no facets on its flatter runs
+  /* a line's width while it is a band (Hunter, Oct 30: "give me params to play with width of lines on the
+     intro sequence ... closer to size once logo shrinks"): bandWidth times its stroke's, growing to the
+     stroke's own as it lands (the collapse lays it on the stroke's edges) */
+  const bandW = (i) => ownW[i] * (bands ? Math.max(0.05, S.bandWidth ?? 1) : 1);
   const smoothEdge = (xs, ys, back) => {
     const at = (k) => (back ? M - 1 - k : k);
     if (back) ctx.lineTo(xs[at(0)], ys[at(0)]);
@@ -479,7 +483,7 @@ export function createLogoField(canvas, S = FIELD) {
     for (let j = 0; j < M; j++) {
       const a = Math.max(0, j - 1), b = Math.min(M - 1, j + 1);
       const slope = (px[b] - px[a]) / Math.max(1e-6, ((ys[b] - ys[a]) * sc));
-      const half = (ownW[i] / 2) * Math.sqrt(1 + slope * slope);
+      const half = (bandW(i) / 2) * Math.sqrt(1 + slope * slope);
       lx[j] = lerp(px[j] - half, finalL[row + j], c);
       rx[j] = lerp(px[j] + half, finalR[row + j], c);
     }

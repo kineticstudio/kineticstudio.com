@@ -19,11 +19,12 @@ export const HOME_LOOK = {
   // down, the amount of elasticity in the rubber bands"): inSpeed = logo widths a second the pill glides in at,
   // catchFor = s from the first band taking it up to its stopping in its place; reach = logo units along each
   // band the push spreads and curve = how soon it straightens (the Kinetic lines tool's magnetism, Oct 30:
-  // "those had a curve. That's really what I want to emulate");
+  // "those had a curve. That's really what I want to emulate"; Oct 30: Hunter's own tuning, pasted from Copy props);
+  // lineWidth = the bands' width before they land, times the strokes' own ("wondering if it'll look better if they are smaller");
   // collapseAt = s from the stop that the bands let go; dockFor = the move into the nav's corner
   intro: {
     logo: 44,
-    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.25, inSpeed: 3.3, catchFor: 0.9, reach: 240, curve: 1.4, collapseAt: -0.3, collapseFor: 0.85, collapseSpread: 0, bounce: 0, dockLead: 0.5, dockFor: 1.15,
+    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.2, inSpeed: 4.3, catchFor: 0.9, reach: 152, curve: 0.95, lineWidth: 1, collapseAt: -0.4, collapseFor: 0.85, collapseSpread: 0, bounce: 0, dockLead: 0.5, dockFor: 1.15,
   },
   // a tile's 3D card under the pointer: tilt (degrees), lift, depth of the view,
   // the springs it moves on, and when it shows (ms after it loads) and is dropped (s after leaving)
