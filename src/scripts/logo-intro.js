@@ -125,39 +125,35 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
   const expoOut = (t) => (t >= 1 ? 1 : 1 - 2 ** (-10 * t));
   const unit01 = (t) => Math.min(1, Math.max(0, t));
   /* The pill's way in (Hunter, Oct 29: "I want the pill to go over, and then maybe it undershoots or
-     overshoots a little bit. As it's coming back to its resting point, it scales down"; then "It should
-     feel all like one big fluid movement"): one body the whole way, so its speed never jumps. It glides
-     in against a light friction, pillFor seconds to its place, and carries on into the lines, which
-     catch it like a spring: out overshoot (logo units) past its place, back in recoil seconds, and a
-     touch past the other way (pillBounce of the overshoot) before it rests.
-     x(t), t from when it sets off, in logo units right of its place; turn = its far point; still = at rest. */
+     overshoots a little bit"; then "It needs to feel like the lines are catching the pill, and then it
+     kind of settles back a little bit"; slowed before it got there, it bumped them). It glides in at
+     full speed, and the lines catch it: from where it reaches them, a damped spring on its place takes
+     it, its pull and its give in balance at the catch, so the pill is at its fastest there and only
+     slows from then on, smoothly, out overshoot (logo units) past its place; back in recoil seconds,
+     and a touch past the other way (pillBounce of the overshoot) before it rests.
+     x(t), t from when it sets off, in logo units right of its place; at = the catch, at catchAt;
+     turn = its far point; still = at rest. */
   const pillPath = (start) => {
     const over = Math.max(1, INTRO.overshoot), lr = Math.log(Math.min(0.6, Math.max(0.01, INTRO.pillBounce ?? 0.12)));
-    const z = -lr / Math.hypot(Math.PI, lr), sq = Math.sqrt(1 - z * z), ac = Math.acos(z);
-    const wd = (Math.PI - ac) / Math.max(0.1, INTRO.recoil ?? 0.5), w = wd / sq;
-    const vc = over * w * Math.exp((z * ac) / sq); // its speed as it crosses its place
-    // the friction that slows it from the window's edge to vc at its place in pillFor
-    // ((vc / lam) (e^(lam pillFor) - 1) = start); too short a way for that, it comes at vc
-    let Ta = Math.max(0.1, INTRO.pillFor ?? 0.6), lam = 0;
-    if (start > vc * Ta) {
-      let lo = 1e-6, hi = 80;
-      for (let k = 0; k < 50; k++) {
-        const m = (lo + hi) / 2;
-        if ((vc / m) * Math.expm1(m * Ta) > start) hi = m;
-        else lo = m;
-      }
-      lam = (lo + hi) / 2;
-    } else Ta = start / vc;
+    const z = -lr / Math.hypot(Math.PI, lr), sq = Math.sqrt(1 - z * z);
+    const wd = (Math.PI - Math.acos(z)) / Math.max(0.1, INTRO.recoil ?? 0.5), w = wd / sq, a = z * w;
+    // from the catch, per unit of how far out it is: speed w / 2z there, so the pull and the give cancel
+    const kappa = w / (2 * z), B = (a - kappa) / wd;
+    const u = (tau) => Math.exp(-a * tau) * (Math.cos(wd * tau) + B * Math.sin(wd * tau));
+    let far = 0, tFar = 0;
+    for (let tau = 0; tau < 3; tau += 0.002) {
+      const v = u(tau);
+      if (v < far) (far = v), (tFar = tau);
+    }
+    const catchAt = over / -far, speed = kappa * catchAt, from = Math.max(start, catchAt);
+    const Ta = (from - catchAt) / speed;
     return {
       over,
+      catchAt,
       at: Ta,
-      turn: Ta + ac / wd,
-      still: Ta + Math.log(vc / wd / 0.2) / (z * w),
-      x: (t) => {
-        if (t <= 0) return start;
-        if (t < Ta) return lam ? (vc / lam) * Math.expm1(lam * (Ta - t)) : vc * (Ta - t);
-        return -(vc / wd) * Math.exp(-z * w * (t - Ta)) * Math.sin(wd * (t - Ta));
-      },
+      turn: Ta + tFar,
+      still: Ta + Math.log((catchAt * Math.hypot(1, B)) / 0.2) / a,
+      x: (t) => (t <= 0 ? from : t < Ta ? from - speed * t : catchAt * u(t - Ta)),
     };
   };
 
@@ -231,16 +227,25 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     // the lines let go at the pill's far point (give or take collapseAt), so they shrink as it comes back
     const collapseFrom = T.pillAt + path.turn + (T.collapseAt ?? 0);
     const endOf = collapseFrom + T.collapseFor + T.collapseSpread;
-    /* The lines ride the pill past its place and back (Hunter, Oct 29: "If we overshoot, though, then
-       the lines need to also overshoot"): the nearest all the way, held to it, each farther one a little
-       less and a little later (a damped follower), so the stack squeezes as the pill presses in and
-       springs back out with it. ride[i] in logo units, the pill's own offset past its place times share. */
+    /* The lines give way with the pill (Hunter, Oct 29: "If we overshoot, though, then the lines need
+       to also overshoot"; "the lines are catching the pill"): once it is within GIVE of its place they
+       go along with it, from still, more the further it presses (give), and on past its place and back
+       with it; at rest they are the mark, so before the pill comes they wait that much to the right.
+       The nearest goes all the way, held to it; each farther one a little less and a little later (a
+       damped follower), so the stack squeezes as the pill presses in and springs back out with it.
+       ride[i] in logo units from its place in the mark. */
+    const GIVE = 60, SOFT = 25;
+    const give = (x) => {
+      const u = Math.max(0, GIVE - x);
+      return u - SOFT * (1 - Math.exp(-u / SOFT)); // 0 and still at GIVE, then nearly the pill's own way
+    };
+    const g0 = give(0);
     const nL = lines.length, step = Math.min(0.15, 10 / path.over);
     const share = lines.map((_, i) => 1 - (nL - 1 - i) * step);
     const rate = lines.map((_, i) => 44 - (nL - 1 - i) * 7); // the followers, rad/s
-    const ride = new Float64Array(nL), rideV = new Float64Array(nL);
+    const ride = Float64Array.from(share, (f) => f * g0), rideV = new Float64Array(nL);
     const carry = (dt, tp) => {
-      const o = tp > path.at ? path.x(tp) : 0;
+      const o = g0 - give(path.x(tp));
       for (let i = 0; i < nL; i++) {
         if (i === nL - 1) {
           ride[i] = share[i] * o;
