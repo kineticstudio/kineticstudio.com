@@ -103,6 +103,9 @@ export function sound(name, { rate = 1, gain = 1 } = {}) {
     if (now - lastHover < 45) return;
     lastHover = now;
   }
+  // nothing can sound before the visitor's first click or key, so the audio isn't set up until then:
+  // setting it up took the homepage intro a 170 ms stutter and eleven downloads (Oct 30)
+  if (!ctx && navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
   const c = audio();
   if (!c || c.state !== "running") return;
   if (role === "thud") return thud(c, gain);

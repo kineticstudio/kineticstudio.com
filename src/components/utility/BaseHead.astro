@@ -31,7 +31,9 @@ const socialVideo = shared ? new URL("/og-video.mp4", Astro.site) : null;
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <Font cssVariable="--font-panell" preload />
-<Font cssVariable="--font-neue-montreal" preload />
+{/* only the regular: the medium sets one name on About and the odd bold word, and preloading it took
+    55 KB from what the first screen needs on every page (Oct 30, Cloudflare's numbers) */}
+<Font cssVariable="--font-neue-montreal" preload={[{ weight: 400 }]} />
 <title>{pageTitle}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />

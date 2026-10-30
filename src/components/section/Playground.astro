@@ -54,7 +54,7 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
         <div class="play_world" data-world data-cols={cols} data-rows={rows} aria-label="Drag to look around, click a piece to open it">
           {cells.map(({ u, v, e }) => (
             <a class="play_tile" href={`/playground/${e.slug}`} data-open={e.slug} data-u={u} data-v={v} style={`--ground:${media[e.m].ground}`} draggable="false">
-              <video data-src={`/media/${e.m}.mp4`} poster={`/media/${e.m}.jpg`} muted loop playsinline preload="none" />
+              <video data-src={`/media/${e.m}.mp4`} data-still={`/media/${e.m}`} muted loop playsinline preload="none" />
               <span class="play_tile-name text-style-tag">{e.title}</span>
             </a>
           ))}
@@ -124,7 +124,10 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
       zoom = Number(localStorage.getItem("ks-play-size")) || 1;
     } catch {}
     if (sizer) sizer.value = String(zoom);
-    const cells = tiles.map((el) => ({ el, u: Number(el.dataset.u), v: Number(el.dataset.v), video: el.querySelector("video")!, on: false }));
+    const cells = tiles.map((el) => ({ el, u: Number(el.dataset.u), v: Number(el.dataset.v), video: el.querySelector("video")!, on: false, still: false }));
+    /* A tile's still comes as it nears the view, in the light copy that fits it (scripts/webp-stills.mjs):
+       every one of the eighty used to load with the page, 2.7 MB (Oct 30, Cloudflare's numbers). */
+    const still = (video: HTMLVideoElement) => `${video.dataset.still}${TW * devicePixelRatio > 700 ? "" : "-640"}.webp`;
     let F = 1400, COL = 0.16, ROW = 0.11, TW = 220, TH = 138, viewA = 0.5, viewB = 0.35;
     let W = 0, H = 0, dpr = 1;
     const layout = () => {
@@ -179,6 +182,9 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
       g.stroke();
     };
 
+    // the films wait for the page to load, so the stills in view come first
+    let loaded = document.readyState === "complete";
+    if (!loaded) addEventListener("load", () => void ((loaded = true), place()), { once: true });
     const place = () => {
       const spanA = COLS * COL, spanB = ROWS * ROW;
       let playing = 0;
@@ -187,6 +193,9 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
         const b = wrap(c.v * ROW - panB, spanB);
         const show = Math.abs(a) < viewA && Math.abs(b) < viewB;
         c.el.style.visibility = show ? "visible" : "hidden";
+        // the view's first, a ring round it once the page has loaded
+        const middle = Math.abs(a) < viewA * 0.55 && Math.abs(b) < viewB * 0.6;
+        if (!c.still && (show || (loaded && Math.abs(a) < viewA + COL && Math.abs(b) < viewB + ROW))) (c.still = true), (c.video.poster = still(c.video));
         if (show) {
           c.el.style.transform = `translateZ(${F}px) rotateY(${(-a).toFixed(4)}rad) rotateX(${(-b).toFixed(4)}rad) translateZ(${-F}px)`;
           // fade toward the rim, where the stretch is strongest
@@ -194,7 +203,7 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
           c.el.style.opacity = Math.min(1, Math.max(0, (1 - edge) / 0.22)).toFixed(3);
         }
         // the pieces near the middle play; the rest hold their poster
-        const want = show && !paused && Math.abs(a) < viewA * 0.55 && Math.abs(b) < viewB * 0.6 && playing < 9;
+        const want = loaded && show && !paused && middle && playing < 9;
         if (want) playing++;
         if (want !== c.on) {
           c.on = want;
@@ -331,7 +340,7 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
       const mine = ++token;
       paused = true;
       from = tile;
-      poster.style.backgroundImage = `url("${tile.querySelector("video")!.poster}")`;
+      poster.style.backgroundImage = `url("${tile.querySelector("video")!.dataset.still}.webp")`;
       poster.style.opacity = "1";
       root.querySelector("[data-title]")!.textContent = e.title;
       paint(tile.style.getPropertyValue("--ground") || "#0d0d0d");

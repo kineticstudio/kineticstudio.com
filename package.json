@@ -7,11 +7,12 @@
     "dev": "astro dev --port 8758",
     "edit": "STUDIO_WORKSPACE=.studio/kineticstudio.com PORT=4351 node ../kinetic-site-editor/studio/dist/cli.mjs dev .",
     "check": "astro check",
+    "prebuild": "node scripts/webp-stills.mjs",
     "build": "astro build",
     "preview": "astro preview --port 8758",
     "astro": "astro",
     "format": "prettier --write .",
-    "build:studio": "KS_STUDIO_BUILD=1 astro build --outDir dist-studio && node scripts/relativize.mjs dist-studio"
+    "build:studio": "node scripts/webp-stills.mjs && KS_STUDIO_BUILD=1 astro build --outDir dist-studio && node scripts/relativize.mjs dist-studio"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",

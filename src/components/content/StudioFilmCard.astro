@@ -25,7 +25,7 @@ const { render = true, class: className } = Astro.props;
     <div class:list={["film-card_wrap", className]} data-film-card>
       <button class="film-card_card" type="button" aria-label="Play the Kinetic Studio tool film, with sound">
         <span class="film-card_media" data-film-from>
-          <video src="/media/studio-film-card.mp4" poster="/media/studio-film-card.jpg" muted loop playsinline autoplay preload="metadata" aria-hidden="true" />
+          <video data-film-loop data-src="/media/studio-film-card.mp4" poster="/media/studio-film-card.webp" muted loop playsinline preload="none" aria-hidden="true" />
         </span>
         <span class="film-card_body">
           {/* the mark with STUDIO TOOL where KINETIC sits (Hunter, Oct 25: "change this lockup to be Studio Tool") */}
@@ -41,7 +41,7 @@ const { render = true, class: className } = Astro.props;
       </button>
       <div class="film-card_sheet" data-film-sheet hidden>
         <div class="film-card_frame" data-film-frame>
-          <video data-film-video data-src="/media/studio-film.mp4" poster="/media/studio-film-card.jpg" playsinline preload="none" />
+          <video data-film-video data-src="/media/studio-film.mp4" poster="/media/studio-film-card.webp" playsinline preload="none" />
           <span class="film-card_bar" aria-hidden="true"><i data-film-progress /></span>
         </div>
         <button class="film-card_close" type="button" aria-label="Close the film" data-film-close>
@@ -64,6 +64,18 @@ const { render = true, class: className } = Astro.props;
     const progress = sheet.querySelector<HTMLElement>("[data-film-progress]")!;
     const close = sheet.querySelector<HTMLButtonElement>("[data-film-close]")!;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // the loop loads once the card is in sight, and on the homepage only after its intro, so it
+    // never takes the line from what the first screen needs (Oct 30, Cloudflare's numbers)
+    const loop = root.querySelector<HTMLVideoElement>("[data-film-loop]")!;
+    const seen = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      seen.disconnect();
+      loop.src = loop.dataset.src!;
+      loop.play().catch(() => {});
+    });
+    const arm = () => seen.observe(root);
+    if (document.querySelector("[data-hero-lines]") && document.documentElement.dataset.intro !== "done") addEventListener("ks:intro-done", arm, { once: true });
+    else arm();
     // the sheet covers the window, so it lives on <body>, clear of the hero's pinned stage
     document.body.append(sheet);
     let open = false;

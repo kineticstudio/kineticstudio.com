@@ -44,9 +44,9 @@ const {
         {AWARDS.map((a, i) => (
           <li class="awards_item" data-reveal style={`--reveal-delay:${0.1 * i}s`}>
             <div class="awards_laurel" data-laurel-slot>
-              <img class="awards_half is-left" src="/images/awards/laurel-chrome.png" alt="" />
+              <img class="awards_half is-left" data-src="/images/awards/laurel-chrome.webp" alt="" decoding="async" />
               <img class="awards_logo" src={a.logo} alt={a.name} style={`--logo-w:${a.width}rem`} />
-              <img class="awards_half is-right" src="/images/awards/laurel-chrome.png" alt="" />
+              <img class="awards_half is-right" data-src="/images/awards/laurel-chrome.webp" alt="" decoding="async" />
             </div>
             <p class="awards_line text-style-small">{a.line}</p>
           </li>
@@ -94,15 +94,23 @@ const {
   import { laurelOptions, laurelLayoutVars } from "@/data/laurel-look.js";
 
   // The laurels in real 3D chrome, once WebGL and src/scripts/laurel.js
-  // are there; the rendered PNG halves stay as the fallback. Every setting
-  // is in src/data/laurel-look.js (tuned at /tools/laurels).
+  // are there; the rendered halves are the fallback, only fetched when the 3D
+  // can't be built (Oct 30: they cost every visit 258 KB that WebGL then hid).
+  // Every setting is in src/data/laurel-look.js (tuned at /tools/laurels).
   const modules = import.meta.glob("../../scripts/laurel.js");
+  // on the homepage the 3D is built as the intro hands over, before the laurels fade in, not while
+  // it plays: the code comes in meanwhile (Oct 30, Cloudflare's numbers)
+  const intro = document.querySelector("[data-hero-lines]") && document.documentElement.dataset.intro !== "done";
+  const introOver = intro ? new Promise((done) => addEventListener("ks:intro-done", done, { once: true })) : null;
   document.querySelectorAll<HTMLElement>("[data-awards]:not([data-awards='manual'])").forEach(async (root) => {
     const load = modules["../../scripts/laurel.js"];
     let canvas = root.querySelector<HTMLCanvasElement>(".awards_canvas");
-    if (!load || !canvas || !canvas.getContext("webgl2")) return;
+    const flat = () => root.querySelectorAll<HTMLImageElement>(".awards_half[data-src]").forEach((img) => (img.src = img.dataset.src!));
+    if (!load || !canvas || !canvas.getContext("webgl2")) return flat();
     try {
-      const { mountLaurels } = (await load()) as { mountLaurels: (c: HTMLCanvasElement, o: object) => unknown };
+      const code = load();
+      await introOver;
+      const { mountLaurels } = (await code) as { mountLaurels: (c: HTMLCanvasElement, o: object) => unknown };
       const slots = [...root.querySelectorAll<HTMLElement>("[data-laurel-slot]")];
       // Hunter, Oct 24: "the 3D laurels still don't look great. They need to
       // look like chrome. Maybe we need to rebuild them and have them have a
@@ -140,6 +148,7 @@ const {
       root.classList.add("is-3d");
     } catch (e) {
       console.warn("laurels stay flat:", e);
+      flat();
     }
   });
 </script>

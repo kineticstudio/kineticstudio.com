@@ -8,6 +8,7 @@ import { WORK } from "@/data/work.js";
 import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
 import ClientLogos from "@/components/content/ClientLogos.astro";
 import StudioFilmCard from "@/components/content/StudioFilmCard.astro";
+import { stillSrcset, stillWebp } from "@/data/stills.js";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -40,6 +41,10 @@ const list = only
    card instead of the still, playing while their row is near the middle. */
 const cards = CARDS as string[];
 const loops = LOOPS as string[];
+/* Oct 30 (Cloudflare's numbers): the stills come in their light copies (src/data/stills.js), each
+   row's as it comes near (data-src, set in place()): the first rows' once the intro is running, so
+   they never hold up its code, the rest as you scroll. */
+const EAGER = 0;
 ---
 
 {
@@ -75,9 +80,9 @@ const loops = LOOPS as string[];
                     >
                       <a class="wheel_hit" href={href} {...ext} {...project} data-card-link aria-label={w.name}>
                         {card && loops.includes(w.slug) ? (
-                          <video class="wheel_still" data-rest data-src={`/media/card-${w.slug}.mp4`} poster={`/cards/${w.slug}/poster.jpg`} muted loop playsinline preload="none" aria-hidden="true" />
+                          <video class="wheel_still" data-rest data-src={`/media/card-${w.slug}.mp4`} {...{ [i < EAGER ? "poster" : "data-poster"]: stillWebp(still) }} muted loop playsinline preload="none" aria-hidden="true" />
                         ) : (
-                          <img class="wheel_still" src={card ? `/cards/${w.slug}/poster.jpg` : `/media/${w.cover}.jpg`} alt="" loading="lazy" decoding="async" />
+                          <img class="wheel_still" {...(i < EAGER ? { src: still, srcset: stillSrcset(still, card ? 1200 : media[w.cover].w) } : { "data-src": still, "data-srcset": stillSrcset(still, card ? 1200 : media[w.cover].w) })} sizes="50vw" alt="" decoding="async" />
                         )}
                       </a>
                       <span class="wheel_hover" data-card-stage />
@@ -121,7 +126,6 @@ const loops = LOOPS as string[];
   import { gsap } from "gsap";
   import { ScrollTrigger } from "gsap/ScrollTrigger";
   import { armCards } from "@/scripts/card-hover.js";
-  import { heroParticles } from "@/scripts/hero-particles.js";
   import { INTERLUDES } from "@/data/work.js";
   import { HOME_LOOK } from "@/data/home-look.js";
   gsap.registerPlugin(ScrollTrigger);
@@ -145,6 +149,8 @@ const loops = LOOPS as string[];
       at: 0, // degrees along the curve from the first row
       // the resting loops (the top few); every other tile is a still until hovered
       videos: [...el.querySelectorAll<HTMLVideoElement>("video[data-rest]")],
+      // the stills not loaded with the page (rows after the first EAGER)
+      lazy: [...el.querySelectorAll<HTMLElement>("img[data-src], video[data-poster]")],
       right: el.querySelector<HTMLElement>(".wheel_item:nth-child(2)"),
       playing: false,
     }));
@@ -153,10 +159,20 @@ const loops = LOOPS as string[];
     // on a phone the wheel stays light (Hunter, Oct 25: "For mobile, we should kill all
     // of this so it's super performant"): no lead, no sinking back, stills instead of loops
     const phone = !matchMedia("(hover: hover) and (pointer: fine)").matches;
-    const particles = reduced ? null : heroParticles(head, stage);
     // the lines the particles spell between the sets: the gap after every other row, from the first
     const gaps = INTERLUDES.map((_, k) => 2 * k).filter((r) => r + 1 < N);
-    particles?.lines(INTERLUDES.slice(0, gaps.length));
+    /* The particles (and three.js under them) come once the intro is over and the page is quiet, so
+       they never hold up the intro or stutter its hand-over (Oct 30, Cloudflare's numbers); until
+       then, or without WebGL, the hero fades and rises as you scroll. */
+    let particles: ReturnType<typeof import("@/scripts/hero-particles.js").heroParticles> = null;
+    const wake = () =>
+      import("@/scripts/hero-particles.js").then(({ heroParticles }) => {
+        particles = heroParticles(head, stage);
+        particles?.lines(INTERLUDES.slice(0, gaps.length));
+        if (particles) head.style.transform = "";
+        place();
+      });
+    const idle = (fn: () => void) => ("requestIdleCallback" in window ? requestIdleCallback(fn, { timeout: 1500 }) : setTimeout(fn, 200));
 
     // geometry, in px and degrees: rows sit along a circle of radius R whose
     // centre is level with the middle of the screen; every card keeps the
@@ -222,6 +238,15 @@ const loops = LOOPS as string[];
       const turn = st.scroll * span() + st.intro;
       for (const r of rows) {
         const phi = START + turn - r.at; // 0 = level with the middle, + = above
+        // a row's stills load a couple of rows before it comes into sight
+        if (r.lazy.length && phi > -150) {
+          for (const el of r.lazy) {
+            if (el instanceof HTMLImageElement) (el.srcset = el.dataset.srcset!), (el.src = el.dataset.src!);
+            // a poster has no srcset: the 640 px copy when the tile needs no more (a phone)
+            else (el as HTMLVideoElement).poster = (tileH / 0.625) * devicePixelRatio <= 640 ? el.dataset.poster!.replace(/\.webp$/, "-640.webp") : el.dataset.poster!;
+          }
+          r.lazy = [];
+        }
         const show = phi > -80 && phi < 80;
         r.el.style.visibility = show ? "visible" : "hidden";
         if (show) {
@@ -312,8 +337,12 @@ const loops = LOOPS as string[];
       if (!reduced) gsap.to(st, { intro: 0, duration: 1.8, ease: "power3.out", onUpdate: place });
       place();
     };
-    if (document.documentElement.dataset.intro === "done") start();
-    else addEventListener("ks:intro-done", start, { once: true });
+    const arrive = () => {
+      start();
+      if (!reduced) setTimeout(() => idle(wake), 1200);
+    };
+    if (document.documentElement.dataset.intro === "done") arrive();
+    else addEventListener("ks:intro-done", arrive, { once: true });
     place();
   });
 </script>
