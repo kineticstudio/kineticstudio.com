@@ -10,14 +10,16 @@
 export const HOME_LOOK = {
   // the intro's field of lines (src/scripts/logo-field.js) and its timing, seconds
   // (Hunter, Oct 24: "a little more fluid. Once it hits the lines, now we start shrinking"; "The
-  // Kinetic logo looks a little too big"; Oct 25: "only have five lines"): logo = its width, rem;
-  // collapseAfter = seconds after the pill meets the lines that they start to shrink, collapseAt the latest
+  // Kinetic logo looks a little too big"; Oct 25: "only have five lines"): logo = its width, rem
   // (Oct 29: "It collapses, and then everything shrinks vertically. It should feel more like one fluid
-  // movement": 0.55, so the lines shrink while they finish rising and the pill comes in, and the logo
-  // starts up into the corner, dockLead, as they land); dockFor = the move into the nav's corner
+  // movement", and the logo starts up into the corner, dockLead, as they land). Then "I want the pill to
+  // go over, and then maybe it undershoots or overshoots a little bit. As it's coming back to its resting
+  // point, it scales down" (logo-intro.js pillPath): pillFor = s to its place, overshoot = logo units past it,
+  // recoil = s from there back to its place, pillBounce = how far past the other way, a share of the
+  // overshoot; collapseAt = s from the pill's far point that the lines let go; dockFor = the move into the nav's corner
   intro: {
     logo: 44, reach: 0.6, softness: 0.25, clearance: 16, response: 0.4, wobble: 0.38, ripple: 0.4,
-    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.25, pillFor: 1.25, overshoot: 0.6, collapseAfter: 0.05, collapseAt: 0.55, collapseFor: 1.0, collapseSpread: 0, bounce: 0.2, dockLead: 0.65, dockFor: 1.15,
+    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.25, pillFor: 0.6, overshoot: 50, recoil: 0.5, pillBounce: 0.12, collapseAt: -0.2, collapseFor: 0.85, collapseSpread: 0, bounce: 0.2, dockLead: 0.5, dockFor: 1.15,
   },
   // a tile's 3D card under the pointer: tilt (degrees), lift, depth of the view,
   // the springs it moves on, and when it shows (ms after it loads) and is dropped (s after leaving)

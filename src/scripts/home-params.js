@@ -29,10 +29,11 @@ const schema = {
     wobble: [I.wobble, 0, 1, 0.01],
     ripple: [I.ripple, 0, 1, 0.01],
     pillAt: [I.pillAt, 0, 1.5, 0.05],
-    pillFor: [I.pillFor, 0.3, 3, 0.05],
-    overshoot: [I.overshoot, 0, 2.5, 0.05], // how far past its place the pill springs
-    collapseAfter: [I.collapseAfter, 0, 1.5, 0.05], // seconds after the pill meets the lines that they shrink
-    collapseAt: [I.collapseAt, 0.3, 3, 0.05], // the latest they start, if it never does
+    pillFor: [I.pillFor, 0.2, 2, 0.05], // s from the window's edge to its place
+    overshoot: [I.overshoot, 5, 160, 1], // logo units the pill goes past its place
+    recoil: [I.recoil, 0.2, 2, 0.05], // s from there back to its place
+    pillBounce: [I.pillBounce, 0.01, 0.5, 0.01], // how far past the other way, a share of the overshoot
+    collapseAt: [I.collapseAt, -0.5, 1, 0.05], // s from the pill's far point that the lines let go
     dockFor: [I.dockFor, 0.3, 3, 0.05], // the move up into the nav's corner
     collapseFor: [I.collapseFor, 0.2, 2, 0.05], // s from a line's release until its ends are at rest on the stroke
     bounce: [I.bounce, 0, 0.6, 0.01], // how far the released ends spring past the stroke and back

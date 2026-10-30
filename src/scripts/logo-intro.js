@@ -44,9 +44,10 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
      the right and they stream round its end the way lines stream round the
      cursor in the Studio's Kinetic lines tool: never crossing, the nearest
      bending most, ringing after the push ("only have five lines, not more
-     than five lines"). As the pill meets them they shrink to the logo's
-     height, their bends becoming its arcs, and the page pulls the logo up
-     into the nav's corner (HeroLines) as they land. The lines are
+     than five lines"). It carries on past its place, pressing into them,
+     and as it comes back they shrink to the logo's height, their bends
+     becoming its arcs, and the page pulls the logo up into the nav's
+     corner (HeroLines) as they land. The lines are
      src/scripts/logo-field.js; the timing is the look (HOME_LOOK.intro). */
   const svg = root.querySelector("svg");
   const vbH = svg.viewBox.baseVal.height || 201;
@@ -121,8 +122,42 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
   const slide = { x: 0 }; // the pill, in logo units right of its place
   const pillAt = () => pill.setAttribute("transform", `translate(${slide.x} 0)`);
   const expoOut = (t) => (t >= 1 ? 1 : 1 - 2 ** (-10 * t));
-  const backOut = (t, s) => 1 + (s + 1) * (t - 1) ** 3 + s * (t - 1) ** 2;
   const unit01 = (t) => Math.min(1, Math.max(0, t));
+  /* The pill's way in (Hunter, Oct 29: "I want the pill to go over, and then maybe it undershoots or
+     overshoots a little bit. As it's coming back to its resting point, it scales down"; then "It should
+     feel all like one big fluid movement"): one body the whole way, so its speed never jumps. It glides
+     in against a light friction, pillFor seconds to its place, and carries on into the lines, which
+     catch it like a spring: out overshoot (logo units) past its place, back in recoil seconds, and a
+     touch past the other way (pillBounce of the overshoot) before it rests.
+     x(t), t from when it sets off, in logo units right of its place; turn = its far point; still = at rest. */
+  const pillPath = (start) => {
+    const over = Math.max(1, INTRO.overshoot), lr = Math.log(Math.min(0.6, Math.max(0.01, INTRO.pillBounce ?? 0.12)));
+    const z = -lr / Math.hypot(Math.PI, lr), sq = Math.sqrt(1 - z * z), ac = Math.acos(z);
+    const wd = (Math.PI - ac) / Math.max(0.1, INTRO.recoil ?? 0.5), w = wd / sq;
+    const vc = over * w * Math.exp((z * ac) / sq); // its speed as it crosses its place
+    // the friction that slows it from the window's edge to vc at its place in pillFor
+    // ((vc / lam) (e^(lam pillFor) - 1) = start); too short a way for that, it comes at vc
+    let Ta = Math.max(0.1, INTRO.pillFor ?? 0.6), lam = 0;
+    if (start > vc * Ta) {
+      let lo = 1e-6, hi = 80;
+      for (let k = 0; k < 50; k++) {
+        const m = (lo + hi) / 2;
+        if ((vc / m) * Math.expm1(m * Ta) > start) hi = m;
+        else lo = m;
+      }
+      lam = (lo + hi) / 2;
+    } else Ta = start / vc;
+    return {
+      over,
+      turn: Ta + ac / wd,
+      still: Ta + Math.log(vc / wd / 0.2) / (z * w),
+      x: (t) => {
+        if (t <= 0) return start;
+        if (t < Ta) return lam ? (vc / lam) * Math.expm1(lam * (Ta - t)) : vc * (Ta - t);
+        return -(vc / wd) * Math.exp(-z * w * (t - Ta)) * Math.sin(wd * (t - Ta));
+      },
+    };
+  };
 
   let tick = null;
   const stopTick = () => {
@@ -139,11 +174,9 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     const box = svg.getBoundingClientRect(), wrap = root.getBoundingClientRect();
     const unit = (box.height || 1) / vbH;
     const W = innerWidth, Hh = innerHeight;
-    // the pill from just past the window's right edge, and how far past its place it springs
+    // the pill from just past the window's right edge, and how far past its place it goes
     const start = Math.max(420, (W - box.left) / unit - (PILL.cx - PILL.r) + 40);
-    let peak = 1;
-    for (let k = 0; k <= 200; k++) peak = Math.max(peak, backOut(k / 200, INTRO.overshoot));
-    const past = start * (peak - 1);
+    const path = pillPath(start), past = path.over;
     Object.assign(canvas.style, { left: `${-wrap.left}px`, top: `${-wrap.top}px`, width: `${W}px`, height: `${Hh}px`, display: "block", opacity: "1" });
     /* Five lines, the logo's five strokes, each at its own weight. Each one
        starts where the pill's push, once the pill is in its place, carries
@@ -176,59 +209,68 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     const n = field.count();
     const color = getComputedStyle(root).color;
     const T = INTRO;
-    let t = 0, saidGlide = false, saidPull = false, saidBuilt = false, done = false;
-    // when the collapse starts: the moment the pill meets the lines
-    let collapseFrom = T.collapseAt;
-    const endOf = () => collapseFrom + T.collapseFor + T.collapseSpread;
-    const finish = () => {
-      if (done) return;
-      done = true;
+    let t = 0, saidGlide = false, saidPull = false, saidBuilt = false, done = false, landed = 0;
+    // the lines let go at the pill's far point (give or take collapseAt), so they shrink as it comes back
+    const collapseFrom = T.pillAt + path.turn + (T.collapseAt ?? 0);
+    const endOf = collapseFrom + T.collapseFor + T.collapseSpread;
+    const rest = () => {
       stopTick();
       slide.x = 0;
       pillAt();
+    };
+    // snap: at once, the pill in its place too (a replay, a resize, the page skipping it)
+    const finish = (snap) => {
+      if (snap) rest();
+      if (done) return;
+      done = true;
       exactly();
       // the SVG takes over from the field in one frame: by now the field draws
-      // the strokes exactly (a crossfade dimmed both halfway through it)
+      // the strokes exactly (a crossfade dimmed both halfway through it); the
+      // pill, the SVG's own all along, carries on to rest
       for (const L of lines) gsap.set(L.p, { opacity: 1 });
       canvas.style.display = "none";
       built();
     };
-    finishNow = finish;
+    finishNow = () => finish(true);
     say("line", 1.1, 0.5);
     tick = (_now, ms) => {
       const dt = Math.min(0.05, ms / 1000);
       t += dt;
-      // the pill: in fast, a touch past its place, and back
-      const p = unit01((t - T.pillAt) / T.pillFor);
-      slide.x = start * (1 - backOut(p, T.overshoot));
+      // the pill: in, past its place, and back
+      slide.x = path.x(t - T.pillAt);
+      pillAt();
+      if (done) {
+        if (t - T.pillAt >= path.still) rest();
+        return;
+      }
       if (t >= T.pillAt && !saidGlide) {
         saidGlide = true;
         say("glide", 1.05, 0.45);
       }
-      pillAt();
       const body = { x: box.left + (PILL.cx + slide.x) * unit, y: box.top + PILL.cy * unit, r: (PILL.r + FIELD.clearance) * unit };
       // the pill meets the field: the nearest line, plus the space the lines keep between them
       if (!saidPull && body.x - body.r < fieldEdge + 12) {
         saidPull = true;
-        collapseFrom = Math.min(T.collapseAt, t + T.collapseAfter);
         say("pull", 1, 0.5);
       }
+      // how far it has come back from its far point: the lines take the mark's shape no faster
+      if (t - T.pillAt >= path.turn) landed = Math.max(landed, unit01(1 + slide.x / past));
       field.frame(dt, {
         body,
         color,
-        // the pill nearly home: the lines' bend becomes the mark's arcs as it arrives (logo-field.js)
-        land: unit01(1 - slide.x / Math.max(1, start * 0.14)),
+        // the pill coming back: the lines' bend becomes the mark's arcs as it does (logo-field.js)
+        land: landed,
         // the lines rise in from the left, one after another
         rise: (i) => expoOut(unit01((t - (i / Math.max(1, n - 1)) * T.riseSpread) / T.riseFor)),
         // and collapse into the strokes from the pill outward
         collapse: (i) => unit01((t - collapseFrom - (1 - field.across(i)) * T.collapseSpread) / T.collapseFor),
       });
       // the page starts pulling the logo up into the corner as the lines land
-      if (!saidBuilt && t >= endOf() - T.dockLead) {
+      if (!saidBuilt && t >= endOf - T.dockLead) {
         saidBuilt = true;
         built();
       }
-      if (t >= endOf()) finish();
+      if (t >= endOf) finish(false);
     };
     gsap.ticker.add(tick);
   };

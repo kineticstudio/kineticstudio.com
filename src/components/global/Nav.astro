@@ -223,8 +223,9 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
        speed only ever falling (Hunter: "when the pill comes in, it needs to settle back to its resting
        state"; caught first and settled after, it read as two). The settle runs on the clock from the
        click, so the next page carries it on. At home the word leans and the mark stays put. */
-    // px, at most; 1.7 times the first lean (Hunter, Oct 29: "make it translate even more, maybe 70% more")
-    const LEAN = 6.8;
+    // px, at most; 2.2 times the first lean (Hunter, Oct 29: "make it translate even more, maybe 70% more",
+    // then "make the hover even more agressive, another 30%")
+    const LEAN = 8.84;
     const SETTLE = DUR; // s, the label's way home from a click (on the pill's own curve, so they land together)
     const word = nav.querySelector<SVGGElement>(".nav_word")!;
     const svg = nav.querySelector<SVGSVGElement>(".nav_logo-svg")!;
@@ -356,7 +357,7 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
         const r = leanEl(slot)!.getBoundingClientRect();
         const dx = box.x + box.w / 2 - (r.left - (lean[slot]?.x ?? 0) + r.width / 2);
         if (Math.abs(dx) < 1) return;
-        leanTo(slot, Math.sign(dx) * Math.min(LEAN, 2.55 + Math.abs(dx) * 0.034), 0.45, "power3.out");
+        leanTo(slot, Math.sign(dx) * Math.min(LEAN, 3.3 + Math.abs(dx) * 0.0442), 0.45, "power3.out");
       });
       a.addEventListener("pointerleave", () => {
         if (slot === nav.dataset.active) return; // clicked: the pill has it, and they settle together

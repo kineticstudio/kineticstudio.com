@@ -98,8 +98,9 @@ const { render = true, heading = "Captivating websites that tell compelling stor
       const scale = b.width / a.width;
       dock = gsap.to(logo, {
         // up into the corner as the lines land, the one move carrying on (Oct 29: "It should feel more like one
-        // fluid movement"): expo.inOut's long slow start held the finished mark still, so a gentler ease in
-        x: b.left - a.left, y: b.top - a.top, scale, transformOrigin: "0 0", duration: HOME_LOOK.intro.dockFor, ease: "power3.inOut",
+        // fluid movement"): expo.inOut's long slow start held the finished mark still, and power3's middle was
+        // a whoosh next to everything round it ("Something still does feel jumpy about it"), so power2
+        x: b.left - a.left, y: b.top - a.top, scale, transformOrigin: "0 0", duration: HOME_LOOK.intro.dockFor, ease: "sine.inOut",
         onUpdate() { if (this.progress() > 0.55) reveal(); },
         onComplete: finish,
       });

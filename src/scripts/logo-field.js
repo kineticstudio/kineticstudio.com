@@ -122,8 +122,10 @@ export function createLogoField(canvas, S = FIELD) {
     ownW = lines ? Float32Array.from(lines, (l) => l.w) : null;
     keepPx = lines ? keep : 0;
     if (lines && N > 1) pitch = (x0[N - 1] - x0[0]) / (N - 1);
-    // the lines run past the top and bottom, so their ends never show
-    for (let j = 0; j < M; j++) ys[j] = lerp(-0.06 * H, 1.06 * H, j / (M - 1));
+    // the lines run past the top and bottom, so their ends never show, but only just, so they are in
+    // sight the moment the lines let go (Oct 29: past by 6% of the window, the shrink hid its start)
+    const past = Math.max(24, 0.02 * H);
+    for (let j = 0; j < M; j++) ys[j] = lerp(-past, H + past, j / (M - 1));
     endY = new Float32Array(2 * N);
     endV = new Float32Array(2 * N);
     endY0 = new Float32Array(2 * N);
