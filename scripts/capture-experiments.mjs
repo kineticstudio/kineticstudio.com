@@ -25,7 +25,7 @@ const { chromium } = await import(pathToFileURL(PW).href);
 
 const only = process.argv.slice(2);
 // seconds to wait before the clip starts, for pieces that open on an intro or load slowly
-const LEAD = { "ink-world": 8, "hero-ribbon": 10, island: 4, "glyph-morph": 3, "object-stipple": 3 };
+const LEAD = { "ink-world": 8, "hero-ribbon": 10, island: 4, "glyph-morph": 3, "object-stipple": 3, "ab-test": 5.5, "from-the-inside": 11, "scene-inset": 4, "silhouette-chrome": 5.5 };
 const todo = EXPERIMENTS.filter((e) => e.kind === "live" && (!only.length || only.includes(e.slug)));
 await fs.mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ args: ["--use-angle=metal", "--enable-gpu", "--ignore-gpu-blocklist"] });

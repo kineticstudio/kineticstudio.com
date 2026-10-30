@@ -719,6 +719,180 @@
     "ground": "#f1e9dc",
     "video": true
   },
+  "exp-liquid-eyes": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#225f7c",
+    "video": true
+  },
+  "exp-bloom-cone": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#cee2ed",
+    "video": true
+  },
+  "exp-hero-bloom": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#01022a",
+    "video": true
+  },
+  "exp-bloom-rings": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#120411",
+    "video": true
+  },
+  "exp-orbs-bento": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#e7e7e7",
+    "video": true
+  },
+  "exp-scene-inset": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#e9e5dc",
+    "video": true
+  },
+  "exp-silhouette-chrome": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#6287b4",
+    "video": true
+  },
+  "exp-ascii-world": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#f7ffe3",
+    "video": true
+  },
+  "exp-thinking-net": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#2c4b72",
+    "video": true
+  },
+  "exp-lab-report": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#060606",
+    "video": true
+  },
+  "exp-sticker-wall": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#111111",
+    "video": true
+  },
+  "exp-kern": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#3f1928",
+    "video": true
+  },
+  "exp-parachute": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#1c211b",
+    "video": true
+  },
+  "exp-black-hole": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#000000",
+    "video": true
+  },
+  "exp-lava-glow": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#f0e8df",
+    "video": true
+  },
+  "exp-neon-flower": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#020202",
+    "video": true
+  },
+  "exp-diamond-mark": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#282d27",
+    "video": true
+  },
+  "exp-sine-mark": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#000000",
+    "video": true
+  },
+  "exp-coin": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#0e0e0e",
+    "video": true
+  },
+  "exp-spinning-cube": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#0c0c0c",
+    "video": true
+  },
+  "exp-thread-line": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#e7f6e1",
+    "video": true
+  },
+  "exp-depth-engraving": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#e7e5d3",
+    "video": true
+  },
+  "exp-wire-assembly": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#0a0a0a",
+    "video": true
+  },
+  "exp-floating-islands": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#0c0c0c",
+    "video": true
+  },
+  "exp-from-the-inside": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#d2d7d1",
+    "video": true
+  },
+  "exp-ab-test": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#6acb81",
+    "video": true
+  },
+  "exp-combo-card": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#0d0d0d",
+    "video": true
+  },
+  "exp-soft-hero": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#fff5e5",
+    "video": true
+  },
+  "exp-membrane": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#f2f7f1",
+    "video": true
+  },
   "exp-ease-grid": {
     "w": 1280,
     "h": 800,
