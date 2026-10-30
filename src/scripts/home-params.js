@@ -31,8 +31,8 @@ const schema = {
     pillFor: [I.pillFor, 0.3, 3, 0.01], // s from the window's edge to its place
     // how it goes: how far along (up) against the time (across); the dashed line is where the first band takes it
     pillCurve: { type: "curve", label: "Pill curve", value: I.pillCurve, mark: "__ksIntroCatch", markLabel: "first band" },
-    reach: [I.reach, 30, 500, 1], // how far along each band the pill's push spreads, logo units (more: wider, softer bends)
-    curve: [I.curve, 0.3, 4, 0.05], // how soon each band straightens again (more: tighter round the pill, upright sooner)
+    reach: [I.reach, 0.3, 3, 0.01], // how wide each band's bend is, times the width that fits the logo (more: wider, softer)
+    curve: [I.curve, 0.3, 4, 0.05], // how soon each band straightens past the logo (more: upright sooner)
     lineWidth: [I.lineWidth, 0.1, 1.5, 0.01], // the bands' width before they land, times the logo's strokes (lower: thinner, nearer their docked size)
     collapseAt: [I.collapseAt, -0.5, 1, 0.05], // s from the pill's stop that the bands let go
     dockFor: [I.dockFor, 0.3, 3, 0.05], // the move up into the nav's corner

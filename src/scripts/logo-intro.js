@@ -21,12 +21,12 @@ import { createLogoField } from "./logo-field.js";
 
 export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} }) {
   const INTRO = look;
-  const FIELD = { count: 5, weight: 0.32, gap: 0.3, bounce: 0.2, settle: 0.95, bandReach: 152, bandCurve: 0.95, bandWidth: 1 };
+  const FIELD = { count: 5, weight: 0.32, gap: 0.3, bounce: 0.2, settle: 0.95, bandReach: 1, bandCurve: 1, bandWidth: 1 };
   const fieldFrom = () => Object.assign(FIELD, {
     // the bands let go: their ends at rest on the strokes collapseFor after each goes
     bounce: INTRO.bounce ?? 0.2, settle: INTRO.collapseFor,
     // and how they bend (logo-field.js layBands)
-    bandReach: INTRO.reach ?? 152, bandCurve: INTRO.curve ?? 0.95, bandWidth: INTRO.lineWidth ?? 1,
+    bandReach: INTRO.reach ?? 1, bandCurve: INTRO.curve ?? 1, bandWidth: INTRO.lineWidth ?? 1,
   });
   const stripes = [...root.querySelectorAll(".kinetic-logo_stripe")];
   const bars = morphAll(stripes.map((p) => p.dataset.d));
@@ -233,7 +233,8 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
       pillAt();
       if (done) {
         if (t - T.pillAt >= path.still) return rest();
-        for (const L of lines) L.p.setAttribute("transform", `translate(${slide.x} 0)`);
+        // (all but the straight bar, which never moves)
+        lines.forEach((L, k) => k > 0 && L.p.setAttribute("transform", `translate(${slide.x} 0)`));
         return;
       }
       if (t >= T.pillAt && !saidGlide) {
