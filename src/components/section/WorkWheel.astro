@@ -333,7 +333,9 @@ const EAGER = 0;
     // on arrival the first rows rise in from below and settle, no spring
     const start = () => {
       root.classList.add("is-in");
-      gsap.fromTo(words, { yPercent: 110, y: 0 }, { yPercent: 0, y: 0, duration: reduced ? 0 : 1, stagger: 0.035, ease: "expo.out" });
+      // the words fade up rather than rise out of a mask (Hunter, Oct 30, for the page's load score: a
+      // masked word first paints as a sliver, so browsers counted the headline as barely there)
+      gsap.fromTo(words, { yPercent: 60, opacity: 0 }, { yPercent: 0, opacity: 1, duration: reduced ? 0 : 1, stagger: 0.035, ease: "expo.out" });
       if (!reduced) gsap.to(st, { intro: 0, duration: 1.8, ease: "power3.out", onUpdate: place });
       place();
     };
@@ -549,12 +551,11 @@ const EAGER = 0;
     }
     .wheel_word {
       display: inline-block;
-      overflow: hidden;
       vertical-align: top;
       padding-right: 0.2em;
       & > span {
         display: inline-block;
-        transform: translateY(110%);
+        opacity: 0;
       }
     }
     .wheel_awards,
