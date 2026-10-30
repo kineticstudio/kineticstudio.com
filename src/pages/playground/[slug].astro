@@ -9,6 +9,6 @@ export function getStaticPaths() {
 const { experiment } = Astro.props;
 ---
 
-<Layout title={experiment.title} description={`${experiment.note} A live experiment from Kinetic Studio, with parameters to play with.`} footer={false}>
+<Layout title={`${experiment.title} | Playground`} description={`${experiment.note} Play with it live in the Kinetic Studio Playground.`} footer={false}>
   <ExperimentStage experiment={experiment} />
 </Layout>

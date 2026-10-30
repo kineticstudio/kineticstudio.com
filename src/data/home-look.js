@@ -15,11 +15,15 @@ export const HOME_LOOK = {
   // dockLead, as they land; "I want the pill to go over ... As it's coming back to its resting point, it
   // scales down"; "like rubber bands that are slowing down the pill"; "the right line could be almost
   // all the way to the right of the viewport", logo-intro.js pillPath; Oct 30: "Let's not have a bounce-back
-  // effect either", so no overshoot and bounce 0): catchFor = s from the first band taking the pill up to
-  // its stopping in its place; collapseAt = s from then that the bands let go; dockFor = the move into the nav's corner
+  // effect either", so no overshoot and bounce 0; "give me parameters for: speed it comes in, speed it slows
+  // down, the amount of elasticity in the rubber bands"): inSpeed = logo widths a second the pill glides in at,
+  // catchFor = s from the first band taking it up to its stopping in its place; stretch = how far along each
+  // band the push carries (times the mark's own: lower tighter and more curved), hold = how soon each comes
+  // back upright toward the window's edge (times), tip = how round a band's bow is at its tip (logo units);
+  // collapseAt = s from the stop that the bands let go; dockFor = the move into the nav's corner
   intro: {
     logo: 44,
-    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.25, catchFor: 0.9, collapseAt: -0.3, collapseFor: 0.85, collapseSpread: 0, bounce: 0, dockLead: 0.5, dockFor: 1.15,
+    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.25, inSpeed: 3.3, catchFor: 0.9, stretch: 1, hold: 1, tip: 15, collapseAt: -0.3, collapseFor: 0.85, collapseSpread: 0, bounce: 0, dockLead: 0.5, dockFor: 1.15,
   },
   // a tile's 3D card under the pointer: tilt (degrees), lift, depth of the view,
   // the springs it moves on, and when it shows (ms after it loads) and is dropped (s after leaving)

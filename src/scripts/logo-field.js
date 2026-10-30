@@ -194,7 +194,9 @@ export function createLogoField(canvas, S = FIELD) {
     slB = new Float32Array(N);
     give = new Float32Array(N * M);
     depth = new Float64Array(M);
-    const step = (spanBot - spanTop) / (M - 1), dy = ys[1] - ys[0], e = 15 * unit, hold = Math.max(60 * unit, 0.8 * (spanTop - ys[0]));
+    // (the homepage's Params: stretch times the reach, hold times the distance back to upright, tip in logo units)
+    const step = (spanBot - spanTop) / (M - 1), dy = ys[1] - ys[0], e = Math.max(0, S.tip ?? 15) * unit;
+    const hold = Math.max(60 * unit, 0.8 * (spanTop - ys[0])) * Math.max(0.1, S.hold ?? 1), stretch = Math.max(0.1, S.stretch ?? 1);
     for (let i = 0; i < N; i++) {
       const row = i * M;
       for (let j = 0; j < M; j++) mid[row + j] = (finalL[row + j] + finalR[row + j]) / 2;
@@ -209,7 +211,7 @@ export function createLogoField(canvas, S = FIELD) {
       // the reach that has the band leave its stroke's ends just as the stroke does: how far it is pressed
       // there over how steeply the stroke leaves (a band not pressed at rest, the straight bar, reaches far)
       const out = Math.max(stand[i] - endT[i], stand[i] - endB[i]), lean = Math.max(Math.abs(slT[i]), Math.abs(slB[i]));
-      const reach = out > unit ? clamp(out / Math.max(0.05, lean), 140 * unit, 900 * unit) : 420 * unit;
+      const reach = (out > unit ? clamp(out / Math.max(0.05, lean), 140 * unit, 900 * unit) : 420 * unit) * stretch;
       for (let m = 0; m < M; m++) give[i * M + m] = Math.exp(-(Math.hypot(m * dy, e) - e) / reach - ((m * dy) / hold) ** 2);
     }
   }

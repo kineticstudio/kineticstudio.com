@@ -21,10 +21,12 @@ import { createLogoField } from "./logo-field.js";
 
 export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} }) {
   const INTRO = look;
-  const FIELD = { count: 5, weight: 0.32, gap: 0.3, bounce: 0.2, settle: 0.95 };
+  const FIELD = { count: 5, weight: 0.32, gap: 0.3, bounce: 0.2, settle: 0.95, stretch: 1, hold: 1, tip: 15 };
   const fieldFrom = () => Object.assign(FIELD, {
     // the bands let go: their ends at rest on the strokes collapseFor after each goes
     bounce: INTRO.bounce ?? 0.2, settle: INTRO.collapseFor,
+    // and how they give (logo-field.js layBands)
+    stretch: INTRO.stretch ?? 1, hold: INTRO.hold ?? 1, tip: INTRO.tip ?? 15,
   });
   const stripes = [...root.querySelectorAll(".kinetic-logo_stripe")];
   const bars = morphAll(stripes.map((p) => p.dataset.d));
@@ -48,7 +50,7 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
      corner (HeroLines) as they land. The lines are
      src/scripts/logo-field.js; the timing is the look (HOME_LOOK.intro). */
   const svg = root.querySelector("svg");
-  const vbH = svg.viewBox.baseVal.height || 201;
+  const vbH = svg.viewBox.baseVal.height || 201, vbW = svg.viewBox.baseVal.width || 674;
   // the logo's own lines, measured off the drawing: left and right edges as x at any height
   const TOKENS = /[A-Za-z]|-?[\d.]+(?:e-?\d+)?/g;
   const edgesOf = (d) => {
@@ -124,14 +126,28 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
   const unit01 = (t) => Math.min(1, Math.max(0, t));
   /* The pill's way in (Hunter, Oct 29: "It needs to feel like the lines are catching the pill"; "The pill
      shouldn't slow down until it almost feels like these are like rubber bands that are slowing down the
-     pill"; Oct 30: "Let's not have a bounce-back effect either"). It glides in at full speed until the
-     first band takes it up (catchAt, logo units right of its place), and the bands bring it to a stop in
-     its place catchFor seconds later: catchAt (1 - s)^3 (1 + s), s the share of catchFor gone, so its
-     slowing starts from nothing at the catch, grows as they stretch, and has gone again as it stops.
+     pill"; Oct 30: "Let's not have a bounce-back effect either"; "give me parameters for: speed it comes in,
+     speed it slows down"). It glides in at inSpeed (logo widths a second) until the first band takes it up
+     (catchAt, logo units right of its place), and the bands bring it to a stop in its place catchFor
+     seconds later: its speed there falls as (1 - s^q)^2 of what it came in at, s the share of catchFor
+     gone, q set so it covers catchAt exactly, so its slowing starts from nothing at the catch, grows as
+     they stretch, and has gone again as it stops, and it never speeds up again. (A stop too quick or too
+     slow for that speed takes as long as it has to.)
      x(t), t from when it sets off, in logo units right of its place; at = the catch; turn = at rest. */
   const pillPath = (start, catchAt) => {
     catchAt = Math.max(1, catchAt);
-    const T = Math.max(0.15, INTRO.catchFor ?? 0.9), speed = (2 * catchAt) / T;
+    const speed = Math.max(0.2, INTRO.inSpeed ?? 3.3) * vbW;
+    // v: how far it would go at its speed over the stop, in catchAts (1 just enough, 3 the most it can shed)
+    let T = Math.max(0.15, INTRO.catchFor ?? 0.9), v = (speed * T) / catchAt;
+    if (v < 1.1 || v > 3) (v = Math.min(3, Math.max(1.1, v))), (T = (v * catchAt) / speed);
+    const share = (q) => 1 - 2 / (q + 1) + 1 / (2 * q + 1); // the mean of (1 - s^q)^2
+    let lo = 1, hi = 80;
+    for (let k = 0; k < 40; k++) {
+      const m = (lo + hi) / 2;
+      if (share(m) < 1 / v) lo = m;
+      else hi = m;
+    }
+    const q = (lo + hi) / 2, gone = (u) => u - (2 * u ** (q + 1)) / (q + 1) + u ** (2 * q + 1) / (2 * q + 1);
     const from = Math.max(start, catchAt), Ta = (from - catchAt) / speed;
     return {
       at: Ta,
@@ -141,7 +157,7 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
         if (t <= 0) return from;
         if (t < Ta) return from - speed * t;
         const u = Math.min(1, (t - Ta) / T);
-        return catchAt * (1 - u) ** 3 * (1 + u);
+        return Math.max(0, catchAt - speed * T * gone(u));
       },
     };
   };

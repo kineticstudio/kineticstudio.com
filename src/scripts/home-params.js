@@ -20,10 +20,16 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const I = HOME_LOOK.intro, Hv = HOME_LOOK.hover, Wh = HOME_LOOK.wheel, L = LAUREL_LOOK;
 
 const schema = {
+  // first, beside the intro's dials (Hunter, Oct 30: "a button to replay")
+  replayIntro: { type: "action", label: "Replay intro" },
   intro: {
     logo: [I.logo, 24, 64, 0.5], // the logo's width while it plays, rem
     pillAt: [I.pillAt, 0, 1.5, 0.05],
-    catchFor: [I.catchFor, 0.2, 2, 0.05], // s from the first band taking it up to its stop
+    inSpeed: [I.inSpeed, 0.5, 10, 0.1], // how fast the pill comes in, logo widths a second
+    catchFor: [I.catchFor, 0.2, 2, 0.05], // how long the bands take to slow it to a stop, s
+    stretch: [I.stretch, 0.3, 2.5, 0.01], // the bands' elasticity: how far along each the push carries (lower tighter)
+    hold: [I.hold, 0.3, 3, 0.01], // how soon each band comes back upright toward the window's edge (lower sooner)
+    tip: [I.tip, 0, 60, 1], // how round each band's bow is at its tip, logo units
     collapseAt: [I.collapseAt, -0.5, 1, 0.05], // s from the pill's stop that the bands let go
     dockFor: [I.dockFor, 0.3, 3, 0.05], // the move up into the nav's corner
     collapseFor: [I.collapseFor, 0.2, 2, 0.05], // s from a line's release until its ends are at rest on the stroke
@@ -111,7 +117,6 @@ const schema = {
     quality: [L.render?.quality ?? 1.5, 1, 2.5, 0.05],
     steady: [L.render?.steady ?? 0.6, 0, 0.9, 0.01],
   },
-  replayIntro: { type: "action", label: "Replay intro" },
   flashLaurels: { type: "action", label: "Flash laurels" },
   copyProps: { type: "action", label: "Copy props" },
   reset: { type: "action", label: "Reset" },

@@ -2,7 +2,7 @@
 export const SITE_NAME = "Kinetic Studio";
 /** Fallback meta description for pages that don't set their own. */
 export const SITE_DESCRIPTION =
-  "We craft captivating, award-winning websites and digital experiences for modern brands";
+  "Kinetic Studio designs and builds award-winning websites and brands for the companies building what's next, from AI and health to defense and climate.";
 /** Canonical origin. Resolves canonical URLs, social images, and the sitemap. */
 export const SITE_URL = "https://www.kineticstudio.com";
 /** BCP 47 locale tag used to format dates and numbers. */
