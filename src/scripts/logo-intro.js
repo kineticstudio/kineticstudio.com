@@ -21,12 +21,12 @@ import { createLogoField } from "./logo-field.js";
 
 export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} }) {
   const INTRO = look;
-  const FIELD = { count: 5, weight: 0.32, gap: 0.3, bounce: 0.2, settle: 0.95, bandReach: 1, bandCurve: 1, bandWidth: 1 };
+  const FIELD = { count: 5, weight: 0.32, gap: 0.3, bounce: 0.2, settle: 0.95, bandReach: 1, bandCurve: 2.1, bandWidth: 1 };
   const fieldFrom = () => Object.assign(FIELD, {
     // the bands let go: their ends at rest on the strokes collapseFor after each goes
     bounce: INTRO.bounce ?? 0.2, settle: INTRO.collapseFor,
     // and how they bend (logo-field.js layBands)
-    bandReach: INTRO.reach ?? 1, bandCurve: INTRO.curve ?? 1, bandWidth: INTRO.lineWidth ?? 1,
+    bandReach: INTRO.reach ?? 1, bandCurve: INTRO.curve ?? 2.1, bandWidth: INTRO.lineWidth ?? 1,
   });
   const stripes = [...root.querySelectorAll(".kinetic-logo_stripe")];
   const bars = morphAll(stripes.map((p) => p.dataset.d));
@@ -135,10 +135,10 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
      x(t), t from when it sets off, in logo units right of its place; at = the catch; turn = at rest. */
   const curveOf = (v) => {
     const a = Array.isArray(v) ? v : String(v ?? "").split(",").map(Number);
-    return a.length === 4 && a.every(Number.isFinite) ? a : [0.31, 0.76, 0.52, 1];
+    return a.length === 4 && a.every(Number.isFinite) ? a : [0, 0.52, 0.17, 0.97];
   };
   const pillPath = (start, catchAt) => {
-    const T = Math.max(0.15, INTRO.pillFor ?? 0.96), [x1, y1, x2, y2] = curveOf(INTRO.pillCurve);
+    const T = Math.max(0.15, INTRO.pillFor ?? 0.79), [x1, y1, x2, y2] = curveOf(INTRO.pillCurve);
     const bx = (s) => 3 * (1 - s) ** 2 * s * x1 + 3 * (1 - s) * s * s * x2 + s ** 3;
     const by = (s) => 3 * (1 - s) ** 2 * s * y1 + 3 * (1 - s) * s * s * y2 + s ** 3;
     // how far along at a share u of the time: the curve's height where it is u across
