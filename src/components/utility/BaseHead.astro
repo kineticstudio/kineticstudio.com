@@ -16,7 +16,8 @@ const {
 
 const isNoindex = noindex ?? isNoindexRoute(Astro.url.pathname);
 
-const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
+// the name first (Hunter, Oct 30: "make title tag start with Kinetic Studio")
+const pageTitle = title ? `${SITE_NAME} | ${title}` : SITE_NAME;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const socialImage = new URL(image, Astro.site);
 // the site's own preview, the image and its film (scripts/og-video.mjs, Oct 30): where a page has its own image, the image alone

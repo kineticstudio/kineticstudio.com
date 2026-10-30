@@ -106,7 +106,7 @@ export function createLogoField(canvas, S = FIELD) {
   // ends and their slopes (dx/dy); and how far the strokes are carried with the pill now (px)
   let bands = false, stand = new Float32Array(0), mid = new Float32Array(0), give = new Float32Array(0);
   let endT = new Float32Array(0), endB = new Float32Array(0), slT = new Float32Array(0), slB = new Float32Array(0);
-  let pushNow = 0, depth = new Float64Array(0);
+  let pushNow = 0, depth = new Float64Array(0), hard = new Float64Array(0), blurW = new Float64Array(0), blurR = 0;
   let d, v, target, free, colTmp, colPre, bSum, bW, bCnt, bVel;
   // where each line ends: its stroke, its x at each row of the stroke's height, its width
   let finalX = new Float32Array(0), finalY = new Float32Array(0), finalW = new Float32Array(0);
@@ -200,6 +200,11 @@ export function createLogoField(canvas, S = FIELD) {
     const step = (spanBot - spanTop) / (M - 1), dy = ys[1] - ys[0];
     const reach = Math.max(10, S.bandReach ?? 140) * unit, curve = Math.max(0.2, S.bandCurve ?? 1.2);
     for (let m = 0; m < M; m++) give[m] = (1 + ((m * dy) / reach) ** 2) ** -curve;
+    // the softening: a Gaussian 18 logo units wide along the band
+    hard = new Float64Array(M);
+    const soft = (18 * unit) / dy;
+    blurR = Math.max(1, Math.ceil(3 * soft));
+    blurW = Float64Array.from({ length: blurR + 1 }, (_, m) => Math.exp(-0.5 * (m / soft) ** 2));
     for (let i = 0; i < N; i++) {
       const row = i * M;
       for (let j = 0; j < M; j++) mid[row + j] = (finalL[row + j] + finalR[row + j]) / 2;
@@ -227,6 +232,7 @@ export function createLogoField(canvas, S = FIELD) {
         depth[k] = ys[k] < spanTop || ys[k] > spanBot ? -1 : stand[i] - strokeMid(i, ys[k], push);
         if (depth[k] > 0) any = true;
       }
+      // the strongest push at each row
       for (let j = 0; j < M; j++) {
         let out = 0;
         if (any)
@@ -236,7 +242,18 @@ export function createLogoField(canvas, S = FIELD) {
             const g = dk * give[Math.abs(j - k)];
             if (g > out) out = g;
           }
-        d[row + j] = -out; // x0 is where it stands
+        hard[j] = out;
+      }
+      /* then softened along the band (Hunter, Oct 30: "super jaggedy"): where one point's push takes over from
+         another further along, the strongest alone turns a corner; a blur over soft rows rounds it off */
+      for (let j = 0; j < M; j++) {
+        let sum = 0, wsum = 0;
+        for (let k = Math.max(0, j - blurR); k <= Math.min(M - 1, j + blurR); k++) {
+          const wk = blurW[Math.abs(j - k)];
+          sum += hard[k] * wk;
+          wsum += wk;
+        }
+        d[row + j] = -(sum / wsum); // x0 is where it stands
       }
     }
   }
@@ -393,17 +410,34 @@ export function createLogoField(canvas, S = FIELD) {
     const endSlope = (k0, k1) => ((finalL[row + k1] + finalR[row + k1]) - (finalL[row + k0] + finalR[row + k0])) / 2 / ((k1 - k0) * step);
     const sTop = endSlope(0, 2), sBot = endSlope(M - 3, M - 1), D = 0.45 * (spanBot - spanTop);
     const reach = (u) => D * (1 - Math.exp(-u / D)); // the distance it leans out over a run of u, at most D
-    // (a band past its stroke's ends keeps its own curve, carried onto the stroke's end)
+    /* A band past its stroke's ends (Hunter, Oct 30: "They don't look curvy or organic at all. They're super
+       jaggedy"): it leaves each end in the stroke's own direction and eases into the band's own curve over
+       half the logo's height, so there is no corner where the two meet; drawn from its own middle, as wide
+       across as the line is (a stroke end's width, carried flat onto a flatter tail, thinned it). */
     const bandT = bands ? streamAt(i, spanTop) : 0, bandB = bands ? streamAt(i, spanBot) : 0;
+    const mT = (finalL[row] + finalR[row]) / 2, mB = (finalL[row + M - 1] + finalR[row + M - 1]) / 2, L = 0.5 * (spanBot - spanTop);
+    const ease = (u) => {
+      const t = clamp(u / L, 0, 1);
+      return t * t * (3 - 2 * t);
+    };
+    // (each end's tail by its own side, even a hair past the end, where its slope is read)
+    const tail = (y, top) =>
+      top
+        ? mT + lerp(-sTop * (spanTop - y), streamAt(i, y) - bandT, ease(spanTop - y))
+        : mB + lerp(sBot * (y - spanBot), streamAt(i, y) - bandB, ease(y - spanBot));
     for (let j = 0; j < M; j++) {
       const y = lerp(yt, yb, j / (M - 1));
       const sx = streamAt(i, y), sl = slopeAt(i, y), half = (ownW[i] / 2) * Math.sqrt(1 + sl * sl);
       let aL, aR;
-      if (y < spanTop) {
-        const off = bands ? sx - bandT : -sTop * reach(spanTop - y);
+      if (bands && (y < spanTop || y > spanBot)) {
+        const top = y < spanTop, c = tail(y, top), e = (0.5 * (spanBot - spanTop)) / (M - 1), ts = (tail(y + e, top) - tail(y - e, top)) / (2 * e);
+        const h = (ownW[i] / 2) * Math.sqrt(1 + ts * ts);
+        (aL = c - h), (aR = c + h);
+      } else if (y < spanTop) {
+        const off = -sTop * reach(spanTop - y);
         (aL = finalL[row] + off), (aR = finalR[row] + off);
       } else if (y > spanBot) {
-        const off = bands ? sx - bandB : sBot * reach(y - spanBot);
+        const off = sBot * reach(y - spanBot);
         (aL = finalL[row + M - 1] + off), (aR = finalR[row + M - 1] + off);
       } else (aL = strokeAt(finalL, i, y)), (aR = strokeAt(finalR, i, y));
       py[j] = y;
@@ -413,13 +447,24 @@ export function createLogoField(canvas, S = FIELD) {
     ctx.globalAlpha = Math.min(1, r * 1.6);
     ctx.beginPath();
     ctx.moveTo(lx[0], py[0]);
-    for (let j = 1; j < M; j++) ctx.lineTo(lx[j], py[j]);
-    for (let j = M - 1; j >= 0; j--) ctx.lineTo(rx[j], py[j]);
+    smoothEdge(lx, py, false);
+    smoothEdge(rx, py, true);
     ctx.closePath();
     ctx.fill();
   }
 
   const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+  // one edge of a filled line, down (or back up) its rows as curves through their midpoints, so a band
+  // drawn row by row has no facets on its flatter runs
+  const smoothEdge = (xs, ys, back) => {
+    const at = (k) => (back ? M - 1 - k : k);
+    if (back) ctx.lineTo(xs[at(0)], ys[at(0)]);
+    for (let k = 1; k < M - 1; k++) {
+      const a = at(k), b = at(k + 1);
+      ctx.quadraticCurveTo(xs[a], ys[a], (xs[a] + xs[b]) / 2, (ys[a] + ys[b]) / 2);
+    }
+    ctx.lineTo(xs[at(M - 1)], ys[at(M - 1)]);
+  };
   const px = new Float32Array(512), py = new Float32Array(512), lx = new Float32Array(512), rx = new Float32Array(512);
   /* A given line is a filled shape, its weight held across its bends, its
      ends cut flat; at the end its edges are the stroke's own, so it is the
@@ -441,8 +486,8 @@ export function createLogoField(canvas, S = FIELD) {
     ctx.globalAlpha = Math.min(1, r * 1.6);
     ctx.beginPath();
     ctx.moveTo(lx[0], py[0]);
-    for (let j = 1; j < M; j++) ctx.lineTo(lx[j], py[j]);
-    for (let j = M - 1; j >= 0; j--) ctx.lineTo(rx[j], py[j]);
+    smoothEdge(lx, py, false);
+    smoothEdge(rx, py, true);
     ctx.closePath();
     ctx.fill();
   }
