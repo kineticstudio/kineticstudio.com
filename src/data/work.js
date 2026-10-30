@@ -114,6 +114,9 @@ export const WORK = [
   { slug: "rylo", name: "Rylo", industry: "Health", does: ["Web design", "Development"], cover: "rylo", url: "https://rylo.com/" },
   { slug: "elio", name: "Elio", industry: "Fintech & web3", does: ["Brand", "Web design", "Development"], cover: "elio", url: "https://elio-site.kineticstudio.com/" }, // elio.com is for sale now (Oct 24): Kinetic's own share of the site
   { slug: "dorm-room-fund", name: "Dorm Room Fund", industry: "Venture", does: ["Web design", "Development"], cover: "dorm-room-fund", url: "https://www.dormroomfund.com/" },
+  // Oct 29: "lets add s32 and rre to the work on the homepage"
+  { slug: "s32", name: "S32", industry: "Venture", does: ["Web design", "Development"], cover: "s32", url: "https://www.s32.com/" },
+  { slug: "rre", name: "RRE", industry: "Venture", does: ["Web design", "Development"], cover: "rre", url: "https://rre.com/" },
   { slug: "moses", name: "moses", client: "moses", industry: "Health", does: ["Web design"], cover: "moses", url: "https://moses.kineticstudio.com/" },
   { slug: "heygen", name: "HeyGen", industry: "AI", does: ["Web design", "Development"], cover: "heygen", url: "https://www.heygen.com/" },
   { slug: "ethos", name: "Ethos", industry: "Fintech & web3", does: ["Brand", "Web design", "Development"], cover: "ethos", url: "https://www.ethos.network/" },
@@ -159,6 +162,8 @@ export const HOME = [
   "roam-robotics", "dorm-room-fund",
   // Oct 25: "we also need to add counsel-health to the work on homepage", beside Elio
   "elio", "counsel-health",
+  // Oct 29: "lets add s32 and rre to the work on the homepage"
+  "s32", "rre",
 ];
 
 /* Hunter, Oct 23: these four lead the site, each shown with its code-powered

@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Code-powered work card for S32 (www.s32.com, "S32 | Venture Beyond"; Kinetic
+     designed and built the site), 2026-10-29, built on the Wispr Flow card's
+     engine (04-Wispr-Flow-work-card.html) as a classic script, like the Dorm
+     Room Fund card's:
+     - the miniature is the live homepage rebuilt in HTML and CSS layers at its
+       own 1440px width, scaled into a 16:10 card laid out K times larger so
+       tilted text stays sharp; one spring-driven loop, transforms and opacity
+       only
+     - every bit of the page's scroll-tied motion is rebuilt on the miniature's
+       scroll with the page's own ranges: the hero's card rising, "What makes
+       S32 different" pinned under the hero while the S32 mark rises and its box
+       draws itself round, the three rows sliding in, the invest cards rising
+       column by column, "Fewer Bets / Full Conviction" pinned while the white
+       "Select Companies" panel rises over it and slides to the left edge, the
+       companies' staircase, the footer card rising; the headings' lines and
+       words slide in on the page's own timings, on the card's clock
+     - idle, it tours the hero, "What makes S32 different", Depth / Talent /
+       Concentration, "Where we invest", "Fewer Bets / Full Conviction" with the
+       panel coming over, "Select Companies" and the footer, and back home: a
+       fixed 21.6 s loop of eased stops
+     - hover tilts it toward the pointer (tilt.tiltMax, 5 degrees as on the
+       other cards, up to 20) and the layers separate by depth with soft shadows
+       that grow with height; the light is one round bloom that follows the
+       pointer; the tour keeps running under the hover
+     - press and drag scrolls the miniature either way: drag up, page goes
+       down (1:1); drag right, it scrubs further down, left back up (2.5x);
+       momentum and clamped ends; the tour picks up from there after a beat
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge,
+       on a transparent page; it pauses when hidden or when the parent posts
+       {type: "ks-card", visible: false}; {type: "ks-card", at: seconds} puts
+       the tour at that time (the site's resting loop is this tour recorded);
+       a click or tap posts {type: "ks-card-open"}. &bleed=N keeps N px of clear
+       frame round the card, &radius=N rounds its corners, &mat=F draws it
+       framed (the site's border on every tile: the window inset F x the card's
+       width on all four sides, on S32's beige, card.frameColor), and touch
+       drag is off unless &touchdrag=1, so a swipe over the tile scrolls the site
+
+     Everything S32-side was taken from the live site on 2026-10-29 and lives in
+     s32-card-src/: its PP Neue Montreal files, its S32 mark (the page's own
+     path), its colours, sizes and words. The page has no photographs. raw/
+     keeps the fetched HTML, CSS and fonts for reference; nothing in it is used
+     or executed. -->
+<title>S32 work card</title>
+<script>
+  /* ?embed=1 is the site tile. &radius=N rounds the card's corners. &bleed=N: the site's iframe overhangs the tile by N px on every side
+     (room for the tilt), so the card keeps N px of clear frame round it and sits exactly on the tile at rest.
+     &touchdrag=1 lets a finger drag the miniature; off by default, so a swipe over the tile scrolls the site. */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    if (q.get('embed') !== '1') return;
+    var h = document.documentElement;
+    h.classList.add('embed');
+    var b = parseFloat(q.get('bleed'));
+    if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    var r = parseFloat(q.get('radius'));   // &radius=N: the card's corner radius in px (the site passes 6)
+    if (r >= 0) h.style.setProperty('--card-r', r + 'px');
+  })();
+</script>
+<link rel="stylesheet" href="s32-card-src/css/card.css">
+<link rel="stylesheet" href="s32-card-src/css/site.css">
+</head>
+
+<body>
+<!-- the S32 mark's letters, the page's own path -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="s32w" viewBox="0 0 150 66"><path fill="currentColor" d="M27.5438 65.3839C11.7918 65.3839 0.879805 57.1119 -0.00019528 43.0319H8.2718C9.15181 51.7439 14.0798 58.4319 27.1918 58.4319C38.5438 58.4319 41.7118 53.4159 41.7118 46.9919C41.7118 38.1919 35.5518 37.1359 23.3198 34.0559C13.8158 31.6799 2.6398 28.7759 2.6398 16.6319C2.6398 6.59985 10.3838 -0.000147343 23.9358 -0.000147343C38.1918 -0.000147343 46.9038 7.21585 47.9598 19.8879H39.6878C38.5438 11.4399 34.1438 6.95185 24.0238 6.95185C15.2238 6.95185 10.9118 10.2959 10.9118 16.2799C10.9118 24.1119 18.4798 25.6959 26.5758 27.6319C38.8078 30.5359 49.9838 33.3519 49.9838 46.7279C49.9838 57.1119 43.2078 65.3839 27.5438 65.3839ZM79.0259 65.3839C63.5379 65.3839 54.9139 57.2879 54.9139 43.5599H63.1859C63.1859 52.3599 66.8819 58.3439 78.4099 58.3439C88.8819 58.3439 92.3139 54.0319 92.3139 47.0799C92.3139 37.9279 85.7139 35.9039 79.8179 35.9039H73.3059V28.8639H79.4659C85.7139 28.8639 90.1139 25.9599 90.1139 18.9199C90.1139 13.9919 87.1219 9.15186 78.8499 9.15186C66.9699 9.15186 64.7699 15.5759 64.7699 21.5599H56.4979C56.4979 10.3839 63.8019 2.11185 78.8499 2.11185C89.2339 2.11185 98.3859 8.18385 98.3859 18.9199C98.3859 25.3439 95.2179 29.3919 89.0579 31.8559V32.0319C97.2419 34.5839 100.586 39.9519 100.586 47.0799C100.586 58.6959 92.0499 65.3839 79.0259 65.3839ZM148.166 64.1519H106.014C106.014 53.1519 112.966 44.5279 124.142 38.0159C135.494 31.4159 140.774 29.3039 140.774 20.4159C140.774 15.3119 138.838 9.15186 129.51 9.15186C118.862 9.15186 116.046 16.2799 116.046 24.6399H107.774C107.774 12.0559 114.638 2.11185 129.686 2.11185C140.07 2.11185 149.046 8.71185 149.046 20.3279C149.046 32.1199 139.542 37.7519 130.654 42.8559C123.79 46.8159 117.278 50.5999 115.606 56.9359V57.1119H148.166V64.1519Z"/></symbol>
+  <symbol id="s32box" viewBox="0 0 333.7 227.8"><path d="M 8 8 L 325.7 8 L 325.7 219.8 L 8 219.8 L 8 8" fill="none" stroke="currentColor" stroke-width="14" stroke-linejoin="miter" stroke-linecap="square"/></symbol>
+</svg>
+
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="S32, s32.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+            <div class="page" id="page">
+
+              <!-- 1 the hero: the headline drifts down, the card rises its overhang -->
+              <section class="sec hero" id="s-hero" data-tone="dark">
+                <div class="hero-panel"></div>
+                <div class="hero-h-a" data-anim="h1">
+                  <h1 class="h1 hero-h" data-layer="headline" data-depth="0.6" data-shadow="0,0.3,18">For obsessive<br>founders building<br>iconic companies.</h1>
+                </div>
+                <div class="hero-links" data-layer="links" data-depth="0.28">
+                  <div class="hl" style="top:0"><span>Meet the Team</span></div>
+                  <div class="hl" style="top:93px"><span>The Talent Advantage</span></div>
+                  <div class="hl" style="top:186px"><span>Portfolio</span></div>
+                </div>
+                <div class="hero-card-a" data-anim="card">
+                  <div class="hero-card" data-layer="card" data-depth="0.34" data-shadow="0,0.45,26">
+                    <p class="big hero-p" data-layer="body copy" data-depth="0.55">S32 is a high-conviction venture firm. We focus on a small set of core relationships so we can commit deeply and stand behind founders for the long term.</p>
+                  </div>
+                </div>
+              </section>
+
+              <!-- 2 what makes S32 different: pinned under the hero, the mark rises and its box draws; then the three rows -->
+              <section class="sec diff" id="s-diff" data-tone="dark">
+                <div class="dtop" data-anim="dtop">
+                  <div class="h1 d-what" data-layer="headline" data-depth="0.55" data-shadow="0,0.35,14">What makes</div>
+                  <div class="d-logo-a" data-anim="logo">
+                    <div class="d-logo" data-layer="S32 mark" data-depth="0.8" data-shadow="0,0.4,12">
+                      <svg class="d-word" viewBox="0 0 150 66"><use href="#s32w"/></svg>
+                      <div class="d-rect"><i class="e0"></i><i class="e1"></i><i class="e2"></i><i class="e3"></i></div>
+                    </div>
+                  </div>
+                  <div class="d-diff-a" data-anim="diff">
+                    <div class="h1 d-diff" data-layer="headline" data-depth="0.55" data-shadow="0,0.35,14">different</div>
+                  </div>
+                </div>
+                <div class="dbot-a" data-anim="dbot">
+                  <div class="dbot" data-layer="panel" data-depth="0.1">
+                    <div class="item-a" data-anim="item0" style="top:0">
+                      <div class="item" data-layer="row" data-depth="0.2">
+                        <div class="big i-name" data-layer="name" data-depth="0.45">Depth</div>
+                        <div class="i-text" data-layer="body copy" data-depth="0.38">A small, deeply experienced group of investors and operators with experience backing 500+ companies, driving 150+ exits, and generating tens of billions in realized exit value.</div>
+                      </div>
+                    </div>
+                    <div class="item-a" data-anim="item1" style="top:274.6px">
+                      <div class="item" data-layer="row" data-depth="0.2">
+                        <div class="big i-name" data-layer="name" data-depth="0.45">Talent</div>
+                        <div class="i-text" data-layer="body copy" data-depth="0.38">Hands-on support hiring world-class leaders across engineering, AI, and go-to-market, with real execution experience in the most critical moments.</div>
+                      </div>
+                    </div>
+                    <div class="item-a" data-anim="item2" style="top:549.2px">
+                      <div class="item" data-layer="row" data-depth="0.2">
+                        <div class="big i-name" data-layer="name" data-depth="0.45">Concentration</div>
+                        <div class="i-text" data-layer="body copy" data-depth="0.38">We work with a small number of companies by design, reserving meaningful time, capital, and attention for the companies we believe in.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- 3 where we invest: the cards rise column by column -->
+              <section class="sec inv" id="s-inv" data-tone="light">
+                <h2 class="h1 inv-h" id="rvInv" data-layer="headline" data-depth="0.55"><span class="ln"><i class="rv">Where we</i></span><span class="ln"><i class="rv">invest</i></span></h2>
+                <div class="inv-c-a" data-anim="inv0t" style="left:205.8px;top:512.8px"><div class="inv-c" data-layer="sector" data-depth="0.26" data-shadow="0,0.32,20"><div class="inv-t" data-layer="label" data-depth="0.5">Artificial Intelligence</div></div></div>
+                <div class="inv-c-a" data-anim="inv0b" style="left:205.8px;top:788.2px"><div class="inv-c" data-layer="sector" data-depth="0.26" data-shadow="0,0.32,20"><div class="inv-t" data-layer="label" data-depth="0.5">Computational biology</div></div></div>
+                <div class="inv-c-a" data-anim="inv1t" style="left:617.9px;top:403.05px"><div class="inv-c" data-layer="sector" data-depth="0.32" data-shadow="0,0.36,20"><div class="inv-t" data-layer="label" data-depth="0.56">Physical AI</div></div></div>
+                <div class="inv-c-a" data-anim="inv1b" style="left:617.9px;top:678.45px"><div class="inv-c" data-layer="sector" data-depth="0.32" data-shadow="0,0.36,20"><div class="inv-t" data-layer="label" data-depth="0.56">Infrastructure</div></div></div>
+                <div class="inv-c-a" data-anim="inv2t" style="left:1030px;top:293.3px"><div class="inv-c" data-layer="sector" data-depth="0.38" data-shadow="0,0.4,20"><div class="inv-t" data-layer="label" data-depth="0.62">Cybersecurity</div></div></div>
+                <div class="inv-c-a" data-anim="inv2b" style="left:1030px;top:568.7px"><div class="inv-c" data-layer="sector" data-depth="0.38" data-shadow="0,0.4,20"><div class="inv-t" data-layer="label" data-depth="0.62">Enterprise</div></div></div>
+              </section>
+
+              <!-- 4 fewer bets, full conviction: pinned while the white panel rises over it; the companies' staircase -->
+              <section class="sec comp" id="s-comp" data-tone="dark">
+                <div class="ch-a" data-anim="ch">
+                  <h2 class="h1 ch-h" id="rvFewer" data-layer="headline" data-depth="0.55"><span class="ln"><i class="rv">Fewer Bets</i></span><span class="ln"><i class="rv">Full Conviction</i></span></h2>
+                  <p class="big ch-p" id="rvText" data-split="words" data-layer="body copy" data-depth="0.4">We are deliberately capital constrained to force ourselves to choose between excellent opportunities rather than deploy into marginal ones.</p>
+                </div>
+                <div class="wrap-a" data-anim="wrap" data-tone="light">
+                  <div class="wrap" data-layer="panel" data-depth="0.08">
+                    <h2 class="h1 sel-h" id="rvSel" data-layer="headline" data-depth="0.5"><span class="ln"><i class="rv">Select Companies</i></span></h2>
+                    <div class="prior" data-layer="key" data-depth="0.58"><div class="sq-a"><div class="sq" id="rvSq"></div></div><div class="pt-c"><div class="pt" id="rvPrior">Prior to S32</div></div></div>
+                    <div class="list">
+                      <div class="cl-a" data-anim="cl0" style="top:0"><div class="cl" data-layer="company" data-depth="0.24"><span>8090</span></div></div>
+                      <div class="cl-a" data-anim="cl1" style="top:104.53px"><div class="cl" data-layer="company" data-depth="0.24"><span>Basecamp</span></div></div>
+                      <div class="cl-a" data-anim="cl2" style="top:209.06px"><div class="cl" data-layer="company" data-depth="0.24"><span>Black Forest Labs</span></div></div>
+                      <div class="cl-a" data-anim="cl3" style="top:313.59px"><div class="cl" data-layer="company" data-depth="0.24"><span>Cohere</span></div></div>
+                      <div class="cl-a" data-anim="cl4" style="top:418.12px"><div class="cl" data-layer="company" data-depth="0.24"><span>Coinbase</span></div></div>
+                      <div class="cl-a" data-anim="cl5" style="top:522.65px"><div class="cl" data-layer="company" data-depth="0.24"><span>Crowdstrike</span></div></div>
+                      <div class="cl-a" data-anim="cl6" style="top:627.18px"><div class="cl" data-layer="company" data-depth="0.24"><span>Databricks</span></div></div>
+                      <div class="cl-a" data-anim="cl7" style="top:731.71px"><div class="cl" data-layer="company" data-depth="0.24"><span>Deel</span></div></div>
+                      <div class="cl-a" data-anim="cl8" style="top:836.24px"><div class="cl" data-layer="company" data-depth="0.24"><span>Ema</span></div></div>
+                      <div class="cl-a" data-anim="cl9" style="top:940.77px"><div class="cl" data-layer="company" data-depth="0.24"><span>Endor Labs</span></div></div>
+                      <div class="cl-a" data-anim="cl10" style="top:1045.3px"><div class="cl" data-layer="company" data-depth="0.24"><span>Gusto</span></div></div>
+                      <div class="cl-a" data-anim="cl11" style="top:1149.83px"><div class="cl" data-layer="company" data-depth="0.24"><span>Inceptive</span></div></div>
+                      <div class="cl-a" data-anim="cl12" style="top:1254.36px"><div class="cl" data-layer="company" data-depth="0.24"><span>Infleqtion</span></div></div>
+                      <div class="cl-a" data-anim="cl13" style="top:1358.89px"><div class="cl" data-layer="company" data-depth="0.24"><span>Legora</span></div></div>
+                      <div class="cl-a" data-anim="cl14" style="top:1463.42px"><div class="cl" data-layer="company" data-depth="0.24"><span>Linear</span></div></div>
+                      <div class="cl-a" data-anim="cl15" style="top:1567.95px"><div class="cl" data-layer="company" data-depth="0.24"><span>Nest<b></b></span></div></div>
+                      <div class="cl-a" data-anim="cl16" style="top:1672.48px"><div class="cl" data-layer="company" data-depth="0.24"><span>Neuralink</span></div></div>
+                      <div class="cl-a" data-anim="cl17" style="top:1777.01px"><div class="cl" data-layer="company" data-depth="0.24"><span>New Limit</span></div></div>
+                      <div class="cl-a" data-anim="cl18" style="top:1881.54px"><div class="cl" data-layer="company" data-depth="0.24"><span>Ohalo</span></div></div>
+                      <div class="cl-a" data-anim="cl19" style="top:1986.07px"><div class="cl" data-layer="company" data-depth="0.24"><span>Phaidra</span></div></div>
+                      <div class="cl-a" data-anim="cl20" style="top:2090.6px"><div class="cl" data-layer="company" data-depth="0.24"><span>Physical intelligence</span></div></div>
+                      <div class="cl-a" data-anim="cl21" style="top:2195.13px"><div class="cl" data-layer="company" data-depth="0.24"><span>Prometheus</span></div></div>
+                      <div class="cl-a" data-anim="cl22" style="top:2299.66px"><div class="cl" data-layer="company" data-depth="0.24"><span>Raya</span></div></div>
+                      <div class="cl-a" data-anim="cl23" style="top:2404.19px"><div class="cl" data-layer="company" data-depth="0.24"><span>SandboxAQ</span></div></div>
+                      <div class="cl-a" data-anim="cl24" style="top:2508.72px"><div class="cl" data-layer="company" data-depth="0.24"><span>Scale AI</span></div></div>
+                      <div class="cl-a" data-anim="cl25" style="top:2613.25px"><div class="cl" data-layer="company" data-depth="0.24"><span>Slack<b></b></span></div></div>
+                      <div class="cl-a" data-anim="cl26" style="top:2717.78px"><div class="cl" data-layer="company" data-depth="0.24"><span>Snorkel</span></div></div>
+                      <div class="cl-a" data-anim="cl27" style="top:2822.31px"><div class="cl" data-layer="company" data-depth="0.24"><span>Uber<b></b></span></div></div>
+                      <div class="cl-a" data-anim="cl28" style="top:2926.84px"><div class="cl" data-layer="company" data-depth="0.24"><span>Whatnot</span></div></div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- 5 the footer: the card rises over the panel, the links slide in -->
+              <section class="sec foot" id="s-foot" data-tone="dark">
+                <div class="foot-panel"></div>
+                <div class="fl-a" data-anim="fl0" style="top:0"><div class="fl" data-layer="link" data-depth="0.26"><span>Meet the Team</span></div></div>
+                <div class="fl-a" data-anim="fl1" style="top:59.4px"><div class="fl" data-layer="link" data-depth="0.26"><span>The Talent Advantage</span></div></div>
+                <div class="fl-a" data-anim="fl2" style="top:118.8px"><div class="fl" data-layer="link" data-depth="0.26"><span>Portfolio</span></div></div>
+                <div class="fc-a" data-anim="fc">
+                  <div class="fc" data-layer="card" data-depth="0.36" data-shadow="0,0.45,24">
+                    <p class="big" data-layer="body copy" data-depth="0.55">The best way to reach us is through a warm introduction from someone we know or have worked with. As a small team, we rely on that signal to help us focus our time and respond thoughtfully.</p>
+                  </div>
+                </div>
+                <div class="legal" data-layer="small print" data-depth="0.3">© 2026 S32</div>
+              </section>
+            </div>
+
+            <!-- the nav and the scroll bar, fixed in the viewport -->
+            <nav class="nav" id="nav">
+              <div class="n-logo" data-layer="logo" data-depth="0.5">
+                <div class="ink ink-w"><svg class="w1" viewBox="0 0 150 66"><use href="#s32w"/></svg><svg class="w2" viewBox="0 0 333.7 227.8"><use href="#s32box"/></svg></div>
+                <div class="ink ink-k"><svg class="w1" viewBox="0 0 150 66"><use href="#s32w"/></svg><svg class="w2" viewBox="0 0 333.7 227.8"><use href="#s32box"/></svg></div>
+              </div>
+              <div class="n-burger" data-layer="menu" data-depth="0.5">
+                <div class="ink ink-w"><i style="top:0"></i><i style="top:12px"></i><i style="top:24px"></i></div>
+                <div class="ink ink-k"><i style="top:0"></i><i style="top:12px"></i><i style="top:24px"></i></div>
+              </div>
+              <div class="sbar"><i class="ink-w"></i><i class="ink-k"></i></div>
+            </nav>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>S32</h3>
+      <p><span>Venture capital</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="s32-card-src/js/card.js"></script>
+<script type="module">
+const card = window.__s32Card;
+const DEFAULTS = card.defaults;
+
+/* The dials. Embedded on the site there is no panel at all, and opened straight
+   from disk there is no studio to serve the module, so it loads on demand and the
+   card runs on its defaults without it. */
+if (!card.embed && location.protocol !== 'file:') {
+  import('/shared/params/params.js').then(({ defineParams }) => {
+    const TOOL = 's32 work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [DEFAULTS['layers.depth'], 0, 2.5, 0.01],        // how far apart the layers sit
+        parallax: [DEFAULTS['layers.parallax'], 0, 3, 0.01],    // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [DEFAULTS['layers.spread'], 0, 1, 0.01],        // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [DEFAULTS['tilt.tiltMax'], 0, 20, 0.5],        // degrees
+        perspective: [DEFAULTS['tilt.perspective'], 1, 6, 0.05],// eye distance, in card widths
+        hoverScale: [DEFAULTS['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [DEFAULTS['light.bloom'], 0, 1.5, 0.01],         // the round light under the pointer
+        bloomSize: [DEFAULTS['light.bloomSize'], 0.4, 2.5, 0.05], // its diameter, in card widths
+        rim: [DEFAULTS['light.rim'], 0, 1, 0.01],
+        shadow: [DEFAULTS['light.shadow'], 0, 1, 0.01],
+      },
+      motion: {
+        scrollSpeed: [DEFAULTS['motion.scrollSpeed'], 0, 3, 0.05],
+        stiffness: [DEFAULTS['motion.stiffness'], 40, 500, 1],
+        damping: [DEFAULTS['motion.damping'], 4, 60, 0.5],
+      },
+      drag: {
+        momentum: [DEFAULTS['drag.momentum'], 0, 3, 0.05],      // how far a flick carries
+        scrub: [DEFAULTS['drag.scrub'], 0, 6, 0.1],             // px of page per px of sideways drag
+        resumeAfter: [DEFAULTS['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [DEFAULTS['card.cardSize'], 24, 72, 0.5],     // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: DEFAULTS['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: DEFAULTS['card.frame'] },
+        frameColor: DEFAULTS['card.frameColor'],                 // the mat (S32's beige), also with the site's &mat=F
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: DEFAULTS['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  }).catch(() => { /* no studio here: the card runs on its defaults */ });
+}
+</script>
+</body>
+</html>

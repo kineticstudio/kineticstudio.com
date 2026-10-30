@@ -53,6 +53,8 @@ export const MEDIA = [
   { id: "rylo", from: "twitter", file: "rylo-home.mp4", ss: 0.5, dur: 5, loop: "bounce" },
   { id: "elio", from: "twitter", file: "elio-hero.mp4", ss: 0.8, dur: 5, loop: "bounce" },
   { id: "dorm-room-fund", from: "twitter", file: "dorm-room-fund-home.mp4", ss: 0.6, dur: 6, loop: "bounce" },
+  { id: "s32", from: "twitter", file: "s32-home.mp4", ss: 3, dur: 5 },
+  { id: "rre", from: "twitter", file: "rre-ai.mp4", ss: 1, dur: 5 },
   // the client logos' hover loops (Hunter, Oct 24), for clients with no project of their own here
   { id: "client-buck-mason", from: "twitter", file: "buck.mov", ss: 0.5, dur: 5, loop: "bounce" },
   { id: "client-superhuman", from: "twitter", file: "superhuman-login.mp4", ss: 2, dur: 5 },

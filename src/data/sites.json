@@ -75,5 +75,13 @@
   "dorm-room-fund": {
     "live": true,
     "still": "/sites/stills/dorm-room-fund.jpg"
+  },
+  "s32": {
+    "live": true,
+    "still": "/sites/stills/s32.jpg"
+  },
+  "rre": {
+    "live": true,
+    "still": "/sites/stills/rre.jpg"
   }
 }

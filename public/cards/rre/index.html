@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- PARAMS CONTRACT (see CLAUDE.md, "Design tools and the params panel")
+     1. Declare dials with defineParams from /shared/params/params.js.
+     2. Keep the design inside .stage.
+     3. Never draw a params button on the design.
+
+     Code-powered work card for RRE (rre.com, "RRE: Early-Stage Venture Capital
+     Partner"), 2026-10-29, built on the Wispr Flow card's engine and the newer
+     cards' frame colour and classic-script handle:
+     - the miniature is the live homepage rebuilt in HTML and CSS layers at its
+       own 1440px width, scaled into a 16:10 card laid out K times larger so
+       tilted text stays sharp; one spring-driven loop, transforms and opacity
+       only
+     - the page's film (its aerial river delta, mirrored, at 75% over the
+       near-black) is a still from the site's own video, fixed in the viewport
+       and set deepest, so it shows through the gutter, the clear sections and
+       the footer's logo window with real depth, drifting slowly once a tour
+     - idle, it tours the hero, "The confidence to commit early" with the
+       numbers, "Investment areas" over the film with "Our difference? Depth."
+       under it, the testimonial, "Latest from RRE" and the footer's logo
+       window, and back home: a fixed ~20 s loop of eased stops. The headings
+       rise in line by line and the hairlines draw in as on the page, driven by
+       the miniature's scroll; two of the page's hovers play on the tour's clock
+     - hover tilts it toward the pointer (tilt.tiltMax, 5 degrees as on the other
+       cards, up to 20) and the layers separate by depth with soft shadows that
+       grow with height; the light is one round bloom that follows the pointer;
+       the tour keeps running under the hover
+     - press and drag scrolls the miniature either way: drag up, page goes
+       down (1:1); drag right, it scrubs further down, left back up (2.5x);
+       momentum and clamped ends; the tour picks up from there after a beat
+     - a notched ruler beside the card slides with the scroll
+     - ?embed=1 is the version the site frames: the card alone, edge to edge,
+       on a transparent page; it pauses when hidden or when the parent posts
+       {type: "ks-card", visible: false}; {type: "ks-card", at: seconds} puts
+       the tour at that time (the site's resting loop is this tour recorded);
+       a click or tap posts {type: "ks-card-open"}. &bleed=N keeps N px of clear
+       frame round the card, &radius=N rounds its corners, &mat=F draws it
+       framed (the site's border on every tile: the window inset F x the card's
+       width on all four sides, on RRE's sky blue, card.frameColor), and touch
+       drag is off unless &touchdrag=1, so a swipe over the tile scrolls the site
+
+     Everything RRE-side was taken from the live site on 2026-10-29 and lives in
+     rre-card-src/: its ABC Monument Grotesk file, its logo mark and footer logo
+     window, the posts' pictures and a still of its background video. raw/ keeps
+     the fetched HTML, CSS, font, images and video for reference; nothing in it
+     is used or executed. -->
+<title>RRE work card</title>
+<script>
+  /* ?embed=1 is the site tile. &radius=N rounds the card's corners. &bleed=N: the site's iframe overhangs the tile by N px on every side
+     (room for the tilt), so the card keeps N px of clear frame round it and sits exactly on the tile at rest.
+     &touchdrag=1 lets a finger drag the miniature; off by default, so a swipe over the tile scrolls the site. */
+  (function () {
+    var q = new URLSearchParams(location.search);
+    if (q.get('embed') !== '1') return;
+    var h = document.documentElement;
+    h.classList.add('embed');
+    var b = parseFloat(q.get('bleed'));
+    if (b > 0) { h.style.setProperty('--bleed', b + 'px'); h.classList.add('has-bleed'); }
+    var r = parseFloat(q.get('radius'));   // &radius=N: the card's corner radius in px (the site passes 6)
+    if (r >= 0) h.style.setProperty('--card-r', r + 'px');
+  })();
+</script>
+<link rel="stylesheet" href="rre-card-src/css/card.css">
+<link rel="stylesheet" href="rre-card-src/css/site.css">
+</head>
+
+<body>
+<div class="stage" id="stage">
+  <div class="slot">
+    <div class="persp" id="persp">
+      <div class="card-shadow" id="cshadow" aria-hidden="true"></div>
+      <div class="card" id="card" role="img" aria-label="RRE, rre.com, built live in code">
+        <div class="win-shadow" id="winShadow" aria-hidden="true"></div>
+        <div class="win" id="win" data-layer="window" data-depth="0" data-kind="card">
+          <div class="vp" id="vp" aria-hidden="true">
+
+            <!-- the film, fixed in the viewport like the page's background video -->
+            <div class="film abs" data-layer="film" data-depth="-0.32" data-kind="vp"><img id="filmImg" src="rre-card-src/img/bg.jpg" alt=""></div>
+
+            <div class="page" id="page">
+
+              <!-- hero -->
+              <section class="sec hero" id="s-hero" data-tone="dark">
+                <h1 class="h1 hero-h" data-layer="headline" data-depth="0.75" data-shadow="0,0.34,16">Backing the best<br>for the distance</h1>
+                <p class="body hero-p" data-layer="body copy" data-depth="0.5" data-shadow="0,0.28,12">Founding a world-changing company is a marathon, not a sprint, and raising capital is just the starting gun. What matters most is what comes next: the months and years of building, adapting, and persevering. That’s where we prove our value.<br><br>It’s an unwavering commitment to your vision. Expertise that provides an invaluable perspective in a rapidly changing landscape. And a boutique model that favors deeper relationships over broader portfolios, which means you’ve got a mentor when you need one, a powerful network when it counts, and a partner by your side for every step of the journey.</p>
+              </section>
+
+              <!-- the confidence to commit early -->
+              <section class="sec conf" id="s-conf" data-tone="light">
+                <div class="panel"></div>
+                <h2 class="h2 dark conf-h" data-rv="h" data-layer="headline" data-depth="0.7" data-shadow="0,0.2,14"><span class="ln"><span>The confidence to</span></span><span class="ln"><span>commit early</span></span></h2>
+                <p class="body dark conf-p" data-layer="body copy" data-depth="0.45"><span class="rvi" data-rv="1">We combine 30 years of experience and deep AI analysis to identify the rare early-stage founders with a vision and the guts to see it through.</span></p>
+                <div class="btn dark conf-btn" data-layer="button" data-depth="0.85" data-shadow="0,0.24,8"><div class="rvi" data-rv="2"><span class="lbl">Our portfolio</span><svg class="c-tl" viewBox="0 0 9 10" fill="none"><path d="M9 1H1V9" stroke="currentColor"/></svg><svg class="c-tr" viewBox="0 0 9 10" fill="none"><path d="M8 9L8 1L0 1" stroke="currentColor"/></svg><svg class="c-br" viewBox="0 0 9 10" fill="none"><path d="M0 8L8 8L8 0" stroke="currentColor"/></svg><svg class="c-bl" viewBox="0 0 9 10" fill="none"><path d="M1 0.650391L1 8.65039L9 8.65039" stroke="currentColor"/></svg></div></div>
+                <div class="stats" data-layer="grid lines" data-depth="0.12">
+                  <i class="rule v" style="left:0;top:0;height:579px"></i>
+                  <i class="rule h" style="left:0;top:0;width:629px"></i>
+                  <i class="rule h" style="left:0;top:193px;width:629px"></i>
+                  <i class="rule h" style="left:0;top:386px;width:629px"></i>
+                </div>
+                <div class="stat-n h2 dark" style="left:843px;top:152px" data-layer="number" data-depth="0.62" data-shadow="0,0.2,12">$2.5B+</div>
+                <div class="stat-l dark" style="left:843px;top:220px" data-layer="label" data-depth="0.38">Assets under management</div>
+                <div class="stat-n h2 dark" style="left:843px;top:345px" data-layer="number" data-depth="0.62" data-shadow="0,0.2,12">125+</div>
+                <div class="stat-l dark" style="left:843px;top:413px" data-layer="label" data-depth="0.38">Exits</div>
+                <div class="stat-n h2 dark" style="left:843px;top:538px" data-layer="number" data-depth="0.62" data-shadow="0,0.2,12">400+</div>
+                <div class="stat-l dark" style="left:843px;top:606px" data-layer="label" data-depth="0.38">Companies</div>
+              </section>
+
+              <!-- investment areas, over the film -->
+              <section class="sec invest" id="s-invest" data-tone="dark">
+                <i class="rule v gutter-line"></i>
+                <h2 class="h2 invest-h" data-rv="h" data-layer="headline" data-depth="0.7" data-shadow="0,0.3,14"><span class="ln"><span>Investment areas</span></span></h2>
+                <p class="body invest-p" data-layer="body copy" data-depth="0.45"><span class="rvi" data-rv="1">We back bold companies across sectors. What unites them isn’t industry, it’s a clear thesis for technological transformation, and founders we believe in.</span></p>
+                <div class="areas" data-layer="grid lines" data-depth="0.14">
+                  <i class="rule v" style="left:0;top:0;height:345px"></i>
+                  <i class="rule v" style="left:274px;top:0;height:345px"></i>
+                  <i class="rule v" style="left:548px;top:0;height:345px"></i>
+                  <i class="rule h" style="left:0;top:69px;width:628px"></i>
+                  <i class="rule h" style="left:0;top:138px;width:628px"></i>
+                  <i class="rule h" style="left:0;top:207px;width:628px"></i>
+                  <i class="rule h" style="left:0;top:276px;width:628px"></i>
+                </div>
+                <div class="areas" style="width:548px" data-layer="investment areas" data-depth="0.44">
+                  <span style="left:32px;top:24px">AI</span><span style="left:306px;top:24px">Consumer</span>
+                  <span style="left:32px;top:93px">Crypto</span><span style="left:306px;top:93px">Enterprise/Saas</span>
+                  <span style="left:32px;top:162px">Fintech</span><span style="left:306px;top:162px">Hardware</span>
+                  <span style="left:32px;top:231px">Healthcare</span><span style="left:306px;top:231px">Media</span>
+                  <span style="left:32px;top:300px">Robotics</span><span style="left:306px;top:300px">Space</span>
+                </div>
+              </section>
+
+              <!-- our difference? depth. -->
+              <section class="sec diff" id="s-diff" data-tone="light">
+                <div class="panel"></div>
+                <h2 class="h2 dark diff-h" data-rv="h" data-layer="headline" data-depth="0.7" data-shadow="0,0.2,14"><span class="ln"><span>Our difference?</span></span><span class="ln"><span>Depth.</span></span></h2>
+                <p class="body dark diff-p" data-layer="body copy" data-depth="0.45"><span class="rvi" data-rv="1">At RRE, success isn’t an accident, it’s a recipe we’ve spent decades perfecting. Here, deeper experience, relationships, and commitment combine to build value for founders and LPs.</span></p>
+                <div class="btn dark diff-btn" data-layer="button" data-depth="0.85" data-shadow="0,0.24,8"><div class="rvi" data-rv="2"><span class="lbl">Our portfolio</span><svg class="c-tl" viewBox="0 0 9 10" fill="none"><path d="M9 1H1V9" stroke="currentColor"/></svg><svg class="c-tr" viewBox="0 0 9 10" fill="none"><path d="M8 9L8 1L0 1" stroke="currentColor"/></svg><svg class="c-br" viewBox="0 0 9 10" fill="none"><path d="M0 8L8 8L8 0" stroke="currentColor"/></svg><svg class="c-bl" viewBox="0 0 9 10" fill="none"><path d="M1 0.650391L1 8.65039L9 8.65039" stroke="currentColor"/></svg></div></div>
+                <div class="acc" data-layer="accordion" data-depth="0.1">
+                  <div class="acc-bg" style="top:86px" data-hover="acc"></div>
+                  <i class="rule v" style="left:0;top:0;height:346px"></i>
+                  <i class="rule h" style="left:0;top:86px;width:629px"></i>
+                  <i class="rule h" style="left:0;top:172px;width:629px"></i>
+                  <i class="rule h" style="left:0;top:259px;width:629px"></i>
+                  <i class="rule h" style="left:0;top:345px;width:629px"></i>
+                </div>
+                <div class="acc-t dark h3" style="left:843px;top:24px" data-layer="question" data-depth="0.5">Deeper Experience</div>
+                <div class="acc-t dark h3" style="left:843px;top:110px" data-layer="question" data-depth="0.5">Deeper relationships</div>
+                <div class="acc-t dark h3" style="left:843px;top:197px" data-layer="question" data-depth="0.5">Deeper commitment</div>
+                <div class="acc-t dark h3" style="left:843px;top:283px" data-layer="question" data-depth="0.5">Amplified by AI</div>
+                <div class="plus" style="left:1312px;top:27px" data-layer="plus" data-depth="0.66"><i></i><i></i></div>
+                <div class="plus" style="left:1312px;top:113px" data-layer="plus" data-depth="0.66"><i></i><i></i></div>
+                <div class="plus" style="left:1312px;top:200px" data-layer="plus" data-depth="0.66"><i></i><i></i></div>
+                <div class="plus" style="left:1312px;top:286px" data-layer="plus" data-depth="0.66"><i></i><i></i></div>
+              </section>
+
+              <!-- the testimonial, over the film -->
+              <section class="sec testi" id="s-testi" data-tone="dark">
+                <i class="rule v gutter-line"></i>
+                <div class="arrows" data-layer="arrows" data-depth="0.8" data-shadow="0,0.3,8">
+                  <svg style="left:0" viewBox="0 0 49 49" fill="none"><path d="M26.5 20.5L22.5 24.5L26.5 28.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/><path d="M8.5 0.5H0.5V8.5" stroke="currentColor"/><path d="M48.5 8.5L48.5 0.5L40.5 0.5" stroke="currentColor"/><path d="M40.5 48.5L48.5 48.5L48.5 40.5" stroke="currentColor"/><path d="M0.5 40.5L0.5 48.5L8.5 48.5" stroke="currentColor"/></svg>
+                  <svg style="left:47px" viewBox="0 0 49 49" fill="none"><path d="M22.5 28.5L26.5 24.5L22.5 20.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/><path d="M8.5 0.5H0.5V8.5" stroke="currentColor"/><path d="M48.5 8.5L48.5 0.5L40.5 0.5" stroke="currentColor"/><path d="M40.5 48.5L48.5 48.5L48.5 40.5" stroke="currentColor"/><path d="M0.5 40.5L0.5 48.5L8.5 48.5" stroke="currentColor"/></svg>
+                </div>
+                <h3 class="h3 quote" data-layer="quote" data-depth="0.66" data-shadow="0,0.34,16">"RRE was always going to be a core part of our round in the Seed and Series A as well. It was never a question. It’s a relationship that you really can’t replicate with another team in venture. "</h3>
+                <div class="who" data-layer="name" data-depth="0.42"><div>Vishal Gupta</div><div>Founder &amp; CEO, True Markets</div></div>
+              </section>
+
+              <!-- latest from RRE -->
+              <section class="sec blogs" id="s-blogs" data-tone="dark">
+                <h2 class="h2 blogs-h" data-rv="h" data-layer="headline" data-depth="0.7" data-shadow="0,0.36,14"><span class="ln"><span>Latest from RRE</span></span></h2>
+                <div class="rows" data-layer="list lines" data-depth="0.08">
+                  <div class="row-bg" style="top:216px" data-hover="row"></div>
+                  <i class="rule v" style="left:0;top:0;height:765px"></i>
+                  <i class="rule h" style="left:0;top:0;width:1360px"></i>
+                  <i class="rule h" style="left:0;top:216px;width:1360px"></i>
+                  <i class="rule h" style="left:0;top:308px;width:1360px"></i>
+                  <i class="rule h" style="left:0;top:399px;width:1360px"></i>
+                  <i class="rule h" style="left:0;top:491px;width:1360px"></i>
+                  <i class="rule h" style="left:0;top:582px;width:1360px"></i>
+                  <i class="rule h" style="left:0;top:674px;width:1360px"></i>
+                  <i class="rule h" style="left:0;top:764px;width:1360px"></i>
+                </div>
+                <div class="row-img" style="left:171px;top:216px" data-layer="picture" data-depth="0.34" data-shadow="0,0.3,10"><img src="rre-card-src/img/pov.jpg" alt=""></div>
+                <div class="row-t" style="left:279px;top:250px" data-layer="post" data-depth="0.5"><span class="w" data-hover-out="row">The AI Model Wars: Why One Winner Won’t Take All</span><span class="k" data-hover="row">The AI Model Wars: Why One Winner Won’t Take All</span></div>
+                <div class="row-c" style="left:1177px;top:251px" data-layer="kind" data-depth="0.42"><span class="w" data-hover-out="row">Podcast</span><span class="k" data-hover="row">Podcast</span></div>
+                <div class="row-img" style="left:171px;top:308px" data-layer="picture" data-depth="0.34" data-shadow="0,0.3,10"><img src="rre-card-src/img/farsight.jpg" alt=""></div>
+                <div class="row-t" style="left:279px;top:342px" data-layer="post" data-depth="0.5">Deutsche Bank Deploys Farsight On-Premise Across Investment Banking and Capital Markets</div>
+                <div class="row-c" style="left:1177px;top:343px" data-layer="kind" data-depth="0.42">News</div>
+                <div class="row-img" style="left:171px;top:399px" data-layer="picture" data-depth="0.34" data-shadow="0,0.3,10"><img src="rre-card-src/img/pov.jpg" alt=""></div>
+                <div class="row-t" style="left:279px;top:433px" data-layer="post" data-depth="0.5">Rogue AI</div>
+                <div class="row-c" style="left:1177px;top:434px" data-layer="kind" data-depth="0.42">Podcast</div>
+                <div class="row-img" style="left:171px;top:491px" data-layer="picture" data-depth="0.34" data-shadow="0,0.3,10"><img src="rre-card-src/img/scarcity.jpg" alt=""></div>
+                <div class="row-t" style="left:279px;top:525px" data-layer="post" data-depth="0.5">From Scarcity to Ambience: Distributed Intelligence and the Restructuring of Civilization</div>
+                <div class="row-c" style="left:1177px;top:526px" data-layer="kind" data-depth="0.42">Blog</div>
+                <div class="row-img" style="left:171px;top:582px" data-layer="picture" data-depth="0.34" data-shadow="0,0.3,10"><img src="rre-card-src/img/helogen.jpg" alt=""></div>
+                <div class="row-t" style="left:279px;top:604px" data-layer="post" data-depth="0.5">Helogen Announces October Missions to Advance Commercial Manufacturing in Orbit and Establish First Regulatory Pathway</div>
+                <div class="row-c" style="left:1177px;top:617px" data-layer="kind" data-depth="0.42">News</div>
+                <div class="row-img" style="left:171px;top:674px" data-layer="picture" data-depth="0.34" data-shadow="0,0.3,10"><img src="rre-card-src/img/concentrate.jpg" alt=""></div>
+                <div class="row-t" style="left:279px;top:708px" data-layer="post" data-depth="0.5">Our Investment in Concentrate AI</div>
+                <div class="row-c" style="left:1177px;top:709px" data-layer="kind" data-depth="0.42">Blog</div>
+              </section>
+
+              <!-- footer: the logo is a window onto the film -->
+              <section class="sec foot" id="s-foot" data-tone="dark">
+                <div class="foot-bg" style="left:0;top:0;width:1440px;height:128px"></div>
+                <div class="foot-bg" style="left:0;top:128px;width:446px;height:379px"></div>
+                <div class="foot-bg" style="left:1361px;top:128px;width:79px;height:379px"></div>
+                <div class="foot-bg" style="left:0;top:507px;width:1440px;height:431px"></div>
+                <div class="foot-logo"><svg viewBox="0 0 990 410" fill="none" preserveAspectRatio="none"><path d="M514.459 0V106.508H990V151.573H514.459V258.08H990V303.138H514.459V409.646H990V409.65H261.302V258.08H441.679V151.573H154.714L155.738 302.119V409.65H106.588V106.51H440.696V0.00292969H0V0H514.459Z" fill="#000"/></svg></div>
+                <div class="foot-big" data-layer="links" data-depth="0.62" data-shadow="0,0.4,14"><div>Home</div><div>Portfolio</div><div>Team</div></div>
+                <div class="foot-small" data-layer="small links" data-depth="0.36"><div>RRE POV</div><div>Blog</div><div>X</div><div>LinkedIn</div><div>Jobs</div></div>
+                <div class="news" data-layer="newsletter" data-depth="0.28">
+                  <div class="news-eye">Subscribe to receive news and updates</div>
+                  <div class="news-in">Your Email Address</div>
+                  <div class="btn news-btn" data-layer="button" data-depth="0.6" data-shadow="0.28,0.4,8"><span class="lbl" style="top:14px">Subscribe</span><svg class="c-tl" viewBox="0 0 9 10" fill="none"><path d="M9 1H1V9" stroke="currentColor"/></svg><svg class="c-tr" viewBox="0 0 9 10" fill="none"><path d="M8 9L8 1L0 1" stroke="currentColor"/></svg><svg class="c-br" viewBox="0 0 9 10" fill="none"><path d="M0 8L8 8L8 0" stroke="currentColor"/></svg><svg class="c-bl" viewBox="0 0 9 10" fill="none"><path d="M1 0.650391L1 8.65039L9 8.65039" stroke="currentColor"/></svg></div>
+                </div>
+                <div class="fb" style="left:80px" data-layer="contact" data-depth="0.3">INFO@RRE.COM</div>
+                <div class="fb" style="left:446px" data-layer="address" data-depth="0.3">130 E 59TH ST<br>NEW YORK, NY</div>
+                <div class="fb" style="left:720px;width:183px" data-layer="address" data-depth="0.3">5355 TOWN CENTER ROAD BOCA RATON, FL</div>
+                <div class="lp" data-layer="logins" data-depth="0.5" data-shadow="0,0.3,8">
+                  <div class="btn center" style="top:0"><span class="lbl">Limited Partner Login</span><svg class="c-tl" viewBox="0 0 9 10" fill="none"><path d="M9 1H1V9" stroke="currentColor"/></svg><svg class="c-tr" viewBox="0 0 9 10" fill="none"><path d="M8 9L8 1L0 1" stroke="currentColor"/></svg><svg class="c-br" viewBox="0 0 9 10" fill="none"><path d="M0 8L8 8L8 0" stroke="currentColor"/></svg><svg class="c-bl" viewBox="0 0 9 10" fill="none"><path d="M1 0.650391L1 8.65039L9 8.65039" stroke="currentColor"/></svg></div>
+                  <div class="btn center" style="top:45px"><span class="lbl">General Partner Login</span><svg class="c-tl" viewBox="0 0 9 10" fill="none"><path d="M9 1H1V9" stroke="currentColor"/></svg><svg class="c-tr" viewBox="0 0 9 10" fill="none"><path d="M8 9L8 1L0 1" stroke="currentColor"/></svg><svg class="c-br" viewBox="0 0 9 10" fill="none"><path d="M0 8L8 8L8 0" stroke="currentColor"/></svg><svg class="c-bl" viewBox="0 0 9 10" fill="none"><path d="M1 0.650391L1 8.65039L9 8.65039" stroke="currentColor"/></svg></div>
+                </div>
+              </section>
+            </div>
+
+            <!-- the nav, in the viewport; it scrolls away with the page -->
+            <nav class="nav abs" id="nav">
+              <div class="nav-shift" id="navShift">
+                <div class="nav-bar abs" data-layer="nav" data-depth="0.55" data-shadow="0,0.22,10">
+                  <img class="nav-logo" src="rre-card-src/img/rre-logo.svg" alt="">
+                  <span class="nav-link" style="left:811px">PORTFOLIO</span>
+                  <span class="nav-link" style="left:1086px">TEAM</span>
+                </div>
+              </div>
+            </nav>
+          </div>
+        </div>
+        <div class="ruler ruler-in" aria-hidden="true"><div class="ink dark"><div class="ticks"></div><div class="mark"></div></div><div class="ink light"><div class="ticks"></div><div class="mark"></div></div></div>
+        <div class="bloom" id="bloom" aria-hidden="true"></div>
+        <div class="rim" id="rim" aria-hidden="true"><i id="rimLight"></i></div>
+      </div>
+      <div class="ruler ruler-out" aria-hidden="true"><div class="ticks"></div><div class="mark"></div></div>
+    </div>
+    <div class="meta">
+      <h3>RRE</h3>
+      <p><span>Venture capital</span><span>Web design, Development</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- the engine is a classic script, so the card also runs opened from disk -->
+<script src="rre-card-src/js/card.js"></script>
+<script type="module">
+const card = window.__rreCard;
+const DEFAULTS = card.defaults;
+
+/* The dials. Embedded on the site there is no panel at all, and opened straight
+   from disk there is no studio to serve the module, so it loads on demand and the
+   card runs on its defaults without it. */
+if (!card.embed && location.protocol !== 'file:') {
+  import('/shared/params/params.js').then(({ defineParams }) => {
+    const TOOL = 'rre work card';
+    defineParams(TOOL, {
+      layers: {
+        depth: [DEFAULTS['layers.depth'], 0, 2.5, 0.01],        // how far apart the layers sit
+        parallax: [DEFAULTS['layers.parallax'], 0, 3, 0.01],    // how much they slide as the card tilts (1 = true to the tilt)
+        spread: [DEFAULTS['layers.spread'], 0, 1, 0.01],        // perspective push away from the centre
+      },
+      tilt: {
+        tiltMax: [DEFAULTS['tilt.tiltMax'], 0, 20, 0.5],        // degrees
+        perspective: [DEFAULTS['tilt.perspective'], 1, 6, 0.05],// eye distance, in card widths
+        hoverScale: [DEFAULTS['tilt.hoverScale'], 1, 1.12, 0.005],
+      },
+      light: {
+        bloom: [DEFAULTS['light.bloom'], 0, 1.5, 0.01],         // the round light under the pointer
+        bloomSize: [DEFAULTS['light.bloomSize'], 0.4, 2.5, 0.05], // its diameter, in card widths
+        rim: [DEFAULTS['light.rim'], 0, 1, 0.01],
+        shadow: [DEFAULTS['light.shadow'], 0, 1, 0.01],
+      },
+      motion: {
+        scrollSpeed: [DEFAULTS['motion.scrollSpeed'], 0, 3, 0.05],
+        stiffness: [DEFAULTS['motion.stiffness'], 40, 500, 1],
+        damping: [DEFAULTS['motion.damping'], 4, 60, 0.5],
+        drift: [DEFAULTS['motion.drift'], 0, 3, 0.05],          // the film's slow drift, once round a tour
+      },
+      drag: {
+        momentum: [DEFAULTS['drag.momentum'], 0, 3, 0.05],      // how far a flick carries
+        scrub: [DEFAULTS['drag.scrub'], 0, 6, 0.1],             // px of page per px of sideways drag
+        resumeAfter: [DEFAULTS['drag.resumeAfter'], 0.2, 5, 0.1], // seconds still before the tour picks up again
+      },
+      card: {
+        cardSize: [DEFAULTS['card.cardSize'], 24, 72, 0.5],     // vw, as on the work grid
+        aspect: { type: 'select', options: ['16:10', '4:3'], default: DEFAULTS['card.aspect'] },
+        frame: { type: 'toggle', labels: ['Full bleed', 'Framed'], default: DEFAULTS['card.frame'] },
+        frameColor: DEFAULTS['card.frameColor'],                 // the mat (RRE's sky blue), also with the site's &mat=F
+        ruler: { type: 'toggle', labels: ['No ruler', 'Ruler'], default: DEFAULTS['card.ruler'] },
+      },
+      debug: {
+        outlines: { type: 'toggle', labels: ['No outlines', 'Layer outlines'], default: false },
+        hold: { type: 'toggle', labels: ['Live', 'Hold layered'], default: false },
+      },
+      copyProps: { type: 'action', label: 'Copy props' },
+    }, {
+      onChange(values, path) { card.set(values, path); },
+      onAction(name) {
+        if (name === 'copyProps') return JSON.stringify({ tool: TOOL, ...card.values }, null, 2);
+      },
+    });
+  }).catch(() => { /* no studio here: the card runs on its defaults */ });
+}
+</script>
+</body>
+</html>

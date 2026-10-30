@@ -1,0 +1,136 @@
+/* S32 (www.s32.com, "S32 | Venture Beyond"), rebuilt at its own 1440px design width.
+   Every colour, size and line height here was read off the live site on 2026-10-29
+   (computed styles and boxes at 1440 x 900). The page is the live page's own flow:
+   the hero (100vh), "What makes S32 different" pinned under it for 80vh, the three
+   rows on black, "Where we invest", "Fewer Bets / Full Conviction" pinned while the
+   white "Select Companies" panel slides over it, and the footer. Section tops that
+   depend on the screen height are set by the engine from --vh. */
+
+@font-face { font-family: "S32 Montreal"; src: url("../fonts/PPNeueMontreal-Regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: "S32 Montreal"; src: url("../fonts/PPNeueMontreal-Medium.woff2") format("woff2"); font-weight: 500; font-display: block; }
+
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  --vh: 900px;
+  --beige: #d8d5c8; --panel: #181818; --slate: #2a3845; --ink: #111;
+  background: #000;
+  font-family: "S32 Montreal", Arial, sans-serif; font-weight: 400;
+  font-size: 16px; line-height: 1.4;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+.vp p, .vp h1, .vp h2, .vp h3 { margin: 0; font-weight: inherit; }
+.vp svg { display: block; }
+.page { position: absolute; left: 0; top: 0; width: 1440px; will-change: transform; }
+.page .sec, .sec > *, .abs,
+.hero-h, .hl, .hl span, .hero-card, .hero-p, .d-what, .d-logo-a, .d-logo, .d-word, .d-rect, .d-rect i, .d-diff-a, .d-diff,
+.dbot, .item-a, .item, .i-name, .i-text, .inv-c, .inv-t, .ch-h, .ch-p, .wrap, .sel-h, .prior, .prior > *, .sq, .pt, .list, .cl-a, .cl, .cl > span,
+.fc, .fc p, .fl, .fl span, .nav > *, .n-logo .ink, .n-burger .ink { position: absolute; }
+.sec { left: 0; width: 1440px; }
+[data-depth] { will-change: transform; }
+.anim { will-change: transform; }
+
+.h1 { font-size: 86.4px; line-height: 86.4px; letter-spacing: -.864px; white-space: nowrap; }
+.big { font-size: 28px; line-height: 39.2px; }
+.ln { display: block; position: relative; height: 86.4px; }
+.ln > i, .rv { font-style: normal; }
+.ln > i { display: block; position: relative; }
+.wd { display: inline-block; position: relative; font-style: normal; }
+
+/* ---------- 1 the hero (z 2, over the pinned "What makes") ---------- */
+.hero { top: 0; height: var(--vh); background: #000; z-index: 2; }
+.hero-panel { left: 205.8px; top: 0; width: 1234.2px; height: 100%; background: var(--panel); }
+.hero-h-a { left: 245.8px; top: 40px; width: 760px; height: 259.2px; }
+.hero-h { left: 0; top: 0; width: 760px; }
+.hero-links { left: 205.8px; bottom: 0; width: 617.1px; height: 279px; }
+.hero-links .hl { left: 0; width: 617.1px; height: 93px; border-top: 1px solid rgba(255, 255, 255, .1); }
+.hero-links .hl span { left: 32px; top: 32px; font-size: 28px; line-height: 28px; white-space: nowrap; }
+.hero-card-a { left: 822.9px; bottom: 0; width: 617.1px; height: calc(var(--vh) * .5 - 10.1px); }
+.hero-card { left: 0; top: 0; width: 617.1px; height: 100%; background: var(--beige); }
+.hero-p { left: 24px; top: 24px; width: 569.1px; color: #000; }
+
+/* ---------- 2 what makes S32 different (z 1; its top pinned 80vh under the hero) ---------- */
+.diff { background: var(--slate); z-index: 1; overflow: hidden; }
+.dtop { left: 205.8px; top: 0; width: 1235px; height: calc(var(--vh) * .7 + 133.2px); }
+.d-what { left: 0; top: calc(var(--vh) * .4 + 55.44px); width: 446.7px; height: 77.76px; line-height: 77.76px; }
+.d-logo-a { left: 462.7px; top: calc(var(--vh) * .4); width: 108px; height: 133.2px; }
+.d-logo { left: 0; top: 0; width: 108px; height: 133.2px; }
+.d-word { left: 0; top: 0; width: 108px; height: 47.52px; color: #fff; }
+.d-rect { left: .32px; top: 59.84px; width: 107.36px; height: 73.06px; }   /* the stroke's outer edge, square caps */
+/* the box draws itself with the scroll: four bars along the path (top, right, bottom, left), each scaled from its start */
+.d-rect i { display: block; background: #fff; will-change: transform; }
+.d-rect .e0 { left: 0; top: 0; width: 100%; height: 4.53px; transform-origin: 0 50%; }
+.d-rect .e1 { right: 0; top: 0; width: 4.53px; height: 100%; transform-origin: 50% 0; }
+.d-rect .e2 { right: 0; bottom: 0; width: 100%; height: 4.53px; transform-origin: 100% 50%; }
+.d-rect .e3 { left: 0; bottom: 0; width: 4.53px; height: 100%; transform-origin: 50% 100%; }
+.d-diff-a { left: 586.8px; top: calc(var(--vh) * .4 + 55.44px); width: 296.6px; height: 77.76px; }
+.d-diff { left: 0; top: 0; line-height: 77.76px; }
+
+.dbot-a { left: 205.8px; top: calc(var(--vh) * 1.5 + 134.2px); width: 1234.2px; height: 822.8px; }
+.dbot { left: 0; top: 0; width: 1234.2px; height: 822.8px; background: var(--panel); }
+.item-a { left: 0; width: 1234.2px; height: 273.6px; }
+.item { left: 0; top: 0; width: 1234.2px; height: 273.6px; background: #000; }
+.i-name { left: 48px; top: 48px; white-space: nowrap; }
+.i-text { left: 617.6px; top: 48px; width: 410.7px; font-weight: 500; font-size: 16px; line-height: 22.4px; }
+
+/* ---------- 3 where we invest (z 3, white) ---------- */
+.inv { height: 1061.6px; background: #fff; color: #000; z-index: 3; }
+.inv-h { left: 205.8px; top: 212px; width: 384px; height: 172.8px; }
+.inv-c-a { width: 410px; height: 273.4px; }
+.inv-c { left: 0; top: 0; width: 410px; height: 273.4px; background: var(--beige); }
+.inv-t { left: 40px; top: 40px; width: 330px; font-size: 28px; line-height: 30.8px; white-space: nowrap; }
+
+/* ---------- 4 fewer bets, full conviction; the select companies panel (z 1, on the black page) ---------- */
+.comp { height: 4318.2px; z-index: 1; overflow: hidden; }
+.ch-a { left: 205.8px; top: 0; width: 1234.2px; height: 482.4px; }
+.ch-h { left: 0; top: 144px; width: 616.6px; height: 172.8px; }
+.ch-p { left: 0; top: 332.8px; width: 822.4px; text-wrap: balance; }
+.wrap-a { left: 0; top: 642.4px; width: 1646px; height: 3675.8px; }
+.wrap { left: 0; top: 0; width: 1646px; height: 3675.8px; background: #fff; color: #000; }
+.sel-h { left: 205.8px; top: 176px; width: 925.4px; height: 86.4px; }
+.prior { left: 1132.2px; top: 208px; width: 120px; height: 22.4px; }
+.prior .sq-a { left: 0; top: 7.2px; width: 12px; height: 8px; }
+.prior .sq { left: 0; top: 0; width: 12px; height: 8px; background: #000; transform-origin: 100% 50%; }
+.prior .pt-c { left: 20px; top: 0; width: 100px; height: 22.4px; }
+.prior .pt { left: 0; top: 0; white-space: nowrap; font-size: 16px; line-height: 22.4px; }
+.list { left: 205.8px; top: 326.4px; width: 1234.2px; }
+.cl-a { left: 0; width: 1234.2px; height: 102.53px; }
+.cl { left: 0; top: 0; width: 1234.2px; height: 102.53px; background: var(--beige); color: var(--ink); }
+.cl > span { left: 23.04px; top: 31.68px; display: flex; align-items: center; gap: 8px; height: 39.2px; font-size: 28px; line-height: 39.2px; white-space: nowrap; }
+.cl b { display: block; width: 12px; height: 8px; background: #000; }
+
+/* ---------- 5 the footer (z 996: its card rises over the panel) ---------- */
+.foot { height: 527.4px; background: #000; z-index: 996; }
+.foot-panel { left: 205.8px; top: 0; width: 1234.2px; height: 527.4px; background: var(--panel); }
+.fc-a { left: 205.8px; top: 0; width: 617.1px; height: 411.4px; }
+.fc { left: 0; top: 0; width: 617.1px; height: 411.4px; background: var(--beige); }
+.fc p { left: 24px; top: 24px; width: 569.1px; color: #000; }
+.fl-a { left: 822.9px; width: 617.1px; height: 59.4px; }
+.fl { left: 0; top: 0; width: 617.1px; height: 59.4px; background: var(--panel); border-bottom: 1px solid rgba(255, 255, 255, .2); }
+.fl span { left: 24px; top: 18px; white-space: nowrap; }
+.legal { left: 237.8px; top: 467.4px; font-size: 20px; line-height: 28px; white-space: nowrap; }
+
+/* ---------- the nav and the scroll bar, fixed in the viewport (on the live page they difference-blend;
+   here each comes in white and in black, crossfaded by what lies under it) ---------- */
+.nav { left: 0; top: 0; width: 1440px; height: 82px; z-index: 999; }
+.n-logo { left: 24px; top: 16px; width: 40px; height: 49.7px; }
+.n-logo .ink, .n-burger .ink { left: 0; top: 0; width: 100%; height: 100%; will-change: opacity; }
+.n-logo svg { position: absolute; left: 0; width: 40px; }
+.n-logo .w1 { top: 0; height: 17.6px; }
+.n-logo .w2 { top: 22.4px; height: 27.3px; }
+.n-burger { left: 1376px; top: 27.8px; width: 32px; height: 26px; }
+.n-burger i { position: absolute; left: 0; width: 32px; height: 2px; background: currentColor; }
+.ink-w { color: #fff; }
+.ink-k { color: #000; opacity: 0; }
+.sbar { right: 0; top: 0; width: 2px; height: var(--vh); z-index: 997; }
+.sbar i { position: absolute; left: 0; top: 0; width: 2px; height: 100%; transform-origin: 50% 0; will-change: transform, opacity; }
+.sbar .ink-w { background: #fff; }
+.sbar .ink-k { background: #000; }
+
+/* shadow twins: a darkened, blurred copy of a lifted layer, left on the surface below it */
+.twin { filter: brightness(0) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; }
+.twin * { will-change: auto !important; }

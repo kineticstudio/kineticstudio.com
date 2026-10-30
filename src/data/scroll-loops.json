@@ -106,5 +106,17 @@
     "poster": "/media/scroll/counsel-health.jpg",
     "duration": 24.61,
     "from": "https://www.counselhealth.com/"
+  },
+  "s32": {
+    "video": "/media/scroll/s32.mp4",
+    "poster": "/media/scroll/s32.jpg",
+    "duration": 18.91,
+    "from": "https://www.s32.com/"
+  },
+  "rre": {
+    "video": "/media/scroll/rre.mp4",
+    "poster": "/media/scroll/rre.jpg",
+    "duration": 14.61,
+    "from": "https://rre.com/"
   }
 }

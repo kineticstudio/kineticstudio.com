@@ -1,0 +1,144 @@
+/* RRE (rre.com), rebuilt at its own 1440px design width.
+   Every colour, size and line height here was read off the live site on
+   2026-10-29 (computed styles at 1440 x 900, the nav at rest, 124px tall).
+   One face, ABC Monument Grotesk Regular, as the site ships it. The page's
+   background film (an aerial river delta, mirrored, at 75% over the near-black)
+   is a still from the site's own video, fixed in the viewport like the film. */
+
+@font-face { font-family: "RRE Monument"; src: url("../fonts/ABCMonumentGrotesk-Regular-Trial.woff2") format("woff2"); font-weight: 400; font-display: block; }
+
+.vp {
+  position: absolute; left: 0; top: 0;
+  width: 1440px; height: var(--vh, 900px);
+  transform-origin: 0 0;
+  overflow: hidden;
+  --ink: #07020a; --white: #fff; --powder: #d3e7f1; --sky: #6ccfff;
+  background: var(--ink);
+  font-family: "RRE Monument", Arial, sans-serif; font-weight: 400;
+  font-size: 20px; line-height: 28px;
+  color: var(--white);
+  text-rendering: geometricPrecision;
+}
+.vp p, .vp h1, .vp h2, .vp h3 { margin: 0; font-weight: 400; }
+.vp img { display: block; }
+.page { position: absolute; left: 0; top: 0; width: 1440px; height: 4898px; will-change: transform; }
+.page .sec, .sec > *, .abs { position: absolute; }
+.sec { left: 0; width: 1440px; }
+[data-depth] { will-change: transform; }
+
+/* the film, fixed in the viewport behind the page (overscanned for the tilt and its slow drift) */
+.film { left: -60px; top: -60px; width: 1560px; height: calc(var(--vh, 900px) + 120px); overflow: hidden; }
+.film img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; object-position: 32% 40%; transform-origin: 40% 45%; will-change: transform; }
+
+/* type, as the site sets it */
+.h1 { font-size: 80px; line-height: 88px; letter-spacing: -4px; }
+.h2 { font-size: 56px; line-height: 56px; letter-spacing: -2px; }
+.h3 { font-size: 32px; line-height: 38.4px; }
+.body { font-size: 20px; line-height: 28px; }
+.small { font-size: 15px; line-height: 21px; }
+.caps { text-transform: uppercase; }
+.dark { color: var(--ink); }
+
+/* the headings rise in line by line, the copy under them fades up (the page's reveal, on the card's clock) */
+.ln { display: block; overflow: hidden; padding-bottom: .14em; margin-bottom: -.14em; }
+.ln > span, .rvi { display: block; will-change: transform, opacity; }
+
+/* hairlines draw in as they come into view */
+.rule { position: absolute; background: currentColor; will-change: transform; }
+.rule.h { height: 1px; transform-origin: 0 50%; }
+.rule.v { width: 1px; transform-origin: 50% 0; }
+
+/* the bracket button */
+.btn { height: 45px; padding: 12px 16px; font-size: 15px; line-height: 21px; text-transform: uppercase; white-space: nowrap; }
+.btn .rvi { position: absolute; inset: 0; }
+.btn .lbl { position: absolute; left: 16px; top: 12px; right: 16px; }
+.btn.center .lbl { text-align: center; }
+.btn svg { position: absolute; width: 12px; height: 12px; overflow: visible; }
+.btn .c-tl { left: 0; top: 0; } .btn .c-tr { right: 0; top: 0; } .btn .c-bl { left: 0; bottom: 0; } .btn .c-br { right: 0; bottom: 0; }
+
+/* ---------- nav, in the viewport ---------- */
+.nav { left: 0; top: 0; width: 1440px; height: 124px; }
+.nav-shift { position: absolute; inset: 0; will-change: transform; }
+.nav-bar { left: 0; top: 0; width: 1440px; height: 124px; }
+.nav-bar > * { position: absolute; }
+.nav-logo { left: 80px; top: 52px; width: 58px; height: 24px; }
+.nav-link { top: 52px; font-size: 15px; line-height: 21px; }
+
+/* ---------- hero ---------- */
+.hero { top: 0; height: 744px; }
+.hero-h { left: 80px; top: 440px; width: 600px; }
+.hero-p { left: 811px; top: 252px; width: 549px; }
+
+/* ---------- the confidence to commit early ---------- */
+.conf { top: 744px; height: 707px; }
+.panel { left: 80px; top: 0; width: 1360px; height: 100%; background: var(--powder); }
+.conf-h { left: 171px; top: 128px; width: 470px; }
+.conf-p { left: 171px; top: 288px; width: 457px; }
+.conf-btn { left: 171px; top: 420px; width: 149px; }
+.stats { left: 811px; top: 128px; width: 629px; height: 579px; color: var(--ink); }
+.stat { position: absolute; left: 32px; }
+.stat b { display: block; font-weight: 400; font-size: 56px; line-height: 56px; letter-spacing: -2px; }
+.stat-n { position: absolute; left: 32px; }
+.stat-l { position: absolute; left: 32px; font-size: 15px; line-height: 21px; text-transform: uppercase; white-space: nowrap; }
+
+/* ---------- investment areas ---------- */
+.invest { top: 1451px; height: 345px; }
+.gutter-line { left: 80px; top: 0; width: 1px; height: 100%; color: var(--white); }
+.invest-h { left: 172px; top: 65px; width: 520px; }
+.invest-p { left: 172px; top: 169px; width: 457px; }
+.areas { left: 812px; top: 0; width: 628px; height: 345px; color: var(--white); }
+.areas span { position: absolute; font-size: 15px; line-height: 21px; text-transform: uppercase; white-space: nowrap; }
+
+/* ---------- our difference? depth. ---------- */
+.diff { top: 1796px; height: 493px; }
+.diff-h { left: 171px; top: 64px; width: 470px; }
+.diff-p { left: 171px; top: 224px; width: 457px; }
+.diff-btn { left: 171px; top: 384px; width: 149px; }
+.acc { left: 811px; top: 0; width: 629px; height: 346px; color: var(--ink); }
+.acc-bg { position: absolute; left: 0; width: 629px; height: 86px; background: var(--white); opacity: 0; will-change: opacity; }
+.acc-t { position: absolute; left: 32px; font-size: 32px; line-height: 38.4px; white-space: nowrap; }
+.plus { position: absolute; left: 501px; width: 32px; height: 32px; }
+.plus i { position: absolute; background: var(--ink); }
+.plus i:first-child { left: 0; top: 15.5px; width: 32px; height: 1px; }
+.plus i:last-child { left: 15.5px; top: 0; width: 1px; height: 32px; }
+
+/* ---------- testimonial ---------- */
+.testi { top: 2289px; height: 905px; }
+.arrows { left: 172px; top: 128px; width: 96px; height: 48px; }
+.arrows svg { position: absolute; top: 0; width: 48px; height: 48px; color: var(--white); }
+.quote { left: 812px; top: 128px; width: 468px; }
+.who { left: 812px; top: 445px; width: 400px; font-size: 15px; line-height: 21px; }
+
+/* ---------- latest from RRE ---------- */
+.blogs { top: 3194px; height: 766px; background: var(--ink); }
+.blogs-h { left: 171px; top: 96px; width: 600px; }
+.rows { left: 80px; top: 0; width: 1360px; height: 766px; color: var(--white); }
+.row-bg { position: absolute; left: 0; width: 1360px; height: 91px; background: var(--sky); opacity: 0; will-change: opacity; }
+.row-img { position: absolute; left: 91px; width: 91px; height: 91px; overflow: hidden; }
+.row-img img { width: 91px; height: 91px; object-fit: cover; }
+.row-t { position: absolute; left: 199px; width: 880px; font-size: 20px; line-height: 24px; }
+.row-c { position: absolute; left: 1097px; font-size: 15px; line-height: 21px; text-transform: uppercase; white-space: nowrap; }
+.row-t .w, .row-c .w { display: block; will-change: opacity; }
+.row-t .k, .row-c .k { position: absolute; left: 0; top: 0; width: 100%; color: var(--ink); opacity: 0; will-change: opacity; }
+
+/* ---------- footer ---------- */
+.foot { top: 3960px; height: 938px; }
+.foot-bg { position: absolute; background: var(--ink); }
+.foot-logo { left: 446px; top: 128px; width: 915px; height: 379px; }
+.foot-logo svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.foot-big { left: 80px; top: 128px; width: 360px; font-size: 56px; line-height: 53.2px; }
+.foot-big div { height: 65px; }
+.foot-small { left: 80px; top: 521px; width: 200px; font-size: 15px; line-height: 14.25px; text-transform: uppercase; }
+.foot-small div { height: 26.2px; }
+.news { left: 446px; top: 555px; width: 914px; height: 85px; border: 1px solid var(--white); }
+.news > * { position: absolute; }
+.news-eye { left: 16px; top: 16px; font-size: 12px; line-height: 16.8px; text-transform: uppercase; white-space: nowrap; }
+.news-in { left: 16px; top: 34px; font-size: 20px; line-height: 28px; color: rgba(255, 255, 255, .42); white-space: nowrap; }
+.news-btn { left: 781px; top: 16px; width: 115px; height: 49px; }
+.fb { top: 768px; font-size: 15px; line-height: 21px; text-transform: uppercase; }
+.lp { left: 1086px; top: 768px; width: 274px; height: 90px; }
+.lp .btn { position: absolute; left: 0; width: 274px; }
+
+/* shadow twins: a darkened, blurred copy of a lifted layer, left on the surface below it */
+.twin { filter: brightness(0) blur(var(--blur, 14px)); opacity: 0; pointer-events: none; }
+.twin * { will-change: auto !important; }
