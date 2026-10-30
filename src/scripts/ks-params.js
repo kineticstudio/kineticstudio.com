@@ -211,19 +211,23 @@ export function defineParams(tool, schema, hooks = {}) {
    design itself. */
 
 const R = "var(--ksp-radius, 12px)";       /* base radius, matches the studio */
+/* the site's own type (Hunter, Oct 30: "the parameters should use the main typeface for both headline and
+   for subcopy and body"; "All of the buttons on the site and the parameters need to be centered and use our
+   main Kinetic typeface"): the text face for every word, the display face for the buttons, as the site's pills */
+const TEXT = `var(--primary-family, Inter, ui-sans-serif, -apple-system, "Segoe UI", sans-serif)`;
 const CSS = `
 .ksp { position: fixed; top: 12px; right: 12px; bottom: 12px; width: 300px;
   z-index: 2147483000; display: none; flex-direction: column;
   background: var(--ksp-bg, #fbfbf9); color: var(--ksp-ink, #23231f);
   border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,.18);
-  font: 13px/1.4 Inter, ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+  font: 13px/1.4 ${TEXT};
   padding: 14px; }
 .ksp[data-open="true"] { display: flex; }
 .ksp * { box-sizing: border-box; }
 .ksp-head { flex: 0 0 auto; display: flex; align-items: center;
   justify-content: space-between; padding-bottom: 10px; }
 .ksp-head b { font-weight: 600; }
-.ksp-head kbd { font: 11px ui-monospace, Menlo, monospace; opacity: .45;
+.ksp-head kbd { font: 11px ${TEXT}; opacity: .45;
   border: 1px solid rgba(0,0,0,.18); border-radius: 5px; padding: 1px 5px; }
 .ksp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto;
   display: grid; gap: 10px; align-content: start; }
@@ -290,7 +294,7 @@ const CSS = `
   outline-offset: 2px; outline-color: var(--ksp-ink, #23231f); }
 .ksp-tile:hover:not([data-on="true"]) { outline-color: rgba(0,0,0,.35); }
 .ksp-combo { position: relative; }
-.ksp-menu { position: fixed; z-index: 2147483001; margin: 0; padding: 5px;
+.ksp-menu { position: fixed; z-index: 2147483001; margin: 0; padding: 5px; font: 13px/1.4 ${TEXT};
   list-style: none; max-height: 220px; overflow-y: auto; border-radius: ${R};
   /* The panel's own ground, not a hardcoded white. The menu is appended to
      the body rather than the panel, so it never inherits anything: hardcoding
@@ -310,8 +314,9 @@ const CSS = `
 .ksp-menu li i { width: 10px; display: flex; font-style: normal; }
 .ksp-foot { flex: 0 0 auto; padding-top: 12px; margin-top: 4px;
   display: grid; gap: 6px; border-top: 1px solid rgba(0,0,0,.08); }
-.ksp-cta { height: 38px; width: 100%; border-radius: ${R}; border: 0;
-  cursor: pointer; font: 500 13px inherit; font-family: inherit;
+.ksp-cta { display: flex; align-items: center; justify-content: center; height: 38px; width: 100%;
+  padding: 1px 12px 0; border-radius: ${R}; border: 0; cursor: pointer; text-align: center;
+  font: 400 15px/1 var(--display-family, ${TEXT}); letter-spacing: 0; text-transform: uppercase;
   background: var(--ksp-ink, #23231f); color: var(--ksp-bg, #fff); }
 .ksp-cta:active { transform: scale(.97); }
 @media (prefers-reduced-motion: reduce) {
