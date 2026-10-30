@@ -33,9 +33,10 @@ const { render = true, class: className } = Astro.props;
             <MarkLockup class="film-card_logo" label="Studio tool" />
           </span>
           <span class="film-card_text text-style-small">Bleeding-edge tooling for modern brand marketing and interaction. For every client.</span>
-          <span class="film-card_play" aria-hidden="true">
-            <svg viewBox="0 0 12 12"><path d="M3 1.8v8.4L10 6z" fill="currentColor" /></svg>
-          </span>
+        </span>
+        {/* Oct 30: "Let's put the playhead on the bottom right and then move the studio tool with the copy down to the bottom left" */}
+        <span class="film-card_play" aria-hidden="true">
+          <svg viewBox="0 0 12 12"><path d="M3 1.8v8.4L10 6z" fill="currentColor" /></svg>
         </span>
       </button>
       <div class="film-card_sheet" data-film-sheet hidden>
@@ -195,7 +196,7 @@ const { render = true, class: className } = Astro.props;
       position: relative;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-end;
       gap: 0.75rem;
       height: 100%;
       width: 52%;
@@ -227,7 +228,12 @@ const { render = true, class: className } = Astro.props;
       color: color-mix(in srgb, var(--text) 72%, transparent);
       text-wrap: balance;
     }
+    /* in the card's bottom-right corner, the lockup and the line at its bottom left */
     .film-card_play {
+      position: absolute;
+      right: clamp(0.9rem, 2.2cqw, 1.5rem);
+      bottom: clamp(0.9rem, 2.2cqw, 1.5rem);
+      z-index: 1;
       display: grid;
       place-items: center;
       width: 2.25rem;
@@ -270,10 +276,12 @@ const { render = true, class: className } = Astro.props;
       .film-card_text {
         font-size: 0.72rem;
       }
+      /* on a phone, over the loop's top-right corner, clear of the words */
       .film-card_play {
         position: absolute;
         top: 0.5rem;
         right: 0.5rem;
+        bottom: auto;
         width: 1.75rem;
         height: 1.75rem;
       }
