@@ -1,0 +1,186 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
+import { HOME, WORK } from "@/data/work.js";
+import logo from "@/assets/brand/logo.svg?raw";
+
+/* The link preview's video (Hunter, Oct 30: "Let's also work on an OG video. Maybe we do it in the creative
+   studio and create a tab for it. My thought is we do the barrel effect, but with my actual pieces of work,
+   like on the playground UX, with the H1 captivating websites, etc., and all the awards, and then the logo
+   somewhere"). One 1200 x 630 frame, the size every preview uses, scaled to fit whatever shows it: the
+   logo where the nav keeps it, the homepage's headline and laurels, and the work going round a barrel
+   under them, three rows of six, each row moving exactly six tiles a loop, so the film loops without a
+   seam (scripts/og-video.mjs films it). Only on the dev server and in the Creative Studio's build: the
+   live site never has this page. */
+export function getStaticPaths() {
+  return import.meta.env.DEV || process.env.KS_STUDIO_BUILD ? [{ params: { slot: "video" } }] : [];
+}
+
+const ROWS = 3, PER = 6;
+const picks = HOME.slice(0, ROWS * PER).map((slug) => WORK.find((w) => w.slug === slug)).filter(Boolean) as (typeof WORK)[number][];
+const rows = Array.from({ length: ROWS }, (_, r) => picks.slice(r * PER, r * PER + PER));
+---
+
+<Layout title="OG video" footer={false} noindex>
+  <div class="og_fit" data-og>
+    <div class="og_frame">
+      <div class="og_barrel" aria-hidden="true">
+        {rows.map((row, r) =>
+          // each row's six, round the whole barrel as many times as it takes
+          Array.from({ length: PER * 4 }, (_, i) => row[i % PER]).map((w, i) => (
+            <div class="og_tile" data-row={r} data-u={i}>
+              <img src={`/cards/${w.slug}/poster.jpg`} alt="" width="1200" height="750" decoding="sync" />
+            </div>
+          )),
+        )}
+      </div>
+      <div class="og_shade" aria-hidden="true" />
+      <div class="og_logo" set:html={logo} />
+      <div class="og_head">
+        <h1 class="og_title">Captivating websites that tell compelling stories</h1>
+        <AwardsLaurels compact class="og_awards" />
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  /* The barrel, as the site's (ProjectBarrel): the camera at the axis, a tile at angle a round it at the
+     radius F. Driven by the page's clock alone (performance.now), so a film on a driven clock gets
+     exactly the frames a viewer would; LOOP seconds for each row to move PER tiles, rows turning in turn. */
+  const LOOP = 10, PER = 6;
+  const root = document.querySelector<HTMLElement>("[data-og]")!;
+  const frame = root.querySelector<HTMLElement>(".og_frame")!;
+  const barrel = root.querySelector<HTMLElement>(".og_barrel")!;
+  const tiles = [...root.querySelectorAll<HTMLElement>(".og_tile")].map((el) => ({ el, row: Number(el.dataset.row), u: Number(el.dataset.u) }));
+  const ROWS = Math.max(...tiles.map((t) => t.row)) + 1, COUNT = tiles.filter((t) => t.row === 0).length;
+  const W = 1200, F = 900, TW = 252, TH = TW * 0.625, GAP = 16, COL = (TW + GAP) / F, VIEW = Math.atan(W / 2 / F) + COL;
+  const MID = 468; // the barrel's middle row, px down the frame
+  barrel.style.perspective = `${F}px`;
+  barrel.style.perspectiveOrigin = `50% ${MID}px`;
+  frame.style.setProperty("--tile-w", `${TW}px`);
+  const wrap = (x: number, span: number) => ((((x + span / 2) % span) + span) % span) - span / 2;
+  const place = (t: number) => {
+    const span = COUNT * COL, shift = ((t % LOOP) / LOOP) * PER * COL;
+    for (const x of tiles) {
+      const dir = x.row % 2 ? -1 : 1;
+      const a = wrap(x.u * COL - x.row * 0.5 * COL - dir * shift, span);
+      const show = Math.abs(a) < VIEW;
+      x.el.style.visibility = show ? "visible" : "hidden";
+      if (!show) continue;
+      const y = MID + (x.row - (ROWS - 1) / 2) * (TH + GAP);
+      x.el.style.transform = `translate(-50%, -50%) translate(${W / 2}px, ${y.toFixed(1)}px) translateZ(${F}px) rotateY(${(-a).toFixed(4)}rad) translateZ(${-F}px)`;
+    }
+  };
+  // the frame scaled to fit the window, at its own size when the window is it (the film)
+  const fit = () => frame.style.setProperty("--fit", String(Math.min(innerWidth / 1200, innerHeight / 630)));
+  addEventListener("resize", fit);
+  fit();
+  const t0 = performance.now();
+  const tick = (now: number) => {
+    place((now - t0) / 1000);
+    requestAnimationFrame(tick);
+  };
+  place(0);
+  requestAnimationFrame(tick);
+</script>
+
+<style is:global>
+  /* the page is the frame alone: no nav, no ticks */
+  html:has([data-og]) :is(.nav_wrap, .ticks_wrap, .skip-link) {
+    display: none !important;
+  }
+  html:has([data-og]),
+  html:has([data-og]) body {
+    overflow: hidden;
+    background: #000;
+  }
+  .og_fit {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+  .og_frame {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    flex: none;
+    overflow: hidden;
+    background: #0d0d0d;
+    color: var(--text);
+    scale: var(--fit, 1);
+  }
+  .og_barrel {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    /* the sides fall away into the dark, as the site's barrel */
+    mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  }
+  .og_tile {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--tile-w);
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: 6px;
+    background: #1a1a1a;
+    backface-visibility: hidden;
+    & img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+  /* the headline and laurels sit on the dark, the work coming up under them */
+  .og_shade {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(to bottom, #0d0d0d 0%, #0d0d0d 37%, rgb(13 13 13 / 0) 55%, rgb(13 13 13 / 0) 86%, rgb(13 13 13 / 0.75) 100%);
+  }
+  .og_logo {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    width: 120px;
+    color: var(--text);
+    & svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+  }
+  .og_head {
+    position: absolute;
+    top: 58px;
+    left: 0;
+    right: 0;
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    text-align: center;
+  }
+  .og_title {
+    max-width: 26ch;
+    margin: 0;
+    font-family: var(--display-family);
+    font-size: 56px;
+    font-weight: 400;
+    line-height: 0.92;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+  /* the laurels smaller than the homepage's, through their own sizes (they place their 3D from the page,
+     so no zoom), without their lines: the three marks are the point */
+  .og_awards {
+    --laurel-w: 5.4rem !important;
+    --awards-gap: 3.6rem !important;
+    & .awards_line {
+      display: none;
+    }
+  }
+</style>
