@@ -631,11 +631,14 @@ const EAGER = 0;
         order: -1;
         padding-top: calc(var(--nav-height) + var(--space-6));
       }
+      /* a quick fade in after the intro: the Studio tool panel is the biggest thing on a phone's first
+         screen, and browsers time the page's load by the end of its fade */
       .wheel_space {
         position: relative;
         inset: auto;
         perspective: none;
         margin-top: var(--space-8);
+        transition-duration: 0.35s;
       }
       .wheel_drum {
         position: relative;
