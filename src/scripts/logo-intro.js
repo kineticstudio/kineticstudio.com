@@ -166,6 +166,9 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     tick = null;
   };
   let finishNow = null;
+  /* Paused (the homepage's Params, Hunter, Oct 30: "Can you give me a pause button as well, so I could pause
+     and adjust the curve?"): the clock holds, and a dial changed meanwhile redraws the same moment (retune) */
+  let paused = false, retuneNow = null;
   const build = () => {
     finishNow?.();
     builtThisRun = false;
@@ -187,7 +190,7 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
       logo: { left: box.left, top: box.top, unit }, strokes,
       lines: own, bands: true, bandsRight: W - Math.max(48, 0.12 * W),
     });
-    const path = pillPath(start, field.catchAt() / unit);
+    let path = pillPath(start, field.catchAt() / unit);
     field.reset();
     for (const L of lines) gsap.set(L.p, { opacity: 0 });
     slide.x = start;
@@ -197,8 +200,12 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     const T = INTRO;
     let t = 0, saidGlide = false, saidHit = false, saidBuilt = false, done = false;
     // the lines let go at the pill's far point (give or take collapseAt), so they shrink as it comes back
-    const collapseFrom = T.pillAt + path.turn + (T.collapseAt ?? 0);
-    const endOf = collapseFrom + T.collapseFor + T.collapseSpread;
+    let collapseFrom = 0, endOf = 0;
+    const timing = () => {
+      collapseFrom = T.pillAt + path.turn + (T.collapseAt ?? 0);
+      endOf = collapseFrom + T.collapseFor + T.collapseSpread;
+    };
+    timing();
     const rest = () => {
       stopTick();
       slide.x = 0;
@@ -220,9 +227,7 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     };
     finishNow = () => finish(true);
     say("line", 1.1, 0.5);
-    tick = (_now, ms) => {
-      const dt = Math.min(0.05, ms / 1000);
-      t += dt;
+    const step = (dt) => {
       // the pill: in, past its place, and back, and the strokes with it
       slide.x = path.x(t - T.pillAt);
       pillAt();
@@ -255,8 +260,29 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
       }
       if (t >= endOf) finish(false);
     };
+    tick = (_now, ms) => {
+      if (paused) return;
+      const dt = Math.min(0.05, ms / 1000);
+      t += dt;
+      step(dt);
+    };
+    // the dials again, at the same moment: the pill's way, the bands' shapes, the timing
+    retuneNow = () => {
+      if (done) return;
+      fieldFrom();
+      field.retune();
+      path = pillPath(start, field.catchAt() / unit);
+      timing();
+      step(0);
+    };
     gsap.ticker.add(tick);
   };
+  const pause = (on) => {
+    paused = Boolean(on);
+    // and the page's own moves with it: the dock into the corner, the words
+    gsap.globalTimeline.paused(paused);
+  };
+  const retune = () => retuneNow?.();
   const pulled = () => {
     finishNow?.();
     stopTick();
@@ -267,5 +293,5 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
   };
   addEventListener("resize", () => finishNow?.());
 
-  return { build, pulled };
+  return { build, pulled, pause, retune };
 }

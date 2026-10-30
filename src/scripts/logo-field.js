@@ -107,7 +107,7 @@ export function createLogoField(canvas, S = FIELD) {
   // ends and their slopes (dx/dy); and how far the strokes are carried with the pill now (px)
   let bands = false, stand = new Float32Array(0), mid = new Float32Array(0), shape = new Float32Array(0), deep = new Float32Array(0), soft = 1;
   let endT = new Float32Array(0), endB = new Float32Array(0), slT = new Float32Array(0), slB = new Float32Array(0);
-  let pushNow = 0;
+  let pushNow = 0, lastRight = 0, lastUnit = 1;
   let d, v, target, free, colTmp, colPre, bSum, bW, bCnt, bVel;
   // where each line ends: its stroke, its x at each row of the stroke's height, its width
   let finalX = new Float32Array(0), finalY = new Float32Array(0), finalW = new Float32Array(0);
@@ -180,6 +180,8 @@ export function createLogoField(canvas, S = FIELD) {
         finalR[i * M + j] = logo.left + r * logo.unit;
       }
     }
+    lastRight = bandsRight;
+    lastUnit = logo.unit;
     if (bands) layBands(bandsRight, logo.unit);
   }
 
@@ -547,6 +549,10 @@ export function createLogoField(canvas, S = FIELD) {
   return {
     layout,
     count: () => N,
+    /** Bands: their shapes again from the settings, everything else as it is (the intro's dials while it is paused). */
+    retune() {
+      if (bands) layBands(lastRight, lastUnit);
+    },
     catchAt() {
       let most = 0;
       for (let i = 0; i < N; i++) for (let j = 0; j < M; j++) if (ys[j] >= spanTop && ys[j] <= spanBot) most = Math.max(most, stand[i] - strokeMid(i, ys[j], 0));

@@ -22,6 +22,9 @@ const I = HOME_LOOK.intro, Hv = HOME_LOOK.hover, Wh = HOME_LOOK.wheel, L = LAURE
 const schema = {
   // first, beside the intro's dials (Hunter, Oct 30: "a button to replay")
   replayIntro: { type: "action", label: "Replay intro" },
+  // and hold it where it is, to adjust it there (Oct 30: "a pause button as well, so I could pause and adjust the curve"):
+  // while it is paused every intro dial redraws the same moment
+  pause: { type: "toggle", labels: ["Playing", "Paused"], default: false },
   intro: {
     logo: [I.logo, 24, 64, 0.5], // the logo's width while it plays, rem
     pillAt: [I.pillAt, 0, 1.5, 0.05],
@@ -152,8 +155,10 @@ defineParams("Homepage", schema, {
     if (!path) return; // the first announce: the files already hold these
     const [group, key] = path.split(".");
     const value = values[path];
+    if (path === "pause") return void window.__ksIntro?.pause(value);
     if (HOME_GROUPS[group]) {
       HOME_LOOK[group][key] = value;
+      if (group === "intro") window.__ksIntro?.retune();
       if (group === "hover") retuneCards();
       if (group === "wheel") dispatchEvent(new CustomEvent("ks:home-look"));
     } else if (LAUREL_GROUPS[group]) {

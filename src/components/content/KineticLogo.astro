@@ -55,6 +55,8 @@ const pill = { x: n("x"), y: n("y"), w: n("width"), h: n("height"), r: n("rx"), 
       root.dispatchEvent(new CustomEvent("kinetic-logo:built", { bubbles: true }));
     };
     const intro = mountLogoIntro(root, { look: HOME_LOOK.intro, say, onBuilt: built });
+    // the homepage's Params pause it and retune it (src/scripts/home-params.js)
+    (window as unknown as { __ksIntro?: typeof intro }).__ksIntro = intro;
 
     root.addEventListener("click", () => intro.build());
     const arrival = document.documentElement.classList.contains("is-arrival"); // the intro is skipped
