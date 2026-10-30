@@ -33,13 +33,15 @@
    mark's straight bar to near the window's right edge (bandsRight, px; "I
    still want each of the lines to be spaced evenly ... I want the lines to
    have a curve"). The pill carries the strokes with it (push), and each band
-   is pressed aside by its stroke as that reaches it: on the stroke where it
-   is held, and from there easing back to where it stands in one curve, its
-   give falling away along its length (each point of the stroke pushes the
-   band out e^(-run / reach), the band the furthest of those), so no straight
-   runs and no corners. Each band's reach is what lets it leave its stroke's
-   ends in the stroke's own direction, so at rest, with the pill in its place,
-   the bands are the strokes. Bands that never cross, no field.
+   is pressed aside by its stroke as that reaches it, the push falling away
+   along the band the way the Kinetic lines tool's cursor parts its lines
+   (Oct 30: "whenever we played with that hover effect where the cursor moves
+   the lines out of the way like magnetism, those had a curve. That's really
+   what I want to emulate"): each point of the stroke, within the logo's
+   height, pushes the band out (1 + (run / reach)^2)^-curve, the band the
+   furthest of those, so it bends hard round the pill and curves back to
+   upright, no straight runs and no corners. At rest the bands bulge a little
+   past the strokes' ends; the collapse lays them on. Bands never cross.
 
      const f = createLogoField(canvas, settings)
      f.layout({ width, height, fieldLeft, fieldRight, logo: { left, top, unit }, strokes, lines?, keep?, bands? })
@@ -192,11 +194,12 @@ export function createLogoField(canvas, S = FIELD) {
     endB = new Float32Array(N);
     slT = new Float32Array(N);
     slB = new Float32Array(N);
-    give = new Float32Array(N * M);
+    give = new Float32Array(M);
     depth = new Float64Array(M);
-    // (the homepage's Params: stretch times the reach, hold times the distance back to upright, tip in logo units)
-    const step = (spanBot - spanTop) / (M - 1), dy = ys[1] - ys[0], e = Math.max(0, S.tip ?? 15) * unit;
-    const hold = Math.max(60 * unit, 0.8 * (spanTop - ys[0])) * Math.max(0.1, S.hold ?? 1), stretch = Math.max(0.1, S.stretch ?? 1);
+    // (the homepage's Params: bandReach in logo units, how far along a band the push spreads; bandCurve, how soon it straightens)
+    const step = (spanBot - spanTop) / (M - 1), dy = ys[1] - ys[0];
+    const reach = Math.max(10, S.bandReach ?? 140) * unit, curve = Math.max(0.2, S.bandCurve ?? 1.2);
+    for (let m = 0; m < M; m++) give[m] = (1 + ((m * dy) / reach) ** 2) ** -curve;
     for (let i = 0; i < N; i++) {
       const row = i * M;
       for (let j = 0; j < M; j++) mid[row + j] = (finalL[row + j] + finalR[row + j]) / 2;
@@ -206,14 +209,7 @@ export function createLogoField(canvas, S = FIELD) {
       slB[i] = (mid[row + M - 1] - mid[row + M - 3]) / (2 * step);
     }
     const left = mid[Math.floor(M / 2)];
-    for (let i = 0; i < N; i++) {
-      stand[i] = x0[i] = N > 1 ? lerp(left, Math.max(left + N * 20, right), i / (N - 1)) : left;
-      // the reach that has the band leave its stroke's ends just as the stroke does: how far it is pressed
-      // there over how steeply the stroke leaves (a band not pressed at rest, the straight bar, reaches far)
-      const out = Math.max(stand[i] - endT[i], stand[i] - endB[i]), lean = Math.max(Math.abs(slT[i]), Math.abs(slB[i]));
-      const reach = (out > unit ? clamp(out / Math.max(0.05, lean), 140 * unit, 900 * unit) : 420 * unit) * stretch;
-      for (let m = 0; m < M; m++) give[i * M + m] = Math.exp(-(Math.hypot(m * dy, e) - e) / reach - ((m * dy) / hold) ** 2);
-    }
+    for (let i = 0; i < N; i++) stand[i] = x0[i] = N > 1 ? lerp(left, Math.max(left + N * 20, right), i / (N - 1)) : left;
   }
   // band i's stroke, carried with the pill by push, at height y: past its ends straight on
   const strokeMid = (i, y, push) => {
@@ -226,8 +222,9 @@ export function createLogoField(canvas, S = FIELD) {
     for (let i = 0; i < N; i++) {
       const row = i * M;
       let any = false;
+      // only the stroke itself pushes, within the logo's height (carried on past its ends, it pushed straight runs back in)
       for (let k = 0; k < M; k++) {
-        depth[k] = stand[i] - strokeMid(i, ys[k], push);
+        depth[k] = ys[k] < spanTop || ys[k] > spanBot ? -1 : stand[i] - strokeMid(i, ys[k], push);
         if (depth[k] > 0) any = true;
       }
       for (let j = 0; j < M; j++) {
@@ -236,7 +233,7 @@ export function createLogoField(canvas, S = FIELD) {
           for (let k = 0; k < M; k++) {
             const dk = depth[k];
             if (dk <= out) continue;
-            const g = dk * give[i * M + Math.abs(j - k)];
+            const g = dk * give[Math.abs(j - k)];
             if (g > out) out = g;
           }
         d[row + j] = -out; // x0 is where it stands
@@ -503,7 +500,7 @@ export function createLogoField(canvas, S = FIELD) {
     count: () => N,
     catchAt() {
       let most = 0;
-      for (let i = 0; i < N; i++) for (let j = 0; j < M; j++) most = Math.max(most, stand[i] - strokeMid(i, ys[j], 0));
+      for (let i = 0; i < N; i++) for (let j = 0; j < M; j++) if (ys[j] >= spanTop && ys[j] <= spanBot) most = Math.max(most, stand[i] - strokeMid(i, ys[j], 0));
       return most;
     },
     /** Where line i stands across the field, 0 at the left .. 1 nearest the pill. */

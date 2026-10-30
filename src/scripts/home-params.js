@@ -27,9 +27,8 @@ const schema = {
     pillAt: [I.pillAt, 0, 1.5, 0.05],
     inSpeed: [I.inSpeed, 0.5, 10, 0.1], // how fast the pill comes in, logo widths a second
     catchFor: [I.catchFor, 0.2, 2, 0.05], // how long the bands take to slow it to a stop, s
-    stretch: [I.stretch, 0.3, 2.5, 0.01], // the bands' elasticity: how far along each the push carries (lower tighter)
-    hold: [I.hold, 0.3, 3, 0.01], // how soon each band comes back upright toward the window's edge (lower sooner)
-    tip: [I.tip, 0, 60, 1], // how round each band's bow is at its tip, logo units
+    reach: [I.reach, 30, 500, 1], // how far along each band the pill's push spreads, logo units (more: wider, softer bends)
+    curve: [I.curve, 0.3, 4, 0.05], // how soon each band straightens again (more: tighter round the pill, upright sooner)
     collapseAt: [I.collapseAt, -0.5, 1, 0.05], // s from the pill's stop that the bands let go
     dockFor: [I.dockFor, 0.3, 3, 0.05], // the move up into the nav's corner
     collapseFor: [I.collapseFor, 0.2, 2, 0.05], // s from a line's release until its ends are at rest on the stroke

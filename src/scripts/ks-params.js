@@ -344,6 +344,24 @@ const el = (tag, cls, html) => {
 const prettify = (s) =>
   s.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
 
+/* The panel stays as it was left, open or shut and each group open or folded, through a reload or a
+   replay (Hunter, Oct 30: "for testing purposes, let's not collapse the parameter or close the parameters
+   when I refresh or replay"): kept in this browser per page. */
+const uiKey = () => `ksp-ui:${location.pathname}`;
+const readUi = () => {
+  try {
+    return JSON.parse(localStorage.getItem(uiKey()) ?? "null");
+  } catch {
+    return null;
+  }
+};
+const writeUi = (panel) => {
+  try {
+    const shut = [...panel.querySelectorAll('.ksp-section[data-shut="true"]')].map((sec) => sec.dataset.group);
+    localStorage.setItem(uiKey(), JSON.stringify({ open: panel.dataset.open === "true", shut }));
+  } catch {}
+};
+
 function standalonePanel(api) {
   const boot = () => {
     /* A tool may redefine its dials mid-life (a control list that grows or
@@ -361,7 +379,8 @@ function standalonePanel(api) {
     }
 
     const panel = el("div", "ksp");
-    panel.dataset.open = wasOpen ? "true" : "false";
+    const ui = readUi();
+    panel.dataset.open = wasOpen || ui?.open ? "true" : "false";
     panel.appendChild(el("div", "ksp-head", "<b>Params</b><kbd>P</kbd>"));
 
     /* light/dark rides above everything, exactly as it does in the studio */
@@ -380,11 +399,15 @@ function standalonePanel(api) {
           const head = el("button", "ksp-gh", `<span>${prettify(c.group)}</span>${CHEVRON}`);
           head.type = "button";
           const groupSection = section;
-          head.setAttribute("aria-expanded", "true");
+          groupSection.dataset.group = c.group;
+          const folded = Boolean(ui?.shut?.includes(c.group));
+          groupSection.dataset.shut = String(folded);
+          head.setAttribute("aria-expanded", String(!folded));
           head.onclick = () => {
             const shut = groupSection.dataset.shut !== "true";
             groupSection.dataset.shut = String(shut);
             head.setAttribute("aria-expanded", String(!shut));
+            writeUi(panel);
           };
           section.appendChild(head);
         }
@@ -424,8 +447,12 @@ function standalonePanel(api) {
       if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
       if (e.key === "p" || e.key === "P") {
         panel.dataset.open = panel.dataset.open === "true" ? "false" : "true";
+        writeUi(panel);
       }
-      if (e.key === "Escape") panel.dataset.open = "false";
+      if (e.key === "Escape" && panel.dataset.open === "true") {
+        panel.dataset.open = "false";
+        writeUi(panel);
+      }
     };
     addEventListener("keydown", window.__kspKeys);
   };
