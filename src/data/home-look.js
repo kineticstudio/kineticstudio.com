@@ -16,15 +16,16 @@ export const HOME_LOOK = {
   // scales down"; "like rubber bands that are slowing down the pill"; "the right line could be almost
   // all the way to the right of the viewport", logo-intro.js pillPath; Oct 30: "Let's not have a bounce-back
   // effect either", so no overshoot and bounce 0; "give me parameters for: speed it comes in, speed it slows
-  // down, the amount of elasticity in the rubber bands"): inSpeed = logo widths a second the pill glides in at,
-  // catchFor = s from the first band taking it up to its stopping in its place; reach = logo units along each
+  // down, the amount of elasticity in the rubber bands"; "give me a graphical curve to play with how the pill is
+  // animated in and slows down"): pillFor = s from the window's edge to its place, pillCurve = how it goes, a
+  // cubic-bezier of how far along against the time (fitted to the glide and catch it had); reach = logo units along each
   // band the push spreads and curve = how soon it straightens (the Kinetic lines tool's magnetism, Oct 30:
   // "those had a curve. That's really what I want to emulate"; Oct 30: Hunter's own tuning, pasted from Copy props);
   // lineWidth = the bands' width before they land, times the strokes' own ("wondering if it'll look better if they are smaller");
   // collapseAt = s from the stop that the bands let go; dockFor = the move into the nav's corner
   intro: {
     logo: 44,
-    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.2, inSpeed: 4.3, catchFor: 0.9, reach: 152, curve: 0.95, lineWidth: 1, collapseAt: -0.4, collapseFor: 0.85, collapseSpread: 0, bounce: 0, dockLead: 0.5, dockFor: 1.15,
+    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.2, pillFor: 0.96, pillCurve: [0.31, 0.76, 0.52, 1], reach: 152, curve: 0.95, lineWidth: 1, collapseAt: -0.4, collapseFor: 0.85, collapseSpread: 0, bounce: 0, dockLead: 0.5, dockFor: 1.15,
   },
   // a tile's 3D card under the pointer: tilt (degrees), lift, depth of the view,
   // the springs it moves on, and when it shows (ms after it loads) and is dropped (s after leaving)

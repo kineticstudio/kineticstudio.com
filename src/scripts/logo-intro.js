@@ -124,42 +124,40 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
   const pillAt = () => pill.setAttribute("transform", `translate(${slide.x} 0)`);
   const expoOut = (t) => (t >= 1 ? 1 : 1 - 2 ** (-10 * t));
   const unit01 = (t) => Math.min(1, Math.max(0, t));
-  /* The pill's way in (Hunter, Oct 29: "It needs to feel like the lines are catching the pill"; "The pill
-     shouldn't slow down until it almost feels like these are like rubber bands that are slowing down the
-     pill"; Oct 30: "Let's not have a bounce-back effect either"; "give me parameters for: speed it comes in,
-     speed it slows down"). It glides in at inSpeed (logo widths a second) until the first band takes it up
-     (catchAt, logo units right of its place), and the bands bring it to a stop in its place catchFor
-     seconds later: its speed there falls as (1 - s^q)^2 of what it came in at, s the share of catchFor
-     gone, q set so it covers catchAt exactly, so its slowing starts from nothing at the catch, grows as
-     they stretch, and has gone again as it stops, and it never speeds up again. (A stop too quick or too
-     slow for that speed takes as long as it has to.)
+  /* The pill's way in (Hunter, Oct 29: "It needs to feel like the lines are catching the pill"; "like
+     rubber bands that are slowing down the pill"; Oct 30: "Let's not have a bounce-back effect either";
+     "can you give me a graphical curve to play with how the pill is animated in and slows down"): from
+     just past the window's edge to its place in pillFor seconds, along pillCurve, a cubic-bezier
+     [x1, y1, x2, y2] of how far along it is (up) against the time (across), drawn and dragged in the
+     homepage's Params. The default is fitted to the glide and catch it had before: in fast, slowing from
+     the first band on, no bounce. The bands catch it wherever the curve brings it to them (catchAt,
+     logo units right of its place; the panel marks how far along that is).
      x(t), t from when it sets off, in logo units right of its place; at = the catch; turn = at rest. */
+  const curveOf = (v) => {
+    const a = Array.isArray(v) ? v : String(v ?? "").split(",").map(Number);
+    return a.length === 4 && a.every(Number.isFinite) ? a : [0.31, 0.76, 0.52, 1];
+  };
   const pillPath = (start, catchAt) => {
-    catchAt = Math.max(1, catchAt);
-    const speed = Math.max(0.2, INTRO.inSpeed ?? 3.3) * vbW;
-    // v: how far it would go at its speed over the stop, in catchAts (1 just enough, 3 the most it can shed)
-    let T = Math.max(0.15, INTRO.catchFor ?? 0.9), v = (speed * T) / catchAt;
-    if (v < 1.1 || v > 3) (v = Math.min(3, Math.max(1.1, v))), (T = (v * catchAt) / speed);
-    const share = (q) => 1 - 2 / (q + 1) + 1 / (2 * q + 1); // the mean of (1 - s^q)^2
-    let lo = 1, hi = 80;
-    for (let k = 0; k < 40; k++) {
-      const m = (lo + hi) / 2;
-      if (share(m) < 1 / v) lo = m;
-      else hi = m;
-    }
-    const q = (lo + hi) / 2, gone = (u) => u - (2 * u ** (q + 1)) / (q + 1) + u ** (2 * q + 1) / (2 * q + 1);
-    const from = Math.max(start, catchAt), Ta = (from - catchAt) / speed;
-    return {
-      at: Ta,
-      turn: Ta + T,
-      still: Ta + T,
-      x: (t) => {
-        if (t <= 0) return from;
-        if (t < Ta) return from - speed * t;
-        const u = Math.min(1, (t - Ta) / T);
-        return Math.max(0, catchAt - speed * T * gone(u));
-      },
+    const T = Math.max(0.15, INTRO.pillFor ?? 0.96), [x1, y1, x2, y2] = curveOf(INTRO.pillCurve);
+    const bx = (s) => 3 * (1 - s) ** 2 * s * x1 + 3 * (1 - s) * s * s * x2 + s ** 3;
+    const by = (s) => 3 * (1 - s) ** 2 * s * y1 + 3 * (1 - s) * s * s * y2 + s ** 3;
+    // how far along at a share u of the time: the curve's height where it is u across
+    const along = (u) => {
+      let lo = 0, hi = 1;
+      for (let k = 0; k < 30; k++) {
+        const m = (lo + hi) / 2;
+        if (bx(m) < u) lo = m;
+        else hi = m;
+      }
+      return by((lo + hi) / 2);
     };
+    const x = (t) => (t <= 0 ? start : start * (1 - along(Math.min(1, t / T))));
+    let at = T;
+    for (let k = 0; k <= 400; k++) if (x((k / 400) * T) <= catchAt) { at = (k / 400) * T; break; }
+    // the panel's curve marks where the first band takes it
+    window.__ksIntroCatch = Math.max(0, 1 - catchAt / start);
+    dispatchEvent(new CustomEvent("ks-params-mark"));
+    return { at, turn: T, still: T, x };
   };
 
   let tick = null;

@@ -25,8 +25,9 @@ const schema = {
   intro: {
     logo: [I.logo, 24, 64, 0.5], // the logo's width while it plays, rem
     pillAt: [I.pillAt, 0, 1.5, 0.05],
-    inSpeed: [I.inSpeed, 0.5, 10, 0.1], // how fast the pill comes in, logo widths a second
-    catchFor: [I.catchFor, 0.2, 2, 0.05], // how long the bands take to slow it to a stop, s
+    pillFor: [I.pillFor, 0.3, 3, 0.01], // s from the window's edge to its place
+    // how it goes: how far along (up) against the time (across); the dashed line is where the first band takes it
+    pillCurve: { type: "curve", label: "Pill curve", value: I.pillCurve, mark: "__ksIntroCatch", markLabel: "first band" },
     reach: [I.reach, 30, 500, 1], // how far along each band the pill's push spreads, logo units (more: wider, softer bends)
     curve: [I.curve, 0.3, 4, 0.05], // how soon each band straightens again (more: tighter round the pill, upright sooner)
     lineWidth: [I.lineWidth, 0.1, 1.5, 0.01], // the bands' width before they land, times the logo's strokes (lower: thinner, nearer their docked size)

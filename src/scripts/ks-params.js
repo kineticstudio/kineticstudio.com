@@ -141,6 +141,14 @@ function normalise(path, key, group, raw) {
   if (t === "action") {
     return { path, label: raw.label ?? label, group, kind: "action" };
   }
+  if (t === "curve") {
+    /* An ease drawn as a curve with two handles, as cubic-bezier(x1, y1, x2, y2): time across, how far along up
+       (Hunter, Oct 30: "can you give me a graphical curve to play with how the pill is animated in and slows
+       down"). The value is [x1, y1, x2, y2]; `mark` names a window property, a share of the way, drawn as a
+       line across the curve with `markLabel` beside it. */
+    return { path, label: raw.label ?? label, group, kind: "curve", value: raw.default ?? raw.value ?? [0.25, 0.1, 0.25, 1],
+             mark: raw.mark, markLabel: raw.markLabel };
+  }
   if (t === "color") {
     /* `options` is a list of preset hexes (a design system's colors),
        drawn as clickable dots under the well. */
@@ -319,6 +327,17 @@ const CSS = `
   font: 400 15px/1 var(--display-family, ${TEXT}); letter-spacing: 0; text-transform: uppercase;
   background: var(--ksp-ink, #23231f); color: var(--ksp-bg, #fff); }
 .ksp-cta:active { transform: scale(.97); }
+.ksp-curve { border-radius: ${R}; background: rgba(0,0,0,.05); padding: 9px 10px 8px; }
+.ksp-curve-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 3px 6px; }
+.ksp-curve-head output { opacity: .55; font-variant-numeric: tabular-nums; }
+.ksp-curve svg { display: block; width: 100%; height: auto; touch-action: none; overflow: visible; }
+.ksp-curve .grid { stroke: currentColor; stroke-opacity: .14; stroke-width: 1; }
+.ksp-curve .arm { stroke: currentColor; stroke-opacity: .4; stroke-width: 1; }
+.ksp-curve .ease { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.ksp-curve .knob { fill: var(--ksp-card, #fff); stroke: currentColor; stroke-width: 1.6; cursor: grab; }
+.ksp-curve .knob:active { cursor: grabbing; }
+.ksp-curve .mark { stroke: currentColor; stroke-opacity: .35; stroke-width: 1; stroke-dasharray: 3 3; }
+.ksp-curve text { fill: currentColor; fill-opacity: .5; font-size: 10.5px; }
 @media (prefers-reduced-motion: reduce) {
   .ksp, .ksp * { transition: none !important; }
 }
@@ -462,6 +481,7 @@ function standalonePanel(api) {
 
 function control(api, c) {
   if (c.kind === "range") return dial(api, c);
+  if (c.kind === "curve") return curveControl(api, c);
   if (c.kind === "gradient") return gradientControl(api, c);
   if (c.kind === "toggle")
     return segmented(api, c, c.labels?.[0] ?? "Off", c.labels?.[1] ?? "On", "", "");
@@ -613,6 +633,89 @@ function dial(api, c) {
      the row follows so the panel never lies about the state on screen */
   api.subscribe(paint);
   return row;
+}
+
+/* The curve: the plot from (0, 0) to (1, 1), room above and below for a handle to go past, the two handles
+   dragged anywhere in it (time kept between 0 and 1, as an ease needs) */
+function curveControl(api, c) {
+  const W = 272, H = 176, PX = 10, top = 1.3, bottom = -0.3;
+  const sx = (x) => PX + x * (W - 2 * PX), sy = (y) => H - 8 - ((y - bottom) / (top - bottom)) * (H - 16);
+  const ux = (px) => (px - PX) / (W - 2 * PX), uy = (py) => bottom + ((H - 8 - py) / (H - 16)) * (top - bottom);
+  const wrap = el("div", "ksp-curve");
+  const head = el("div", "ksp-curve-head", `<span>${c.label}</span>`);
+  const out = el("output");
+  head.appendChild(out);
+  wrap.appendChild(head);
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("aria-label", c.label);
+  const make = (tag, cls) => {
+    const n = document.createElementNS(NS, tag);
+    if (cls) n.setAttribute("class", cls);
+    svg.appendChild(n);
+    return n;
+  };
+  for (const y of [0, 1]) {
+    const g = make("line", "grid");
+    g.setAttribute("x1", String(sx(0))); g.setAttribute("x2", String(sx(1)));
+    g.setAttribute("y1", String(sy(y))); g.setAttribute("y2", String(sy(y)));
+  }
+  const mark = make("line", "mark"), markText = make("text");
+  const arm1 = make("line", "arm"), arm2 = make("line", "arm"), ease = make("path", "ease");
+  const k1 = make("circle", "knob"), k2 = make("circle", "knob");
+  for (const k of [k1, k2]) k.setAttribute("r", "6");
+  wrap.appendChild(svg);
+  const val = () => {
+    const v = api.values[c.path];
+    const a = Array.isArray(v) ? v : String(v).split(",").map(Number);
+    return a.length === 4 && a.every(Number.isFinite) ? a : [0.25, 0.1, 0.25, 1];
+  };
+  const paint = () => {
+    const [x1, y1, x2, y2] = val();
+    ease.setAttribute("d", `M${sx(0)} ${sy(0)} C${sx(x1)} ${sy(y1)} ${sx(x2)} ${sy(y2)} ${sx(1)} ${sy(1)}`);
+    arm1.setAttribute("x1", String(sx(0))); arm1.setAttribute("y1", String(sy(0)));
+    arm1.setAttribute("x2", String(sx(x1))); arm1.setAttribute("y2", String(sy(y1)));
+    arm2.setAttribute("x1", String(sx(1))); arm2.setAttribute("y1", String(sy(1)));
+    arm2.setAttribute("x2", String(sx(x2))); arm2.setAttribute("y2", String(sy(y2)));
+    k1.setAttribute("cx", String(sx(x1))); k1.setAttribute("cy", String(sy(y1)));
+    k2.setAttribute("cx", String(sx(x2))); k2.setAttribute("cy", String(sy(y2)));
+    out.textContent = val().map((n) => +n.toFixed(2)).join(", ");
+    const m = c.mark ? Number(window[c.mark]) : NaN;
+    const show = Number.isFinite(m);
+    mark.style.display = markText.style.display = show ? "" : "none";
+    if (show) {
+      mark.setAttribute("x1", String(sx(0))); mark.setAttribute("x2", String(sx(1)));
+      mark.setAttribute("y1", String(sy(m))); mark.setAttribute("y2", String(sy(m)));
+      markText.setAttribute("x", String(sx(1) - 2)); markText.setAttribute("y", String(sy(m) - 4));
+      markText.setAttribute("text-anchor", "end");
+      markText.textContent = c.markLabel ?? "";
+    }
+  };
+  const drag = (knob, i) => {
+    knob.onpointerdown = (e) => {
+      try { knob.setPointerCapture(e.pointerId); } catch { /* fine */ }
+      e.preventDefault();
+    };
+    knob.onpointermove = (e) => {
+      if (!knob.hasPointerCapture(e.pointerId)) return;
+      const r = svg.getBoundingClientRect();
+      const px = ((e.clientX - r.left) / r.width) * W, py = ((e.clientY - r.top) / r.height) * H;
+      const v = val().slice();
+      v[i] = +Math.min(1, Math.max(0, ux(px))).toFixed(2);
+      v[i + 1] = +Math.min(top, Math.max(bottom, uy(py))).toFixed(2);
+      api.set(c.path, v);
+      paint();
+    };
+  };
+  drag(k1, 0);
+  drag(k2, 2);
+  paint();
+  // the mark can move (a new window) and the value too (Reset); the curve follows
+  api.subscribe(paint);
+  addEventListener("resize", paint);
+  addEventListener("ks-params-mark", paint);
+  return wrap;
 }
 
 function segmented(api, c, offLabel, onLabel, offIcon, onIcon) {
