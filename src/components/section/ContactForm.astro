@@ -447,20 +447,21 @@ const timings = Array.from({ length: 25 }, (_, i) => {
         grid-template-columns: 1fr;
         gap: var(--space-6);
       }
+      /* the title and Copy email stay beside the form as it scrolls by, on the Contact page too
+         (Hunter, Oct 30: "On the contact page, let's make the left side sticky") */
+      & .contact_intro {
+        position: sticky;
+        top: calc(var(--nav-height, 5rem) + var(--space-5));
+        align-self: start;
+      }
+      @media (width < 54rem) {
+        & .contact_intro {
+          position: static;
+        }
+      }
       /* at the foot of a page: no room kept for the nav above it */
       &.is-footer {
         padding-top: var(--section-space-small);
-        /* its title and Copy email stay beside the form as it scrolls by */
-        & .contact_intro {
-          position: sticky;
-          top: calc(var(--nav-height, 5rem) + var(--space-5));
-          align-self: start;
-        }
-        @media (width < 54rem) {
-          & .contact_intro {
-            position: static;
-          }
-        }
       }
     }
     .contact_intro {
@@ -724,11 +725,17 @@ const timings = Array.from({ length: 25 }, (_, i) => {
     .contact_trap {
       display: none;
     }
+    /* Send, the whole width of the form and bigger than the site's other pills (Hunter, Oct 30: "Let's
+       make the send button full width and bigger on the contact form"), the note under it */
     .contact_send {
-      display: flex;
-      align-items: center;
-      gap: var(--space-4);
-      margin-top: var(--space-2);
+      display: grid;
+      gap: var(--space-3);
+      margin-top: var(--space-3);
+    }
+    .contact_submit {
+      width: 100%;
+      height: calc(var(--pill-height) * 1.75);
+      font-size: calc(var(--pill-type) * 1.5);
     }
     .contact_note {
       margin: 0;

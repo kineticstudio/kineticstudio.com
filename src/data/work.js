@@ -159,11 +159,12 @@ export const HOME = [
   "cambium", "venus-aerospace",
   "epirus", "new-era",
   "happy-droid", "metamag",
-  "roam-robotics", "dorm-room-fund",
+  // Oct 29: "lets add s32 and rre to the work on the homepage"; Oct 30: "Let's move RRE up a few
+  // spots, maybe next to Rome Robotics", so Dorm Room Fund goes with S32
+  "roam-robotics", "rre",
+  "dorm-room-fund", "s32",
   // Oct 25: "we also need to add counsel-health to the work on homepage", beside Elio
   "elio", "counsel-health",
-  // Oct 29: "lets add s32 and rre to the work on the homepage"
-  "s32", "rre",
 ];
 
 /* Hunter, Oct 23: these four lead the site, each shown with its code-powered

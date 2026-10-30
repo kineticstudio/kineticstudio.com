@@ -18,7 +18,7 @@ const { render = true } = Astro.props;
       <ul class="stats_list">
         {STATS.map((s, i) => (
           <li class="stats_item" data-reveal style={`--reveal-delay:${0.08 * i}s`}>
-            <span class="stats_num text-style-figure">{s.value}</span>
+            <span class="stats_num text-style-figure" data-count={s.value}>{s.value}</span>
             <span class="stats_label text-style-label">{s.label}</span>
           </li>
         ))}
@@ -26,6 +26,47 @@ const { render = true } = Astro.props;
     </section>
   )
 }
+
+<script>
+  /* Each figure counts up from nothing as it scrolls in (Hunter, Oct 30: "Increment these numbers up as I
+     scroll in"), with its row's reveal; the page itself carries the final figures, so without the script,
+     or with reduced motion, they simply show. */
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const els = [...document.querySelectorAll<HTMLElement>(".stats_num[data-count]")];
+  if (!reduced && "IntersectionObserver" in window) {
+    const parts = (v: string) => {
+      const m = v.match(/^(\D*)([\d,]+)(.*)$/);
+      return m ? { pre: m[1], n: Number(m[2].replace(/,/g, "")), post: m[3] } : null;
+    };
+    const run = (el: HTMLElement, delay: number) => {
+      const p = parts(el.dataset.count!);
+      if (!p) return;
+      const dur = 1400, t0 = performance.now() + delay;
+      const step = (now: number) => {
+        const u = Math.min(1, Math.max(0, (now - t0) / dur));
+        el.textContent = `${p.pre}${Math.round(p.n * (1 - (1 - u) ** 3)).toLocaleString("en-US")}${p.post}`;
+        if (u < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          io.unobserve(e.target);
+          run(e.target as HTMLElement, els.indexOf(e.target as HTMLElement) * 80);
+        }
+      },
+      { threshold: 0.4 },
+    );
+    for (const el of els) {
+      const p = parts(el.dataset.count!);
+      if (!p) continue;
+      el.textContent = `${p.pre}0${p.post}`;
+      io.observe(el);
+    }
+  }
+</script>
 
 <style is:global>
   @layer components {

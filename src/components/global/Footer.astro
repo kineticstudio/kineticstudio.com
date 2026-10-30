@@ -11,14 +11,13 @@ interface Props {
 }
 
 const { render = true, form = true } = Astro.props;
-const year = new Date().getFullYear();
 /* The footer, dark on every page, and the end of every page (Hunter, Oct 25:
    "I don't like the footer. There's a card on top of the work, and then the
    footer just has another set of lines ... The start a project should be at
    the bottom of every page, so really, it could be a part of the footer").
 
    The contact form itself (ContactForm, not on the Playground), then the
-   pages, the address, the profiles, the sound and the year. The barrel of
+   pages, the address, the profiles and the sound. The barrel of
    work that sat over the form is gone (Hunter, Oct 25: "let's remove the
    barrel section above the contact field"); ProjectBarrel is kept. */
 // the marks, drawn in the text colour
@@ -57,23 +56,11 @@ const ICONS: Record<string, string> = {
           <span class="footer_bars" aria-hidden="true"><i /><i /><i /><i /></span>
           Sound
         </button>
-        <p class="footer_meta text-style-label">© {year} Kinetic Studio</p>
-        <a class="pill is-tab footer_top" href="#main">Back to top ↑</a>
+        {/* no year or Back to top (Hunter, Oct 30: "remove these") */}
       </div>
     </footer>
   )
 }
-
-<script>
-  // back to the top, smoothly, and the page's start takes the focus
-  document.querySelectorAll<HTMLAnchorElement>(".footer_top").forEach((a) =>
-    a.addEventListener("click", (e) => {
-      e.preventDefault();
-      scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-      document.getElementById("main")?.focus({ preventScroll: true });
-    }),
-  );
-</script>
 
 <style is:global>
   @layer components {
@@ -147,7 +134,7 @@ const ICONS: Record<string, string> = {
       }
     }
     /* the sound, on or off: four bars that move while it is on */
-    /* the pages, the sound and back to top in the nav's own words and pills */
+    /* the pages and the sound in the nav's own words and pills */
     .footer_sound {
       gap: 0.5rem;
       /* on or off shows in its bars, not a ring */
@@ -191,10 +178,6 @@ const ICONS: Record<string, string> = {
       align-items: center;
       height: var(--pill-height);
       padding-inline: var(--pill-pad);
-    }
-    .footer_meta {
-      margin: 0;
-      color: color-mix(in srgb, var(--text) 45%, transparent);
     }
     @media (width < 48rem) {
       .footer_social {

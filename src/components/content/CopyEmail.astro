@@ -49,8 +49,16 @@ const { render = true, label = "Contact", class: className, look } = Astro.props
     const status = root.querySelector('[role="status"]')!;
     const sound = (name: string, rate = 1, gain = 1) => dispatchEvent(new CustomEvent("ks:sound", { detail: { name, rate, gain } }));
     let timer = 0;
+    const tip = root.querySelector<HTMLElement>(".copy-email_pill")!;
     const open = () => {
       if (root.classList.contains("is-open")) return;
+      // a tooltip over a button near the window's edge comes in to fit, its point still on the button
+      if (root.classList.contains("is-pill")) {
+        const b = button.getBoundingClientRect(), w = tip.offsetWidth, edge = 12;
+        const left = b.left + b.width / 2 - w / 2;
+        const nudge = Math.min(Math.max(left, edge), innerWidth - edge - w) - left;
+        tip.style.setProperty("--nudge", `${nudge.toFixed(1)}px`);
+      }
       root.classList.add("is-open");
     };
     const close = () => {
@@ -110,8 +118,11 @@ const { render = true, label = "Contact", class: className, look } = Astro.props
         position: absolute;
         left: 50%;
         bottom: calc(100% + 0.6rem);
+        /* as wide as the address: from the button's middle it could only have grown to half the
+           button's width, and the address was cut off (Hunter, Oct 30: "This tooltip is getting cut off") */
+        width: max-content;
         z-index: 5;
-        translate: -50% 0.3rem;
+        translate: calc(-50% + var(--nudge, 0px)) 0.3rem;
         transform-origin: 50% 100%;
         grid-template-columns: 1fr;
         padding: 0.5rem 0.85rem;
@@ -134,14 +145,14 @@ const { render = true, label = "Contact", class: className, look } = Astro.props
           position: absolute;
           left: 50%;
           top: 100%;
-          translate: -50% -1px;
+          translate: calc(-50% - var(--nudge, 0px)) -1px;
           border: 0.35rem solid transparent;
           border-top-color: var(--text);
         }
       }
       &.is-open .copy-email_pill {
         padding: 0.5rem 0.85rem;
-        translate: -50% 0;
+        translate: calc(-50% + var(--nudge, 0px)) 0;
         scale: 1;
       }
       & .copy-email_text {
