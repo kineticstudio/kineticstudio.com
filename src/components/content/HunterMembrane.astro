@@ -25,21 +25,12 @@ const { class: className } = Astro.props;
 </div>
 
 <script>
-  import { MEMBRANE_LOOK, MEMBRANE_MATCAPS, MEMBRANE_TUNING_KEY } from "@/data/membrane-look.js";
+  import { MEMBRANE_DIALS, MEMBRANE_LOOK, MEMBRANE_MATCAPS, MEMBRANE_MATERIALS, MEMBRANE_PORTRAITS, MEMBRANE_SUBJECTS, MEMBRANE_TUNING_KEY } from "@/data/membrane-look.js";
   import { defineParams } from "@/scripts/ks-params.js";
 
   type Dial = [number, number, number] | "color" | string[];
   // each group's dials, [min, max, step] (or a colour, or a list to choose from)
-  const DIALS: Record<string, Record<string, Dial>> = {
-    motion: { speed: [0, 3, 0.01], range: [0, 180, 1], hold: [0, 0.8, 0.01], lean: [0, 20, 0.1] },
-    press: { depth: [0, 0.3, 0.001], follow: [0, 1, 0.01], soft: [0, 10, 0.05], neck: [0, 0.3, 0.001] },
-    latex: { spread: [0, 1, 0.01], smooth: [0, 10, 0.05], spring: [0.3, 6, 0.01], damping: [0.05, 1.5, 0.01], pillow: [-0.05, 0.1, 0.001], rim: [0, 2, 0.01] },
-    surface: { texture: [0, 2, 0.01], grain: [5, 250, 1], cavity: [0, 2, 0.01] },
-    look: { matcap: Object.keys(MEMBRANE_MATCAPS), tint: "color", exposure: [0.3, 2.5, 0.01], contrast: [0.5, 2, 0.01] },
-    frame: { fill: [0.6, 1, 0.005], corner: [0, 0.2, 0.001] },
-    glow: { bloom: [0, 2, 0.01], threshold: [0.2, 2, 0.01], radius: [0, 1.5, 0.01] },
-    render: { quality: [0.5, 1.6, 0.05] },
-  };
+  const DIALS: Record<string, Record<string, Dial>> = MEMBRANE_DIALS as any;
 
   document.querySelectorAll<HTMLElement>("[data-membrane]").forEach(async (root) => {
     const canvas = root.querySelector<HTMLCanvasElement>(".membrane_canvas")!;
@@ -49,7 +40,7 @@ const { class: className } = Astro.props;
     const mobile = matchMedia("(pointer: coarse), (width < 40rem)").matches;
     const { mountMembrane } = await import("@/scripts/hunter-membrane.js");
     const L = MEMBRANE_LOOK as unknown as Record<string, any>;
-    const m = mountMembrane(canvas, L as any, { matcaps: MEMBRANE_MATCAPS, reduced, mobile });
+    const m = mountMembrane(canvas, L as any, { matcaps: MEMBRANE_MATCAPS, portraits: MEMBRANE_PORTRAITS, reduced, mobile });
     if (!m) return;
     await m.ready;
     root.classList.add("is-3d");
@@ -78,8 +69,18 @@ const { class: className } = Astro.props;
         const [g, k] = path.split(".");
         if (!(g in L)) return;
         L[g][k] = values[path];
+        // the photos are the carved bust's: picking one shows the bust, still
+        if (path === "portrait.photo" && L.fidelity.subject !== "Bust") Object.assign(L.fidelity, { subject: "Bust" }), Object.assign(L.motion, (MEMBRANE_SUBJECTS as any).Bust.motion);
+        // a new material (or subject, or photo) starts from its own settings
+        if (path === "material.type" || path === "fidelity.subject" || path === "portrait.photo") {
+          const preset = (path === "material.type" ? MEMBRANE_MATERIALS : MEMBRANE_SUBJECTS as Record<string, any>)[values[path]];
+          if (preset) for (const [pg, pv] of Object.entries(preset)) Object.assign(L[pg], pv);
+          save();
+          location.reload();
+          return;
+        }
         save();
-        if (g === "render") {
+        if (g === "render" || g === "fidelity") {
           clearTimeout(timer);
           timer = window.setTimeout(() => m.rebuild(L as any), 160);
         } else m.update(L as any);

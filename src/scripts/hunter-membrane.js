@@ -21,6 +21,16 @@
         its normals from a smoothed map, and mirrors a chrome matcap, with a
         fine orange-peel skin and a little darkening in the creases.
 
+   Then (Oct 25: "it looks a little creepy. Maybe it looks too much like C3PO.
+   I need it to also have hair texture"; his reference, a portrait carved in
+   stone) a second subject: his bust as a carved relief (public/images/
+   hunter-relief.png, made from his headshot by scripts/hunter-head/relief.py,
+   or another photo of him: MEMBRANE_PORTRAITS, picked by L.portrait.photo):
+   the volumes in a mesh that presses into the sheet as his head does, and the
+   carving (hair in strands and locks, stubble, the photo's fine lines) in a
+   fine height map rendered from the same pose at a higher resolution, which
+   the sheet takes wherever it touches him. Stone is a material made for it.
+
    Lengths are in sheet heights (the sheet is 1 by 1, the headshot's frame). */
 
 import * as THREE from "three";
@@ -28,10 +38,85 @@ import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import { createBloom } from "./chrome.js";
 
 // the head asset: for each direction out from the middle of his head (384 round, 193 top to
-// bottom), how far out his surface is, in 16 bits (R hi, G lo) of RMAX
+// bottom), how far out his surface is, in 16 bits (R hi, G lo) of RMAX; two maps, one over
+// the other: his head with the photo's facial detail, then the same head without it
 const RMAX = 0.8;
-// the middle of his head, where it turns (in the headshot's frame: x right, y up, z toward you)
 const PIVOT = new THREE.Vector3(362 / 720 - 0.5, 0.5 - 262 / 720, 0.03);
+
+/** The sheet's materials, in the order the shader knows them. */
+export const MATERIALS = ["Chrome", "Matte", "Clay", "Plaster", "Rubber", "Glass", "Stone"];
+
+// the relief asset (scripts/hunter-head/relief.py), 1024 x 2048: on top the volumes in 16 bits (R hi,
+// G lo) of R_MACRO pixels and the carve (B, signed); under it strands (R), locks (G), stubble (B), signed;
+// pixels of the 1024 frame, so a sheet height is 1024 of them
+const R_MACRO = 256, R_CARVE = 4, R_STRANDS = 3.5, R_LOCKS = 2, R_STUBBLE = 3;
+
+async function loadRelief(url) {
+  const blob = await (await fetch(url)).blob();
+  const bmp = await createImageBitmap(blob, { colorSpaceConversion: "none", premultiplyAlpha: "none" });
+  const c = document.createElement("canvas");
+  c.width = bmp.width;
+  c.height = bmp.height;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(bmp, 0, 0);
+  const px = ctx.getImageData(0, 0, c.width, c.height).data;
+  const n = c.width;
+  const macro = new Float32Array(n * n);
+  // the detail as a texture, rows turned so v = 0 is the bottom: strands, locks, stubble, carve
+  const detail = new Uint8Array(n * n * 4);
+  for (let y = 0; y < n; y++)
+    for (let x = 0; x < n; x++) {
+      const a = (y * n + x) * 4, b = ((y + n) * n + x) * 4, o = ((n - 1 - y) * n + x) * 4;
+      macro[y * n + x] = ((px[a] * 256 + px[a + 1]) / 65535) * R_MACRO;
+      detail[o] = px[b];
+      detail[o + 1] = px[b + 1];
+      detail[o + 2] = px[b + 2];
+      detail[o + 3] = px[a + 2];
+    }
+  const tex = new THREE.DataTexture(detail, n, n, THREE.RGBAFormat, THREE.UnsignedByteType);
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = true;
+  tex.anisotropy = 4;
+  tex.needsUpdate = true;
+  return { n, macro, tex };
+}
+
+/* His bust as a slab: a grid over the frame, raised by the relief's volumes
+   (x `depth`), its vertices about PIVOT the way the head's are, so it turns
+   and presses the same way. */
+function slabGeometry({ n, macro }, segs, depth = 1) {
+  const S = Math.max(16, segs | 0);
+  const pos = new Float32Array((S + 1) * (S + 1) * 3);
+  const uv = new Float32Array((S + 1) * (S + 1) * 2);
+  const facing = new Float32Array((S + 1) * (S + 1)).fill(1);
+  const probe = [];
+  const at = (x, y) => {
+    const fx = Math.min(n - 1.001, Math.max(0, x)), fy = Math.min(n - 1.001, Math.max(0, y));
+    const x0 = fx | 0, y0 = fy | 0, tx = fx - x0, ty = fy - y0, i = y0 * n + x0;
+    return (macro[i] * (1 - tx) + macro[i + 1] * tx) * (1 - ty) + (macro[i + n] * (1 - tx) + macro[i + n + 1] * tx) * ty;
+  };
+  for (let j = 0; j <= S; j++)
+    for (let i = 0; i <= S; i++) {
+      const u = i / S, v = 1 - j / S, k = j * (S + 1) + i;
+      const z = (at(u * (n - 1), (1 - v) * (n - 1)) / n) * depth;
+      pos.set([u - 0.5 - PIVOT.x, v - 0.5 - PIVOT.y, z - PIVOT.z], k * 3);
+      uv.set([u, v], k * 2);
+      if (i % 6 === 0 && j % 6 === 0 && z > 0.002) probe.push(new THREE.Vector3(pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2]));
+    }
+  const idx = [];
+  for (let j = 0; j < S; j++)
+    for (let i = 0; i < S; i++) {
+      const a = j * (S + 1) + i, b = a + 1, c = a + S + 1, d = c + 1;
+      idx.push(a, c, b, b, c, d);
+    }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  g.setAttribute("facing", new THREE.BufferAttribute(facing, 1));
+  g.setIndex(idx);
+  return { geometry: g, probe };
+}
 
 const VERT = /* glsl */ `
   varying vec2 vUv;
@@ -46,27 +131,46 @@ async function loadHead(url) {
   const ctx = c.getContext("2d", { willReadFrequently: true });
   ctx.drawImage(bmp, 0, 0);
   const px = ctx.getImageData(0, 0, c.width, c.height).data;
-  const r = new Float32Array(c.width * c.height);
-  for (let i = 0; i < r.length; i++) r[i] = ((px[i * 4] * 256 + px[i * 4 + 1]) / 65535) * RMAX;
-  return { w: c.width, h: c.height - 1, r };
+  const w = c.width, rows = c.height / 2; // detailed on top, plain under it
+  const read = (row0) => {
+    const r = new Float32Array(w * rows);
+    for (let i = 0; i < r.length; i++) {
+      const k = (row0 * w + i) * 4;
+      r[i] = ((px[k] * 256 + px[k + 1]) / 65535) * RMAX;
+    }
+    return r;
+  };
+  return { w, h: rows - 1, full: read(0), plain: read(rows) };
 }
 
 /* His head: a sphere pushed out to his surface along each direction
-   (made offline from the headshot's depth; see the About notes in
-   src/data/membrane-look.js). `step` thins it (mobile). */
-function headGeometry({ w, h, r }, step = 1) {
+   (made offline from the headshot's depth, or from his scan; see
+   scripts/hunter-head). `detail` is how much of the facial depth it keeps
+   (0 the plain head, 1 as made, more exaggerates); `step` thins the mesh;
+   `carve` how much of the headshot's carving its face takes (the scan has
+   its own face, so none). */
+function headGeometry({ w, h, full, plain }, step = 1, detail = 1, carve = 1) {
   const W = Math.floor(w / step), H = Math.floor(h / step);
   const pos = new Float32Array(W * (H + 1) * 3);
+  const uv = new Float32Array(W * (H + 1) * 2);
+  const facing = new Float32Array(W * (H + 1));
   const probe = [];
   for (let j = 0; j <= H; j++) {
-    const ph = (j / H) * Math.PI;
+    const ph = (Math.min(j * step, h) / h) * Math.PI;
+    const row = Math.min(j * step, h) * w;
     for (let i = 0; i < W; i++) {
       const th = ((i * step + 0.5) / w) * Math.PI * 2;
-      const rr = r[j * step * w + i * step];
+      const q = row + i * step;
+      const rr = Math.max(0.01, plain[q] + (full[q] - plain[q]) * detail);
       const k = (j * W + i) * 3;
       pos[k] = Math.sin(ph) * Math.sin(th) * rr;
       pos[k + 1] = Math.cos(ph) * rr;
       pos[k + 2] = Math.sin(ph) * Math.cos(th) * rr;
+      // the relief's carving, projected on from the front: the face takes it, the sides let it go
+      const q2 = (j * W + i) * 2;
+      uv[q2] = pos[k] + PIVOT.x + 0.5;
+      uv[q2 + 1] = pos[k + 1] + PIVOT.y + 0.5;
+      facing[j * W + i] = carve * Math.max(0, Math.min(1, (Math.sin(ph) * Math.cos(th) - 0.35) / 0.5));
       if (i % 4 === 0 && j % 3 === 0) probe.push(new THREE.Vector3(pos[k], pos[k + 1], pos[k + 2]));
     }
   }
@@ -78,6 +182,8 @@ function headGeometry({ w, h, r }, step = 1) {
     }
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  g.setAttribute("facing", new THREE.BufferAttribute(facing, 1));
   g.setIndex(idx);
   return { geometry: g, probe };
 }
@@ -101,7 +207,7 @@ const pass = (fragmentShader, uniforms) =>
  * Mount the membrane on a canvas. `L` is MEMBRANE_LOOK (src/data/membrane-look.js).
  * @returns {null | { ready: Promise<void>, update(L): void, rebuild(L): void, dispose(): void }}
  */
-export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-head.png", reduced = false, mobile = false } = {}) {
+export function mountMembrane(canvas, L, { matcaps, portraits = { Headshot: "hunter-relief.png" }, headUrl = "/images/hunter-head.png", scanUrl = "/images/hunter-scan.png", reliefBase = "/images/", matcapBase = "/images/matcaps/", reduced = false, mobile = false } = {}) {
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, premultipliedAlpha: true, powerPreference: "high-performance" });
@@ -139,7 +245,47 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
   });
   const headCam = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0.01, 4);
   headCam.position.set(0, 0, 2);
-  let head = null; // { mesh, probe }
+  let head = null; // { mesh, probe, key }
+  // the carving, rendered from the same pose as the volumes: how much of it the sheet takes here
+  const fineMat = new THREE.ShaderMaterial({
+    side: THREE.DoubleSide,
+    uniforms: {
+      tDetail: { value: null },
+      tState: { value: null },
+      uW: { value: new THREE.Vector4(1, 1, 1, 1) },
+      uContact: { value: 0.006 },
+      uRes: { value: 1024 },
+      uNeck: heightMat.uniforms.uNeck,
+    },
+    vertexShader: /* glsl */ `
+      attribute float facing;
+      uniform float uNeck;
+      #define PIVOT_Y ${PIVOT.y.toFixed(4)}
+      varying vec2 vUv;
+      varying float vZ, vFacing;
+      void main() {
+        vUv = uv;
+        vFacing = facing;
+        vec4 w = modelMatrix * vec4(position, 1.0);
+        vZ = w.z - uNeck * smoothstep(-0.11, -0.24, position.y + PIVOT_Y);
+        gl_Position = projectionMatrix * viewMatrix * w;
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform sampler2D tDetail, tState;
+      uniform vec4 uW;
+      uniform float uContact, uRes;
+      varying vec2 vUv;
+      varying float vZ, vFacing;
+      void main() {
+        vec4 t = (texture2D(tDetail, vUv) * 255.0 - 128.0) / 127.0;
+        // strands, locks, stubble, carve: pixels of the 1024 frame, weighted by their dials
+        float px = t.r * ${R_STRANDS.toFixed(2)} * uW.x + t.g * ${R_LOCKS.toFixed(2)} * uW.y + t.b * ${R_STUBBLE.toFixed(2)} * uW.z + t.a * ${R_CARVE.toFixed(2)} * uW.w;
+        // only where the sheet lies on him
+        float gap = texture2D(tState, gl_FragCoord.xy / uRes).r - vZ;
+        float contact = 1.0 - smoothstep(0.0, uContact, gap);
+        gl_FragColor = vec4(px / 1024.0 * vFacing * contact * step(0.0, vZ), 0.0, 0.0, 1.0);
+      }`,
+  });
 
   // --- the passes
   const quad = new FullScreenQuad();
@@ -243,9 +389,13 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
   // --- the sheet
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(18, 1, 0.1, 20);
+  /* The sheet's materials. Chrome mirrors a matcap; the rest are lit: one
+     studio light (its angle round the sheet and its height), a soft sky and
+     floor, occlusion where the sheet folds, a soft shadow marched over the
+     sheet's own heights, a glossy reflection of the matcap blurred by
+     roughness, and a satin sheen at grazing angles. */
   const sheetMat = new THREE.ShaderMaterial({
     transparent: true,
-    extensions: { derivatives: true },
     uniforms: {
       tShape: { value: null },
       tMatcap: { value: null },
@@ -258,25 +408,46 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
       uCorner: { value: 0.035 },
       uDebug: { value: 0 },
       tObj: { value: null },
+      uMat: { value: 0 },
+      uColor: { value: new THREE.Color(0.8, 0.8, 0.8) },
+      uRough: { value: 0.8 },
+      uSpec: { value: 0.1 },
+      uSheen: { value: 0 },
+      uAmbient: { value: 0.5 },
+      uAO: { value: 0.8 },
+      uShadow: { value: 0.6 },
+      uSoft: { value: 0.5 },
+      uLight: { value: new THREE.Vector3(0, 0.6, 0.8) },
+      uLightI: { value: 1.2 },
+      uSpeckle: { value: 0 },
+      tFine: { value: null },
+      uFineTexel: { value: 1 / 1024 },
+      uRot: { value: new THREE.Matrix3() },
+      uRotInv: { value: new THREE.Matrix3() },
     },
     vertexShader: /* glsl */ `
       uniform sampler2D tShape;
       varying vec2 vUv;
       varying vec3 vView;
+      varying vec3 vWorld;
       void main() {
         vUv = uv;
         vec3 p = position;
         p.z += texture2D(tShape, uv).a;
+        vWorld = (modelMatrix * vec4(p, 1.0)).xyz;
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         vView = -mv.xyz;
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: /* glsl */ `
-      uniform sampler2D tShape, tMatcap, tObj;
-      uniform vec3 uTint;
-      uniform float uExposure, uContrast, uTexture, uGrain, uCavity, uCorner, uDebug;
+      uniform sampler2D tShape, tMatcap, tObj, tFine;
+      uniform vec3 uTint, uColor, uLight;
+      uniform mat3 uRot, uRotInv;
+      uniform float uExposure, uContrast, uTexture, uGrain, uCavity, uCorner, uDebug, uFineTexel;
+      uniform float uMat, uRough, uSpec, uSheen, uAmbient, uAO, uShadow, uSoft, uLightI, uSpeckle;
       varying vec2 vUv;
       varying vec3 vView;
+      varying vec3 vWorld;
       float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
       float noise(vec2 p) {
         vec2 i = floor(p), f = fract(p);
@@ -284,30 +455,100 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
         return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y);
       }
       float skin(vec2 p) { return noise(p) * 0.65 + noise(p * 2.13 + 7.1) * 0.35; }
+      float F(vec2 uv) { return texture2D(tFine, uv).r; }
+      // the whole height here: the sheet over him, and the carving where it lies on him
+      float H(vec2 uv) { return texture2D(tShape, uv).a + F(uv); }
       void main() {
         vec4 s = texture2D(tShape, vUv);
-        // the latex's fine skin, a little flatter where it is stretched over him
+        // the carving's slopes and its creases, at its own resolution
+        float e = uFineTexel;
+        float f0 = F(vUv), fe = F(vUv + vec2(e, 0.0)), fw = F(vUv - vec2(e, 0.0)), fn = F(vUv + vec2(0.0, e)), fs = F(vUv - vec2(0.0, e));
+        vec2 fg = vec2(fe - fw, fn - fs) / (2.0 * e);
+        float fineCrease = clamp((fe + fw + fn + fs - 4.0 * f0) / (e * e) / 2500.0, 0.0, 1.0);
+        // the skin's fine texture, a little flatter where it is stretched over him
         vec2 p = vUv * uGrain;
-        float e = 0.25;
+        float ee = 0.25;
         float n0 = skin(p);
-        vec2 gn = vec2(skin(p + vec2(e, 0.0)) - n0, skin(p + vec2(0.0, e)) - n0) / e;
+        vec2 gn = vec2(skin(p + vec2(ee, 0.0)) - n0, skin(p + vec2(0.0, ee)) - n0) / ee;
         float stretch = clamp(length(s.xy) * 0.8, 0.0, 1.0);
-        vec2 slope = s.xy + gn * uTexture * 0.06 * (1.0 - 0.6 * stretch);
-        vec3 n = normalize(mat3(viewMatrix) * normalize(vec3(-slope, 1.0))); // the sheet sits at the origin, unturned
+        vec2 slope = s.xy + fg + gn * uTexture * 0.06 * (1.0 - 0.6 * stretch);
+        vec3 nw = normalize(vec3(-slope, 1.0)); // in the sheet's own space
+        vec3 n = normalize(mat3(viewMatrix) * (uRot * nw));
         // the matcap, the way MeshMatcapMaterial reads it
         vec3 v = normalize(vView);
         vec3 x = normalize(vec3(v.z, 0.0, -v.x));
         vec3 y = cross(v, x);
         vec2 muv = vec2(dot(x, n), dot(y, n)) * 0.495 + 0.5;
-        vec3 c = texture2D(tMatcap, muv).rgb;
-        c = pow(c, vec3(uContrast)) * uTint * uExposure;
-        // the creases a little darker
-        c *= 1.0 - uCavity * clamp(s.z * 0.004, 0.0, 0.6);
+        float crease = clamp(s.z * 0.004, 0.0, 0.6) + fineCrease * 0.6;
+        vec3 c;
+        float alpha = 1.0;
+        if (uMat < 0.5) {
+          // chrome
+          c = pow(texture2D(tMatcap, muv).rgb, vec3(uContrast)) * uTint;
+          c *= 1.0 - uCavity * min(crease, 0.8);
+        } else {
+          vec3 V = normalize(uRotInv * (cameraPosition - vWorld));
+          vec3 Lw = normalize(uLight); // given in the sheet's own space
+          float ndl = dot(nw, Lw), ndv = max(dot(nw, V), 0.0);
+          // occlusion: the creases, and the sheet standing above this point nearby
+          float h0 = s.a + f0, occ = 0.0;
+          for (int i = 0; i < 8; i++) {
+            float a = float(i) * 0.785398;
+            vec2 d = vec2(cos(a), sin(a));
+            occ += max(0.0, H(vUv + d * 0.012) - h0) * 24.0 + max(0.0, H(vUv + d * 0.045) - h0) * 4.0;
+          }
+          float ao = clamp(1.0 - uAO * (occ / 8.0 + crease * 0.8), 0.0, 1.0);
+          // a soft shadow, marched over the heights toward the light
+          float sh = 1.0;
+          vec2 ld = Lw.xy; float lx = length(ld);
+          if (lx > 1e-3) {
+            ld /= lx; float rise = Lw.z / lx;
+            // its steps jittered a pixel at a time, so a long low shadow is a fine grain, not a comb of copies
+            float jit = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+            for (int i = 1; i <= 32; i++) {
+              float k = (float(i) - jit) * 0.75;
+              float t = k * k * 0.0006;
+              float above = (h0 + t * rise) - H(vUv + ld * t);
+              sh = min(sh, clamp(above / (uSoft * t * 0.6 + 1e-4) + 0.5, 0.0, 1.0));
+            }
+          }
+          sh = mix(1.0, sh, uShadow);
+          // the material's own colour, flecked and mottled by speckle (stone)
+          vec3 base = uColor;
+          if (uSpeckle > 0.0) {
+            vec2 q = vUv * 900.0;
+            float mottle = noise(vUv * 14.0) * 0.6 + noise(vUv * 41.0) * 0.4 - 0.5;
+            float fleck = smoothstep(0.78, 0.95, noise(q) * 0.7 + noise(q * 2.7) * 0.3);
+            float pale = smoothstep(0.82, 0.97, noise(q * 1.3 + 31.0));
+            float grain = noise(q * 3.1) - 0.5;
+            base *= 1.0 + uSpeckle * (0.16 * mottle + 0.1 * grain - 0.38 * fleck + 0.12 * pale);
+          }
+          // light: a wrapped diffuse for the soft materials, a sky and a floor
+          float wrap = uRough * 0.15;
+          float diff = max((ndl + wrap) / (1.0 + wrap), 0.0) * sh;
+          float sky = mix(0.55, 1.0, nw.y * 0.5 + 0.5);
+          c = base * (uAmbient * sky * ao + uLightI * diff * mix(0.8, 1.0, ao));
+          // gloss: a highlight from the light, and the room's reflection blurred by roughness
+          vec3 Hv = normalize(Lw + V);
+          float shin = mix(600.0, 6.0, uRough);
+          float spec = pow(max(dot(nw, Hv), 0.0), shin) * (shin + 8.0) / 40.0;
+          float fres = 0.04 + 0.96 * pow(1.0 - ndv, 5.0);
+          vec3 env = textureLod(tMatcap, muv, uRough * 7.0).rgb;
+          c += uSpec * (uLightI * spec * sh * vec3(1.0) + env * mix(0.25, 1.0, fres) * ao);
+          // satin: a sheen where the sheet turns away from you
+          c += uSheen * pow(1.0 - ndv, 3.0) * sky * ao * mix(base, vec3(1.0), 0.5) * 0.8;
+          if (uMat > 4.5 && uMat < 5.5) {
+            // glass-ish: the page through it, more of the room at grazing angles
+            alpha = clamp(0.28 + 0.75 * fres + uSpec * spec * 0.3 + crease * 0.5, 0.0, 1.0);
+            c = mix(base * 0.6, env, 0.7) * mix(0.55, 1.0, ao) + uLightI * spec * sh * 0.6;
+          }
+        }
+        c *= uExposure;
         // the sheet's frame, its corners rounded
         vec2 q = abs(vUv - 0.5) - (0.5 - uCorner);
         float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - uCorner;
         float aa = max(fwidth(d), 1e-4);
-        float alpha = 1.0 - smoothstep(-aa, aa, d);
+        alpha *= 1.0 - smoothstep(-aa, aa, d);
         if (uDebug > 0.5) c = vec3(s.a * uDebug);
         if (uDebug < -0.5) c = vec3(texture2D(tObj, vUv).r * -uDebug);
         gl_FragColor = vec4(c * alpha, alpha);
@@ -320,11 +561,9 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
 
   // --- targets, sized by quality
   let N = 0;
-  let obj, soft, levels, state, shapeRT;
-  const size = () => {
-    const q = L.render.quality;
-    return Math.max(96, Math.round((mobile ? 160 : 256) * Math.min(q, 1.5)));
-  };
+  let obj, soft, levels, state, shapeRT, fineRT, NF = 0;
+  // fidelity: the height maps' size and the sheet's mesh (a phone gets at most half)
+  const size = () => Math.max(64, Math.round(mobile ? Math.min(L.fidelity.maps, 160) : L.fidelity.maps));
   const makeTargets = () => {
     const n = size();
     if (n === N) return;
@@ -342,8 +581,16 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
     shapeRT = rt(N, N);
     reset = true;
   };
+  // the carving's own map, finer than the sheet's
+  const makeFine = () => {
+    const n = Math.max(128, Math.round(mobile ? Math.min(L.fidelity.fine, 768) : L.fidelity.fine));
+    if (n === NF) return;
+    NF = n;
+    fineRT?.dispose();
+    fineRT = rt(n, n, { depthBuffer: true });
+  };
   const makeSheet = () => {
-    const seg = Math.round((mobile ? 150 : 300) * Math.min(L.render.quality, 1.6));
+    const seg = Math.max(16, Math.round(mobile ? Math.min(L.fidelity.segments, 160) : L.fidelity.segments));
     if (sheet?.userData.seg === seg) return;
     if (sheet) {
       sheet.geometry.dispose();
@@ -370,7 +617,7 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
     if (head) renderer.render(headScene, headCam);
     renderer.setClearColor(0x000000, 0);
     // softened by the sheet's thickness
-    heightMat.uniforms.uNeck.value = L.press.neck;
+    heightMat.uniforms.uNeck.value = head?.bust ? 0 : L.press.neck;
     const sig = L.press.soft * (N / 256);
     blur.uniforms.uSigma.value = sig;
     blur.uniforms.tSrc.value = obj.texture;
@@ -387,10 +634,13 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
     }
     // relax coarse to fine; a coarser texel spans more sheet, so it lets go faster
     // spread: how far round him the sheet is drawn up (a falloff length, in sheet heights)
-    const reach = 0.01 + 0.14 * THREE.MathUtils.clamp(L.latex.spread, 0, 1);
+    const reach = 0.0015 + 0.15 * THREE.MathUtils.clamp(L.latex.spread, 0, 1);
     const eps = (1 / N / reach) ** 2 * 4;
     let prev = null;
-    for (let k = levels.length - 1; k >= 0; k--) {
+    // start no coarser than the reach: a coarse level's blocky picture of him would stand round him as a
+    // halo that a short reach cannot take back
+    const top = THREE.MathUtils.clamp(Math.floor(Math.log2(Math.max(1, (reach * N) / 2))), 0, levels.length - 1);
+    for (let k = top; k >= 0; k--) {
       const [o, a, b] = levels[k];
       copy.uniforms.tSrc.value = prev ? prev.texture : o.texture;
       draw(copy, a);
@@ -399,7 +649,7 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
       relax.uniforms.uK.value = 1 - Math.min(0.5, eps * scale);
       relax.uniforms.tObj.value = o.texture;
       relax.uniforms.uTexel.value.set(1 / o.width, 1 / o.height);
-      const iters = k === levels.length - 1 ? 24 : 14;
+      const iters = k === top ? 24 : 14;
       for (let i = 0; i < iters; i++) {
         relax.uniforms.tPrev.value = src.texture;
         draw(relax, dst);
@@ -438,6 +688,21 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
     shape.uniforms.uPillow.value = L.latex.pillow;
     shape.uniforms.uRim.value = L.latex.rim;
     draw(shape, shapeRT);
+    // the carving, from the same pose, where the sheet lies on him
+    renderer.setRenderTarget(fineRT);
+    renderer.setClearColor(0x000000, 1);
+    renderer.clear(true, true, false);
+    renderer.setClearColor(0x000000, 0);
+    if (head && reliefData) {
+      const F = L.fidelity;
+      fineMat.uniforms.tDetail.value = reliefData.tex;
+      fineMat.uniforms.tState.value = state[0].texture;
+      fineMat.uniforms.uRes.value = NF;
+      fineMat.uniforms.uW.value.set(F.strands, F.locks, F.stubble, F.carve);
+      headScene.overrideMaterial = fineMat;
+      renderer.render(headScene, headCam);
+      headScene.overrideMaterial = null;
+    }
     renderer.setRenderTarget(null);
   };
 
@@ -447,9 +712,12 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
   const matcap = (name) => {
     const file = matcaps[name] ?? Object.values(matcaps)[0];
     if (!cache[file]) {
-      cache[file] = loader.loadAsync(`/images/matcaps/${file}.jpg`).then((t) => {
+      cache[file] = loader.loadAsync(`${matcapBase}${file}.jpg`).then((t) => {
         t.colorSpace = THREE.SRGBColorSpace;
         t.anisotropy = 4;
+        // mipmapped, so the lit materials can read it blurred by roughness
+        t.generateMipmaps = true;
+        t.minFilter = THREE.LinearMipmapLinearFilter;
         return t;
       });
     }
@@ -465,6 +733,20 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
     u.uGrain.value = L.surface.grain;
     u.uCavity.value = L.surface.cavity;
     u.uCorner.value = L.frame.corner;
+    const M = L.material;
+    u.uMat.value = Math.max(0, MATERIALS.indexOf(M.type));
+    u.uColor.value.set(M.color);
+    u.uRough.value = M.roughness;
+    u.uSpec.value = M.gloss;
+    u.uSheen.value = M.sheen;
+    u.uAmbient.value = M.ambient;
+    u.uAO.value = M.ao;
+    u.uShadow.value = M.shadow;
+    u.uSpeckle.value = M.speckle ?? 0;
+    u.uSoft.value = L.light.softness;
+    u.uLightI.value = L.light.intensity;
+    const tone = { ACES: THREE.ACESFilmicToneMapping, Neutral: THREE.NeutralToneMapping, AgX: THREE.AgXToneMapping, None: THREE.NoToneMapping }[L.render.tone];
+    renderer.toneMapping = tone ?? THREE.ACESFilmicToneMapping;
     bloom.strength = L.glow.bloom;
     bloom.threshold = L.glow.threshold;
     bloom.radius = L.glow.radius;
@@ -515,10 +797,11 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
 
   const v3 = new THREE.Vector3();
   let frontMost = 0.3;
+  const rot = new THREE.Matrix4(), rotInv = new THREE.Matrix4(), lightW = new THREE.Vector3();
   const place = (yaw) => {
     if (!head) return;
-    const leanR = THREE.MathUtils.degToRad(L.motion.lean);
-    turn.rotation.set(lean.y * leanR * 0.6, yaw + lean.x * leanR, 0, "YXZ");
+    const look = THREE.MathUtils.degToRad(L.motion.look ?? 0);
+    turn.rotation.set(lean.y * look * 0.6, yaw + lean.x * look, 0, "YXZ");
     turn.position.set(PIVOT.x, PIVOT.y, PIVOT.z);
     turn.updateMatrixWorld(true);
     // how far forward he is at this angle
@@ -527,18 +810,32 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
     const f = THREE.MathUtils.clamp(L.press.follow, 0, 1);
     turn.position.z = PIVOT.z + L.press.depth - (f * zMax + (1 - f) * frontMost);
     turn.updateMatrixWorld(true);
-    // and the view swings a touch toward the pointer, so the chrome moves
+    // the slab tilts a few degrees toward the pointer; the light and the view stay where they are
+    const tilt = THREE.MathUtils.degToRad(L.motion.lean);
+    if (sheet) {
+      sheet.rotation.set(lean.y * tilt, lean.x * tilt, 0);
+      sheet.updateMatrixWorld(true);
+      rot.extractRotation(sheet.matrixWorld);
+      rotInv.copy(rot).invert();
+      sheetMat.uniforms.uRot.value.setFromMatrix4(rot);
+      sheetMat.uniforms.uRotInv.value.setFromMatrix4(rotInv);
+    }
     const d = camera.userData.dist ?? 4;
-    const ax = lean.x * leanR * 0.35, ay = -lean.y * leanR * 0.25;
-    camera.position.set(Math.sin(ax) * Math.cos(ay) * d, Math.sin(ay) * d, Math.cos(ax) * Math.cos(ay) * d);
+    camera.position.set(0, 0, d);
     camera.lookAt(0, 0, 0);
+    // the light: its angle round the sheet (0 from above, clockwise), raking slowly to and fro, and its
+    // height over it; the shader takes it in the sheet's own space
+    const sweep = reduced ? 0 : L.light.sweep * Math.sin((t / Math.max(1, L.light.period)) * Math.PI * 2);
+    const az = THREE.MathUtils.degToRad(L.light.angle + sweep), el = THREE.MathUtils.degToRad(L.light.height);
+    lightW.set(Math.sin(az) * Math.cos(el), Math.cos(az) * Math.cos(el), Math.sin(el)).applyMatrix4(rotInv);
+    sheetMat.uniforms.uLight.value.copy(lightW);
   };
 
   let t = 0, last = 0, raf = 0, on = false, first = true;
   let resolveReady;
   const ready = new Promise((r) => (resolveReady = r));
   const frame = (dt) => {
-    if (!head || !sheetMat.uniforms.tMatcap.value) return;
+    if (!head || !fineRT || !sheetMat.uniforms.tMatcap.value) return;
     const k = 1 - Math.exp(-dt * 3);
     lean.x += (lean.tx - lean.x) * k;
     lean.y += (lean.ty - lean.y) * k;
@@ -546,6 +843,8 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
     simulate(dt);
     sheetMat.uniforms.tShape.value = shapeRT.texture;
     sheetMat.uniforms.tObj.value = obj.texture;
+    sheetMat.uniforms.tFine.value = fineRT.texture;
+    sheetMat.uniforms.uFineTexel.value = 1 / NF;
     renderer.setRenderTarget(bloom.target);
     renderer.clear(true, true, false);
     renderer.render(scene, camera);
@@ -582,14 +881,67 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
   makeTargets();
   makeSheet();
   fit();
-  (async () => {
-    const data = await loadHead(headUrl);
-    const { geometry, probe } = headGeometry(data, mobile ? 2 : 1);
-    const mesh = new THREE.Mesh(geometry, heightMat);
-    mesh.frustumCulled = false;
-    turn.add(mesh);
-    head = { mesh, probe };
+  // his bust (the relief's volumes as a slab) or his head (the turning stand-in), behind the sheet
+  let headData = null, reliefData = null, reliefName = "";
+  // the bust's photo (L.portrait.photo, one of portraits): each relief loaded once, when first picked
+  const reliefs = new Map();
+  const photo = () => (L.portrait?.photo in portraits ? L.portrait.photo : Object.keys(portraits)[0]);
+  const loadPortrait = (name) => {
+    if (!reliefs.has(name)) reliefs.set(name, loadRelief(new URL(portraits[name], new URL(reliefBase, location.href)).href));
+    return reliefs.get(name);
+  };
+  const usePortrait = async () => {
+    const name = photo();
+    if (name === reliefName) return;
+    reliefName = name;
+    const data = await loadPortrait(name);
+    if (name !== photo()) return; // picked another while this one loaded
+    reliefData = data;
+    makeHead();
+    reset = true;
+    frame(0);
+    for (let i = 0; i < 20; i++) frame(1 / 60);
+  };
+  // his scan (Hunter, Oct 25: "make a high-definition model of me based on this and then use this for the
+  // membrane"): the third subject, loaded when first picked
+  let scanData = null, scanLoad = null;
+  const useScan = () =>
+    (scanLoad ??= loadHead(scanUrl).then((d) => {
+      scanData = d;
+      makeHead();
+      reset = true;
+      frame(0);
+      for (let i = 0; i < 20; i++) frame(1 / 60);
+    }));
+  const makeHead = () => {
+    const subject = L.fidelity.subject;
+    const bust = subject === "Bust", scan = subject === "Scan";
+    if (scan && !scanData) return void useScan();
+    if (bust ? !reliefData : !headData) return;
+    const step = Math.max(1, Math.round(L.fidelity.head) + (mobile ? 1 : 0));
+    const key = bust ? `bust:${reliefName}:${step}:${L.fidelity.relief}` : `${subject}:${step}:${L.fidelity.detail}`;
+    if (head?.key === key) return;
+    const { geometry, probe } = bust
+      ? slabGeometry(reliefData, 448 / step, L.fidelity.relief)
+      : headGeometry(scan ? scanData : headData, step, L.fidelity.detail, scan ? 0 : 1);
+    if (head) {
+      head.mesh.geometry.dispose();
+      head.mesh.geometry = geometry;
+      Object.assign(head, { probe, key, bust });
+    } else {
+      const mesh = new THREE.Mesh(geometry, heightMat);
+      mesh.frustumCulled = false;
+      turn.add(mesh);
+      head = { mesh, probe, key, bust };
+    }
     frontMost = probe.reduce((m, p) => Math.max(m, p.z + PIVOT.z), 0);
+    reset = true;
+  };
+  (async () => {
+    reliefName = photo();
+    [headData, reliefData] = await Promise.all([loadHead(headUrl), loadPortrait(reliefName)]);
+    makeFine();
+    makeHead();
     // start a little way into the turn, already settled
     t = 14 / Math.max(0.01, L.motion.speed) * 0.02;
     apply();
@@ -610,14 +962,20 @@ export function mountMembrane(canvas, L, { matcaps, headUrl = "/images/hunter-he
       L = next;
       apply();
       redraw();
+      if (reliefData) usePortrait();
     },
-    /** Quality: the targets and the sheet's mesh again. */
+    /** Fidelity and quality: the maps, the sheet's mesh and his head again. */
     rebuild(next) {
       L = next;
       makeTargets();
+      makeFine();
       makeSheet();
+      makeHead();
       apply();
+      reset = true;
       frame(0);
+      for (let i = 0; i < 20; i++) frame(1 / 60);
+      if (reliefData) usePortrait();
     },
     /** For checks from a console or a headless browser: jump to a moment of the turn. */
     seek(seconds) {

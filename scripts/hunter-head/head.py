@@ -8,8 +8,9 @@
 #                                               silhouette from the depth (the backdrop is plain), ears cut, the neck a column;
 #                                               the dome by inflating the silhouette (Poisson, then sqrt) plus the face's
 #                                               detail from the depth; front.npy, back.npy, previews
-# 3. radial.py WORK public/images/hunter-head.png 384 192 1.6 4
-#                                               the closed head as a radius per direction round the middle of the head
+# 3. radial.py WORK full.png 384 192 1.6 4   the closed head as a radius per direction round the middle of the head;
+#    run 2 again with '"k":0' into a second WORK (no facial detail) and radial.py on that for plain.png, then
+#    stack them, full over plain, into public/images/hunter-head.png (the engine's Detail dial mixes the two)
 # 4. matcap.py public/images/matcaps/silver-room.jpg silver   (and steel): the light studio matcaps
 
 # disparity (Depth Anything V2) + the photo's silhouette -> a closed head: front and back height fields
