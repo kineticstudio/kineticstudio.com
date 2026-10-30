@@ -80,13 +80,19 @@ const { render = true, heading = "Captivating websites that tell compelling stor
       intro.hidden = true;
       requestAnimationFrame(() => requestAnimationFrame(() => nav?.classList.remove("is-handover")));
       removeEventListener("wheel", skip);
-      removeEventListener("keydown", skip);
+      removeEventListener("keydown", skipKey);
       removeEventListener("touchmove", skip);
       intro.removeEventListener("click", skip);
     };
     const skip = () => {
       dock?.kill();
       finish();
+    };
+    // a key skips it, but not a modifier or a shortcut made with one (Hunter, Oct 30: "then i click a button.
+    // like command, it skips the intro. im trying to take a screenshot")
+    const skipKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || /^(Meta|Control|Alt|Shift|CapsLock|Fn|OS)$/.test(e.key)) return;
+      skip();
     };
 
     // the move from the centre to the nav's logo: the same 690 x 201 drawing
@@ -121,7 +127,7 @@ const { render = true, heading = "Captivating websites that tell compelling stor
     }
     nav?.classList.add("logo-hidden");
     addEventListener("wheel", skip, { passive: true });
-    addEventListener("keydown", skip);
+    addEventListener("keydown", skipKey);
     addEventListener("touchmove", skip, { passive: true });
     intro.addEventListener("click", skip);
     // straight on: the logo says it is built as its lines finish collapsing, so the two read as one move
