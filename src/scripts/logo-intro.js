@@ -17,15 +17,13 @@
 
 import { gsap } from "gsap";
 import { morphAll } from "./mark.js";
-import { bendPush, createLogoField } from "./logo-field.js";
+import { createLogoField } from "./logo-field.js";
 
 export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} }) {
   const INTRO = look;
-  const FIELD = { count: 5, weight: 0.32, gap: 0.3, reach: 0.45, softness: 0.1, clearance: 16, response: 0.55, wobble: 0.3, ripple: 0.2, bounce: 0.2, settle: 0.95 };
+  const FIELD = { count: 5, weight: 0.32, gap: 0.3, bounce: 0.2, settle: 0.95 };
   const fieldFrom = () => Object.assign(FIELD, {
-    reach: INTRO.reach, softness: INTRO.softness,
-    clearance: INTRO.clearance, response: INTRO.response, wobble: INTRO.wobble, ripple: INTRO.ripple,
-    // the lines let go like stretched bands: their ends at rest on the strokes collapseFor after each goes
+    // the bands let go: their ends at rest on the strokes collapseFor after each goes
     bounce: INTRO.bounce ?? 0.2, settle: INTRO.collapseFor,
   });
   const stripes = [...root.querySelectorAll(".kinetic-logo_stripe")];
@@ -124,36 +122,42 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
   const pillAt = () => pill.setAttribute("transform", `translate(${slide.x} 0)`);
   const expoOut = (t) => (t >= 1 ? 1 : 1 - 2 ** (-10 * t));
   const unit01 = (t) => Math.min(1, Math.max(0, t));
-  /* The pill's way in (Hunter, Oct 29: "I want the pill to go over, and then maybe it undershoots or
-     overshoots a little bit"; then "It needs to feel like the lines are catching the pill, and then it
-     kind of settles back a little bit"; slowed before it got there, it bumped them). It glides in at
-     full speed, and the lines catch it: from where it reaches them, a damped spring on its place takes
-     it, its pull and its give in balance at the catch, so the pill is at its fastest there and only
-     slows from then on, smoothly, out overshoot (logo units) past its place; back in recoil seconds,
-     and a touch past the other way (pillBounce of the overshoot) before it rests.
-     x(t), t from when it sets off, in logo units right of its place; at = the catch, at catchAt;
-     turn = its far point; still = at rest. */
-  const pillPath = (start) => {
-    const over = Math.max(1, INTRO.overshoot), lr = Math.log(Math.min(0.6, Math.max(0.01, INTRO.pillBounce ?? 0.12)));
-    const z = -lr / Math.hypot(Math.PI, lr), sq = Math.sqrt(1 - z * z);
-    const wd = (Math.PI - Math.acos(z)) / Math.max(0.1, INTRO.recoil ?? 0.5), w = wd / sq, a = z * w;
-    // from the catch, per unit of how far out it is: speed w / 2z there, so the pull and the give cancel
-    const kappa = w / (2 * z), B = (a - kappa) / wd;
-    const u = (tau) => Math.exp(-a * tau) * (Math.cos(wd * tau) + B * Math.sin(wd * tau));
-    let far = 0, tFar = 0;
-    for (let tau = 0; tau < 3; tau += 0.002) {
-      const v = u(tau);
-      if (v < far) (far = v), (tFar = tau);
+  /* The pill's way in (Hunter, Oct 29: "I want the pill to go over"; "It needs to feel like the lines
+     are catching the pill, and then it kind of settles back a little bit"; "The pill shouldn't slow down
+     until it almost feels like these are like rubber bands that are slowing down the pill"). It glides
+     in at full speed until the first band takes it up (catchAt, logo units right of its place), and from
+     there a damped spring on its place has it, its pull and its give in balance at the catch, so it is
+     at its fastest there and only slows from then on, more and more as the bands stretch: out
+     overshoot past its place catchFor seconds later, and back to rest. The damping is what stops it
+     there, so how far out the first band is and how far past it goes set how it settles.
+     x(t), t from when it sets off, in logo units right of its place; at = the catch; turn = its far
+     point; still = at rest. */
+  const pillPath = (start, catchAt) => {
+    catchAt = Math.max(1, catchAt);
+    const over = Math.min(0.9 * catchAt, Math.max(1, INTRO.overshoot)), catchFor = Math.max(0.15, INTRO.catchFor ?? 0.7);
+    // from the catch, in units of catchAt and of 1 / w: e^(-z s) (cos(q s) + B sin(q s)), q = sqrt(1 - z^2)
+    const shape = (z) => {
+      const q = Math.sqrt(1 - z * z), B = (z - 0.5 / z) / q;
+      let far = 0, at = 0;
+      for (let s = 0; s < (2 * Math.PI) / q; s += 0.004) {
+        const v = Math.exp(-z * s) * (Math.cos(q * s) + B * Math.sin(q * s));
+        if (v < far) (far = v), (at = s);
+      }
+      return { far: -far, at, q, B };
+    };
+    let lo = 0.05, hi = 0.97;
+    for (let k = 0; k < 32; k++) {
+      const m = (lo + hi) / 2;
+      if (shape(m).far > over / catchAt) lo = m;
+      else hi = m;
     }
-    const catchAt = over / -far, speed = kappa * catchAt, from = Math.max(start, catchAt);
-    const Ta = (from - catchAt) / speed;
+    const z = (lo + hi) / 2, { at, q, B } = shape(z), w = at / catchFor, wd = q * w, a = z * w;
+    const speed = (w * catchAt) / (2 * z), from = Math.max(start, catchAt), Ta = (from - catchAt) / speed;
     return {
-      over,
-      catchAt,
       at: Ta,
-      turn: Ta + tFar,
+      turn: Ta + catchFor,
       still: Ta + Math.log((catchAt * Math.hypot(1, B)) / 0.2) / a,
-      x: (t) => (t <= 0 ? from : t < Ta ? from - speed * t : catchAt * u(t - Ta)),
+      x: (t) => (t <= 0 ? from : t < Ta ? from - speed * t : catchAt * Math.exp(-a * (t - Ta)) * (Math.cos(wd * (t - Ta)) + B * Math.sin(wd * (t - Ta)))),
     };
   };
 
@@ -168,54 +172,23 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     builtThisRun = false;
     stopTick();
     fieldFrom();
-    let fieldEdge = 0;
     const box = svg.getBoundingClientRect(), wrap = root.getBoundingClientRect();
     const unit = (box.height || 1) / vbH;
     const W = innerWidth, Hh = innerHeight;
-    // the pill from just past the window's right edge, and how far past its place it goes
+    // the pill from just past the window's right edge
     const start = Math.max(420, (W - box.left) / unit - (PILL.cx - PILL.r) + 40);
-    const path = pillPath(start);
     Object.assign(canvas.style, { left: `${-wrap.left}px`, top: `${-wrap.top}px`, width: `${W}px`, height: `${Hh}px`, display: "block", opacity: "1" });
-    /* Five lines, the logo's five strokes, each at its own weight. Each one
-       starts where the pill's push, once the pill is in its place, bends it
-       closest to its stroke over the logo's whole height (the push is the
-       stream function X (1 - q^(k/2)), q = a^2 / (X^2 + Y^2 + s^2 a^2), as
-       logo-field.js bends the lines), so cropped to the logo the bent lines
-       already are the mark (Hunter, Oct 29: "I wonder if the lines need to be
-       wider apart at the beginning ... If the far-right line was further off
-       to the right at the beginning, then whenever they get collapsed in, it
-       would look more like the mark if you were to crop it"; landing only the
-       middles on the strokes left the arcs too flat at their ends). */
-    const a = PILL.r + FIELD.clearance, k = 3.6 + (1.3 - 3.6) * FIELD.reach, sft = FIELD.softness;
-    const mids = lines.map((L) => (L.e.left(L.H / 2) + L.e.right(L.H / 2)) / 2);
-    const fitStart = (L) => {
-      const S = [];
-      for (let q = 0; q <= 20; q++) {
-        const y = (q / 20) * L.H;
-        S.push([y - PILL.cy, (L.e.left(y) + L.e.right(y)) / 2 - PILL.cx]);
-      }
-      const err = (X0) => S.reduce((e, [Y, T]) => e + (X0 + bendPush(X0, Y, a, k, sft) - T) ** 2, 0);
-      let best = -4, be = Infinity;
-      for (let X0 = -6 * a; X0 <= -4; X0 += 3) {
-        const e = err(X0);
-        if (e < be) (be = e), (best = X0);
-      }
-      for (let X0 = best - 3; X0 <= Math.min(-4, best + 3); X0 += 0.2) {
-        const e = err(X0);
-        if (e < be) (be = e), (best = X0);
-      }
-      return best;
-    };
-    const own = lines.map((L) => ({ x: box.left + (PILL.cx + fitStart(L)) * unit, w: (L.e.right(L.H / 2) - L.e.left(L.H / 2)) * unit }));
-    let pitchMid = Infinity;
-    for (let i = 1; i < mids.length; i++) pitchMid = Math.min(pitchMid, mids[i] - mids[i - 1]);
-    fieldEdge = own[own.length - 1].x;
+    /* Five rubber bands, the logo's five strokes, each at its own weight,
+       pinned where its stroke's ends carried straight on meet the window's
+       edge (logo-field.js), so at rest each is its stroke and the pill's
+       way in is the bands taking it up, the far-right one first. */
+    const own = lines.map((L) => ({ x: 0, w: (L.e.right(L.H / 2) - L.e.left(L.H / 2)) * unit }));
     field.layout({
-      width: W, height: Hh,
-      fieldLeft: own[0].x, fieldRight: fieldEdge,
+      width: W, height: Hh, fieldLeft: 0, fieldRight: W,
       logo: { left: box.left, top: box.top, unit }, strokes,
-      lines: own, keep: pitchMid * unit * 0.98,
+      lines: own, bands: true,
     });
+    const path = pillPath(start, field.catchAt() / unit);
     field.reset();
     for (const L of lines) gsap.set(L.p, { opacity: 0 });
     slide.x = start;
@@ -223,42 +196,10 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     const n = field.count();
     const color = getComputedStyle(root).color;
     const T = INTRO;
-    let t = 0, saidGlide = false, saidPull = false, saidBuilt = false, done = false;
+    let t = 0, saidGlide = false, saidHit = false, saidBuilt = false, done = false;
     // the lines let go at the pill's far point (give or take collapseAt), so they shrink as it comes back
     const collapseFrom = T.pillAt + path.turn + (T.collapseAt ?? 0);
     const endOf = collapseFrom + T.collapseFor + T.collapseSpread;
-    /* The lines give way with the pill (Hunter, Oct 29: "If we overshoot, though, then the lines need
-       to also overshoot"; "the lines are catching the pill"): once it is within GIVE (look.give, logo
-       units) of its place they go along with it, from still, more the further it presses, and on past
-       its place and back with it; at rest they are the mark, so before the pill comes they wait that
-       much to the right, fanned wider (Hunter: "I think we could still have the lines start wider apart").
-       The nearest goes all the way, held to it; each farther one a little less and a little later (a
-       damped follower), so the stack squeezes as the pill presses in and springs back out with it.
-       ride[i] in logo units from its place in the mark. */
-    const GIVE = Math.max(1, INTRO.give ?? 110), SOFT = 0.32 * GIVE;
-    const give = (x) => {
-      const u = Math.max(0, GIVE - x);
-      return u - SOFT * (1 - Math.exp(-u / SOFT)); // 0 and still at GIVE, then nearly the pill's own way
-    };
-    const g0 = give(0);
-    const nL = lines.length, step = Math.min(0.25, 12 / path.over);
-    const share = lines.map((_, i) => 1 - (nL - 1 - i) * step);
-    const rate = lines.map((_, i) => 44 - (nL - 1 - i) * 7); // the followers, rad/s
-    const ride = Float64Array.from(share, (f) => f * g0), rideV = new Float64Array(nL);
-    const carry = (dt, tp) => {
-      const o = g0 - give(path.x(tp));
-      for (let i = 0; i < nL; i++) {
-        if (i === nL - 1) {
-          ride[i] = share[i] * o;
-          continue;
-        }
-        const w = rate[i], h = dt / 4;
-        for (let q = 0; q < 4; q++) {
-          rideV[i] += (w * w * (share[i] * o - ride[i]) - 2 * w * rideV[i]) * h;
-          ride[i] += rideV[i] * h;
-        }
-      }
-    };
     const rest = () => {
       stopTick();
       slide.x = 0;
@@ -283,31 +224,28 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     tick = (_now, ms) => {
       const dt = Math.min(0.05, ms / 1000);
       t += dt;
-      // the pill: in, past its place, and back, and the lines with it
+      // the pill: in, past its place, and back, and the strokes with it
       slide.x = path.x(t - T.pillAt);
       pillAt();
-      carry(dt, t - T.pillAt);
       if (done) {
-        if (t - T.pillAt >= path.still + 0.2) return rest();
-        lines.forEach((L, i) => L.p.setAttribute("transform", `translate(${ride[i]} 0)`));
+        if (t - T.pillAt >= path.still) return rest();
+        for (const L of lines) L.p.setAttribute("transform", `translate(${slide.x} 0)`);
         return;
       }
       if (t >= T.pillAt && !saidGlide) {
         saidGlide = true;
         say("glide", 1.05, 0.45);
       }
-      const body = { x: box.left + (PILL.cx + slide.x) * unit, y: box.top + PILL.cy * unit, r: (PILL.r + FIELD.clearance) * unit };
-      // the pill meets the field: the nearest line, plus the space the lines keep between them
-      if (!saidPull && body.x - body.r < fieldEdge + 12) {
-        saidPull = true;
-        say("pull", 1, 0.5);
+      // the first band takes it up: a low thud (Hunter, Oct 29: "it needs to be much deeper, more like a bass")
+      if (!saidHit && t - T.pillAt >= path.at) {
+        saidHit = true;
+        say("thud", 1, 1);
       }
       field.frame(dt, {
-        body,
         color,
-        shift: (i) => ride[i] * unit,
-        // the lines rise in from the left, one after another
-        rise: (i) => expoOut(unit01((t - (i / Math.max(1, n - 1)) * T.riseSpread) / T.riseFor)),
+        push: slide.x * unit,
+        // the bands rise in one after another, from the right, so the pill's first is up when it gets there
+        rise: (i) => expoOut(unit01((t - ((n - 1 - i) / Math.max(1, n - 1)) * T.riseSpread) / T.riseFor)),
         // and collapse into the strokes from the pill outward
         collapse: (i) => unit01((t - collapseFrom - (1 - field.across(i)) * T.collapseSpread) / T.collapseFor),
       });

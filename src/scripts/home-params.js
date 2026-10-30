@@ -22,17 +22,9 @@ const I = HOME_LOOK.intro, Hv = HOME_LOOK.hover, Wh = HOME_LOOK.wheel, L = LAURE
 const schema = {
   intro: {
     logo: [I.logo, 24, 64, 0.5], // the logo's width while it plays, rem
-    reach: [I.reach, 0, 1, 0.01], // how far the pill's push carries
-    softness: [I.softness, 0, 1, 0.01],
-    clearance: [I.clearance, 0, 60, 1], // logo units of clear space round the pill
-    response: [I.response, 0.05, 1, 0.01],
-    wobble: [I.wobble, 0, 1, 0.01],
-    ripple: [I.ripple, 0, 1, 0.01],
     pillAt: [I.pillAt, 0, 1.5, 0.05],
-    give: [I.give, 10, 240, 1], // how far out the lines start giving way with the pill: the more, the wider they start
     overshoot: [I.overshoot, 5, 160, 1], // logo units the pill goes past its place
-    recoil: [I.recoil, 0.2, 2, 0.05], // s from there back to its place
-    pillBounce: [I.pillBounce, 0.01, 0.5, 0.01], // how far past the other way, a share of the overshoot
+    catchFor: [I.catchFor, 0.2, 2, 0.05], // s from the first band taking it up to there
     collapseAt: [I.collapseAt, -0.5, 1, 0.05], // s from the pill's far point that the lines let go
     dockFor: [I.dockFor, 0.3, 3, 0.05], // the move up into the nav's corner
     collapseFor: [I.collapseFor, 0.2, 2, 0.05], // s from a line's release until its ends are at rest on the stroke

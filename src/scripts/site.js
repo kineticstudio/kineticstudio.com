@@ -105,6 +105,7 @@ export function sound(name, { rate = 1, gain = 1 } = {}) {
   }
   const c = audio();
   if (!c || c.state !== "running") return;
+  if (role === "thud") return thud(c, gain);
   const buf = buffers.get(role);
   if (!buf) return;
   const src = c.createBufferSource();
@@ -127,6 +128,26 @@ export function sound(name, { rate = 1, gain = 1 } = {}) {
     src.connect(low).connect(body).connect(g).connect(master);
   } else src.connect(g).connect(master);
   src.start();
+}
+
+/* The homepage intro's pill hitting the bands (Hunter, Oct 29: "it needs to be much deeper, more like a
+   bass. when the pill hits"): made here, a sine falling from about 95 Hz to 45 in a third of a second,
+   with its octave quietly over it so small speakers carry it, struck fast and let ring out. */
+function thud(c, gain) {
+  const t = c.currentTime, out = c.createGain();
+  out.gain.setValueAtTime(0.0001, t);
+  out.gain.exponentialRampToValueAtTime(0.9 * gain, t + 0.012);
+  out.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+  out.connect(master);
+  for (const [mul, level] of [[1, 1], [2, 0.28]]) {
+    const o = c.createOscillator(), g = c.createGain();
+    o.frequency.setValueAtTime(95 * mul, t);
+    o.frequency.exponentialRampToValueAtTime(45 * mul, t + 0.35);
+    g.gain.value = level;
+    o.connect(g).connect(out);
+    o.start(t);
+    o.stop(t + 0.75);
+  }
 }
 
 // for checking from a console: is the audio awake, how many sounds loaded

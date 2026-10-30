@@ -8,20 +8,18 @@
    paste over the file. A tuning is kept in this browser only, until Reset. */
 
 export const HOME_LOOK = {
-  // the intro's field of lines (src/scripts/logo-field.js) and its timing, seconds
+  // the intro's rubber bands (src/scripts/logo-field.js) and its timing, seconds
   // (Hunter, Oct 24: "a little more fluid. Once it hits the lines, now we start shrinking"; "The
   // Kinetic logo looks a little too big"; Oct 25: "only have five lines"): logo = its width, rem
-  // (Oct 29: "It collapses, and then everything shrinks vertically. It should feel more like one fluid
-  // movement", and the logo starts up into the corner, dockLead, as they land). Then "I want the pill to
-  // go over, and then maybe it undershoots or overshoots a little bit. As it's coming back to its resting
-  // point, it scales down", "like rubber bands that are slowing down the pill" (logo-intro.js pillPath): overshoot = logo units past it,
-  // recoil = s from there back to its place, pillBounce = how far past the other way, a share of the
-  // overshoot; collapseAt = s from the pill's far point that the lines let go; dockFor = the move into the nav's corner
-  // (clearance 30: the mark's own space round the pill, so the bent lines, cropped to the logo, are its arcs;
-  // give = logo units out from its place that the lines start giving way with the pill: the more, the wider they start)
+  // (Oct 29: "It should feel more like one fluid movement", and the logo starts up into the corner,
+  // dockLead, as they land; "I want the pill to go over ... As it's coming back to its resting point, it
+  // scales down"; "like rubber bands that are slowing down the pill"; "the right line could be almost
+  // all the way to the right of the viewport", logo-intro.js pillPath): overshoot = logo units the pill
+  // goes past its place, catchFor = s from the first band taking it up to there; collapseAt = s from that
+  // far point that the bands let go; dockFor = the move into the nav's corner
   intro: {
-    logo: 44, reach: 0.6, softness: 0.25, clearance: 30, response: 0.4, wobble: 0.38, ripple: 0.4,
-    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.25, give: 130, overshoot: 50, recoil: 0.5, pillBounce: 0.12, collapseAt: -0.2, collapseFor: 0.85, collapseSpread: 0, bounce: 0.2, dockLead: 0.5, dockFor: 1.15,
+    logo: 44,
+    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.25, overshoot: 50, catchFor: 0.7, collapseAt: -0.2, collapseFor: 0.85, collapseSpread: 0, bounce: 0.2, dockLead: 0.5, dockFor: 1.15,
   },
   // a tile's 3D card under the pointer: tilt (degrees), lift, depth of the view,
   // the springs it moves on, and when it shows (ms after it loads) and is dropped (s after leaving)
