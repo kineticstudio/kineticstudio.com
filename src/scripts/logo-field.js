@@ -297,14 +297,25 @@ export function createLogoField(canvas, S = FIELD) {
     // as far as the line has pulled in, and no further than the pill has come: a line short before the
     // pill is there is a straight bar, and the pill's arrival bends it round into the stroke
     const w = Math.min(clamp((L0 - (yb - yt)) / Math.max(1, L0 - Lf), 0, 1), landNow);
-    const topX = streamAt(i, spanTop), botX = streamAt(i, spanBot);
+    // past the stroke's ends its own arc carries on: out along the end's direction, easing back to upright
+    // over D (Hunter, Oct 29, of the line nearest the pill: "this kink right here ... that far-right line needs
+    // to actually push off to the right more"; carrying on along the bent line instead met the arc's end, which
+    // leans out at about 60 degrees, in a corner)
+    const row = i * M, step = (spanBot - spanTop) / (M - 1);
+    const endSlope = (k0, k1) => ((finalL[row + k1] + finalR[row + k1]) - (finalL[row + k0] + finalR[row + k0])) / 2 / ((k1 - k0) * step);
+    const sTop = endSlope(0, 2), sBot = endSlope(M - 3, M - 1), D = 0.45 * (spanBot - spanTop);
+    const reach = (u) => D * (1 - Math.exp(-u / D)); // the distance it leans out over a run of u, at most D
     for (let j = 0; j < M; j++) {
       const y = lerp(yt, yb, j / (M - 1));
       const sx = streamAt(i, y), sl = slopeAt(i, y), half = (ownW[i] / 2) * Math.sqrt(1 + sl * sl);
       let aL, aR;
-      if (y < spanTop) (aL = finalL[i * M] + sx - topX), (aR = finalR[i * M] + sx - topX);
-      else if (y > spanBot) (aL = finalL[i * M + M - 1] + sx - botX), (aR = finalR[i * M + M - 1] + sx - botX);
-      else (aL = strokeAt(finalL, i, y)), (aR = strokeAt(finalR, i, y));
+      if (y < spanTop) {
+        const off = -sTop * reach(spanTop - y);
+        (aL = finalL[row] + off), (aR = finalR[row] + off);
+      } else if (y > spanBot) {
+        const off = sBot * reach(y - spanBot);
+        (aL = finalL[row + M - 1] + off), (aR = finalR[row + M - 1] + off);
+      } else (aL = strokeAt(finalL, i, y)), (aR = strokeAt(finalR, i, y));
       py[j] = y;
       lx[j] = lerp(sx - half, aL, w);
       rx[j] = lerp(sx + half, aR, w);
