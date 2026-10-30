@@ -29,6 +29,7 @@ const schema = {
     wobble: [I.wobble, 0, 1, 0.01],
     ripple: [I.ripple, 0, 1, 0.01],
     pillAt: [I.pillAt, 0, 1.5, 0.05],
+    give: [I.give, 10, 240, 1], // how far out the lines start giving way with the pill: the more, the wider they start
     overshoot: [I.overshoot, 5, 160, 1], // logo units the pill goes past its place
     recoil: [I.recoil, 0.2, 2, 0.05], // s from there back to its place
     pillBounce: [I.pillBounce, 0.01, 0.5, 0.01], // how far past the other way, a share of the overshoot

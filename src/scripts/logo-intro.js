@@ -228,19 +228,20 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     const collapseFrom = T.pillAt + path.turn + (T.collapseAt ?? 0);
     const endOf = collapseFrom + T.collapseFor + T.collapseSpread;
     /* The lines give way with the pill (Hunter, Oct 29: "If we overshoot, though, then the lines need
-       to also overshoot"; "the lines are catching the pill"): once it is within GIVE of its place they
-       go along with it, from still, more the further it presses (give), and on past its place and back
-       with it; at rest they are the mark, so before the pill comes they wait that much to the right.
+       to also overshoot"; "the lines are catching the pill"): once it is within GIVE (look.give, logo
+       units) of its place they go along with it, from still, more the further it presses, and on past
+       its place and back with it; at rest they are the mark, so before the pill comes they wait that
+       much to the right, fanned wider (Hunter: "I think we could still have the lines start wider apart").
        The nearest goes all the way, held to it; each farther one a little less and a little later (a
        damped follower), so the stack squeezes as the pill presses in and springs back out with it.
        ride[i] in logo units from its place in the mark. */
-    const GIVE = 60, SOFT = 25;
+    const GIVE = Math.max(1, INTRO.give ?? 110), SOFT = 0.32 * GIVE;
     const give = (x) => {
       const u = Math.max(0, GIVE - x);
       return u - SOFT * (1 - Math.exp(-u / SOFT)); // 0 and still at GIVE, then nearly the pill's own way
     };
     const g0 = give(0);
-    const nL = lines.length, step = Math.min(0.15, 10 / path.over);
+    const nL = lines.length, step = Math.min(0.25, 12 / path.over);
     const share = lines.map((_, i) => 1 - (nL - 1 - i) * step);
     const rate = lines.map((_, i) => 44 - (nL - 1 - i) * 7); // the followers, rad/s
     const ride = Float64Array.from(share, (f) => f * g0), rideV = new Float64Array(nL);
