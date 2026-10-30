@@ -23,9 +23,8 @@ const schema = {
   intro: {
     logo: [I.logo, 24, 64, 0.5], // the logo's width while it plays, rem
     pillAt: [I.pillAt, 0, 1.5, 0.05],
-    overshoot: [I.overshoot, 5, 160, 1], // logo units the pill goes past its place
-    catchFor: [I.catchFor, 0.2, 2, 0.05], // s from the first band taking it up to there
-    collapseAt: [I.collapseAt, -0.5, 1, 0.05], // s from the pill's far point that the lines let go
+    catchFor: [I.catchFor, 0.2, 2, 0.05], // s from the first band taking it up to its stop
+    collapseAt: [I.collapseAt, -0.5, 1, 0.05], // s from the pill's stop that the bands let go
     dockFor: [I.dockFor, 0.3, 3, 0.05], // the move up into the nav's corner
     collapseFor: [I.collapseFor, 0.2, 2, 0.05], // s from a line's release until its ends are at rest on the stroke
     bounce: [I.bounce, 0, 0.6, 0.01], // how far the released ends spring past the stroke and back

@@ -122,42 +122,27 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
   const pillAt = () => pill.setAttribute("transform", `translate(${slide.x} 0)`);
   const expoOut = (t) => (t >= 1 ? 1 : 1 - 2 ** (-10 * t));
   const unit01 = (t) => Math.min(1, Math.max(0, t));
-  /* The pill's way in (Hunter, Oct 29: "I want the pill to go over"; "It needs to feel like the lines
-     are catching the pill, and then it kind of settles back a little bit"; "The pill shouldn't slow down
-     until it almost feels like these are like rubber bands that are slowing down the pill"). It glides
-     in at full speed until the first band takes it up (catchAt, logo units right of its place), and from
-     there a damped spring on its place has it, its pull and its give in balance at the catch, so it is
-     at its fastest there and only slows from then on, more and more as the bands stretch: out
-     overshoot past its place catchFor seconds later, and back to rest. The damping is what stops it
-     there, so how far out the first band is and how far past it goes set how it settles.
-     x(t), t from when it sets off, in logo units right of its place; at = the catch; turn = its far
-     point; still = at rest. */
+  /* The pill's way in (Hunter, Oct 29: "It needs to feel like the lines are catching the pill"; "The pill
+     shouldn't slow down until it almost feels like these are like rubber bands that are slowing down the
+     pill"; Oct 30: "Let's not have a bounce-back effect either"). It glides in at full speed until the
+     first band takes it up (catchAt, logo units right of its place), and the bands bring it to a stop in
+     its place catchFor seconds later: catchAt (1 - s)^3 (1 + s), s the share of catchFor gone, so its
+     slowing starts from nothing at the catch, grows as they stretch, and has gone again as it stops.
+     x(t), t from when it sets off, in logo units right of its place; at = the catch; turn = at rest. */
   const pillPath = (start, catchAt) => {
     catchAt = Math.max(1, catchAt);
-    const over = Math.min(0.9 * catchAt, Math.max(1, INTRO.overshoot)), catchFor = Math.max(0.15, INTRO.catchFor ?? 0.7);
-    // from the catch, in units of catchAt and of 1 / w: e^(-z s) (cos(q s) + B sin(q s)), q = sqrt(1 - z^2)
-    const shape = (z) => {
-      const q = Math.sqrt(1 - z * z), B = (z - 0.5 / z) / q;
-      let far = 0, at = 0;
-      for (let s = 0; s < (2 * Math.PI) / q; s += 0.004) {
-        const v = Math.exp(-z * s) * (Math.cos(q * s) + B * Math.sin(q * s));
-        if (v < far) (far = v), (at = s);
-      }
-      return { far: -far, at, q, B };
-    };
-    let lo = 0.05, hi = 0.97;
-    for (let k = 0; k < 32; k++) {
-      const m = (lo + hi) / 2;
-      if (shape(m).far > over / catchAt) lo = m;
-      else hi = m;
-    }
-    const z = (lo + hi) / 2, { at, q, B } = shape(z), w = at / catchFor, wd = q * w, a = z * w;
-    const speed = (w * catchAt) / (2 * z), from = Math.max(start, catchAt), Ta = (from - catchAt) / speed;
+    const T = Math.max(0.15, INTRO.catchFor ?? 0.9), speed = (2 * catchAt) / T;
+    const from = Math.max(start, catchAt), Ta = (from - catchAt) / speed;
     return {
       at: Ta,
-      turn: Ta + catchFor,
-      still: Ta + Math.log((catchAt * Math.hypot(1, B)) / 0.2) / a,
-      x: (t) => (t <= 0 ? from : t < Ta ? from - speed * t : catchAt * Math.exp(-a * (t - Ta)) * (Math.cos(wd * (t - Ta)) + B * Math.sin(wd * (t - Ta)))),
+      turn: Ta + T,
+      still: Ta + T,
+      x: (t) => {
+        if (t <= 0) return from;
+        if (t < Ta) return from - speed * t;
+        const u = Math.min(1, (t - Ta) / T);
+        return catchAt * (1 - u) ** 3 * (1 + u);
+      },
     };
   };
 
@@ -179,14 +164,14 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
     const start = Math.max(420, (W - box.left) / unit - (PILL.cx - PILL.r) + 40);
     Object.assign(canvas.style, { left: `${-wrap.left}px`, top: `${-wrap.top}px`, width: `${W}px`, height: `${Hh}px`, display: "block", opacity: "1" });
     /* Five rubber bands, the logo's five strokes, each at its own weight,
-       pinned where its stroke's ends carried straight on meet the window's
-       edge (logo-field.js), so at rest each is its stroke and the pill's
-       way in is the bands taking it up, the far-right one first. */
+       evenly spaced from the mark's straight bar to near the window's right
+       edge (logo-field.js), so the pill's way in is the bands taking it up,
+       the far-right one first, and at rest each is its stroke. */
     const own = lines.map((L) => ({ x: 0, w: (L.e.right(L.H / 2) - L.e.left(L.H / 2)) * unit }));
     field.layout({
       width: W, height: Hh, fieldLeft: 0, fieldRight: W,
       logo: { left: box.left, top: box.top, unit }, strokes,
-      lines: own, bands: true,
+      lines: own, bands: true, bandsRight: W - Math.max(48, 0.12 * W),
     });
     const path = pillPath(start, field.catchAt() / unit);
     field.reset();

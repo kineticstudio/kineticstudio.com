@@ -29,18 +29,22 @@
    lines are catching the pill ... like rubber bands that are slowing down
    the pill"; "I think the right line could be almost all the way to the right
    of the viewport, wherever it needs to be for the geometry to make sense")
-   the lines are rubber bands instead: each pinned past the window's top and
-   bottom where its stroke's ends, carried straight on, meet the edge, so at
-   rest a band is its stroke and those two straight runs. Before the pill
-   comes a band stands straight between its pins; the stroke, carried with
-   the pill (push), takes it up as it gets there, and the band is that stroke
-   held taut: straight from each pin to where it meets the stroke, round the
-   stroke between. Bands that never cross by construction, no field.
+   the lines are rubber bands instead. They stand evenly spaced, from the
+   mark's straight bar to near the window's right edge (bandsRight, px; "I
+   still want each of the lines to be spaced evenly ... I want the lines to
+   have a curve"). The pill carries the strokes with it (push), and each band
+   is pressed aside by its stroke as that reaches it: on the stroke where it
+   is held, and from there easing back to where it stands in one curve, its
+   give falling away along its length (each point of the stroke pushes the
+   band out e^(-run / reach), the band the furthest of those), so no straight
+   runs and no corners. Each band's reach is what lets it leave its stroke's
+   ends in the stroke's own direction, so at rest, with the pill in its place,
+   the bands are the strokes. Bands that never cross, no field.
 
      const f = createLogoField(canvas, settings)
      f.layout({ width, height, fieldLeft, fieldRight, logo: { left, top, unit }, strokes, lines?, keep?, bands? })
      f.frame(dt, { body: { x, y, r }, rise: (i) => 0..1, collapse: (i) => 0..1, color, land: 0..1, push: px })
-     f.catchAt()                        // bands: the push (px) at which the first band is taken up
+     f.catchAt()                        // bands: the push (px) at which the first band is reached
      f.count()                          // how many lines there are */
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
@@ -98,10 +102,9 @@ export function createLogoField(canvas, S = FIELD) {
   let x0 = new Float32Array(0), ys = new Float32Array(0);
   // bands: each one's pins (px, top and bottom), its stroke's middle row by row (px), the stroke's
   // ends and their slopes (dx/dy); and how far the strokes are carried with the pill now (px)
-  let bands = false, pinT = new Float32Array(0), pinB = new Float32Array(0), mid = new Float32Array(0);
-  let pinTy = new Float32Array(0), pinBy = new Float32Array(0);
+  let bands = false, stand = new Float32Array(0), mid = new Float32Array(0), give = new Float32Array(0);
   let endT = new Float32Array(0), endB = new Float32Array(0), slT = new Float32Array(0), slB = new Float32Array(0);
-  let pushNow = 0, hu = new Float64Array(0), hv = new Float64Array(0);
+  let pushNow = 0, depth = new Float64Array(0);
   let d, v, target, free, colTmp, colPre, bSum, bW, bCnt, bVel;
   // where each line ends: its stroke, its x at each row of the stroke's height, its width
   let finalX = new Float32Array(0), finalY = new Float32Array(0), finalW = new Float32Array(0);
@@ -115,7 +118,7 @@ export function createLogoField(canvas, S = FIELD) {
   // how far the pill has come home (0..1): the bend only becomes the stroke's arc as it arrives
   let landNow = 1;
 
-  function layout({ width, height, fieldLeft, fieldRight, logo, strokes, lines = null, keep = 0, bands: asBands = false }) {
+  function layout({ width, height, fieldLeft, fieldRight, logo, strokes, lines = null, keep = 0, bands: asBands = false, bandsRight = 0 }) {
     W = Math.max(1, width);
     H = Math.max(1, height);
     dpr = Math.min(devicePixelRatio || 1, 2);
@@ -174,25 +177,24 @@ export function createLogoField(canvas, S = FIELD) {
         finalR[i * M + j] = logo.left + r * logo.unit;
       }
     }
-    if (bands) layBands();
+    if (bands) layBands(bandsRight, logo.unit);
   }
 
-  /* The bands' pins: each stroke's ends carried straight on, along the direction they leave the logo
-     in, to just past the window's edge: past the top and bottom, or where that line leaves by the right
-     side first (a tall narrow screen), past the right edge, so every band is its stroke's own line */
-  function layBands() {
+  /* The bands: where each stands (evenly, from the straight bar's own place to right), its stroke's
+     middle row by row, its ends and their slopes (dx/dy), and how its give falls away along it (one
+     table of e^(-(sqrt(run^2 + e^2) - e) / reach - (run / hold)^2) by rows apart: e rounds the very tip,
+     so a band just reached bows round rather than to a point, and hold, from the logo to the window's
+     edge, brings it back near upright by the edge, so it curves all the way, held at its ends) */
+  function layBands(right, unit) {
     mid = new Float32Array(N * M);
-    pinT = new Float32Array(N);
-    pinB = new Float32Array(N);
+    stand = new Float32Array(N);
     endT = new Float32Array(N);
     endB = new Float32Array(N);
     slT = new Float32Array(N);
     slB = new Float32Array(N);
-    pinTy = new Float32Array(N);
-    pinBy = new Float32Array(N);
-    hu = new Float64Array(M + 2);
-    hv = new Float64Array(M + 2);
-    const step = (spanBot - spanTop) / (M - 1);
+    give = new Float32Array(N * M);
+    depth = new Float64Array(M);
+    const step = (spanBot - spanTop) / (M - 1), dy = ys[1] - ys[0], e = 15 * unit, hold = Math.max(60 * unit, 0.8 * (spanTop - ys[0]));
     for (let i = 0; i < N; i++) {
       const row = i * M;
       for (let j = 0; j < M; j++) mid[row + j] = (finalL[row + j] + finalR[row + j]) / 2;
@@ -200,14 +202,15 @@ export function createLogoField(canvas, S = FIELD) {
       endB[i] = mid[row + M - 1];
       slT[i] = (mid[row + 2] - mid[row]) / (2 * step);
       slB[i] = (mid[row + M - 1] - mid[row + M - 3]) / (2 * step);
-      const side = W + (ys[M - 1] - H);
-      pinTy[i] = ys[0];
-      pinT[i] = endT[i] - slT[i] * (spanTop - ys[0]);
-      if (pinT[i] > side) (pinTy[i] = spanTop - (side - endT[i]) / -slT[i]), (pinT[i] = side);
-      pinBy[i] = ys[M - 1];
-      pinB[i] = endB[i] + slB[i] * (ys[M - 1] - spanBot);
-      if (pinB[i] > side) (pinBy[i] = spanBot + (side - endB[i]) / slB[i]), (pinB[i] = side);
-      x0[i] = pinT[i];
+    }
+    const left = mid[Math.floor(M / 2)];
+    for (let i = 0; i < N; i++) {
+      stand[i] = x0[i] = N > 1 ? lerp(left, Math.max(left + N * 20, right), i / (N - 1)) : left;
+      // the reach that has the band leave its stroke's ends just as the stroke does: how far it is pressed
+      // there over how steeply the stroke leaves (a band not pressed at rest, the straight bar, reaches far)
+      const out = Math.max(stand[i] - endT[i], stand[i] - endB[i]), lean = Math.max(Math.abs(slT[i]), Math.abs(slB[i]));
+      const reach = out > unit ? clamp(out / Math.max(0.05, lean), 140 * unit, 900 * unit) : 420 * unit;
+      for (let m = 0; m < M; m++) give[i * M + m] = Math.exp(-(Math.hypot(m * dy, e) - e) / reach - ((m * dy) / hold) ** 2);
     }
   }
   // band i's stroke, carried with the pill by push, at height y: past its ends straight on
@@ -217,33 +220,24 @@ export function createLogoField(canvas, S = FIELD) {
     const u = ((y - spanTop) / (spanBot - spanTop)) * (M - 1), j = Math.min(M - 2, Math.floor(u)), f = u - j;
     return lerp(mid[i * M + j], mid[i * M + j + 1], f) + push;
   };
-  /* Each band held taut round its stroke: of the straight line between its pins and the stroke where
-     that is further left, the greatest convex curve under both (a lower hull, row by row), so straight
-     wherever it is not held, and on the stroke where it is */
-  // the straight line between band i's pins at height y
-  const chordAt = (i, y) => lerp(pinT[i], pinB[i], clamp((y - pinTy[i]) / Math.max(1e-6, pinBy[i] - pinTy[i]), 0, 1));
   function bandRows(push) {
     for (let i = 0; i < N; i++) {
-      const row = i * M, yT = pinTy[i], yB = pinBy[i];
-      let n = 0;
-      const add = (u, v) => {
-        while (n >= 2 && (hu[n - 1] - hu[n - 2]) * (v - hv[n - 2]) - (hv[n - 1] - hv[n - 2]) * (u - hu[n - 2]) <= 0) n--;
-        hu[n] = u;
-        hv[n++] = v;
-      };
-      add(yT, pinT[i]);
-      for (let j = 0; j < M; j++) if (ys[j] > yT && ys[j] < yB) add(ys[j], Math.min(chordAt(i, ys[j]), strokeMid(i, ys[j], push)));
-      add(yB, pinB[i]);
-      // (past a pin on the right edge, the band runs on up or down out of sight)
-      for (let j = 0, k = 0; j < M; j++) {
-        let x;
-        if (ys[j] <= yT) x = pinT[i];
-        else if (ys[j] >= yB) x = pinB[i];
-        else {
-          while (k < n - 2 && hu[k + 1] < ys[j]) k++;
-          x = lerp(hv[k], hv[k + 1], clamp((ys[j] - hu[k]) / Math.max(1e-6, hu[k + 1] - hu[k]), 0, 1));
-        }
-        d[row + j] = x - x0[i];
+      const row = i * M;
+      let any = false;
+      for (let k = 0; k < M; k++) {
+        depth[k] = stand[i] - strokeMid(i, ys[k], push);
+        if (depth[k] > 0) any = true;
+      }
+      for (let j = 0; j < M; j++) {
+        let out = 0;
+        if (any)
+          for (let k = 0; k < M; k++) {
+            const dk = depth[k];
+            if (dk <= out) continue;
+            const g = dk * give[i * M + Math.abs(j - k)];
+            if (g > out) out = g;
+          }
+        d[row + j] = -out; // x0 is where it stands
       }
     }
   }
@@ -353,8 +347,8 @@ export function createLogoField(canvas, S = FIELD) {
       const r = clamp(rise(i), 0, 1);
       if (!loose[i]) {
         loose[i] = 1;
-        endS[2 * i] = endY0[2 * i] = bands ? Math.max(edgeY(0, r), pinTy[i]) : edgeY(0, r);
-        endS[2 * i + 1] = endY0[2 * i + 1] = bands ? Math.min(edgeY(M - 1, r), pinBy[i]) : edgeY(M - 1, r);
+        endS[2 * i] = endY0[2 * i] = edgeY(0, r);
+        endS[2 * i + 1] = endY0[2 * i + 1] = edgeY(M - 1, r);
         endV[2 * i] = endV[2 * i + 1] = 0;
       }
       const glide = clamp((c - 0.8) / 0.2, 0, 1), g = glide * glide * (3 - 2 * glide);
@@ -399,17 +393,18 @@ export function createLogoField(canvas, S = FIELD) {
     const row = i * M, step = (spanBot - spanTop) / (M - 1), carried = bands ? pushNow : 0;
     const endSlope = (k0, k1) => ((finalL[row + k1] + finalR[row + k1]) - (finalL[row + k0] + finalR[row + k0])) / 2 / ((k1 - k0) * step);
     const sTop = endSlope(0, 2), sBot = endSlope(M - 3, M - 1), D = 0.45 * (spanBot - spanTop);
-    // (a band runs straight on to its pin)
-    const reach = bands ? (u) => u : (u) => D * (1 - Math.exp(-u / D)); // the distance it leans out over a run of u, at most D
+    const reach = (u) => D * (1 - Math.exp(-u / D)); // the distance it leans out over a run of u, at most D
+    // (a band past its stroke's ends keeps its own curve, carried onto the stroke's end)
+    const bandT = bands ? streamAt(i, spanTop) : 0, bandB = bands ? streamAt(i, spanBot) : 0;
     for (let j = 0; j < M; j++) {
       const y = lerp(yt, yb, j / (M - 1));
       const sx = streamAt(i, y), sl = slopeAt(i, y), half = (ownW[i] / 2) * Math.sqrt(1 + sl * sl);
       let aL, aR;
       if (y < spanTop) {
-        const off = -sTop * reach(spanTop - y);
+        const off = bands ? sx - bandT : -sTop * reach(spanTop - y);
         (aL = finalL[row] + off), (aR = finalR[row] + off);
       } else if (y > spanBot) {
-        const off = sBot * reach(y - spanBot);
+        const off = bands ? sx - bandB : sBot * reach(y - spanBot);
         (aL = finalL[row + M - 1] + off), (aR = finalR[row + M - 1] + off);
       } else (aL = strokeAt(finalL, i, y)), (aR = strokeAt(finalR, i, y));
       py[j] = y;
@@ -506,8 +501,7 @@ export function createLogoField(canvas, S = FIELD) {
     count: () => N,
     catchAt() {
       let most = 0;
-      for (let i = 0; i < N; i++)
-        for (let j = 1; j < M - 1; j++) if (ys[j] > pinTy[i] && ys[j] < pinBy[i]) most = Math.max(most, chordAt(i, ys[j]) - strokeMid(i, ys[j], 0));
+      for (let i = 0; i < N; i++) for (let j = 0; j < M; j++) most = Math.max(most, stand[i] - strokeMid(i, ys[j], 0));
       return most;
     },
     /** Where line i stands across the field, 0 at the left .. 1 nearest the pill. */

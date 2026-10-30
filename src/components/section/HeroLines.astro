@@ -95,13 +95,22 @@ const { render = true, heading = "Captivating websites that tell compelling stor
       if (done || !navLogo) return finish();
       const a = logo.getBoundingClientRect();
       const b = navLogo.getBoundingClientRect();
-      const scale = b.width / a.width;
-      dock = gsap.to(logo, {
-        // up into the corner as the lines land, the one move carrying on (Oct 29: "It should feel more like one
-        // fluid movement"): expo.inOut's long slow start held the finished mark still, and power3's middle was
-        // a whoosh next to everything round it ("Something still does feel jumpy about it"), so power2
-        x: b.left - a.left, y: b.top - a.top, scale, transformOrigin: "0 0", duration: HOME_LOOK.intro.dockFor, ease: "sine.inOut",
-        onUpdate() { if (this.progress() > 0.55) reveal(); },
+      const s1 = b.width / a.width;
+      /* up into the corner as the bands land, the one move carrying on (Oct 29: "It should feel more like one
+         fluid movement"; "Something still does feel jumpy about it", so sine.inOut; Oct 30: "the way that we
+         move up to the top left ... can be a little bit more fluid"): one even zoom out toward the point that
+         stays put (just above the straight bar, which only rises), its size falling by the same share every
+         moment (a scale taken straight from 1 to a seventh shrank the last half in a blink) */
+      const fx = (b.left - s1 * a.left) / (1 - s1), fy = (b.top - s1 * a.top) / (1 - s1);
+      const at = { p: 0 };
+      gsap.set(logo, { transformOrigin: "0 0" });
+      dock = gsap.to(at, {
+        p: 1, duration: HOME_LOOK.intro.dockFor, ease: "sine.inOut",
+        onUpdate() {
+          const s = s1 ** at.p;
+          gsap.set(logo, { x: (fx - a.left) * (1 - s), y: (fy - a.top) * (1 - s), scale: s });
+          if (at.p > 0.55) reveal();
+        },
         onComplete: finish,
       });
     };
@@ -129,13 +138,17 @@ const { render = true, heading = "Captivating websites that tell compelling stor
     .hero-lines_wrap.is-bare {
       padding: 0;
     }
+    /* the logo plays at the left, its straight bar where the nav's logo's is (Hunter, Oct 30: "let's put
+       all these lines biased to the left, so you know where the logo will land in the top left of the
+       nav ... The far-left line is always where it will be"): the intro's margin is the nav's, so the
+       move into the corner only lifts and shrinks it */
     .hero-lines_intro {
       position: fixed;
       inset: 0;
       z-index: 55;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       padding: 0 var(--site-margin);
       cursor: pointer;
       &[hidden] {
