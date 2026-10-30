@@ -54,6 +54,7 @@ const { render = true, class: className } = Astro.props;
 
 <script>
   import { gsap } from "gsap";
+  import { LITE } from "@/scripts/lite.js";
 
   document.querySelectorAll<HTMLElement>("[data-film-card]").forEach((root) => {
     const card = root.querySelector<HTMLButtonElement>(".film-card_card")!;
@@ -73,7 +74,8 @@ const { render = true, class: className } = Astro.props;
       loop.src = loop.dataset.src!;
       loop.play().catch(() => {});
     });
-    const arm = () => seen.observe(root);
+    // a phone keeps the still (src/scripts/lite.js); the film itself still opens with a tap
+    const arm = () => void (LITE || seen.observe(root));
     if (document.querySelector("[data-hero-lines]") && document.documentElement.dataset.intro !== "done") addEventListener("ks:intro-done", arm, { once: true });
     else arm();
     // the sheet covers the window, so it lives on <body>, clear of the hero's pinned stage

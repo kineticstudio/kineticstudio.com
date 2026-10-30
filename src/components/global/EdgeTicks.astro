@@ -22,10 +22,14 @@ const { render = true, left = true } = Astro.props;
 }
 
 <script>
+  // the shift is set on the two strips themselves: set on <html>, every scrolled frame restyled the
+  // whole page (Oct 30, phones)
+  const strips = [...document.querySelectorAll<HTMLElement>(".ticks_wrap")];
   let extra = 0, raf = 0;
   const paint = () => {
     raf = 0;
-    document.documentElement.style.setProperty("--ticks-shift", `${(-scrollY + extra).toFixed(1)}px`);
+    const shift = `${(-scrollY + extra).toFixed(1)}px`;
+    for (const s of strips) s.style.setProperty("--ticks-shift", shift);
   };
   const request = () => (raf ||= requestAnimationFrame(paint));
   addEventListener("scroll", request, { passive: true });

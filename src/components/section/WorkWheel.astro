@@ -128,6 +128,7 @@ const EAGER = 0;
   import { armCards } from "@/scripts/card-hover.js";
   import { INTERLUDES } from "@/data/work.js";
   import { HOME_LOOK } from "@/data/home-look.js";
+  import { LITE } from "@/scripts/lite.js";
   gsap.registerPlugin(ScrollTrigger);
 
   /* The work comes up from below on a long, shallow curve, tied to the
@@ -156,6 +157,14 @@ const EAGER = 0;
     }));
     const N = rows.length;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // a row's stills, set loading (a poster has no srcset: the 640 px copy when the tile needs no more)
+    const loadRow = (r: (typeof rows)[number]) => {
+      for (const el of r.lazy) {
+        if (el instanceof HTMLImageElement) (el.srcset = el.dataset.srcset!), (el.src = el.dataset.src!);
+        else (el as HTMLVideoElement).poster = LITE || (tileH / 0.625) * devicePixelRatio <= 640 ? el.dataset.poster!.replace(/\.webp$/, "-640.webp") : el.dataset.poster!;
+      }
+      r.lazy = [];
+    };
     // on a phone the wheel stays light (Hunter, Oct 25: "For mobile, we should kill all
     // of this so it's super performant"): no lead, no sinking back, stills instead of loops
     const phone = !matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -239,14 +248,7 @@ const EAGER = 0;
       for (const r of rows) {
         const phi = START + turn - r.at; // 0 = level with the middle, + = above
         // a row's stills load a couple of rows before it comes into sight
-        if (r.lazy.length && phi > -150) {
-          for (const el of r.lazy) {
-            if (el instanceof HTMLImageElement) (el.srcset = el.dataset.srcset!), (el.src = el.dataset.src!);
-            // a poster has no srcset: the 640 px copy when the tile needs no more (a phone)
-            else (el as HTMLVideoElement).poster = (tileH / 0.625) * devicePixelRatio <= 640 ? el.dataset.poster!.replace(/\.webp$/, "-640.webp") : el.dataset.poster!;
-          }
-          r.lazy = [];
-        }
+        if (r.lazy.length && phi > -150) loadRow(r);
         const show = phi > -80 && phi < 80;
         r.el.style.visibility = show ? "visible" : "hidden";
         if (show) {
@@ -305,6 +307,33 @@ const EAGER = 0;
       // the notched edges move with the surface
       dispatchEvent(new CustomEvent("ks:ticks", { detail: -((turn * Math.PI) / 180) * R }));
     };
+
+    /* Phones and tablets (src/scripts/lite.js): the work is a plain list that scrolls with the page, laid
+       out by the CSS below; no pin, no curve, no particles, each row's stills loading as it nears the
+       screen. The tiles keep their sizes and the zip (layout), the headline still fades up on arrival. */
+    if (LITE) {
+      // the Studio tool panel sits over the list as a panel of its own (over its tile it ran up into the awards)
+      const film = root.querySelector<HTMLElement>(".wheel_film");
+      if (film) drum.before(film);
+      new ResizeObserver(() => layout()).observe(drum);
+      layout();
+      armCards(root);
+      const near = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          near.unobserve(e.target);
+          loadRow(rows[Number((e.target as HTMLElement).dataset.row)]);
+        }
+      }, { rootMargin: "100% 0px" });
+      rows.forEach((r) => near.observe(r.el));
+      const arrive = () => {
+        root.classList.add("is-in");
+        gsap.fromTo(words, { yPercent: 60, opacity: 0 }, { yPercent: 0, opacity: 1, duration: reduced ? 0 : 1, stagger: 0.035, ease: "expo.out" });
+      };
+      if (document.documentElement.dataset.intro === "done") arrive();
+      else addEventListener("ks:intro-done", arrive, { once: true });
+      return;
+    }
 
     const relayout = () => {
       layout();
@@ -585,6 +614,53 @@ const EAGER = 0;
     }
     .wheel_wrap.is-in :is(.wheel_awards, .wheel_logos) {
       opacity: 1;
+    }
+    /* phones and tablets (src/scripts/lite.js): the headline, then the work as a plain list scrolling
+       with the page, two to a row with the zip, nothing pinned or turned */
+    @media (hover: none), (pointer: coarse) {
+      .wheel_stage {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+        padding-bottom: var(--section-space-large);
+      }
+      .wheel_head {
+        position: relative;
+        top: auto;
+        order: -1;
+        padding-top: calc(var(--nav-height) + var(--space-6));
+      }
+      .wheel_space {
+        position: relative;
+        inset: auto;
+        perspective: none;
+        margin-top: var(--space-8);
+      }
+      .wheel_drum {
+        position: relative;
+        left: auto;
+        right: auto;
+        top: auto;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-6);
+        margin: 0 var(--site-margin);
+        transform-style: flat;
+      }
+      .wheel_film {
+        position: static;
+        margin: 0 var(--site-margin) var(--space-6);
+      }
+      .wheel_row {
+        position: relative;
+        top: auto;
+        height: auto;
+        padding: calc(var(--zip, 0px) / 2) 0;
+        visibility: visible;
+        backface-visibility: visible;
+        will-change: auto;
+      }
     }
   }
 </style>

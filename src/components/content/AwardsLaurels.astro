@@ -92,6 +92,7 @@ const {
   counters.forEach((c) => io.observe(c));
 
   import { laurelOptions, laurelLayoutVars } from "@/data/laurel-look.js";
+  import { LITE } from "@/scripts/lite.js";
 
   // The laurels in real 3D chrome, once WebGL and src/scripts/laurel.js
   // are there; the rendered halves are the fallback, only fetched when the 3D
@@ -106,7 +107,8 @@ const {
     const load = modules["../../scripts/laurel.js"];
     let canvas = root.querySelector<HTMLCanvasElement>(".awards_canvas");
     const flat = () => root.querySelectorAll<HTMLImageElement>(".awards_half[data-src]").forEach((img) => (img.src = img.dataset.src!));
-    if (!load || !canvas || !canvas.getContext("webgl2")) return flat();
+    // phones keep the flat laurels: the 3D ran its light and bloom every frame (src/scripts/lite.js)
+    if (LITE || !load || !canvas || !canvas.getContext("webgl2")) return flat();
     try {
       const code = load();
       await introOver;

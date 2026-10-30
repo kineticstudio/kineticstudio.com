@@ -31,12 +31,23 @@ const { render = true } = Astro.props;
         </div>
         {/* the Studio tool film (iCloud 💻 Kinetic/twitter/kinetic-studio-tool.mp4), cut for the web */}
         <figure class="reel_frame" data-reveal>
-          <video data-loop data-src="/media/studio-film.mp4" poster="/media/studio-film.jpg" muted loop playsinline preload="none" aria-label="The Kinetic Creative Studio, in motion" />
+          <video data-loop data-src="/media/studio-film.mp4" data-poster="/media/studio-film.webp" muted loop playsinline preload="none" aria-label="The Kinetic Creative Studio, in motion" />
         </figure>
       </div>
     </section>
   )
 }
+
+<script>
+  import { LITE } from "@/scripts/lite.js";
+  /* Phones loop five seconds of the film (from 0:39, the moment the homepage's tool card shows) cut at
+     phone size, 533 KB, instead of the whole 84 s film at 13.8 MB (src/scripts/lite.js); the loop
+     itself starts when the frame is on screen (site.js watchLoops). */
+  document.querySelectorAll<HTMLVideoElement>(".reel_frame video").forEach((v) => {
+    if (LITE) v.dataset.src = "/media/studio-film-phone.mp4";
+    v.poster = LITE ? "/media/studio-film-card-640.webp" : v.dataset.poster!;
+  });
+</script>
 
 <style is:global>
   @layer components {

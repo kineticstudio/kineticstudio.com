@@ -50,6 +50,7 @@ const LINE = [
 <script>
   import { COIN_DESIGNS, COIN_LOOK, COIN_TUNING_KEY } from "@/data/coin-look.js";
   import { defineParams } from "@/scripts/ks-params.js";
+  import { LITE } from "@/scripts/lite.js";
 
   /* Hunter, Oct 25: "Come up with your own designs for the craft, quality,
      and story pills ... they just feel slightly lazy and unrealistic"; then
@@ -112,7 +113,8 @@ const LINE = [
       root.classList.add("no-coins");
       go();
     };
-    if (!slots.length || !canvas.getContext("webgl2")) return drawn();
+    // phones keep the drawn pills: the coins ran their light and bloom every frame (src/scripts/lite.js)
+    if (LITE || !slots.length || !canvas.getContext("webgl2")) return drawn();
     const late = setTimeout(drawn, 1800);
     // the engine comes down while the fonts load, not after (Hunter, Oct 25: the pills
     // "kind of take forever to load"); the words need the display face to be cut

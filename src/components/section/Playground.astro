@@ -92,6 +92,7 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
   import { gsap } from "gsap";
   import { hostExperiment } from "@/scripts/experiment-host.js";
   import { EXPERIMENTS } from "@/data/experiments.js";
+  import { LITE } from "@/scripts/lite.js";
 
   const modules = import.meta.glob("../../experiments/*.js");
   const say = (detail: unknown) => {
@@ -203,7 +204,8 @@ const cells = Array.from({ length: cols * rows }, (_, k) => {
           c.el.style.opacity = Math.min(1, Math.max(0, (1 - edge) / 0.22)).toFixed(3);
         }
         // the pieces near the middle play; the rest hold their poster
-        const want = loaded && show && !paused && middle && playing < 9;
+        // a phone shows stills: nine films at once held it at 30 frames a second (src/scripts/lite.js)
+        const want = !LITE && loaded && show && !paused && middle && playing < 9;
         if (want) playing++;
         if (want !== c.on) {
           c.on = want;
