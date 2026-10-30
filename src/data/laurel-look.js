@@ -10,7 +10,10 @@
 
 import { applyTuning, storedTuning } from "./home-look.js";
 
-// Hunter's own tuning from the laurel Params, Oct 25 (the homepage and About)
+// Hunter's own tuning from the laurel Params, Oct 25 (the homepage and About), with more sparkle
+// (Oct 29: "id also like the laurels to sparkle more on the site througout"): smaller, sharper lights
+// in what the metal mirrors, so glints wink across the leaves; the hot points blooming sooner and
+// stronger; a third, brighter pass in each flash; the leaves turning a little more to catch them
 export const LAUREL_LOOK = {
   // the row: wreath width and the gap between awards (rem), the award logo
   // against its usual size, the line under each award (rem)
@@ -27,20 +30,20 @@ export const LAUREL_LOOK = {
   // what the metal mirrors (polished, mirror, studio, blender) and where its
   // horizon lands (degrees: higher puts more of the dark ground on the leaves)
   // lights = how big and soft its lights are (1 = pinpoints that wink; bigger glide)
-  world: { look: "mirror", horizon: -21.5, exposure: 0.91, lights: 2.95 },
+  world: { look: "mirror", horizon: -21.5, exposure: 0.91, lights: 1.25 },
   // halo = how much the whole laurel glows, not just the parts past the threshold
-  bloom: { strength: 3, threshold: 1.62, radius: 0.7, halo: 0.02 },
+  bloom: { strength: 3.8, threshold: 1.15, radius: 0.7, halo: 0.02 },
   // multipliers on the wind and the lean toward the pointer; turn = the slow
   // side to side sway, degrees
   // twist = how far each leaf turns on its stem; flutter = how much each leaf
   // moves on its own (0 = the branch moves as one wave)
-  motion: { wind: 2.79, windSpeed: 0.82, turn: 9, lean: 1, twist: 1.34, flutter: 1 },
+  motion: { wind: 2.79, windSpeed: 0.82, turn: 9, lean: 1, twist: 1.6, flutter: 1 },
   // every = seconds between flashes (0 = none), count = passes per flash,
   // sweep = how far the lights slide (degrees), pass = seconds a pass takes,
   // glow = how much brighter the metal gets at the height of a pass
-  flash: { every: 1.6, count: 2, sweep: 71, pass: 1.76, glow: 3.54 },
+  flash: { every: 1.6, count: 3, sweep: 71, pass: 1.76, glow: 5.6 },
   // on a light page (About) the horizon sits higher, so the metal reads dark on paper
-  light: { horizon: -27, bloom: 1.35 },
+  light: { horizon: -27, bloom: 1.8 },
   // quality = drawn at this many times the screen's pixels, so thin highlights hold still;
   // steady = how much of the last frame each frame keeps, so glints glide instead of blinking
   render: { quality: 1.25, steady: 0.6 },
