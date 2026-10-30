@@ -216,6 +216,8 @@ export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} 
       field.frame(dt, {
         body,
         color,
+        // the pill nearly home: the lines' bend becomes the mark's arcs as it arrives (logo-field.js)
+        land: unit01(1 - slide.x / Math.max(1, start * 0.14)),
         // the lines rise in from the left, one after another
         rise: (i) => expoOut(unit01((t - (i / Math.max(1, n - 1)) * T.riseSpread) / T.riseFor)),
         // and collapse into the strokes from the pill outward

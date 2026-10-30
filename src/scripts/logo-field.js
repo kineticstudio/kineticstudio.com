@@ -27,7 +27,7 @@
 
      const f = createLogoField(canvas, settings)
      f.layout({ width, height, fieldLeft, fieldRight, logo: { left, top, unit }, strokes, lines?, keep? })
-     f.frame(dt, { body: { x, y, r }, rise: (i) => 0..1, collapse: (i) => 0..1, color })
+     f.frame(dt, { body: { x, y, r }, rise: (i) => 0..1, collapse: (i) => 0..1, color, land: 0..1 })
      f.count()                          // how many lines there are */
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
@@ -93,6 +93,8 @@ export function createLogoField(canvas, S = FIELD) {
   // the elastic collapse: each line's two ends (top, bottom: px, px/s, where each was let go) and the stroke's span
   let endY = new Float32Array(0), endV = new Float32Array(0), endY0 = new Float32Array(0), loose = new Uint8Array(0);
   let spanTop = 0, spanBot = 1;
+  // how far the pill has come home (0..1): the bend only becomes the stroke's arc as it arrives
+  let landNow = 1;
 
   function layout({ width, height, fieldLeft, fieldRight, logo, strokes, lines = null, keep = 0 }) {
     W = Math.max(1, width);
@@ -292,7 +294,9 @@ export function createLogoField(canvas, S = FIELD) {
   function fillLoose(i, r) {
     const yt = endY[2 * i], yb = endY[2 * i + 1];
     const L0 = endY0[2 * i + 1] - endY0[2 * i], Lf = spanBot - spanTop;
-    const w = clamp((L0 - (yb - yt)) / Math.max(1, L0 - Lf), 0, 1);
+    // as far as the line has pulled in, and no further than the pill has come: a line short before the
+    // pill is there is a straight bar, and the pill's arrival bends it round into the stroke
+    const w = Math.min(clamp((L0 - (yb - yt)) / Math.max(1, L0 - Lf), 0, 1), landNow);
     const topX = streamAt(i, spanTop), botX = streamAt(i, spanBot);
     for (let j = 0; j < M; j++) {
       const y = lerp(yt, yb, j / (M - 1));
@@ -395,8 +399,9 @@ export function createLogoField(canvas, S = FIELD) {
     count: () => N,
     /** Where line i stands across the field, 0 at the left .. 1 nearest the pill. */
     across: (i) => (N > 1 ? i / (N - 1) : 0),
-    frame(dt, { body, rise, collapse, color }) {
+    frame(dt, { body, rise, collapse, color, land = 1 }) {
       if (!N) return;
+      landNow = clamp(land, 0, 1);
       computeTargets(body);
       const h = Math.min(1 / 30, Math.max(0, dt));
       stepLines(h);
