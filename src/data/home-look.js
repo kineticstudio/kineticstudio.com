@@ -25,7 +25,7 @@ export const HOME_LOOK = {
   // collapseAt = s from the stop that the bands let go; dockFor = the move into the nav's corner
   intro: {
     logo: 44,
-    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.2, pillFor: 0.96, pillCurve: [0.31, 0.76, 0.52, 1], reach: 152, curve: 0.95, lineWidth: 1, collapseAt: -0.4, collapseFor: 0.85, collapseSpread: 0, bounce: 0, dockLead: 0.5, dockFor: 1.15,
+    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.2, pillFor: 0.96, pillCurve: [0.04, 0.48, 0.16, 1.01], reach: 152, curve: 0.95, lineWidth: 1, collapseAt: -0.4, collapseFor: 0.85, collapseSpread: 0, bounce: 0, dockLead: 0.5, dockFor: 1.15,
   },
   // a tile's 3D card under the pointer: tilt (degrees), lift, depth of the view,
   // the springs it moves on, and when it shows (ms after it loads) and is dropped (s after leaving)
