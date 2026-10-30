@@ -14,7 +14,7 @@ export const HOME_LOOK = {
   // collapseAfter = seconds after the pill meets the lines that they start to shrink; dockFor = the move into the nav's corner
   intro: {
     logo: 44, reach: 0.6, softness: 0.25, clearance: 16, response: 0.4, wobble: 0.38, ripple: 0.4,
-    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.25, pillFor: 1.25, overshoot: 0.6, collapseAfter: 0.05, collapseAt: 1.4, collapseFor: 0.95, collapseSpread: 0.18, dockLead: 0.2, dockFor: 1.15,
+    riseFor: 0.6, riseSpread: 0.35, pillAt: 0.25, pillFor: 1.25, overshoot: 0.6, collapseAfter: 0.05, collapseAt: 1.4, collapseFor: 0.95, collapseSpread: 0, bounce: 0.2, dockLead: 0.2, dockFor: 1.15,
   },
   // a tile's 3D card under the pointer: tilt (degrees), lift, depth of the view,
   // the springs it moves on, and when it shows (ms after it loads) and is dropped (s after leaving)

@@ -13,7 +13,14 @@
    body passes. Here the body is the round end of the KINETIC pill.
 
    At the end every line is drawn into one of the logo's five strokes and
-   shrinks to its height, so the field becomes the mark. Given `lines` (the
+   shrinks to its height, so the field becomes the mark. With given lines the
+   shrink is elastic (Hunter, Oct 29: "still doesn't feel like real physics.
+   the lines kinda collapse in as they shrink vertically"): each line is let
+   go like a stretched band, its two ends springing to the stroke's top and
+   bottom, a touch past and back, and pulling in along the line itself, so
+   the tails run straight up and down into the bend (every point no longer
+   slides diagonally to its place on the arc, which folded the lines into
+   chevrons), and the bend becomes the stroke's arc as the tails come in. Given `lines` (the
    homepage: exactly the five, Hunter, Oct 25: "only have five lines, not more
    than five lines"), each is one stroke, at its own place and weight;
    otherwise `count` lines share the strokes, side by side across each.
@@ -68,6 +75,8 @@ export const FIELD = {
   response: 0.55, // how quickly the lines take up the bend
   wobble: 0.3, // how much they overshoot and ring
   ripple: 0.2, // string tension: bends travel along each line
+  bounce: 0.2, // the collapse: how far a line's released ends spring past the stroke's top and bottom (0 none)
+  settle: 0.95, // s from a line's release until its ends are at rest on the stroke
 };
 
 export function createLogoField(canvas, S = FIELD) {
@@ -81,6 +90,9 @@ export function createLogoField(canvas, S = FIELD) {
   let finalL = new Float32Array(0), finalR = new Float32Array(0);
   // given lines: each one's own weight (px), and the least space kept between their centres (px)
   let ownW = null, keepPx = 0;
+  // the elastic collapse: each line's two ends (top, bottom: px, px/s, where each was let go) and the stroke's span
+  let endY = new Float32Array(0), endV = new Float32Array(0), endY0 = new Float32Array(0), loose = new Uint8Array(0);
+  let spanTop = 0, spanBot = 1;
 
   function layout({ width, height, fieldLeft, fieldRight, logo, strokes, lines = null, keep = 0 }) {
     W = Math.max(1, width);
@@ -110,6 +122,10 @@ export function createLogoField(canvas, S = FIELD) {
     if (lines && N > 1) pitch = (x0[N - 1] - x0[0]) / (N - 1);
     // the lines run past the top and bottom, so their ends never show
     for (let j = 0; j < M; j++) ys[j] = lerp(-0.06 * H, 1.06 * H, j / (M - 1));
+    endY = new Float32Array(2 * N);
+    endV = new Float32Array(2 * N);
+    endY0 = new Float32Array(2 * N);
+    loose = new Uint8Array(N);
     // the end: an equal share of the lines for each stroke, side by side across its width
     finalX = new Float32Array(N * M);
     finalY = new Float32Array(M);
@@ -118,6 +134,8 @@ export function createLogoField(canvas, S = FIELD) {
     finalR = new Float32Array(N * M);
     const n = strokes.length, Hs = strokes[0].H;
     for (let j = 0; j < M; j++) finalY[j] = logo.top + (j / (M - 1)) * Hs * logo.unit;
+    spanTop = finalY[0];
+    spanBot = finalY[M - 1];
     for (let i = 0; i < N; i++) {
       const s = Math.min(n - 1, Math.floor((i * n) / N));
       const first = Math.ceil((s * N) / n), share = Math.ceil(((s + 1) * N) / n) - first;
@@ -213,6 +231,89 @@ export function createLogoField(canvas, S = FIELD) {
     }
   }
 
+  /* The ends, let go: from where each line's top and bottom are the moment it is released (collapse(i)
+     first above 0), two damped springs to the stroke's top and bottom. Stretched as far as it is, the
+     line snaps in fastest at first and slows as it nears the stroke, springing a touch past it and back
+     (bounce); over the last fifth of settle its last few px are glided exactly into place, so the SVG
+     takes over the very same drawing. */
+  const edgeY = (j, r) => {
+    const cy = H / 2, sc = lerp(0.15, 1, r), off = (1 - r) * 0.45 * H;
+    return cy + (ys[j] - cy) * sc + off;
+  };
+  // (the springs' own state; endY is what is drawn: the spring, glided exactly onto the stroke over the last fifth)
+  let endS = new Float32Array(0);
+  function stepEnds(dt, rise, collapse) {
+    // mostly in about two thirds of the way through settle, the last of it glided onto the stroke after
+    const z = clamp(1 - S.bounce, 0.3, 1), w = 4.3 / Math.max(0.1, S.settle);
+    const K = w * w, C = 2 * z * w, sub = 4, h = dt / sub;
+    if (endS.length !== endY.length) endS = new Float32Array(endY.length);
+    for (let i = 0; i < N; i++) {
+      const c = collapse(i);
+      if (c <= 0) {
+        loose[i] = 0;
+        continue;
+      }
+      const r = clamp(rise(i), 0, 1);
+      if (!loose[i]) {
+        loose[i] = 1;
+        endS[2 * i] = endY0[2 * i] = edgeY(0, r);
+        endS[2 * i + 1] = endY0[2 * i + 1] = edgeY(M - 1, r);
+        endV[2 * i] = endV[2 * i + 1] = 0;
+      }
+      const glide = clamp((c - 0.8) / 0.2, 0, 1), g = glide * glide * (3 - 2 * glide);
+      for (let e = 0; e < 2; e++) {
+        const k = 2 * i + e, to = e ? spanBot : spanTop;
+        for (let q = 0; q < sub; q++) {
+          endV[k] += (-K * (endS[k] - to) - C * endV[k]) * h;
+          endS[k] += endV[k] * h;
+        }
+        endY[k] = c >= 1 ? to : lerp(endS[k], to, g);
+      }
+    }
+  }
+  // a given line's bent centre and its slope at any height (px), from the field's rows
+  const streamAt = (i, y) => {
+    const u = clamp(((y - ys[0]) / (ys[M - 1] - ys[0])) * (M - 1), 0, M - 1), j = Math.min(M - 2, Math.floor(u)), f = u - j;
+    return x0[i] + lerp(d[i * M + j], d[i * M + j + 1], f);
+  };
+  const slopeAt = (i, y) => {
+    const step = (ys[M - 1] - ys[0]) / (M - 1);
+    return (streamAt(i, y + step) - streamAt(i, y - step)) / (2 * step);
+  };
+  // the stroke's own edge (finalL or finalR of line i) at any height inside its span
+  const strokeAt = (arr, i, y) => {
+    const u = clamp(((y - spanTop) / Math.max(1e-6, spanBot - spanTop)) * (M - 1), 0, M - 1), j = Math.min(M - 2, Math.floor(u)), f = u - j;
+    return lerp(arr[i * M + j], arr[i * M + j + 1], f);
+  };
+  /* A released line: drawn between its two ends, every row at its own height (so the tails run up and
+     down along the line itself as they come in); its shape the bent line's, becoming the stroke's as far
+     as the line has pulled in (past the stroke's ends, the stroke carried on along the bent line, so the
+     tails join it smoothly). */
+  function fillLoose(i, r) {
+    const yt = endY[2 * i], yb = endY[2 * i + 1];
+    const L0 = endY0[2 * i + 1] - endY0[2 * i], Lf = spanBot - spanTop;
+    const w = clamp((L0 - (yb - yt)) / Math.max(1, L0 - Lf), 0, 1);
+    const topX = streamAt(i, spanTop), botX = streamAt(i, spanBot);
+    for (let j = 0; j < M; j++) {
+      const y = lerp(yt, yb, j / (M - 1));
+      const sx = streamAt(i, y), sl = slopeAt(i, y), half = (ownW[i] / 2) * Math.sqrt(1 + sl * sl);
+      let aL, aR;
+      if (y < spanTop) (aL = finalL[i * M] + sx - topX), (aR = finalR[i * M] + sx - topX);
+      else if (y > spanBot) (aL = finalL[i * M + M - 1] + sx - botX), (aR = finalR[i * M + M - 1] + sx - botX);
+      else (aL = strokeAt(finalL, i, y)), (aR = strokeAt(finalR, i, y));
+      py[j] = y;
+      lx[j] = lerp(sx - half, aL, w);
+      rx[j] = lerp(sx + half, aR, w);
+    }
+    ctx.globalAlpha = Math.min(1, r * 1.6);
+    ctx.beginPath();
+    ctx.moveTo(lx[0], py[0]);
+    for (let j = 1; j < M; j++) ctx.lineTo(lx[j], py[j]);
+    for (let j = M - 1; j >= 0; j--) ctx.lineTo(rx[j], py[j]);
+    ctx.closePath();
+    ctx.fill();
+  }
+
   const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
   const px = new Float32Array(512), py = new Float32Array(512), lx = new Float32Array(512), rx = new Float32Array(512);
   /* A given line is a filled shape, its weight held across its bends, its
@@ -251,11 +352,12 @@ export function createLogoField(canvas, S = FIELD) {
     for (let i = 0; i < N; i++) {
       const r = clamp(rise(i), 0, 1);
       if (r <= 0) continue;
-      const c = ease(clamp(collapse(i), 0, 1));
       if (ownW) {
-        fillLine(i, r, c);
+        if (loose[i]) fillLoose(i, r);
+        else fillLine(i, r, 0);
         continue;
       }
+      const c = ease(clamp(collapse(i), 0, 1));
       // rising in: from below, stretching to the window's height
       const sc = lerp(0.15, 1, r), off = (1 - r) * 0.45 * H;
       const row = i * M;
@@ -296,13 +398,16 @@ export function createLogoField(canvas, S = FIELD) {
     frame(dt, { body, rise, collapse, color }) {
       if (!N) return;
       computeTargets(body);
-      stepLines(Math.min(1 / 30, Math.max(0, dt)));
+      const h = Math.min(1 / 30, Math.max(0, dt));
+      stepLines(h);
+      if (ownW) stepEnds(h, rise, collapse);
       draw({ rise, collapse, color });
     },
     /** Straight, at rest, as before the pill came. */
     reset() {
       d?.fill(0);
       v?.fill(0);
+      loose?.fill(0);
     },
   };
 }

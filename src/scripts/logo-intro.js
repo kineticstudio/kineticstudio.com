@@ -21,10 +21,12 @@ import { createLogoField } from "./logo-field.js";
 
 export function mountLogoIntro(root, { look, say = () => {}, onBuilt = () => {} }) {
   const INTRO = look;
-  const FIELD = { count: 5, weight: 0.32, gap: 0.3, reach: 0.45, softness: 0.1, clearance: 16, response: 0.55, wobble: 0.3, ripple: 0.2 };
+  const FIELD = { count: 5, weight: 0.32, gap: 0.3, reach: 0.45, softness: 0.1, clearance: 16, response: 0.55, wobble: 0.3, ripple: 0.2, bounce: 0.2, settle: 0.95 };
   const fieldFrom = () => Object.assign(FIELD, {
     reach: INTRO.reach, softness: INTRO.softness,
     clearance: INTRO.clearance, response: INTRO.response, wobble: INTRO.wobble, ripple: INTRO.ripple,
+    // the lines let go like stretched bands: their ends at rest on the strokes collapseFor after each goes
+    bounce: INTRO.bounce ?? 0.2, settle: INTRO.collapseFor,
   });
   const stripes = [...root.querySelectorAll(".kinetic-logo_stripe")];
   const bars = morphAll(stripes.map((p) => p.dataset.d));

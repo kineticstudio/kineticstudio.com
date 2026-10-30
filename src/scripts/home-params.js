@@ -34,7 +34,8 @@ const schema = {
     collapseAfter: [I.collapseAfter, 0, 1.5, 0.05], // seconds after the pill meets the lines that they shrink
     collapseAt: [I.collapseAt, 0.3, 3, 0.05], // the latest they start, if it never does
     dockFor: [I.dockFor, 0.3, 3, 0.05], // the move up into the nav's corner
-    collapseFor: [I.collapseFor, 0.2, 2, 0.05],
+    collapseFor: [I.collapseFor, 0.2, 2, 0.05], // s from a line's release until its ends are at rest on the stroke
+    bounce: [I.bounce, 0, 0.6, 0.01], // how far the released ends spring past the stroke and back
   },
   hover: {
     tilt: [Hv.tilt, 0, 20, 0.5], // degrees the card leans toward the pointer
