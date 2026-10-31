@@ -66,16 +66,31 @@ const { render = true, class: className } = Astro.props;
     const close = sheet.querySelector<HTMLButtonElement>("[data-film-close]")!;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     // the loop loads once the card is in sight, and on the homepage only after its intro, so it
-    // never takes the line from what the first screen needs (Oct 30, Cloudflare's numbers)
+    // never takes the line from what the first screen needs (Oct 30, Cloudflare's numbers). Phones and
+    // tablets (src/scripts/lite.js) loop the same five seconds cut at their size, only while it is on
+    // screen, its still kept over it until it has a frame, so it never flashes (Hunter, Oct 31: "I want
+    // the studio to also go in a loop"); not with the browser's data saver.
     const loop = root.querySelector<HTMLVideoElement>("[data-film-loop]")!;
-    const seen = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      seen.disconnect();
+    if (LITE) loop.dataset.src = "/media/studio-film-phone.mp4";
+    const start = () => {
       loop.src = loop.dataset.src!;
+      if (!LITE) return;
+      const still = document.createElement("img");
+      still.className = "film-card_cover";
+      still.alt = "";
+      still.src = loop.poster;
+      loop.after(still);
+      const show = () => still.classList.add("is-gone");
+      if ("requestVideoFrameCallback" in loop) (loop as HTMLVideoElement & { requestVideoFrameCallback(cb: () => void): number }).requestVideoFrameCallback(show);
+      else loop.addEventListener("playing", () => setTimeout(show, 60), { once: true });
+    };
+    const seen = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return void (LITE && loop.pause());
+      if (!loop.src) start();
       loop.play().catch(() => {});
     });
-    // a phone keeps the still (src/scripts/lite.js); the film itself still opens with a tap
-    const arm = () => void (LITE || seen.observe(root));
+    const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+    const arm = () => void ((LITE && saveData) || seen.observe(root));
     if (document.querySelector("[data-hero-lines]") && document.documentElement.dataset.intro !== "done") addEventListener("ks:intro-done", arm, { once: true });
     else arm();
     // the sheet covers the window, so it lives on <body>, clear of the hero's pinned stage
@@ -186,6 +201,19 @@ const { render = true, class: className } = Astro.props;
       }
       &.is-open .film-card_media {
         visibility: hidden;
+      }
+    }
+    /* a phone's still over the loop until the loop has a frame on screen */
+    .film-card_cover {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      &.is-gone {
+        opacity: 0;
       }
     }
     .film-card_media {

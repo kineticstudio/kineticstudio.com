@@ -265,7 +265,7 @@
   let mode = 'tour', bridge = null, coast = 0, idle = 0;
   let hovered = false, touchOn = false, touchLatch = false, dragging = false, down = null;
   const pointer = { x: 0, y: 0 }; let pointerLive = false;
-  let lastScrollStr = '', lastTicks = '', lastTone = '', liftNow = 1;
+  let lastScrollStr = '', lastTicks = '', lastTone = '', liftNow = 1, snapTone = false;
 
   function luminance(hex) {
     const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return 1;
@@ -339,6 +339,18 @@
   ];
   const TOUR = LEGS.reduce((a, [h, m]) => a + h + m, 0);
   const holdAt = LEGS.reduce((a, [h, m], i) => (a.push(i ? a[i - 1] + LEGS[i - 1][0] + LEGS[i - 1][1] : 0), a), []);
+  /* the ambient motion closes on the tour too, so one tour is a seamless loop: the homepage tile rests on a
+     recording of it and the live card takes over at the recording's time (Hunter, Oct 31: loops for every
+     piece of work). Each sway turns a whole number of times a tour, as near its own pace as it can, and the
+     health card goes round its states a whole number of times. */
+  const wave = (w) => (2 * Math.PI * Math.max(1, Math.round((w * TOUR) / (2 * Math.PI)))) / TOUR;
+  const W31 = wave(0.31), W47 = wave(0.47), W42 = wave(0.42), W38 = wave(0.38);
+  const MC_PER = TOUR / (mcStates.length * Math.max(1, Math.round(TOUR / (4.4 * mcStates.length))));
+  // the card at time t of its tour, exactly as a recording of it shows that moment
+  function seekTime(t) {
+    const w = ((t % TOUR) + TOUR) % TOUR;
+    mode = 'tour'; bridge = null; coast = 0; phase = w; ambT = w; scroll = tourAt(w); snapTone = true;
+  }
   function tourAt(t) {
     t = ((t % TOUR) + TOUR) % TOUR;
     for (let i = 0; i < LEGS.length; i++) {
@@ -469,16 +481,16 @@
     }
     // the hero: the health card cycles (primary care, urgent care, chronic care) and the ask follows it
     if (inView(0, 1000)) {
-      const per = 4.4, n = mcStates.length, tt = still ? 0 : ambT / per;
+      const per = MC_PER, n = mcStates.length, tt = still ? 0 : ambT / per;
       const i = Math.floor(tt) % n, f = tt - Math.floor(tt);
       const x = smooth(f, 0.86, 1); // the last ~0.6 s of each beat crossfades into the next
       const W = mcStates.map((_, j) => (j === i ? 1 - x : j === (i + 1) % n ? x : 0));
       mcStates.forEach((m, j) => setO(m, m.el, W[j]));
       phs.forEach((m, j) => setO(m, m.el, W[j]));
-      if (!still) setT(amb.hero, heroThread, `translate3d(${(10 * Math.sin(ambT * 0.31)).toFixed(2)}px, ${(4 * Math.sin(ambT * 0.47 + 1)).toFixed(2)}px, 0) scaleY(${(1 + 0.08 * Math.sin(ambT * 0.42)).toFixed(4)})`);
+      if (!still) setT(amb.hero, heroThread, `translate3d(${(10 * Math.sin(ambT * W31)).toFixed(2)}px, ${(4 * Math.sin(ambT * W47 + 1)).toFixed(2)}px, 0) scaleY(${(1 + 0.08 * Math.sin(ambT * W42)).toFixed(4)})`);
     }
     if (!still && inView(breathTop, breathTop + 900)) {
-      setT(amb.breath, breathThread, `translate3d(0, ${(6 * Math.sin(ambT * 0.38)).toFixed(2)}px, 0)`);
+      setT(amb.breath, breathThread, `translate3d(0, ${(6 * Math.sin(ambT * W38)).toFixed(2)}px, 0)`);
     }
     // the phone comes in as the walkthrough arrives, then its screen follows the step at the centre
     phoneLayer.fade = smooth(scroll, walkTop - VH * 0.6, walkTop - VH * 0.12);
@@ -574,7 +586,8 @@
     let dark = 0;
     if (framed) dark = luminance(V['card.frameColor']) < 0.35 ? 1 : 0;
     else if (EMBED) { const yr = scroll + VH / 2; for (const t of tones) if (yr >= t.y0 && yr < t.y1) dark = t.dark ? 1 : 0; }
-    tone += (dark - tone) * (still ? 1 : 1 - Math.exp(-dt / 0.18));
+    tone += (dark - tone) * (still || snapTone ? 1 : 1 - Math.exp(-dt / 0.18));
+    snapTone = false;
     const ts = tone.toFixed(3);
     if (ts !== lastTone) { lastTone = ts; inkLight.style.opacity = ts; inkDark.style.opacity = (1 - tone).toFixed(3); }
   }
@@ -674,9 +687,12 @@
   }
   document.addEventListener('visibilitychange', sync);
   window.addEventListener('message', (e) => {
-    if (window.parent === window || e.source !== window.parent) return;
     const d = e.data;
-    if (d && d.type === 'ks-card' && typeof d.visible === 'boolean') { parentVisible = d.visible; sync(); }
+    if (!d || d.type !== 'ks-card') return;
+    // the homepage hands over from the recorded loop: be exactly where it was (never mid-drag)
+    if (typeof d.at === 'number' && isFinite(d.at) && !dragging) seekTime(d.at);
+    if (window.parent === window || e.source !== window.parent) return;
+    if (typeof d.visible === 'boolean') { parentVisible = d.visible; sync(); }
   });
   reduced.addEventListener('change', () => { if (reduced.matches) { scroll = 0; mode = 'tour'; phase = 0; bridge = null; } });
 
@@ -694,7 +710,8 @@
     get mode() { return mode; }, get running() { return running; }, get h() { return spr.h.x; },
     get stops() { return stops.slice(); }, get tour() { return TOUR; }, get VH() { return VH; }, get maxScroll() { return maxScroll; },
     get layers() { return layers.length; }, get frames() { return frameLog.slice(); },
-    seek(t) { mode = 'tour'; bridge = null; phase = +t || 0; },
+    seek(t) { seekTime(+t || 0); },
+    get period() { return TOUR; },
     at(i) { mode = 'tour'; bridge = null; phase = holdAt[clamp(i | 0, 0, LEGS.length - 1)] + 0.01; },
   };
   window.counselCard = api;

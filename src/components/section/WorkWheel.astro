@@ -330,23 +330,44 @@ const EAGER = 0;
          looped videos for each of the pieces of work"), the phone cut (scripts/phone-loops.mjs); not
          with reduced motion or the browser's data saver */
       const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
-      if (!reduced && !saveData) {
+      const loops = !reduced && !saveData;
+      /* No flicker (Hunter, Oct 31: "The pieces of work flicker on my phone as I scroll"): a film is set
+         loading as its row nears the screen and starts under its still, which steps aside once a frame of
+         the film is drawn, so starting never flashes the tile; it plays once half on screen and stops only
+         once it has left, so a tile at the edge doesn't flick between the two. */
+      const prime = (v: HTMLVideoElement) => {
+        if (v.src) return;
+        const still = document.createElement("img");
+        still.className = "wheel_cover";
+        still.alt = "";
+        still.decoding = "async";
+        still.src = v.poster || v.dataset.poster!.replace(/\.webp$/, "-640.webp");
+        v.after(still);
+        v.preload = "metadata";
+        v.src = v.dataset.src!.replace(/\.mp4$/, "-phone.mp4");
+        const show = () => still.classList.add("is-gone");
+        if ("requestVideoFrameCallback" in v) (v as HTMLVideoElement & { requestVideoFrameCallback(cb: () => void): number }).requestVideoFrameCallback(show);
+        else v.addEventListener("playing", () => setTimeout(show, 60), { once: true });
+      };
+      if (loops) {
         const seen = new IntersectionObserver((entries) => {
-          for (const { target, isIntersecting } of entries) {
+          for (const { target, isIntersecting, intersectionRatio } of entries) {
             const v = target as HTMLVideoElement;
-            if (isIntersecting) {
-              if (!v.src) v.src = v.dataset.src!.replace(/\.mp4$/, "-phone.mp4");
-              v.play().catch(() => {});
-            } else v.pause();
+            if (intersectionRatio >= 0.5) {
+              prime(v);
+              if (v.paused) v.play().catch(() => {});
+            } else if (!isIntersecting) v.pause();
           }
-        }, { threshold: 0.5 });
+        }, { threshold: [0, 0.5] });
         rows.forEach((r) => r.videos.forEach((v) => seen.observe(v)));
       }
       const near = new IntersectionObserver((entries) => {
         for (const e of entries) {
           if (!e.isIntersecting) continue;
           near.unobserve(e.target);
-          loadRow(rows[Number((e.target as HTMLElement).dataset.row)]);
+          const row = rows[Number((e.target as HTMLElement).dataset.row)];
+          loadRow(row);
+          if (loops) row.videos.forEach(prime);
         }
       }, { rootMargin: "100% 0px" });
       rows.forEach((r) => near.observe(r.el));
@@ -692,13 +713,28 @@ const EAGER = 0;
         will-change: auto;
         view-timeline: --wheel-row block;
       }
-      /* the right column leading the left, on the scroll's own timeline (where the browser has one) */
+      /* the right column leading the left, on the scroll's own timeline (where the browser has one); its
+         tiles kept on layers of their own the whole way, not made and dropped as they pass (a flicker) */
       @supports (animation-timeline: view()) {
         @media (prefers-reduced-motion: no-preference) {
           .wheel_item:nth-child(2) {
             animation: wheel-lead linear both;
             animation-timeline: --wheel-row;
+            will-change: translate;
           }
+        }
+      }
+      /* a tile's still, over its film until the film has a frame on screen */
+      .wheel_cover {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        &.is-gone {
+          opacity: 0;
         }
       }
     }
