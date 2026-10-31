@@ -42,7 +42,7 @@ that commit.
 
 Started 2026-10-23. Dark, in the same 2026 language as the proposals and
 briefs (kinetic-contracts): **Panell Condensed** for display and headings,
-**PP Neue Montreal** for text, **Neue Montreal Mono** for labels, ink
+**PP Neue Montreal** for text and labels, ink
 `#0d0d0d`, sage `#d9e2d2`, lime `#a8ff66`, and the brand-2026 striped mark
 and italic KINETIC lockup (`src/assets/brand`).
 
@@ -95,7 +95,8 @@ src/
   components/...              everything else is Lumos, used as is
   styles/base.css             the tokens: colours, fonts, spacing, radii
   consts.ts                   site name, description, URL, contact email
-  assets/fonts/               Panell Condensed (trial), PP Neue Montreal, Neue Montreal Mono
+  assets/fonts/               Panell Condensed Medium and PP Neue Montreal Regular + Medium (licensed;
+                              from ~/Developer/kinetic/kinetic-brand), Neue Montreal Mono (not licensed, unused)
   assets/brand/               the 2026 mark, lockup and Studio lockup
 LUMOS.md                      the rules for writing components (read before adding one)
 .agents/skills/               Lumos's own skills, including lumos-upgrade-version
@@ -128,8 +129,12 @@ pre-Lumos code is tagged `pre-lumos-2026-10-17`.
 
 ## Open items
 
-- **Panell Condensed is a trial cut** (`src/assets/fonts`): it needs a real
-  licence before this site replaces the Webflow one. GT Walsheim and Monument
-  Extended are gone with the redesign.
+- **Fonts are licensed** (Oct 30, 2026): Panell Condensed Medium from Displaay
+  (Desktop + Print and Web, up to 3 people) and PP Neue Montreal Regular and
+  Medium v3.0 from Pangram Pangram (1 workstation, web up to 10k pageviews a
+  month). Files, licence and invoice: iCloud `💻 Kinetic/kinetic/Fonts`. The 3D
+  work cards carry the same licensed files in `public/cards/*/*-card-src/fonts/ks`.
+  Neue Montreal Mono was never licensed: nothing on the site uses it. Panell in
+  video (the OG video, launch films) is Displaay's separate Video usage.
 - The Webflow site has more pages than the homepage. Only the homepage is
   rebuilt so far.

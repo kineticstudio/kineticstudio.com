@@ -1,6 +1,6 @@
 /* Kinetic's side: the page, the work card, its light and its ruler (from the Wispr Flow card). */
-@font-face { font-family: "KS Panell Condensed"; src: url("../fonts/PanellCondensed-TRIAL-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
-@font-face { font-family: "KS Mono"; src: url("../fonts/PPNeueMontrealMono-Book.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "KS Panell Condensed"; src: url("../fonts/ks/PanellCondensed-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "KS Text"; src: url("../fonts/ks/PPNeueMontreal-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
@@ -145,7 +145,7 @@ html.embed .card { --r: var(--card-r, 0px); }
   margin: 0;
   display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
   text-align: right;
-  font-family: "KS Mono", ui-monospace, monospace;
+  font-family: "KS Text", "Helvetica Neue", Arial, sans-serif;
   font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
   color: rgba(238, 241, 234, .5);
 }
@@ -157,7 +157,7 @@ html.embed .card { --r: var(--card-r, 0px); }
   position: absolute; left: 6px; top: 6px; z-index: 50;
   padding: 3px 8px 2px; border-radius: 4px;
   background: #a8ff66; color: #0d0d0d;
-  font: 500 20px/1.15 "KS Mono", ui-monospace, monospace;
+  font: 500 20px/1.15 "KS Text", "Helvetica Neue", Arial, sans-serif;
   text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; text-align: left;
 }
 .card.show-layers > [data-layer] { outline-width: calc(1px * var(--k)); outline-offset: calc(-1px * var(--k)); }

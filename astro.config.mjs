@@ -23,7 +23,7 @@ export default defineConfig({
       provider: fontProviders.local(),
       fallbacks: ["Arial Narrow", "sans-serif"],
       options: {
-        variants: [{ weight: 500, style: "normal", src: ["./src/assets/fonts/PanellCondensed-TRIAL-Medium.woff2"] }],
+        variants: [{ weight: 500, style: "normal", src: ["./src/assets/fonts/PanellCondensed-Medium.woff2"] }],
       },
     },
     {

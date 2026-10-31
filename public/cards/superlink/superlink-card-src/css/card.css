@@ -5,15 +5,15 @@
 
 @font-face { font-family: "SL Planar"; src: url("../fonts/GTPlanar-Regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
 @font-face { font-family: "SL Planar"; src: url("../fonts/GTPlanar-Medium.woff2") format("woff2"); font-weight: 500; font-display: block; }
-@font-face { font-family: "KS Panell Condensed"; src: url("../fonts/PanellCondensed-TRIAL-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
-@font-face { font-family: "KS Mono"; src: url("../fonts/PPNeueMontrealMono-Book.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "KS Panell Condensed"; src: url("../fonts/ks/PanellCondensed-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "KS Text"; src: url("../fonts/ks/PPNeueMontreal-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 body {
   background: #0d0d0d;
   color: #eef1ea;
-  font-family: "KS Mono", ui-monospace, monospace;
+  font-family: "KS Text", "Helvetica Neue", Arial, sans-serif;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -149,7 +149,7 @@ body {
   margin: 0;
   display: flex; flex-direction: column; align-items: flex-end; gap: .2rem;
   text-align: right;
-  font-family: "KS Mono", ui-monospace, monospace;
+  font-family: "KS Text", "Helvetica Neue", Arial, sans-serif;
   font-size: .75rem; line-height: 1.2; letter-spacing: .04em; text-transform: uppercase;
   color: rgba(238, 241, 234, .5);
 }
@@ -391,7 +391,7 @@ html.is-embed, html.is-embed body { background: transparent; }
   position: absolute; left: var(--lab-x, 6px); top: var(--lab-y, 6px); z-index: 50;
   padding: 3px 8px 2px; border-radius: 4px;
   background: #a8ff66; color: #0d0d0d;
-  font: 500 22px/1.15 "KS Mono", ui-monospace, monospace;
+  font: 500 22px/1.15 "KS Text", "Helvetica Neue", Arial, sans-serif;
   -webkit-text-fill-color: #0d0d0d; text-transform: uppercase; letter-spacing: .02em;
   white-space: nowrap; text-align: left;
 }
