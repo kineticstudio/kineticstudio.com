@@ -218,11 +218,16 @@ const {
       width: 14rem;
       height: 9.5rem;
     }
+    /* the flat wreath's two branches, each a half of the picture at its own shape, at the slot's outer
+       edges: as wide as half the slot, cover cropped their tips and stems whenever the slot was wider
+       than the picture (Hunter, Oct 31, on his phone: "the laurels seem cut off in a weird way") */
     .awards_half {
       position: absolute;
       top: 0;
-      width: 50%;
+      width: auto;
       height: 100%;
+      aspect-ratio: 350 / 622;
+      max-width: 50%;
       object-fit: cover;
       &.is-left {
         left: 0;

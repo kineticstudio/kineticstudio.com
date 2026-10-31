@@ -315,9 +315,33 @@ const EAGER = 0;
       // the Studio tool panel sits over the list as a panel of its own (over its tile it ran up into the awards)
       const film = root.querySelector<HTMLElement>(".wheel_film");
       if (film) drum.before(film);
-      new ResizeObserver(() => layout()).observe(drum);
-      layout();
+      /* the right column runs ahead of the left as the page scrolls (Hunter, Oct 31: "I miss the kind of
+         parallax effect between the left and the right row"): the CSS animates it on the scroll itself
+         (a view timeline), off the main thread; --lead is how far it leads either way, the desktop
+         wheel's parallax over 40 degrees of its curve */
+      const fit = () => {
+        layout();
+        root.style.setProperty("--lead", `${(tileH * WHEEL.parallax * 40).toFixed(1)}px`);
+      };
+      new ResizeObserver(fit).observe(drum);
+      fit();
       armCards(root);
+      /* each work plays its loop while it is on screen (Hunter, Oct 31: "Ideally, we would still have
+         looped videos for each of the pieces of work"), the phone cut (scripts/phone-loops.mjs); not
+         with reduced motion or the browser's data saver */
+      const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+      if (!reduced && !saveData) {
+        const seen = new IntersectionObserver((entries) => {
+          for (const { target, isIntersecting } of entries) {
+            const v = target as HTMLVideoElement;
+            if (isIntersecting) {
+              if (!v.src) v.src = v.dataset.src!.replace(/\.mp4$/, "-phone.mp4");
+              v.play().catch(() => {});
+            } else v.pause();
+          }
+        }, { threshold: 0.5 });
+        rows.forEach((r) => r.videos.forEach((v) => seen.observe(v)));
+      }
       const near = new IntersectionObserver((entries) => {
         for (const e of entries) {
           if (!e.isIntersecting) continue;
@@ -655,6 +679,9 @@ const EAGER = 0;
         position: static;
         margin: 0 var(--site-margin) var(--space-6);
       }
+      .wheel_space {
+        pointer-events: auto;
+      }
       .wheel_row {
         position: relative;
         top: auto;
@@ -663,6 +690,24 @@ const EAGER = 0;
         visibility: visible;
         backface-visibility: visible;
         will-change: auto;
+        view-timeline: --wheel-row block;
+      }
+      /* the right column leading the left, on the scroll's own timeline (where the browser has one) */
+      @supports (animation-timeline: view()) {
+        @media (prefers-reduced-motion: no-preference) {
+          .wheel_item:nth-child(2) {
+            animation: wheel-lead linear both;
+            animation-timeline: --wheel-row;
+          }
+        }
+      }
+    }
+    @keyframes wheel-lead {
+      from {
+        translate: 0 calc(var(--zip, 0px) / 2 + var(--lead, 0px));
+      }
+      to {
+        translate: 0 calc(var(--zip, 0px) / 2 - var(--lead, 0px));
       }
     }
   }
