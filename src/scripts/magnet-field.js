@@ -10,7 +10,8 @@
      magnetize(root) -> { destroy() }
 
    Markup: a [data-magnet] wrapper holding one input, select or textarea and
-   an empty <svg class="contact_line">. Each keystroke plays the kit's "key"
+   an empty <svg class="contact_line"> ([data-magnet="box"]: a field with a
+   box of its own, which gets the focus class and the key sound but no line). Each keystroke plays the kit's "key"
    sound through ks:sound, pitched a touch differently every time. */
 
 const ctx = document.createElement("canvas").getContext("2d");
@@ -83,7 +84,8 @@ export function magnetize(root) {
     const cs = getComputedStyle(f.el);
     f.lh = parseFloat(cs.lineHeight) || 32;
     f.pad = parseFloat(cs.paddingTop) || 0;
-    const count = f.kind === "textarea" ? Math.max(1, Math.floor((f.h - f.pad) / f.lh)) : 1;
+    // a [data-magnet="box"] field draws its own box: no lines, only the focus and the key sound
+    const count = f.wrap.dataset.magnet === "box" ? 0 : f.kind === "textarea" ? Math.max(1, Math.floor((f.h - f.pad) / f.lh)) : 1;
     while (f.rows.length < count) f.rows.push(row());
     f.rows.length = count;
     f.svg.replaceChildren(

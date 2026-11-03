@@ -17,7 +17,16 @@ export function getStaticPaths() {
 }
 
 const ROWS = 3, PER = 6;
-const picks = HOME.slice(0, ROWS * PER).map((slug) => WORK.find((w) => w.slug === slug)).filter(Boolean) as (typeof WORK)[number][];
+/* Hunter, Nov 3: "make sure that Wispr Flow and Anthropic are in the middle, since those are my most
+   impressive clients". The middle row's first two tiles meet on the frame's centre line in the first
+   frame (the still every preview shows, and the loop comes back to it), so they swap into those two. */
+const MIDDLE = ["wispr-flow", "anthropic-community"];
+const order = HOME.slice(0, ROWS * PER);
+MIDDLE.forEach((slug, i) => {
+  const from = order.indexOf(slug), to = PER + i;
+  if (from >= 0) [order[from], order[to]] = [order[to], order[from]];
+});
+const picks = order.map((slug) => WORK.find((w) => w.slug === slug)).filter(Boolean) as (typeof WORK)[number][];
 const rows = Array.from({ length: ROWS }, (_, r) => picks.slice(r * PER, r * PER + PER));
 ---
 
@@ -49,6 +58,9 @@ const rows = Array.from({ length: ROWS }, (_, r) => picks.slice(r * PER, r * PER
      radius F. Driven by the page's clock alone (performance.now), so a film on a driven clock gets
      exactly the frames a viewer would; LOOP seconds for each row to move PER tiles, rows turning in turn. */
   const LOOP = 10, PER = 6;
+  // the film's first frame is two seconds in (scripts/og-video.mjs lets the page settle first): the barrel's
+  // own time starts there, so the film opens, and loops back, on the middle row's first two tiles centred
+  const SETTLE = 2;
   const root = document.querySelector<HTMLElement>("[data-og]")!;
   const frame = root.querySelector<HTMLElement>(".og_frame")!;
   const barrel = root.querySelector<HTMLElement>(".og_barrel")!;
@@ -78,10 +90,10 @@ const rows = Array.from({ length: ROWS }, (_, r) => picks.slice(r * PER, r * PER
   fit();
   const t0 = performance.now();
   const tick = (now: number) => {
-    place((now - t0) / 1000);
+    place((now - t0) / 1000 - SETTLE);
     requestAnimationFrame(tick);
   };
-  place(0);
+  place(-SETTLE);
   requestAnimationFrame(tick);
 </script>
 

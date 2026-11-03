@@ -125,9 +125,11 @@ const timings = Array.from({ length: 25 }, (_, i) => {
           ))}
         </div>
 
-        <label class="contact_field" data-magnet>
+        {/* a box to write in, not ruled lines (Hunter, Nov 3: "people are getting confused with the
+            multi-line nature of it"); typing still ticks */}
+        <label class="contact_field" data-magnet="box">
           <span class="text-style-label">The project</span>
-          <span class="contact_control">
+          <span class="contact_control is-box">
             <textarea name="message" rows="4" placeholder="Tell me about what you're looking to build…" />
             <svg class="contact_line" aria-hidden="true" />
           </span>
@@ -577,6 +579,22 @@ const timings = Array.from({ length: 25 }, (_, i) => {
     }
     .contact_field.is-focus .contact_line path {
       stroke-opacity: 1;
+    }
+    /* the project: a rounded box in the lines' own stroke, brightening the same way */
+    .contact_control.is-box textarea {
+      height: 10rem;
+      margin-top: 0.35rem;
+      padding: 0.85rem 1rem;
+      border: var(--pill-line) solid color-mix(in srgb, var(--text) 50%, transparent);
+      border-radius: var(--radius-main);
+      line-height: 1.4;
+      transition: border-color 0.25s ease;
+    }
+    .contact_field:hover .contact_control.is-box textarea {
+      border-color: color-mix(in srgb, var(--text) 75%, transparent);
+    }
+    .contact_field.is-focus .contact_control.is-box textarea {
+      border-color: var(--text);
     }
 
     /* timing, and the budget under it */
