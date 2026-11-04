@@ -1,0 +1,2 @@
+{"note":"The two records that pointed kineticstudio.com at Webflow, removed Oct 25 2026 when the site moved to Cloudflare. Re-create them to switch back.",
+ "records":[{"type":"A","name":"kineticstudio.com","content":"198.202.211.1","proxied":false},{"type":"CNAME","name":"www.kineticstudio.com","content":"cdn.webflow.com","proxied":false}]}
