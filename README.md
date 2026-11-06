@@ -5,8 +5,8 @@ Kinetic Studio's own website, built the way every Kinetic site is now built:
 editor**, hosted on **Cloudflare**. It is also the first site on that setup,
 so it doubles as the reference for client builds.
 
-The real domain still points at Webflow and is untouched. Nothing here changes
-what visitors to kineticstudio.com see until the DNS is moved on purpose.
+**It is live on kineticstudio.com** (since Oct 25, 2026). Pushing `main`
+deploys it; work happens on `redesign-2026` and is fast-forwarded into `main`.
 
 ```bash
 npm install
@@ -113,15 +113,55 @@ Two Lumos rules worth knowing before touching a component:
 
 ## Hosting
 
-**Cloudflare builds this repo.** Every push to `main` rebuilds and deploys
-<https://kineticstudio-com.hunter-938.workers.dev> in about a minute (Workers
-Builds, connected 2026-10-17, Worker `kineticstudio-com` on Hunter's account).
-Build command `npm run build`, deploy command `npx wrangler deploy`, build
-variable `NODE_VERSION=24`; other branches get their own preview link. So a
-push here publishes that address, though not kineticstudio.com.
+**Cloudflare builds this repo, and `main` is the live site.** Every push to
+`main` rebuilds and deploys kineticstudio.com and www.kineticstudio.com (both
+custom domains on the Worker `kineticstudio-com`, account 9385…1120) in about
+two minutes. Build command `npm run build` (its `prebuild` makes the WebP
+copies of the stills), deploy command `npx wrangler deploy`, `NODE_VERSION=24`.
+The Webflow records removed on Oct 25 are saved in `.webflow-dns-backup.json`
+(on branch `transfer/2026-11-04/laptop-wip`) for a rollback.
 
-kineticstudio.com itself still points at Webflow. Moving it is a route on the
-Worker plus a DNS change, done only when the rest of the pages are rebuilt.
+The usual ship, after `npx astro build` passes:
+
+```bash
+git push origin redesign-2026
+git checkout main && git merge --ff-only redesign-2026 && git push origin main
+git checkout redesign-2026
+# then, in ../kinetic-creative-studio: node scripts/sync-kinetic-site.mjs
+```
+
+`public/_headers` sets the caching (hashed build files a year, stills and media
+a day), HSTS, and the locked-down CSP on the client-site copies in `/sites`.
+
+## Picking this up on another Mac
+
+1. `git clone git@github.com:kineticstudio/kineticstudio.com.git ~/Developer/kinetic/kineticstudio`,
+   `git checkout redesign-2026`, `npm install`.
+2. Fonts are committed here (the site needs them to build). The brand kit
+   (`kineticstudio/kinetic-brand`, private) keeps them out of git: copy the
+   `.woff2` files into its `fonts/` from iCloud `💻 Kinetic/kinetic/Fonts`.
+3. Scripts that film or record (`og-video.mjs`, `record-card-loops.mjs`,
+   `card-loop-check.mjs`, `phone-loops.mjs`) need ffmpeg and playwright-core
+   (they look in `~/Developer/kinetic/creative-studio-supercut/node_modules`,
+   or set `PLAYWRIGHT_CORE`). `og-video.mjs` needs `npm run dev` on 8758.
+4. The Creative Studio mirror: `../kinetic-creative-studio`, then
+   `node scripts/sync-kinetic-site.mjs` after each ship.
+5. Nothing else lives outside the repo. The phone/desktop lab scripts used for
+   the Oct 30 performance pass were scratch files and are gone; the numbers are
+   in the commit messages from Oct 30 to 31.
+
+## Where things stand (Nov 6, 2026)
+
+- **Performance pass** (Oct 30 to 31): light WebP stills, deferred 3D, caching
+  headers, and a stripped-down site for phones and tablets (`src/scripts/lite.js`:
+  plain scrolling work list with the column parallax, phone-size loops for every
+  homepage work, flat laurels, drawn pills, stills on the Playground globe).
+- **Every homepage work has a resting loop** (`src/data/card-loops.json`, 20),
+  with phone cuts (`*-phone.mp4`). A new tile needs its card to pass
+  `card-loop-check.mjs`, then `record-card-loops.mjs <slug>` and `phone-loops.mjs`.
+- **OG preview** (Nov 3): Wispr Flow and Anthropic centred; re-filming it means
+  bumping `OG_VERSION` in `src/components/utility/BaseHead.astro`.
+- **Contact**: "The project" is a rounded box (Nov 3).
 
 The earlier version of this rebuild (Astro, Sanity, Netlify) is still at
 <https://kineticstudio-com.netlify.app>, with no git connection. The
@@ -136,5 +176,13 @@ pre-Lumos code is tagged `pre-lumos-2026-10-17`.
   work cards carry the same licensed files in `public/cards/*/*-card-src/fonts/ks`.
   Neue Montreal Mono was never licensed: nothing on the site uses it. Panell in
   video (the OG video, launch films) is Displaay's separate Video usage.
-- The Webflow site has more pages than the homepage. Only the homepage is
-  rebuilt so far.
+- **Cloudflare dashboard items** (Hunter's to do; the API token here only reads
+  analytics): kineticstudio.com and www both serve the site with no redirect
+  (canonical and sitemap say www), TLS 1.0 and 1.1 are still accepted, DNSSEC is
+  off, and there's no DMARC record.
+- Rre, S32 and Counsel Health loops are recorded; tiles added to `HOME` later
+  need theirs.
+- Pangram's licence terms on subsetting are unknown, so the full Neue Montreal
+  Regular (77 KB) ships; ask them if it should be trimmed.
+- kinetic-contracts (now the Creative Studio's contracts-and-proposals) still
+  has the trial Panell and the unlicensed Mono.
