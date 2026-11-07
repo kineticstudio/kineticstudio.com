@@ -19,9 +19,13 @@ interface Props {
   rows?: number;
   /** Exactly these projects (slugs), in this order, each once. */
   only?: string[];
+  /** Show each project's `partner` credit in its caption ("Brand by Primary", on /primary). */
+  credits?: boolean;
+  /** Every tile rests on its loop, no live 3D card on hover (just a small lift) and no particles (/primary). */
+  simple?: boolean;
 }
 
-const { render = true, heading = "Captivating websites that | tell compelling stories", rows = 8, only } = Astro.props;
+const { render = true, heading = "Captivating websites that | tell compelling stories", rows = 8, only, credits = false, simple = false } = Astro.props;
 const media = MEDIA as Record<string, { w: number; h: number; ground: string; video: boolean }>;
 const pool = only
   ? only.map((slug) => WORK.find((w) => w.slug === slug)).filter((w): w is (typeof WORK)[number] => Boolean(w && media[w.cover]))
@@ -49,7 +53,7 @@ const EAGER = 0;
 
 {
   render && (
-    <section class="wheel_wrap" data-wheel>
+    <section class:list={["wheel_wrap", simple && "is-simple"]} data-wheel data-simple={simple ? "" : undefined}>
       <div class="wheel_stage">
         <div class="wheel_space">
           <div class="wheel_drum">
@@ -62,6 +66,11 @@ const EAGER = 0;
                   // a click opens the project's modal (src/scripts/project-modal.js)
                   const site = (SITES as Record<string, { live?: boolean; hosted?: string; still?: string }>)[w.slug];
                   const still = card ? `/cards/${w.slug}/poster.jpg` : `/media/${w.cover}.jpg`;
+                  /* the tile's resting loop: its card's (recorded with the card's mat), or in `simple` mode
+                     (Hunter, Nov 6, /primary: "they should all be looped video") its cover's; the cover has
+                     no phone cut, so phones play it as is */
+                  const rest = card && loops.includes(w.slug) ? `/media/card-${w.slug}.mp4` : simple && media[w.cover].video ? `/media/${w.cover}.mp4` : undefined;
+                  const restPhone = rest && !rest.startsWith("/media/card-") ? rest : undefined;
                   const project = {
                     "data-project": w.slug, "data-name": w.name, "data-url": w.url,
                     "data-site": site?.hosted ?? (site?.live ? w.url : undefined),
@@ -74,13 +83,13 @@ const EAGER = 0;
                     <div
                       class:list={["wheel_card", card ? "is-3d" : "is-matted"]}
                       style={`--mat:${MAT * 100}cqw;--ground:${media[w.cover].ground}`}
-                      data-card-src={card ? cardSrc(w.slug, { bleed: 24 }) : undefined}
-                      data-loop-src={!card && media[w.cover].video ? `/media/${w.cover}.mp4` : undefined}
+                      data-card-src={card && !simple ? cardSrc(w.slug, { bleed: 24 }) : undefined}
+                      data-loop-src={!card && !simple && media[w.cover].video ? `/media/${w.cover}.mp4` : undefined}
                       data-card-title={`${w.name}, a live miniature of the site`}
                     >
                       <a class="wheel_hit" href={href} {...ext} {...project} data-card-link aria-label={w.name}>
-                        {card && loops.includes(w.slug) ? (
-                          <video class="wheel_still" data-rest data-src={`/media/card-${w.slug}.mp4`} {...{ [i < EAGER ? "poster" : "data-poster"]: stillWebp(still) }} muted loop playsinline preload="none" aria-hidden="true" />
+                        {rest ? (
+                          <video class="wheel_still" data-rest data-src={rest} data-phone={restPhone} {...{ [i < EAGER ? "poster" : "data-poster"]: stillWebp(still) }} muted loop playsinline preload="none" aria-hidden="true" />
                         ) : (
                           <img class="wheel_still" {...(i < EAGER ? { src: still, srcset: stillSrcset(still, card ? 1200 : media[w.cover].w) } : { "data-src": still, "data-srcset": stillSrcset(still, card ? 1200 : media[w.cover].w) })} sizes="50vw" alt="" decoding="async" />
                         )}
@@ -95,6 +104,7 @@ const EAGER = 0;
                       <span class="wheel_meta text-style-label">
                         <span>{w.industry}</span>
                         <span>{w.does.join(", ")}</span>
+                        {credits && w.partner && <span class="wheel_credit">{w.partner}</span>}
                       </span>
                     </p>
                     </div>
@@ -138,6 +148,8 @@ const EAGER = 0;
      past, not a wheel. Native scroll, pinned while the rows go by; the
      page's notched edges travel with it. */
   document.querySelectorAll<HTMLElement>("[data-wheel]").forEach((root) => {
+    // /primary: loops only, no live cards on hover and no particles (Hunter, Nov 6)
+    const simple = root.hasAttribute("data-simple");
     const stage = root.querySelector<HTMLElement>(".wheel_stage")!;
     const drum = root.querySelector<HTMLElement>(".wheel_drum")!;
     const head = root.querySelector<HTMLElement>(".wheel_head")!;
@@ -325,7 +337,7 @@ const EAGER = 0;
       };
       new ResizeObserver(fit).observe(drum);
       fit();
-      armCards(root);
+      if (!simple) armCards(root);
       /* each work plays its loop while it is on screen (Hunter, Oct 31: "Ideally, we would still have
          looped videos for each of the pieces of work"), the phone cut (scripts/phone-loops.mjs); not
          with reduced motion or the browser's data saver */
@@ -344,7 +356,7 @@ const EAGER = 0;
         still.src = v.poster || v.dataset.poster!.replace(/\.webp$/, "-640.webp");
         v.after(still);
         v.preload = "metadata";
-        v.src = v.dataset.src!.replace(/\.mp4$/, "-phone.mp4");
+        v.src = v.dataset.phone ?? v.dataset.src!.replace(/\.mp4$/, "-phone.mp4");
         const show = () => still.classList.add("is-gone");
         if ("requestVideoFrameCallback" in v) (v as HTMLVideoElement & { requestVideoFrameCallback(cb: () => void): number }).requestVideoFrameCallback(show);
         else v.addEventListener("playing", () => setTimeout(show, 60), { once: true });
@@ -389,7 +401,7 @@ const EAGER = 0;
     // the homepage's Params changed the wheel
     addEventListener("ks:home-look", relayout);
     layout();
-    armCards(root);
+    if (!simple) armCards(root);
 
     // pinned for as long as the rows take to come through
     ScrollTrigger.create({
@@ -415,7 +427,7 @@ const EAGER = 0;
     };
     const arrive = () => {
       start();
-      if (!reduced) setTimeout(() => idle(wake), 1200);
+      if (!reduced && !simple) setTimeout(() => idle(wake), 1200);
     };
     if (document.documentElement.dataset.intro === "done") arrive();
     else addEventListener("ks:intro-done", arrive, { once: true });
@@ -495,6 +507,17 @@ const EAGER = 0;
       }
       &.is-hovered {
         z-index: 1;
+      }
+    }
+    /* `simple` (/primary): no live card on hover, the tile just lifts a little (Hunter, Nov 6: "On hover,
+       we can just have the shift of the card") */
+    @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+      .wheel_wrap.is-simple .wheel_card {
+        transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+        &:hover,
+        &:has(:focus-visible) {
+          transform: translateY(-0.5rem);
+        }
       }
     }
     /* a tile with no card yet: the recording on a mat, the border a card draws for itself */
@@ -593,7 +616,7 @@ const EAGER = 0;
       .wheel_meta {
         align-items: flex-start;
         text-align: left;
-        & > span + span {
+        & > span + span:not(.wheel_credit) {
           display: none;
         }
       }

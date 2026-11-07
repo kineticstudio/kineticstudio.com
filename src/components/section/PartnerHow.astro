@@ -1,0 +1,97 @@
+---
+import Section from "@/components/wrapper/Section.astro";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Small label over the headline. */
+  eyebrow?: string;
+  /** The headline; a "|" breaks it onto a second line. */
+  heading: string;
+  /** What working together means, a few short points. */
+  points: { title: string; body: string }[];
+}
+
+const { render = true, eyebrow, heading, points } = Astro.props;
+/* How the partnership works, on a light band (Hunter, Nov 6, /primary: "a section somewhere that explains
+   how we work, like that we work together directly ... We could even have a light section"): the headline
+   on the left, the points in a grid beside it, each a title and a line. */
+---
+
+{
+  render && (
+    <Section theme="light" paddingTop="large" paddingBottom="large" class="partner-how">
+      <div class="partner-how_grid">
+        <div class="partner-how_head" data-reveal>
+          {eyebrow && <p class="partner-how_eyebrow text-style-label">{eyebrow}</p>}
+          <h2 class="partner-how_title text-style-h2">
+            {heading.split("|").map((line) => <span>{line.trim()}</span>)}
+          </h2>
+        </div>
+        <ul class="partner-how_points">
+          {points.map((p, i) => (
+            <li class="partner-how_point" data-reveal style={`--reveal-delay:${(0.06 * i).toFixed(2)}s`}>
+              <h3 class="partner-how_point-title text-style-h5">{p.title}</h3>
+              <p class="partner-how_point-body text-style-main">{p.body}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .partner-how_grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      gap: var(--space-8) var(--space-6);
+      width: 100%;
+      @media (width < 56rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .partner-how_head {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+    .partner-how_eyebrow {
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .partner-how_title {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+    }
+    .partner-how_points {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-8) var(--space-6);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      @media (width < 36rem) {
+        grid-template-columns: 1fr;
+        gap: var(--space-6);
+      }
+    }
+    .partner-how_point {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      padding-top: var(--space-4);
+      border-top: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+    }
+    .partner-how_point-title,
+    .partner-how_point-body {
+      margin: 0;
+    }
+    .partner-how_point-body {
+      max-width: 34ch;
+      color: color-mix(in srgb, var(--text) 72%, transparent);
+    }
+  }
+</style>

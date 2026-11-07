@@ -347,6 +347,24 @@
     "ground": "#4453f8",
     "video": true
   },
+  "exe": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#e1e0d9",
+    "video": true
+  },
+  "owner": {
+    "w": 1280,
+    "h": 720,
+    "ground": "#f7eee7",
+    "video": true
+  },
+  "ramble": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#1f201c",
+    "video": true
+  },
   "superlink": {
     "w": 1280,
     "h": 720,

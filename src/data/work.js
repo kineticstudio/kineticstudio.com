@@ -128,7 +128,12 @@ export const WORK = [
   { slug: "ingredient-ai", name: "IngredientAI", industry: "AI", does: ["Development"], cover: "ingredient", url: "https://www.ingredient-ai.com/" },
   { slug: "roam-robotics", name: "Roam Robotics", industry: "Health", does: ["Web design"], cover: "roam", url: "https://www.roamrobotics.com/" },
   { slug: "para", name: "Para AI", industry: "AI", does: ["Brand", "Web design", "Development"], cover: "para", url: "https://www.usepara.com/" },
-  { slug: "august-health", name: "August Health", industry: "Health", does: ["Web design", "Development"], cover: "august-health", url: "https://www.augusthealth.com/" },
+  { slug: "august-health", name: "August Health", industry: "Health", does: ["Web design", "Development"], cover: "august-health", url: "https://www.augusthealth.com/", partner: "Brand by Primary" },
+  // Nov 6, for /primary (Hunter: "we should show off exe.dev, owner.com, august health, ramble").
+  // `partner` credits the brand to Primary where Primary made it (not Owner); WorkCard shows it after `does`
+  { slug: "exe", name: "exe.dev", industry: "AI", does: ["Web design", "Development"], cover: "exe", url: "https://exe.dev/", partner: "Brand by Primary" },
+  { slug: "owner", name: "Owner", industry: "Restaurants", does: ["Web design", "Development"], cover: "owner", url: "https://www.owner.com/" },
+  { slug: "ramble", name: "Ramble", industry: "Consumer", does: ["Web design", "Development"], cover: "ramble", url: "https://ramble.app/", partner: "Brand by Primary" },
   { slug: "superlink", name: "Superlink", industry: "Consumer", does: ["Brand", "Web design"], cover: "superlink", url: "https://superlink.me/" },
   { slug: "konvoy", name: "Konvoy", industry: "Venture", does: ["Web design", "Development"], cover: "konvoy", url: "https://www.konvoy.vc/" },
   { slug: "reshape", name: "Reshape Biotech", industry: "Health", does: ["Web design", "Development"], cover: "reshape", url: "https://reshapebiotech.com/" },

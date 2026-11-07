@@ -1,0 +1,154 @@
+---
+import Marquee from "@/components/interactive/Marquee.astro";
+import { WORK } from "@/data/work.js";
+import { MAT } from "@/data/card-embed.js";
+import { projectLink, restLoop } from "@/data/project-link.js";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Exactly these projects (slugs), in this order. */
+  only: string[];
+  /** Show each project's `partner` credit under its name. */
+  credits?: boolean;
+  /** Accessible name for the strip. */
+  label?: string;
+}
+
+const { render = true, only, credits = false, label = "Selected work" } = Astro.props;
+/* A strip of work running sideways on its own (Hunter, Nov 6, /primary: "a horizontal marquee for all the
+   primary work"): the site's Marquee, each tile resting on its loop (no live 3D card), lifting a little
+   when hovered, and opening the project's modal on a click like everywhere else. The loops play only
+   while the strip is on screen. */
+const items = only
+  .map((slug) => WORK.find((w) => w.slug === slug))
+  .filter((w): w is (typeof WORK)[number] => Boolean(w && restLoop(w)))
+  .map((w) => ({ w, loop: restLoop(w)!, link: projectLink(w) }));
+---
+
+{
+  render && items.length > 0 && (
+    <div class="partner-work" data-partner-work>
+      <Marquee label={label} class="partner-work_strip">
+        {items.map(({ w, loop, link }) => (
+          <figure class="partner-work_item">
+            <a class:list={["partner-work_tile", loop.matted && "is-matted"]} style={`--ground:${loop.ground};--mat:${MAT * 100}cqw`} {...link} aria-label={w.name}>
+              <video class="partner-work_video" data-src={loop.src} poster={loop.poster} muted loop playsinline preload="none" aria-hidden="true" />
+            </a>
+            <figcaption class="partner-work_caption">
+              <span class="partner-work_name text-style-h5">{w.name}</span>
+              <span class="partner-work_meta text-style-label">
+                <span>{w.does.join(", ")}</span>
+                {credits && w.partner && <span>{w.partner}</span>}
+              </span>
+            </figcaption>
+          </figure>
+        ))}
+      </Marquee>
+    </div>
+  )
+}
+
+<script>
+  // the loops play while the strip is on screen (both copies of the panel), and rest when it isn't
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll<HTMLElement>("[data-partner-work]").forEach((root) => {
+    const videos = [...root.querySelectorAll<HTMLVideoElement>("video[data-src]")];
+    if (reduced) return;
+    new IntersectionObserver(([e]) => {
+      for (const v of videos) {
+        if (e.isIntersecting) {
+          if (!v.src) v.src = v.dataset.src!;
+          v.play().catch(() => {});
+        } else v.pause();
+      }
+    }, { rootMargin: "25% 0px" }).observe(root);
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .partner-work {
+      /* full bleed: the strip runs edge to edge under the site's margins */
+      width: 100%;
+      overflow-x: clip;
+      /* room under the captions for the pause button, then the band below */
+      padding-bottom: calc(var(--space-8) + 2.5rem);
+      & .marquee_wrap {
+        --_gap-size: clamp(0.75rem, 1.4vw, 1.5rem);
+        /* seconds each tile is on its way across */
+        --_speed: 11s;
+        position: relative;
+        display: block;
+      }
+      & .marquee_viewport {
+        /* room above for the lift, so a hovered tile isn't cut off */
+        padding-top: 0.75rem;
+      }
+      & .marquee_panel {
+        justify-content: flex-start;
+        align-items: flex-start;
+      }
+      /* the pause button sits under the strip's right end, out of the way of the tiles */
+      & .marquee_toggle {
+        position: absolute;
+        right: var(--site-margin, 1rem);
+        bottom: -3.25rem;
+      }
+    }
+    .partner-work_item {
+      --tile-w: clamp(17rem, 40vw, 44rem);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      width: var(--tile-w);
+      margin: 0;
+    }
+    .partner-work_tile {
+      position: relative;
+      display: block;
+      aspect-ratio: 16 / 10;
+      overflow: hidden;
+      border-radius: var(--radius-media);
+      background: var(--ground, var(--dark-700));
+      container-type: inline-size;
+      transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .partner-work_video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    /* a cover on a mat of its own ground, the border a card draws for itself */
+    .partner-work_tile.is-matted .partner-work_video {
+      inset: var(--mat);
+      width: auto;
+      height: auto;
+      border-radius: calc(var(--radius-media) * 0.75);
+    }
+    @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+      .partner-work_tile:is(:hover, :focus-visible) {
+        transform: translateY(-0.5rem);
+      }
+    }
+    .partner-work_caption {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-3);
+    }
+    .partner-work_name {
+      margin: 0;
+    }
+    .partner-work_meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.2rem;
+      text-align: right;
+      color: color-mix(in srgb, var(--text) 50%, transparent);
+    }
+  }
+</style>

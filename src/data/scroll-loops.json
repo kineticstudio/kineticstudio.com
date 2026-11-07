@@ -89,11 +89,23 @@
     "duration": 17.25,
     "from": "https://www.roamrobotics.com/"
   },
+  "rre": {
+    "video": "/media/scroll/rre.mp4",
+    "poster": "/media/scroll/rre.jpg",
+    "duration": 14.61,
+    "from": "https://rre.com/"
+  },
   "dorm-room-fund": {
     "video": "/media/scroll/dorm-room-fund.mp4",
     "poster": "/media/scroll/dorm-room-fund.jpg",
     "duration": 14.6,
     "from": "https://www.dormroomfund.com/"
+  },
+  "s32": {
+    "video": "/media/scroll/s32.mp4",
+    "poster": "/media/scroll/s32.jpg",
+    "duration": 18.91,
+    "from": "https://www.s32.com/"
   },
   "elio": {
     "video": "/media/scroll/elio.mp4",
@@ -107,16 +119,22 @@
     "duration": 24.61,
     "from": "https://www.counselhealth.com/"
   },
-  "s32": {
-    "video": "/media/scroll/s32.mp4",
-    "poster": "/media/scroll/s32.jpg",
-    "duration": 18.91,
-    "from": "https://www.s32.com/"
+  "exe": {
+    "video": "/media/scroll/exe.mp4",
+    "poster": "/media/scroll/exe.jpg",
+    "duration": 14.62,
+    "from": "https://exe.dev/"
   },
-  "rre": {
-    "video": "/media/scroll/rre.mp4",
-    "poster": "/media/scroll/rre.jpg",
-    "duration": 14.61,
-    "from": "https://rre.com/"
+  "owner": {
+    "video": "/media/scroll/owner.mp4",
+    "poster": "/media/scroll/owner.jpg",
+    "duration": 22.26,
+    "from": "https://www.owner.com/"
+  },
+  "ramble": {
+    "video": "/media/scroll/ramble.mp4",
+    "poster": "/media/scroll/ramble.jpg",
+    "duration": 24.62,
+    "from": "https://ramble.app/"
   }
 }

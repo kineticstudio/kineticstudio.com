@@ -30,6 +30,7 @@ const SOURCES = {
   portfolio: path.join(KINETIC, "kinetic-creative-studio/clients/kinetic/designs/01-Personal/portfolio-src/media"),
   mirror: path.join(KINETIC, "kineticstudio-webflow-mirror/assets"),
   capture: path.join(ROOT, "scripts/.captures"),
+  scroll: path.join(ROOT, "public/media/scroll"), // a project's modal loop (scripts/record-scroll-loops.mjs)
 };
 
 const BOX = [1280, 800];

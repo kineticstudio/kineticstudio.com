@@ -1,0 +1,57 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import PartnerHero from "@/components/section/PartnerHero.astro";
+import PartnerWork from "@/components/section/PartnerWork.astro";
+import PartnerHow from "@/components/section/PartnerHow.astro";
+import WorkWheel from "@/components/section/WorkWheel.astro";
+import { HOME } from "@/data/work.js";
+import primaryLogo from "@/assets/clients/primary.svg?raw";
+
+/* Nov 6: Primary (primary.studio) made Kinetic its web partner, and Hunter promised Brandon a page to
+   share with prospects. Hunter: "we should show off exe.dev, owner.com, august health, ramble ... But
+   also show other sites done by me, and make sure we show off the clients and the pedigree and stuff.
+   logos and laurels"; then "a lockup of primary × Kinetic ... a horizontal marquee for all the primary
+   work, and then go back and do our carousel scroller ... for the other work", with a light section on
+   how we work together. Every tile rests on its loop, with no live 3D card and no particles ("We don't
+   need the 3D hover states on this one ... let's not have the pixel effect").
+   No contact form at the foot (Hunter, Nov 6: "Remove the contact form at the bottom").
+   Not in the nav and kept out of search (NOINDEX_ROUTES): it travels by link. */
+const PRIMARY = ["exe", "owner", "august-health", "ramble"];
+const rest = HOME.filter((slug) => !PRIMARY.includes(slug));
+
+/* The working relationship, from the Nov 6 call with Nick and Brandon: one team for brand and web, the
+   site made from Primary's own system, Hunter directly, custom code the client can edit. Prices stay off
+   the page. */
+const HOW = [
+  {
+    title: "One team",
+    body: "Your brand and your website come from two studios that already work side by side. No second agency to manage, and no explaining your company twice.",
+  },
+  {
+    title: "The brand, carried through",
+    body: "Your site is designed from Primary's own system and files, so it feels like the brand from the first page, not a translation of it.",
+  },
+  {
+    title: "Straight to the designer",
+    body: "You work directly with Hunter, who designs and builds your site. No account managers or handoffs, just quick answers and links to review.",
+  },
+  {
+    title: "Built to launch",
+    body: "Custom code and a CMS your team can edit, live in about five weeks. After launch we can keep going with site updates, decks and social.",
+  },
+];
+---
+
+<Layout footerForm={false} title="Primary x Kinetic" description="Primary builds the brand, Kinetic carries it into the website: award-winning sites for exe.dev, Ramble, August Health and more.">
+  {/* no logo intro here: the wheel arrives straight away (it waits for "ks:intro-done" otherwise) */}
+  <script is:inline slot="head">document.documentElement.dataset.intro = "done";</script>
+  <PartnerHero
+    partnerLogo={primaryLogo}
+    partnerName="Primary"
+    heading="From brand | to website"
+    lead="Primary builds your brand. Kinetic carries it into your website. Two studios working as one, so nothing gets lost in between."
+  />
+  <PartnerWork only={PRIMARY} credits label="Websites for Primary brands" />
+  <PartnerHow eyebrow="How we work together" heading="Two studios, | one team" points={HOW} />
+  <WorkWheel heading="More websites | from Kinetic" only={rest} simple />
+</Layout>

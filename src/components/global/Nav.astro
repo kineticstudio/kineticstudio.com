@@ -393,6 +393,17 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
         nav.classList.toggle("theme-dark", under.size > 0);
       }, { rootMargin: "0px 0px -94% 0px" });
       document.querySelectorAll("main .theme-dark, footer.theme-dark").forEach((el) => watch.observe(el));
+    } else {
+      // and the other way round: on a dark page, light while a light band runs under it (/primary, Nov 6)
+      const bands = document.querySelectorAll("main .theme-light");
+      if (bands.length) {
+        const under = new Set<Element>();
+        const watch = new IntersectionObserver((entries) => {
+          for (const e of entries) e.isIntersecting ? under.add(e.target) : under.delete(e.target);
+          nav.classList.toggle("theme-light", under.size > 0);
+        }, { rootMargin: "0px 0px -94% 0px" });
+        bands.forEach((el) => watch.observe(el));
+      }
     }
   });
 </script>

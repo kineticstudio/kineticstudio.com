@@ -8,7 +8,7 @@ export const SITE_URL = "https://www.kineticstudio.com";
 /** BCP 47 locale tag used to format dates and numbers. */
 export const SITE_LOCALE = "en-US";
 /** Routes excluded from search and the sitemap. Surrounding slashes are ignored. */
-export const NOINDEX_ROUTES: string[] = ["/404", "/lab/*", "/lab-laurels", "/directions/*"];
+export const NOINDEX_ROUTES: string[] = ["/404", "/lab/*", "/lab-laurels", "/directions/*", "/primary"];
 /** Where every Contact button sends people. */
 export const CONTACT_EMAIL = "hunter@kineticstudio.com";
 /** The contact form's Web3Forms access key (it is meant to be public: it only lets the form send to CONTACT_EMAIL). */

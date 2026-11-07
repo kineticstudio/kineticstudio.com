@@ -4,6 +4,7 @@
           portfolio  the swimlanes design's finished loops (kinetic-creative-studio
                      clients/kinetic/designs/01-Personal/portfolio-src/media), copied as is
           twitter    iCloud 💻 Kinetic/twitter, Hunter's recordings
+          scroll     public/media/scroll, the modal's scroll-through loops
           mirror     the Webflow mirror's portfolio hover videos and stills
                      (kineticstudio-webflow-mirror/assets)
    ss/dur where the loop starts and how long it runs, in seconds
@@ -93,6 +94,10 @@ export const MEDIA = [
   { id: "roam", from: "mirror", file: "videos/roam-transcode.mp4", ss: 0.3, dur: 5 },
   { id: "para", from: "mirror", file: "videos/para-portfolio-transcode.mp4", ss: 0.5, dur: 5 },
   { id: "august-health", from: "mirror", file: "videos/august-health-transcode.mp4", ss: 0.3, dur: 5 },
+  // Nov 6, for /primary: exe.dev and Ramble from the top of their scroll loops, Owner from its homepage recording
+  { id: "exe", from: "scroll", file: "exe.mp4", ss: 0, dur: 6 }, // the live site (Hunter, Nov 6: "a normal looped video on the actual site"), not the desk film
+  { id: "owner", from: "twitter", file: "owner-home.mp4", ss: 0, dur: 1.2, loop: "bounce" },
+  { id: "ramble", from: "scroll", file: "ramble.mp4", ss: 0, dur: 1.15, loop: "bounce" },
   { id: "superlink", from: "mirror", file: "videos/superlink-portfolio-transcode.mp4", ss: 0.3, dur: 5 },
   { id: "konvoy", from: "mirror", file: "videos/konvoy-transcode.mp4", ss: 0.3, dur: 5 },
   { id: "reshape", from: "mirror", file: "videos/reshape-transcode.mp4", ss: 0.5, dur: 5 },

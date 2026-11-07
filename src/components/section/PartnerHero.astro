@@ -1,0 +1,108 @@
+---
+import Section from "@/components/wrapper/Section.astro";
+import kineticRaw from "@/assets/brand/logo.svg?raw";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The partner's wordmark, as raw SVG (src/assets/clients/<slug>.svg?raw), drawn in the text colour. */
+  partnerLogo: string;
+  /** The partner's name, for the lockup's label. */
+  partnerName: string;
+  /** The headline; a "|" breaks it onto a second line. */
+  heading: string;
+  /** The line under it. */
+  lead: string;
+}
+
+const { render = true, partnerLogo, partnerName, heading, lead } = Astro.props;
+/* A partner page's opening (Hunter, Nov 6, /primary: "Maybe we show a lockup of primary × Kinetic"):
+   the partner's own wordmark, a times sign, and Kinetic's logo, both in their real files and at one
+   cap height; then the headline and one line under it. */
+const clean = (svg: string, label: string) =>
+  svg
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/\sid="[^"]*"/g, "")
+    .replace(/\saria-label="[^"]*"/g, "")
+    .replace(/<svg /, `<svg role="img" aria-label="${label}" `);
+---
+
+{
+  render && (
+    <Section paddingTop="navoverlap" paddingBottom="medium" class="partner-hero" gap="0">
+      <div class="partner-hero_inner">
+        <p class="partner-hero_lockup" data-reveal>
+          <span class="partner-hero_partner" set:html={clean(partnerLogo, partnerName)} />
+          <span class="partner-hero_x" aria-label="and">×</span>
+          <span class="partner-hero_kinetic" set:html={clean(kineticRaw, "Kinetic")} />
+        </p>
+        <h1 class="partner-hero_title text-style-h1" data-reveal style="--reveal-delay:0.08s">
+          {heading.split("|").map((line) => <span class="partner-hero_line">{line.trim()}</span>)}
+        </h1>
+        <p class="partner-hero_lead text-style-large" data-reveal style="--reveal-delay:0.16s">{lead}</p>
+      </div>
+    </Section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .partner-hero_inner {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-6);
+      padding-top: var(--space-8);
+      text-align: center;
+    }
+    /* one height for both marks: Primary's wordmark box is 97 x 29 with its capitals about 22 high, and
+       Kinetic's logo is its pill, so the pill sits a little taller than Primary's capitals */
+    .partner-hero_lockup {
+      --lock-h: clamp(2.25rem, 4.5vw, 3.75rem);
+      display: flex;
+      align-items: center;
+      gap: calc(var(--lock-h) * 0.42);
+      margin: 0;
+      color: var(--text);
+    }
+    .partner-hero_partner,
+    .partner-hero_kinetic {
+      display: block;
+      & svg {
+        display: block;
+        width: auto;
+        height: 100%;
+      }
+    }
+    .partner-hero_partner {
+      height: calc(var(--lock-h) * 0.86);
+      /* the wordmark's descender (the y) hangs below its capitals: sit the capitals on the pill's middle */
+      translate: 0 calc(var(--lock-h) * 0.07);
+    }
+    .partner-hero_kinetic {
+      height: var(--lock-h);
+    }
+    .partner-hero_x {
+      font-size: calc(var(--lock-h) * 0.62);
+      line-height: 1;
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .partner-hero_title {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+    }
+    .partner-hero_lead {
+      max-width: 36ch;
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 70%, transparent);
+      text-wrap: balance;
+    }
+    @media (width < 30rem) {
+      .partner-hero_lockup {
+        --lock-h: 1.85rem;
+      }
+    }
+  }
+</style>

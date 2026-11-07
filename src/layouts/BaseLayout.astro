@@ -15,9 +15,11 @@ type Props = SeoProps & {
   logoHidden?: boolean;
   /** Leave the footer off (full-screen pages). */
   footer?: boolean;
+  /** The contact form in the footer; on everywhere but the Playground unless a page says (/primary: off). */
+  footerForm?: boolean;
 };
 
-const { theme = "dark", logoHidden = false, footer = true, ...seo } = Astro.props;
+const { theme = "dark", logoHidden = false, footer = true, footerForm, ...seo } = Astro.props;
 ---
 
 <!doctype html>
@@ -37,7 +39,7 @@ const { theme = "dark", logoHidden = false, footer = true, ...seo } = Astro.prop
     <main id="main" tabindex="-1">
       <slot />
     </main>
-    {footer && <Footer form={!Astro.url.pathname.startsWith("/playground")} />}
+    {footer && <Footer form={footerForm ?? !Astro.url.pathname.startsWith("/playground")} />}
     <ProjectModal />
     <slot name="after" />
     <script>
