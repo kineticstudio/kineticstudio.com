@@ -98,6 +98,7 @@ export const MEDIA = [
   { id: "exe", from: "scroll", file: "exe.mp4", ss: 0, dur: 6 }, // the live site (Hunter, Nov 6: "a normal looped video on the actual site"), not the desk film
   { id: "owner", from: "twitter", file: "owner-home.mp4", ss: 0, dur: 1.2, loop: "bounce" },
   { id: "ramble", from: "scroll", file: "ramble.mp4", ss: 0, dur: 1.15, loop: "bounce" },
+  { id: "planned", from: "scroll", file: "planned.mp4", ss: 0, dur: 1.15, loop: "bounce" }, // Nov 9, for /primary
   { id: "superlink", from: "mirror", file: "videos/superlink-portfolio-transcode.mp4", ss: 0.3, dur: 5 },
   { id: "konvoy", from: "mirror", file: "videos/konvoy-transcode.mp4", ss: 0.3, dur: 5 },
   { id: "reshape", from: "mirror", file: "videos/reshape-transcode.mp4", ss: 0.5, dur: 5 },

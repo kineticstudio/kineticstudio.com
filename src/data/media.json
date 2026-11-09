@@ -365,6 +365,12 @@
     "ground": "#1f201c",
     "video": true
   },
+  "planned": {
+    "w": 1280,
+    "h": 800,
+    "ground": "#fafcf1",
+    "video": true
+  },
   "superlink": {
     "w": 1280,
     "h": 720,

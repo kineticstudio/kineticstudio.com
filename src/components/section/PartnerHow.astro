@@ -1,18 +1,21 @@
 ---
 import Section from "@/components/wrapper/Section.astro";
+import Button from "@/components/Button.astro";
 
 interface Props {
   /** Set to `false` to omit the component. */
   render?: boolean;
-  /** Small label over the headline. */
-  eyebrow?: string;
+  /** A line under the headline. */
+  lead?: string;
+  /** The page's next step, under the line. */
+  cta?: { label: string; href: string };
   /** The headline; a "|" breaks it onto a second line. */
   heading: string;
   /** What working together means, a few short points. */
   points: { title: string; body: string }[];
 }
 
-const { render = true, eyebrow, heading, points } = Astro.props;
+const { render = true, lead, cta, heading, points } = Astro.props;
 /* How the partnership works, on a light band (Hunter, Nov 6, /primary: "a section somewhere that explains
    how we work, like that we work together directly ... We could even have a light section"): the headline
    on the left, the points in a grid beside it, each a title and a line. */
@@ -23,10 +26,15 @@ const { render = true, eyebrow, heading, points } = Astro.props;
     <Section theme="light" paddingTop="large" paddingBottom="large" class="partner-how">
       <div class="partner-how_grid">
         <div class="partner-how_head" data-reveal>
-          {eyebrow && <p class="partner-how_eyebrow text-style-label">{eyebrow}</p>}
           <h2 class="partner-how_title text-style-h2">
             {heading.split("|").map((line) => <span>{line.trim()}</span>)}
           </h2>
+          {lead && <p class="partner-how_lead text-style-main">{lead}</p>}
+          {cta && (
+            <div class="partner-how_cta">
+              <Button element="link" href={cta.href} target="_blank" rel="noopener">{cta.label}</Button>
+            </div>
+          )}
         </div>
         <ul class="partner-how_points">
           {points.map((p, i) => (
@@ -57,9 +65,13 @@ const { render = true, eyebrow, heading, points } = Astro.props;
       flex-direction: column;
       gap: var(--space-4);
     }
-    .partner-how_eyebrow {
+    .partner-how_lead {
+      max-width: 34ch;
       margin: 0;
-      color: color-mix(in srgb, var(--text) 55%, transparent);
+      color: color-mix(in srgb, var(--text) 72%, transparent);
+    }
+    .partner-how_cta {
+      margin-top: var(--space-2);
     }
     .partner-how_title {
       display: flex;

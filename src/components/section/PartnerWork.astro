@@ -84,6 +84,9 @@ const items = only
       & .marquee_viewport {
         /* room above for the lift, so a hovered tile isn't cut off */
         padding-top: 0.75rem;
+        /* tiles run clean off the edges, no fade (Hunter: no gradient fades) */
+        mask-image: none;
+        -webkit-mask-image: none;
       }
       & .marquee_panel {
         justify-content: flex-start;
