@@ -2,6 +2,7 @@
 import Section from "@/components/wrapper/Section.astro";
 import { WORK } from "@/data/work.js";
 import { projectLink, restLoop } from "@/data/project-link.js";
+import TURN from "@/data/macbook-turn.json";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -26,7 +27,13 @@ const { render = true, heading, lead, pairs } = Astro.props;
    execution"). The pages are Primary's own (the brand book Figma files); the site plays on Kinetic's
    MacBook, rendered head-on in Blender (Hunter: "it can't be a super aggressive angle"), its screen box
    measured from the render (devices.py corners), so the loop sits exactly on the glass. */
-const SCREEN = { left: 6.0606, top: 7.1654, width: 87.8789, height: 65.6093 };
+/* Nov 17 (Hunter): "two rows of the marquee. The top one could go a little bit slower than the bottom one",
+   cut hard at the page edge; and the laptop "can maybe even turn as we scroll down". The laptop is 13 Blender
+   renders, az -24 to 24 degrees in 4 degree steps (src/data/macbook-turn.json, each with its screen's corners
+   as fractions of the frame); the script crossfades the two nearest and lays the loop onto the screen with an
+   affine transform (the camera is orthographic, so a turned screen is an exact parallelogram). Head-on at
+   rest, when the row sits in the middle of the window; nothing pins. */
+const MID = Math.floor(TURN.frames.length / 2);
 const rows = pairs
   .map((p) => ({ p, w: WORK.find((w) => w.slug === p.slug) }))
   .filter((r): r is { p: (typeof pairs)[number]; w: (typeof WORK)[number] } => Boolean(r.w && restLoop(r.w) && r.p.slides.length))
@@ -42,25 +49,29 @@ const rows = pairs
         </h2>
         {lead && <p class="brand-web_lead text-style-main">{lead}</p>}
       </div>
-      <ul class="brand-web_list" data-brand-web>
+      <ul class="brand-web_list" data-brand-web style={`--turn-ratio:${TURN.width / TURN.height}`}>
         {rows.map(({ p, w, loop, link }) => (
           <li class="brand-web_row" data-reveal>
             <div class="brand-web_pair">
               <figure class="brand-web_book" aria-label={`${w.name} brand guidelines by Primary`}>
-                <div class="brand-web_track" style={`--count:${p.slides.length}`}>
-                  {[0, 1].map((copy) => (
-                    <div class="brand-web_set" aria-hidden={copy === 1 ? "true" : undefined}>
-                      {p.slides.map((s) => (
-                        <img class="brand-web_slide" src={s.src} alt={copy === 0 ? s.alt : ""} width="1280" height="720" loading="lazy" decoding="async" />
-                      ))}
-                    </div>
-                  ))}
-                </div>
+                {[p.slides.filter((_, i) => i % 2 === 0), p.slides.filter((_, i) => i % 2 === 1)].map((line, r) => (
+                  <div class:list={["brand-web_track", r === 0 ? "is-slow" : "is-fast"]} style={`--count:${line.length}`}>
+                    {[0, 1].map((copy) => (
+                      <div class="brand-web_set" aria-hidden={copy === 1 ? "true" : undefined}>
+                        {line.map((s) => (
+                          <img class="brand-web_slide" src={s.src} alt={copy === 0 ? s.alt : ""} width="1280" height="720" loading="lazy" decoding="async" />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                ))}
                 <figcaption class="brand-web_tag text-style-label">Brand guidelines by Primary</figcaption>
               </figure>
-              <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`}>
-                <img class="brand-web_mac" src="/images/primary/macbook-front.webp" alt="" width="1600" height="1377" loading="lazy" decoding="async" />
-                <span class="brand-web_screen" style={`left:${SCREEN.left}%;top:${SCREEN.top}%;width:${SCREEN.width}%;height:${SCREEN.height}%`}>
+              <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`} data-turn>
+                {TURN.frames.map((f, i) => (
+                  <img class:list={["brand-web_mac", i === MID && "is-on"]} src={f.src} alt="" width={TURN.width} height={TURN.height} loading={i === MID ? "lazy" : "lazy"} decoding="async" />
+                ))}
+                <span class="brand-web_screen" style={`--q:${JSON.stringify(TURN.frames[MID].q)}`}>
                   <video class="brand-web_video" data-src={loop.src} poster={loop.poster} muted loop playsinline preload="none" aria-hidden="true" />
                 </span>
                 <span class="brand-web_tag brand-web_tag--site text-style-label">Website by Kinetic</span>
@@ -76,6 +87,40 @@ const rows = pairs
     </Section>
   )
 }
+
+<script define:vars={{ TURN }}>
+  // the laptop turns with the row's place in the window, and the site loop stays on its screen
+  const reducedTurn = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const devices = [...document.querySelectorAll("[data-turn]")];
+  const mid = Math.floor(TURN.frames.length / 2);
+  const place = (dev, k) => {
+    const imgs = dev.querySelectorAll(".brand-web_mac");
+    const n = TURN.frames.length, i = Math.max(0, Math.min(n - 1, Math.floor(k))), j = Math.min(n - 1, i + 1), t = Math.max(0, Math.min(1, k - i));
+    imgs.forEach((im, x) => { im.style.opacity = x === i ? "1" : x === j ? String(t) : "0"; });
+    const A = TURN.frames[i].q, B = TURN.frames[j].q, W = dev.clientWidth, H = dev.clientHeight;
+    const q = A.map((p, c) => [(p[0] + (B[c][0] - p[0]) * t) * W, (p[1] + (B[c][1] - p[1]) * t) * H]);
+    const sw = TURN.screen[0], sh = TURN.screen[1], s = dev.querySelector(".brand-web_screen");
+    s.style.width = sw + "px"; s.style.height = sh + "px";
+    s.style.transform = `matrix(${(q[1][0] - q[0][0]) / sw},${(q[1][1] - q[0][1]) / sw},${(q[3][0] - q[0][0]) / sh},${(q[3][1] - q[0][1]) / sh},${q[0][0]},${q[0][1]})`;
+  };
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const vh = innerHeight;
+    for (const dev of devices) {
+      const r = dev.getBoundingClientRect();
+      if (r.bottom < -100 || r.top > vh + 100) continue;
+      // -1 entering at the bottom, 0 in the middle, 1 leaving at the top
+      const u = reducedTurn ? 0 : Math.max(-1, Math.min(1, ((vh / 2) - (r.top + r.height / 2)) / (vh / 2 + r.height / 2)));
+      place(dev, mid + u * mid);
+    }
+  };
+  const ask = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+  addEventListener("scroll", ask, { passive: true });
+  addEventListener("resize", ask);
+  devices.forEach((d) => new ResizeObserver(ask).observe(d));
+  update();
+</script>
 
 <script>
   // each row plays (its pages drifting, its site looping) while it is on screen, and rests when it isn't
@@ -142,25 +187,38 @@ const rows = pairs
         grid-template-columns: 1fr;
       }
     }
-    /* the brand book: its pages run left to right, slowly, edge to edge with no fade */
+    /* the brand book: two rows of its pages run left to right, the top one slower, cut hard at the page's
+       left edge and at the laptop's side, no rounding and no fade */
     .brand-web_book {
       position: relative;
-      height: calc(var(--row-h) * 0.62);
-      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      height: calc(var(--row-h) * 0.82);
+      margin: 0 0 0 calc(-1 * var(--site-margin, 1.5rem));
       overflow: hidden;
-      border-radius: var(--radius-media);
       @media (width < 48rem) {
         height: auto;
-        aspect-ratio: 16 / 7;
+        margin-right: calc(-1 * var(--site-margin, 1.5rem));
       }
     }
     .brand-web_track {
       display: flex;
+      flex: 1 1 0;
+      min-height: 0;
       width: max-content;
-      height: 100%;
-      /* about seven seconds a page */
-      animation: brand-web-drift calc(var(--count) * 7s) linear infinite;
+      animation: brand-web-drift calc(var(--count) * var(--per)) linear infinite;
       animation-play-state: paused;
+      @media (width < 48rem) {
+        flex: none;
+        height: 9rem;
+      }
+    }
+    .brand-web_track.is-slow {
+      --per: 11s;
+    }
+    .brand-web_track.is-fast {
+      --per: 7s;
     }
     .brand-web_row.is-playing .brand-web_track {
       animation-play-state: running;
@@ -176,8 +234,6 @@ const rows = pairs
       height: 100%;
       width: auto;
       aspect-ratio: 16 / 9;
-      border-radius: calc(var(--radius-media) * 0.6);
-      box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
     }
     /* left to right: the second copy starts where the first sits, so the loop has no seam */
     @keyframes brand-web-drift {
@@ -191,7 +247,7 @@ const rows = pairs
     .brand-web_tag {
       position: absolute;
       top: var(--space-3);
-      left: var(--space-3);
+      left: calc(var(--site-margin, 1.5rem) + var(--space-3));
       z-index: 1;
       padding: 0.3rem 0.6rem;
       border-radius: 99rem;
@@ -203,26 +259,33 @@ const rows = pairs
       right: 0;
       top: 0;
     }
-    /* the laptop, head-on, with the site playing on its glass */
+    /* the laptop: its frames stacked, the script showing the one for this turn */
     .brand-web_device {
       position: relative;
       display: block;
       height: var(--row-h);
-      aspect-ratio: 1600 / 1377;
+      aspect-ratio: var(--turn-ratio, 1.333);
       @media (width < 48rem) {
         height: auto;
         width: 100%;
       }
     }
     .brand-web_mac {
-      display: block;
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
+      opacity: 0;
+    }
+    .brand-web_mac.is-on {
+      opacity: 1;
     }
     .brand-web_screen {
       position: absolute;
+      top: 0;
+      left: 0;
       overflow: hidden;
-      border-radius: 0.4% / 0.6%;
+      transform-origin: 0 0;
       background: #111;
     }
     .brand-web_video {
@@ -249,6 +312,9 @@ const rows = pairs
       .brand-web_track {
         animation: none;
         transform: translateX(-25%);
+      }
+      .brand-web_track.is-fast {
+        transform: translateX(-10%);
       }
     }
   }
