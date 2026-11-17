@@ -40,3 +40,4 @@ public/videos/
 
 # experiment recordings (scripts/capture-experiments.mjs)
 scripts/.captures/
+dist-drafts/

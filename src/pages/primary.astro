@@ -5,6 +5,7 @@ import PartnerWork from "@/components/section/PartnerWork.astro";
 import PartnerBrandToWeb from "@/components/section/PartnerBrandToWeb.astro";
 import PartnerProcess from "@/components/section/PartnerProcess.astro";
 import PartnerClose from "@/components/section/PartnerClose.astro";
+import PartnerQuotes from "@/components/section/PartnerQuotes.astro";
 import WorkWheel from "@/components/section/WorkWheel.astro";
 import { HOME } from "@/data/work.js";
 import primaryLogo from "@/assets/clients/primary.svg?raw";
@@ -119,6 +120,8 @@ const POINTS = [
     heading="Put your Primary brand | out into the world"
     lead="Primary is a world-class branding agency. Kinetic has deep expertise in taking the fundamentals of their work and bringing it into the world with motion and interactivity, in a custom website live four weeks after your sprint."
   />
+  {/* client words under the hero; only approved quotes render (src/data/testimonials.json) */}
+  <PartnerQuotes page="primary" />
   <PartnerWork only={PRIMARY} credits label="Websites for Primary brands" />
   <PartnerBrandToWeb
     heading="The brand book, | brought to life"

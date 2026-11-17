@@ -1,0 +1,115 @@
+---
+import DATA from "@/data/testimonials.json";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Which page's quotes (each entry lists the pages it may appear on). */
+  page: string;
+}
+
+const { render = true, page } = Astro.props;
+/* Client words in one line, running slowly under the hero (Hunter, Nov 17: a marquee of testimonials below
+   a hero). They come from src/data/testimonials.json, and only approved ones render: a preview build with
+   PUBLIC_DRAFT_QUOTES=1 also shows unapproved ones, each marked Draft, so the placement can be judged before
+   anyone has said yes. Confidential clients never show here. Text only, no cards; the line is cut hard at
+   the page's edges, no fade; it pauses under the pointer. */
+const drafts = import.meta.env.PUBLIC_DRAFT_QUOTES === "1";
+type Q = { id: string; quote: string; name: string; role?: string; company: string; approved: boolean; confidential?: boolean; pages: string[] };
+const quotes = (DATA.quotes as Q[]).filter((q) => q.pages.includes(page) && !q.confidential && (q.approved || drafts));
+const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
+---
+
+{
+  render && quotes.length > 0 && (
+    <section class="quotes" aria-label="What clients say">
+      <div class="quotes_track" style={`--count:${quotes.length}`}>
+        {[0, 1].map((copy) => (
+          <ul class="quotes_set" aria-hidden={copy === 1 ? "true" : undefined}>
+            {quotes.map((q) => (
+              <li class="quotes_item">
+                <blockquote class="quotes_quote text-style-large">{q.quote}</blockquote>
+                <p class="quotes_by text-style-label">
+                  {by(q)}
+                  {!q.approved && <span class="quotes_draft">Draft, not approved</span>}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .quotes {
+      width: 100%;
+      overflow: hidden;
+      padding-block: var(--space-6);
+      border-block: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+    }
+    .quotes_track {
+      display: flex;
+      width: max-content;
+      /* about nine seconds a quote, right to left */
+      animation: quotes-run calc(var(--count) * 9s) linear infinite;
+    }
+    .quotes:hover .quotes_track {
+      animation-play-state: paused;
+    }
+    .quotes_set {
+      display: flex;
+      gap: clamp(2.5rem, 6vw, 6rem);
+      margin: 0;
+      padding: 0 clamp(2.5rem, 6vw, 6rem) 0 0;
+      list-style: none;
+    }
+    .quotes_item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      width: clamp(17rem, 34vw, 30rem);
+    }
+    .quotes_quote {
+      margin: 0;
+      text-wrap: pretty;
+    }
+    .quotes_quote::before {
+      content: "\201C";
+    }
+    .quotes_quote::after {
+      content: "\201D";
+    }
+    .quotes_by {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 60%, transparent);
+    }
+    .quotes_draft {
+      padding: 0.05rem 0.45rem;
+      border-radius: 99rem;
+      background: #c8ff54;
+      color: #111;
+    }
+    @keyframes quotes-run {
+      from {
+        transform: translateX(0);
+      }
+      to {
+        transform: translateX(-50%);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .quotes_track {
+        animation: none;
+      }
+      .quotes {
+        overflow-x: auto;
+      }
+    }
+  }
+</style>

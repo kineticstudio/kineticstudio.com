@@ -1,0 +1,128 @@
+{
+  "_about": "Client words about Kinetic, collected from Slack and Gmail by the Kinetic Assistant hub (Nov 17 2026). None were written as testimonials. A quote renders on the site only when approved is true, and approval means Hunter has the client's OK on the exact words and the attribution (name, role, company, logo). Builds with PUBLIC_DRAFT_QUOTES=1 (the preview only) also show unapproved ones, marked as drafts; the production build never sets it. The hub tracks asking and approval on the board (clients/<slug>.testimonial). confidential: true means the client is confidential and must never be shown, even in a draft preview, without their explicit OK.",
+  "quotes": [
+    {
+      "id": "ramble-jessica-lo",
+      "quote": "It's been incredible how fast you were able to stitch these all together, and +1 to the sphere effect!! I love how well it represents you get immersed in a world of multiple communities on stage!",
+      "name": "Jessica Lo",
+      "role": "",
+      "company": "Ramble",
+      "source": "Slack #ramble, Sep 2 2026",
+      "primaryBrand": true,
+      "approved": false,
+      "pages": ["primary", "home"]
+    },
+    {
+      "id": "dorm-room-fund-madi-jacox",
+      "quote": "The feedback Molly and I are getting from co-investors, LPs, press, founders ... People are blown away.",
+      "name": "Madi Jacox",
+      "role": "",
+      "company": "Dorm Room Fund",
+      "source": "Gmail, Oct 2 2026",
+      "approved": false,
+      "pages": ["primary", "home"]
+    },
+    {
+      "id": "pave-russell-abdo",
+      "quote": "I've loved working with you... I'm already SO impressed about the progress we're making.",
+      "name": "Russell Abdo",
+      "role": "",
+      "company": "Pave",
+      "source": "Slack DM, Jul 15 2026",
+      "approved": false,
+      "pages": ["primary", "home"]
+    },
+    {
+      "id": "new-era-stephanie-petricca",
+      "quote": "Appreciate all the work on the back-end on this one. Everything turned out great.",
+      "name": "Stephanie Petricca",
+      "role": "",
+      "company": "New Era",
+      "source": "Gmail, Oct 30 2026",
+      "approved": false,
+      "pages": ["primary", "home"]
+    },
+    {
+      "id": "wispr-kim-stoner",
+      "quote": "The wireframe and comment section is a game changer.",
+      "name": "Kim Stoner",
+      "role": "",
+      "company": "Wispr Flow",
+      "source": "Slack, Sep 15 2026 (about the Studio tool)",
+      "approved": false,
+      "pages": ["primary", "home"]
+    },
+    {
+      "id": "moses-walker-john-moses",
+      "quote": "Very epic work. I love that 3D model.",
+      "name": "Walker John Moses",
+      "role": "",
+      "company": "moses",
+      "source": "Slack, Nov 13 2026",
+      "approved": false,
+      "pages": ["primary", "home"]
+    },
+    {
+      "id": "elio-ron-litvak",
+      "quote": "The loading animations are incredible!",
+      "name": "Ron Litvak",
+      "role": "",
+      "company": "Elio",
+      "source": "Slack, Sep 26 2026",
+      "approved": false,
+      "pages": ["primary", "home"]
+    },
+    {
+      "id": "natural-capital-kira-mccroden",
+      "quote": "We are both super excited and loving the direction. Particularly the gamified logo.",
+      "name": "Kira McCroden",
+      "role": "",
+      "company": "Natural Capital",
+      "source": "Gmail, Nov 13 2026",
+      "approved": false,
+      "pages": ["home"]
+    },
+    {
+      "id": "goodside-jessica-strelioff",
+      "quote": "What you are doing with AI is incredible. What you showed me a few weeks ago is just so good.",
+      "name": "Jessica Strelioff",
+      "role": "",
+      "company": "Goodside",
+      "source": "Slack DM, Oct 2 2026",
+      "approved": false,
+      "pages": ["home"]
+    },
+    {
+      "id": "pave-teresa-cullen",
+      "quote": "Incredible work as always, Hunter!",
+      "name": "Teresa Cullen",
+      "role": "",
+      "company": "Pave",
+      "source": "Slack, Sep 24 2026",
+      "approved": false,
+      "pages": ["home"]
+    },
+    {
+      "id": "overland-sophia-umansky",
+      "quote": "Incredible! You are the best, thank you!",
+      "name": "Sophia Umansky",
+      "role": "",
+      "company": "Overland",
+      "source": "Slack, Sep 11 2026",
+      "approved": false,
+      "pages": ["home"]
+    },
+    {
+      "id": "auxia-meyli-doersch",
+      "quote": "How the heck did you do this so quickly!? Best retainer money I have ever spent.",
+      "name": "Meyli Doersch",
+      "role": "",
+      "company": "Auxia",
+      "source": "Slack DM, Nov 4 2026",
+      "confidential": true,
+      "note": "Auxia is a fully confidential client: never shown, even in a draft preview, without Auxia's explicit OK to be named.",
+      "approved": false,
+      "pages": []
+    }
+  ]
+}
