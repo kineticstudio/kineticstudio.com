@@ -1,6 +1,8 @@
 ---
 import Section from "@/components/wrapper/Section.astro";
 import kineticRaw from "@/assets/brand/logo.svg?raw";
+import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
+import ClientLogos from "@/components/content/ClientLogos.astro";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -13,9 +15,12 @@ interface Props {
   heading: string;
   /** The line under it. */
   lead: string;
+  /** The studio's awards and client logos under the line (Hunter, Nov 17, /primary: "put the awards and
+      everything at the top"). */
+  pedigree?: boolean;
 }
 
-const { render = true, partnerLogo, partnerName, heading, lead } = Astro.props;
+const { render = true, partnerLogo, partnerName, heading, lead, pedigree = false } = Astro.props;
 /* A partner page's opening (Hunter, Nov 6, /primary: "Maybe we show a lockup of primary × Kinetic"):
    the partner's own wordmark, a times sign, and Kinetic's logo, both in their real files and at one
    cap height; then the headline and one line under it. */
@@ -40,6 +45,12 @@ const clean = (svg: string, label: string) =>
           {heading.split("|").map((line) => <span class="partner-hero_line">{line.trim()}</span>)}
         </h1>
         <p class="partner-hero_lead text-style-large" data-reveal style="--reveal-delay:0.16s">{lead}</p>
+        {pedigree && (
+          <div class="partner-hero_pedigree" data-reveal style="--reveal-delay:0.24s">
+            <AwardsLaurels compact />
+            <ClientLogos class="partner-hero_logos" />
+          </div>
+        )}
       </div>
     </Section>
   )
@@ -92,6 +103,21 @@ const clean = (svg: string, label: string) =>
       display: flex;
       flex-direction: column;
       margin: 0;
+    }
+    .partner-hero_pedigree {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-5);
+      width: 100%;
+      margin-top: var(--space-4);
+    }
+    .partner-hero_logos {
+      max-width: none;
+      width: 100%;
+      & .logos_item {
+        opacity: 0.6;
+      }
     }
     .partner-hero_lead {
       max-width: 36ch;

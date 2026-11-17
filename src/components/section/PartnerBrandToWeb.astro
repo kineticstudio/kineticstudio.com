@@ -2,7 +2,7 @@
 import Section from "@/components/wrapper/Section.astro";
 import { WORK } from "@/data/work.js";
 import { projectLink, restLoop } from "@/data/project-link.js";
-import TURN from "@/data/macbook-turn.json";
+import MAC from "@/data/macbook-angle.json";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -28,12 +28,11 @@ const { render = true, heading, lead, pairs } = Astro.props;
    MacBook, rendered head-on in Blender (Hunter: "it can't be a super aggressive angle"), its screen box
    measured from the render (devices.py corners), so the loop sits exactly on the glass. */
 /* Nov 17 (Hunter): "two rows of the marquee. The top one could go a little bit slower than the bottom one",
-   cut hard at the page edge; and the laptop "can maybe even turn as we scroll down". The laptop is 13 Blender
-   renders, az -24 to 24 degrees in 4 degree steps (src/data/macbook-turn.json, each with its screen's corners
-   as fractions of the frame); the script crossfades the two nearest and lays the loop onto the screen with an
-   affine transform (the camera is orthographic, so a turned screen is an exact parallelogram). Head-on at
-   rest, when the row sits in the middle of the window; nothing pins. */
-const MID = Math.floor(TURN.frames.length / 2);
+   cut hard at the page edge. The laptop is one Blender render (devices.py, az -12, el 8), turned a little
+   toward the pages (Hunter: "just render it at a slightly sideways angle for now", after a scroll-driven
+   turn), with its screen's corners as fractions of the frame (src/data/macbook-angle.json); the script lays
+   the loop onto the screen with an affine transform (an orthographic camera turns the screen into an exact
+   parallelogram). */
 const rows = pairs
   .map((p) => ({ p, w: WORK.find((w) => w.slug === p.slug) }))
   .filter((r): r is { p: (typeof pairs)[number]; w: (typeof WORK)[number] } => Boolean(r.w && restLoop(r.w) && r.p.slides.length))
@@ -49,7 +48,7 @@ const rows = pairs
         </h2>
         {lead && <p class="brand-web_lead text-style-main">{lead}</p>}
       </div>
-      <ul class="brand-web_list" data-brand-web style={`--turn-ratio:${TURN.width / TURN.height}`}>
+      <ul class="brand-web_list" data-brand-web style={`--turn-ratio:${MAC.width / MAC.height}`}>
         {rows.map(({ p, w, loop, link }) => (
           <li class="brand-web_row" data-reveal>
             <div class="brand-web_pair">
@@ -67,11 +66,9 @@ const rows = pairs
                 ))}
                 <figcaption class="brand-web_tag text-style-label">Brand guidelines by Primary</figcaption>
               </figure>
-              <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`} data-turn>
-                {TURN.frames.map((f, i) => (
-                  <img class:list={["brand-web_mac", i === MID && "is-on"]} src={f.src} alt="" width={TURN.width} height={TURN.height} loading={i === MID ? "lazy" : "lazy"} decoding="async" />
-                ))}
-                <span class="brand-web_screen" style={`--q:${JSON.stringify(TURN.frames[MID].q)}`}>
+              <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`} data-mac>
+                <img class="brand-web_mac" src={MAC.src} alt="" width={MAC.width} height={MAC.height} loading="lazy" decoding="async" />
+                <span class="brand-web_screen">
                   <video class="brand-web_video" data-src={loop.src} poster={loop.poster} muted loop playsinline preload="none" aria-hidden="true" />
                 </span>
                 <span class="brand-web_tag brand-web_tag--site text-style-label">Website by Kinetic</span>
@@ -88,38 +85,16 @@ const rows = pairs
   )
 }
 
-<script define:vars={{ TURN }}>
-  // the laptop turns with the row's place in the window, and the site loop stays on its screen
-  const reducedTurn = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const devices = [...document.querySelectorAll("[data-turn]")];
-  const mid = Math.floor(TURN.frames.length / 2);
-  const place = (dev, k) => {
-    const imgs = dev.querySelectorAll(".brand-web_mac");
-    const n = TURN.frames.length, i = Math.max(0, Math.min(n - 1, Math.floor(k))), j = Math.min(n - 1, i + 1), t = Math.max(0, Math.min(1, k - i));
-    imgs.forEach((im, x) => { im.style.opacity = x === i ? "1" : x === j ? String(t) : "0"; });
-    const A = TURN.frames[i].q, B = TURN.frames[j].q, W = dev.clientWidth, H = dev.clientHeight;
-    const q = A.map((p, c) => [(p[0] + (B[c][0] - p[0]) * t) * W, (p[1] + (B[c][1] - p[1]) * t) * H]);
-    const sw = TURN.screen[0], sh = TURN.screen[1], s = dev.querySelector(".brand-web_screen");
-    s.style.width = sw + "px"; s.style.height = sh + "px";
+<script define:vars={{ MAC }}>
+  // the site loop laid onto the laptop's screen, kept there as the layout resizes
+  const fit = (dev) => {
+    const W = dev.clientWidth, H = dev.clientHeight, [sw, sh] = MAC.screen, s = dev.querySelector(".brand-web_screen");
+    const q = MAC.q.map(([x, y]) => [x * W, y * H]);
+    s.style.width = sw + "px";
+    s.style.height = sh + "px";
     s.style.transform = `matrix(${(q[1][0] - q[0][0]) / sw},${(q[1][1] - q[0][1]) / sw},${(q[3][0] - q[0][0]) / sh},${(q[3][1] - q[0][1]) / sh},${q[0][0]},${q[0][1]})`;
   };
-  let ticking = false;
-  const update = () => {
-    ticking = false;
-    const vh = innerHeight;
-    for (const dev of devices) {
-      const r = dev.getBoundingClientRect();
-      if (r.bottom < -100 || r.top > vh + 100) continue;
-      // -1 entering at the bottom, 0 in the middle, 1 leaving at the top
-      const u = reducedTurn ? 0 : Math.max(-1, Math.min(1, ((vh / 2) - (r.top + r.height / 2)) / (vh / 2 + r.height / 2)));
-      place(dev, mid + u * mid);
-    }
-  };
-  const ask = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
-  addEventListener("scroll", ask, { passive: true });
-  addEventListener("resize", ask);
-  devices.forEach((d) => new ResizeObserver(ask).observe(d));
-  update();
+  document.querySelectorAll("[data-mac]").forEach((dev) => { new ResizeObserver(() => fit(dev)).observe(dev); fit(dev); });
 </script>
 
 <script>
@@ -259,7 +234,7 @@ const rows = pairs
       right: 0;
       top: 0;
     }
-    /* the laptop: its frames stacked, the script showing the one for this turn */
+    /* the laptop, a little sideways, with the site playing on its screen */
     .brand-web_device {
       position: relative;
       display: block;
@@ -275,10 +250,6 @@ const rows = pairs
       inset: 0;
       width: 100%;
       height: 100%;
-      opacity: 0;
-    }
-    .brand-web_mac.is-on {
-      opacity: 1;
     }
     .brand-web_screen {
       position: absolute;

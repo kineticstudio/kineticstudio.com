@@ -23,41 +23,46 @@ interface Props {
 
 const { render = true, heading, lead, columns, lanes, points = [] } = Astro.props;
 /* How the two studios hand off, week by week (Nick, Nov 9: "some clear process and timeline stuff";
-   Hunter, Nov 9: four weeks of web, "a much cleaner, rounder number"). A plain timeline: one lane for
-   Primary, one for Kinetic, each bar a phase; on phones each bar is a row with its weeks named. Nothing
-   moves with the scroll. */
-const cols = columns.length;
+   Hunter, Nov 9: four weeks of web). Nov 17 (Hunter): dark, and vertical "so you see the days kind of stack
+   up, and then the ideas kind of bleed off to the right with Kinetic": the weeks run down the left, Primary
+   has its own column, and Kinetic's column runs off the page's right edge. The particle script reads each
+   bar's box, so it works in any layout. Nothing moves with the scroll. */
+const rows = columns.length;
+const partner = lanes.find((l) => l.kind === "partner");
+const kinetic = lanes.find((l) => l.kind === "kinetic");
 ---
 
 {
   render && (
-    <Section theme="light" paddingTop="large" paddingBottom="large" class="process" gap="0">
+    <Section theme="dark" paddingTop="large" paddingBottom="large" class="process" gap="0">
       <div class="process_head" data-reveal>
         <h2 class="process_title text-style-h2">
           {heading.split("|").map((line) => <span>{line.trim()}</span>)}
         </h2>
         {lead && <p class="process_lead text-style-main">{lead}</p>}
       </div>
-      <div class="process_chart" style={`--cols:${cols}`} data-process>
+      <div class="process_chart" style={`--rows:${rows}`} data-process>
         <canvas class="process_particles" aria-hidden="true" />
-        <div class="process_axis" aria-hidden="true">
-          <span />
-          {columns.map((c) => <span class="process_col text-style-label">{c}</span>)}
-        </div>
-        {lanes.map((lane) => (
-          <div class:list={["process_lane", `is-${lane.kind}`]}>
-            <p class="process_lane-name text-style-h5">{lane.name}</p>
-            <ol class="process_bars">
-              {lane.bars.map((b) => (
-                <li class:list={["process_bar", b.soft && "is-soft"]} style={`--from:${b.from};--to:${b.to + 1}`} data-bar={lane.kind}>
-                  <span class="process_when text-style-label">{b.when}</span>
-                  <span class="process_bar-title text-style-h5">{b.title}</span>
-                  <span class="process_bar-note text-style-label">{b.note}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
+        <span class="process_lane-name text-style-h5" style="grid-column:2;grid-row:1">{partner?.name}</span>
+        <span class="process_lane-name text-style-h5" style="grid-column:3;grid-row:1">{kinetic?.name}</span>
+        {columns.map((c, i) => (
+          <>
+            <span class="process_rule" style={`grid-row:${i + 2}`} aria-hidden="true" />
+            <span class="process_week text-style-label" style={`grid-row:${i + 2}`}>{c}</span>
+          </>
         ))}
+        {[partner, kinetic].map((lane, col) =>
+          lane?.bars.map((b) => (
+            <div
+              class:list={["process_bar", `is-${lane.kind}`, b.soft && "is-soft"]}
+              style={`grid-column:${col + 2};grid-row:${b.from + 1} / ${b.to + 2}`}
+              data-bar={lane.kind}
+            >
+              <span class="process_bar-title text-style-h5">{b.title}</span>
+              <span class="process_bar-note text-style-label">{b.note}</span>
+            </div>
+          )),
+        )}
       </div>
       {points.length > 0 && (
         <ul class="process_points">
@@ -99,7 +104,7 @@ const cols = columns.length;
     const size = () => { const r = chart.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height; canvas.width = W * dpr; canvas.height = H * dpr; };
     new ResizeObserver(size).observe(chart); size();
     // how many particles each Kinetic bar takes to fill, by its area
-    const need = targets.map((t) => { const r = rect(t); return Math.max(24, Math.round((r.w * r.h) / 260)); });
+    const need = targets.map((t) => { const r = rect(t); return Math.min(70, Math.max(26, Math.round((r.w * r.h) / 700))); });
     const got = targets.map(() => 0);
     const end = targets.map((t) => { const c = getComputedStyle(t).backgroundColor; const a = /rgba/.test(c) ? 0.55 : 1; return [...rgb(c), a]; });
     type P = { t: number; dur: number; sx: number; sy: number; cx: number; cy: number; ex: number; ey: number; k: number; r: number; ambient: boolean };
@@ -119,7 +124,7 @@ const cols = columns.length;
       if (phase === 0) { setFill(source, ease(Math.min(1, phaseT / 900))); if (phaseT > 1000) { phase = 1; phaseT = 0; } }
       else if (phase === 1) {
         // stream into the current bar until it has what it needs in flight, then move to the next
-        acc += dt * 0.14;
+        acc += dt * 0.12;
         while (acc >= 1 && cur < targets.length) { acc -= 1; spawn(cur); if (parts.filter((p) => !p.ambient && p.k === cur).length + got[cur] >= need[cur]) cur++; }
         if (cur >= targets.length && !parts.some((p) => !p.ambient)) phase = 2;
       } else {
@@ -169,39 +174,36 @@ const cols = columns.length;
       margin: 0;
       color: color-mix(in srgb, var(--text) 72%, transparent);
     }
+    /* weeks down the left, Primary's column, then Kinetic's, which runs off the right edge of the page */
     .process_chart {
-      --label-w: 8rem;
+      --label-w: 7rem;
+      --row-h: clamp(5rem, 9vw, 7.5rem);
       position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-3);
-      width: 100%;
-    }
-    .process_axis,
-    .process_lane {
       display: grid;
-      grid-template-columns: var(--label-w) minmax(0, 1fr);
-      align-items: stretch;
-    }
-    .process_axis {
-      grid-template-columns: var(--label-w) repeat(var(--cols), minmax(0, 1fr));
-      padding-bottom: var(--space-3);
-      border-bottom: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
-    }
-    .process_col {
-      color: color-mix(in srgb, var(--text) 55%, transparent);
+      grid-template-columns: var(--label-w) minmax(0, 1fr) minmax(0, 1.7fr);
+      grid-template-rows: auto repeat(var(--rows), var(--row-h));
+      column-gap: 0.5rem;
+      width: calc(100% + var(--site-margin, 1.5rem));
+      margin-right: calc(-1 * var(--site-margin, 1.5rem));
+      @media (width < 48rem) {
+        --label-w: 3.5rem;
+        --row-h: 6.5rem;
+        grid-template-columns: var(--label-w) minmax(0, 1fr) minmax(0, 1.3fr);
+        column-gap: 0.35rem;
+      }
     }
     .process_lane-name {
       margin: 0;
-      padding-top: var(--space-3);
+      padding-bottom: var(--space-3);
     }
-    .process_bars {
-      display: grid;
-      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-      gap: 0.4rem;
-      margin: 0;
-      padding: 0;
-      list-style: none;
+    .process_rule {
+      grid-column: 1 / -1;
+      border-top: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+    }
+    .process_week {
+      grid-column: 1;
+      padding-top: var(--space-3);
+      color: color-mix(in srgb, var(--text) 55%, transparent);
     }
     .process_particles {
       position: absolute;
@@ -215,65 +217,42 @@ const cols = columns.length;
        reduced motion it is simply full */
     .process_bar {
       --fill: 1;
-      clip-path: inset(0 calc((1 - var(--fill)) * 100%) 0 0 round var(--radius-media));
-      grid-column: var(--from) / var(--to);
+      position: relative;
+      z-index: 1;
       display: flex;
       flex-direction: column;
       gap: 0.35rem;
-      min-height: 7.5rem;
+      margin: 0.3rem 0;
       padding: var(--space-3);
       border-radius: var(--radius-media);
+      clip-path: inset(0 calc((1 - var(--fill)) * 100%) 0 0 round var(--radius-media));
     }
-    .process_lane.is-partner .process_bar {
+    .process_bar.is-partner {
       background: #c8ff54; /* Primary's neon, from primary.studio */
       color: #111;
     }
-    .process_lane.is-kinetic .process_bar {
+    .process_bar.is-kinetic {
       background: var(--text);
       color: var(--background);
+      /* off the page's right edge: square there, no rounding */
+      border-radius: var(--radius-media) 0 0 var(--radius-media);
+      clip-path: inset(0 calc((1 - var(--fill)) * 100%) 0 0 round var(--radius-media) 0 0 var(--radius-media));
     }
-    .process_lane.is-kinetic .process_bar.is-soft {
-      background: color-mix(in srgb, var(--text) 12%, transparent);
+    .process_bar.is-kinetic.is-soft {
+      background: color-mix(in srgb, var(--text) 16%, var(--background));
       color: var(--text);
     }
     .process_bar-title {
       margin: 0;
+    }
+    .process_bar-note {
+      opacity: 0.72;
     }
     .process_chart.is-armed .process_bar {
       --fill: 0;
     }
     .process_chart.is-armed .process_bar > * {
       opacity: clamp(0, calc((var(--fill) - 0.6) * 3), 1);
-    }
-    .process_bar-note {
-      opacity: 0.72;
-    }
-    /* the weeks are read off the axis on wide screens; on phones each bar names its own */
-    .process_when {
-      display: none;
-    }
-    @media (width < 48rem) {
-      .process_axis {
-        display: none;
-      }
-      .process_lane {
-        grid-template-columns: 1fr;
-        gap: var(--space-3);
-      }
-      .process_lane-name {
-        padding-top: var(--space-4);
-      }
-      .process_bars {
-        grid-template-columns: 1fr;
-      }
-      .process_bar {
-        grid-column: auto;
-        min-height: 0;
-      }
-      .process_when {
-        display: block;
-        opacity: 0.72;
-      }
     }
     .process_points {
       display: grid;

@@ -23,9 +23,11 @@ interface Props {
   credits?: boolean;
   /** Every tile rests on its loop, no live 3D card on hover (just a small lift) and no particles (/primary). */
   simple?: boolean;
+  /** Leave the awards and logos out of the header (on /primary they sit in the hero, Nov 17). */
+  bare?: boolean;
 }
 
-const { render = true, heading = "Captivating websites that | tell compelling stories", rows = 8, only, credits = false, simple = false } = Astro.props;
+const { render = true, heading = "Captivating websites that | tell compelling stories", rows = 8, only, credits = false, simple = false, bare = false } = Astro.props;
 const media = MEDIA as Record<string, { w: number; h: number; ground: string; video: boolean }>;
 const pool = only
   ? only.map((slug) => WORK.find((w) => w.slug === slug)).filter((w): w is (typeof WORK)[number] => Boolean(w && media[w.cover]))
@@ -124,8 +126,8 @@ const EAGER = 0;
               </span>
             ))}
           </h1>
-          <AwardsLaurels compact class="wheel_awards" />
-          <ClientLogos class="wheel_logos" />
+          {!bare && <AwardsLaurels compact class="wheel_awards" />}
+          {!bare && <ClientLogos class="wheel_logos" />}
         </div>
       </div>
     </section>
