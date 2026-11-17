@@ -7,8 +7,8 @@ import MAC from "@/data/macbook-angle.json";
 interface Props {
   /** Set to `false` to omit the component. */
   render?: boolean;
-  /** The headline; a "|" breaks it onto a second line. */
-  heading: string;
+  /** The headline; a "|" breaks it onto a second line. None on /primary, which goes straight into the rows. */
+  heading?: string;
   /** A line under the headline. */
   lead?: string;
   /** Each pair: pages of the partner's brand guidelines, then the site we built from them. */
@@ -24,32 +24,37 @@ const { render = true, heading, lead, pairs } = Astro.props;
 /* Brand to website (Hunter, Nov 17: "a handful of the brand guidelines that are essentially a 16:9 static
    PDF that Primary sends over ... and then you see a looped version of the website on the right"). The
    pages are Primary's own (the brand book Figma files); the site plays on Kinetic's MacBook, a Blender
-   render (devices.py, el 8) with its screen's corners as fractions of the frame (src/data/macbook-angle.json),
-   so the loop sits exactly on the glass.
-   Later on Nov 17 (Hunter): the laptops turn to the left (az +12), bigger, the rows taller, no "Website
-   by Kinetic" tag or industry; and the pages ride a barrel: "they came in from the left, but they were
-   closer to us the more on the left they were, and then they got pulled into the website", going "all
-   the way behind the screen of the laptop". Each row's pages travel a curve in depth (a quarter of an
-   ellipse seen from inside): near and facing us at the page's left edge, turning and shrinking as they
-   run right, and slipping behind the laptop's screen. Two lines of pages, the top one slower. */
+   render (devices.py, az +12 el 8: turned left, toward the pages) with its screen's corners as fractions of
+   the frame (src/data/macbook-angle.json), so the loop sits on the glass, inset from the screen's edge and
+   rounded at the corners like the real display.
+   The pages ride a barrel (Hunter, Nov 17: "skew the more they are to the left, and they shouldn't overlap,
+   kind of like what we do with the hero"; "blurry on the left as well, maybe with a lens effect"): the
+   Playground's projection on one axis, the barrel's axis through the laptop's screen, so a page at the
+   screen is at true size and the further left, the nearer and more stretched; spaced evenly round it, so
+   they never overlap; two lines, the top one slower, running in behind the screen.
+   The section goes from light into dark toward its bottom right, the neon glowing on the edge, like the
+   Primary proposal's cover ("add in the gradient and then go into dark mode in the bottom right"), into
+   the dark timeline below. Every dial is in src/data/brand-web-look.js, with Params on the page (P). */
 const rows = pairs
   .map((p) => ({ p, w: WORK.find((w) => w.slug === p.slug) }))
   .filter((r): r is { p: (typeof pairs)[number]; w: (typeof WORK)[number] } => Boolean(r.w && restLoop(r.w) && r.p.slides.length))
-  .map(({ p, w }) => ({ p, w, loop: restLoop(w)!, link: projectLink(w) }));
+  .map(({ p, w }) => ({ p, w, link: projectLink(w) }));
 ---
 
 {
   render && rows.length > 0 && (
-    <Section paddingTop="large" paddingBottom="large" class="brand-web" gap="0">
-      <div class="brand-web_head" data-reveal>
-        <h2 class="brand-web_title text-style-h2">
-          {heading.split("|").map((line) => <span>{line.trim()}</span>)}
-        </h2>
-        {lead && <p class="brand-web_lead text-style-main">{lead}</p>}
-      </div>
-      <ul class="brand-web_list" data-brand-web style={`--mac-ratio:${MAC.width / MAC.height}`}>
-        {rows.map(({ p, w, loop, link }) => (
-          <li class="brand-web_row" data-reveal>
+    <Section paddingTop={heading ? "large" : "small"} paddingBottom="large" class="brand-web" gap="0" data-brand-web-section>
+      {heading && (
+        <div class="brand-web_head" data-reveal>
+          <h2 class="brand-web_title text-style-h2">
+            {heading.split("|").map((line) => <span>{line.trim()}</span>)}
+          </h2>
+          {lead && <p class="brand-web_lead text-style-main">{lead}</p>}
+        </div>
+      )}
+      <ul class="brand-web_list" style={`--mac-ratio:${MAC.width / MAC.height}`}>
+        {rows.map(({ p, w, link }) => (
+          <li class="brand-web_row">
             <div class="brand-web_pair">
               <figure class="brand-web_book" aria-label={`${w.name} brand guidelines by Primary`} data-book>
                 {[p.slides.filter((_, i) => i % 2 === 0), p.slides.filter((_, i) => i % 2 === 1)].map((line, r) => (
@@ -68,7 +73,7 @@ const rows = pairs
               <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`} data-mac>
                 <img class="brand-web_mac" src={MAC.src} alt="" width={MAC.width} height={MAC.height} loading="lazy" decoding="async" />
                 <span class="brand-web_screen">
-                  <video class="brand-web_video" data-src={loop.src} poster={loop.poster} muted loop playsinline preload="none" aria-hidden="true" />
+                  <video class="brand-web_video" data-src={`/media/${w.cover}.mp4`} poster={`/media/${w.cover}.webp`} muted loop playsinline preload="none" aria-hidden="true" />
                 </span>
               </a>
             </div>
@@ -80,91 +85,115 @@ const rows = pairs
   )
 }
 
-<script define:vars={{ MAC }}>
-  // the site loop laid onto the laptop's screen, kept there as the layout resizes
-  const fit = (dev) => {
-    const W = dev.clientWidth, H = dev.clientHeight, [sw, sh] = MAC.screen, s = dev.querySelector(".brand-web_screen");
-    const q = MAC.q.map(([x, y]) => [x * W, y * H]);
-    s.style.width = sw + "px";
-    s.style.height = sh + "px";
-    s.style.transform = `matrix(${(q[1][0] - q[0][0]) / sw},${(q[1][1] - q[0][1]) / sw},${(q[3][0] - q[0][0]) / sh},${(q[3][1] - q[0][1]) / sh},${q[0][0]},${q[0][1]})`;
-  };
-  document.querySelectorAll("[data-mac]").forEach((dev) => { new ResizeObserver(() => fit(dev)).observe(dev); fit(dev); });
+<script>
+  import MAC from "@/data/macbook-angle.json";
+  import { BRAND_WEB_LOOK as LOOK } from "@/data/brand-web-look.js";
 
-  /* The barrel. In the book's own box (x right, y down, z toward us, the camera's perspective at the
-     laptop's screen), a page at angle th (0 to TH) sits on a quarter ellipse round the point
-     (left, far):  x = x0 + rx sin(th),  z = zFar + rz cos(th),  turned rotateY(atan(rz sin th / rx cos th))
-     so it lies along the curve. th runs at an even pace, so the pages keep their spacing. */
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const TH = 1.18; // where the curve ends, about 68 degrees round: behind the screen
-  const LINES = [
-    { y: -0.2, lap: 30 }, // seconds for a page to cross, top line slower
-    { y: 0.2, lap: 20 },
-  ];
-  document.querySelectorAll(".brand-web_pair").forEach((pair) => {
-    const book = pair.querySelector("[data-book]");
-    const dev = pair.querySelector("[data-mac]");
-    const row = pair.closest(".brand-web_row");
-    const lines = [...book.querySelectorAll("template[data-line]")].map((t, r) => {
-      const imgs = [...t.content.querySelectorAll("img")];
-      return { ...LINES[r], imgs, els: [], n: 0 };
+  const section = document.querySelector<HTMLElement>("[data-brand-web-section]");
+
+  // light into dark toward the bottom right, the neon on the light side of the edge; each row's name takes
+  // the light text where the dark has reached it
+  const gradient = () => {
+    if (!section) return;
+    const g = LOOK.gradient, at = g.start + (g.end - g.start) * g.accentAt;
+    section.style.setProperty("--bw-angle", `${g.angle}deg`);
+    section.style.setProperty("--bw-start", `${g.start * 100}%`);
+    section.style.setProperty("--bw-accent", `${at * 100}%`);
+    section.style.setProperty("--bw-end", `${g.end * 100}%`);
+    section.style.setProperty("--bw-mix", `${g.accentMix * 100}%`);
+    const S = section.getBoundingClientRect(), rad = (g.angle * Math.PI) / 180, dx = Math.sin(rad), dy = -Math.cos(rad);
+    const len = Math.abs(S.width * dx) + Math.abs(S.height * dy);
+    section.querySelectorAll<HTMLElement>(".brand-web_name").forEach((n) => {
+      const r = n.getBoundingClientRect();
+      const t = ((r.left + r.width / 2 - S.left - S.width / 2) * dx + (r.top + r.height / 2 - S.top - S.height / 2) * dy) / len + 0.5;
+      n.classList.toggle("is-on-dark", t > (g.start + g.end) / 2);
     });
-    let geo = null;
+  };
+
+  // the site loop laid onto the laptop's glass: the screen's corners, inset to the glass, as an affine map
+  const fit = (dev: HTMLElement) => {
+    const W = dev.clientWidth, H = dev.clientHeight, [sw, sh] = MAC.screen, s = dev.querySelector<HTMLElement>(".brand-web_screen")!;
+    const L = LOOK.laptop, q = MAC.q.map(([x, y]) => [x * W, y * H]);
+    const ux = [(q[1][0] - q[0][0]) / sw, (q[1][1] - q[0][1]) / sw], vy = [(q[3][0] - q[0][0]) / sh, (q[3][1] - q[0][1]) / sh];
+    const ix = L.insetX * sw, it = L.insetTop * sh, ib = L.insetBottom * sh;
+    s.style.width = `${sw - 2 * ix}px`;
+    s.style.height = `${sh - it - ib}px`;
+    const r = L.radius * sw;
+    s.style.borderRadius = `${r}px ${r}px ${r / 3}px ${r / 3}px`;
+    s.style.transform = `matrix(${ux[0]},${ux[1]},${vy[0]},${vy[1]},${q[0][0] + ux[0] * ix + vy[0] * it},${q[0][1] + ux[1] * ix + vy[1] * it})`;
+  };
+
+  document.querySelectorAll<HTMLElement>(".brand-web_pair").forEach((pair) => {
+    const book = pair.querySelector<HTMLElement>("[data-book]")!;
+    const dev = pair.querySelector<HTMLElement>("[data-mac]")!;
+    const row = pair.closest<HTMLElement>(".brand-web_row")!;
+    type Line = { imgs: HTMLImageElement[]; els: HTMLImageElement[]; top: boolean };
+    const lines: Line[] = [...book.querySelectorAll<HTMLTemplateElement>("template[data-line]")].map((t, r) => ({
+      imgs: [...t.content.querySelectorAll("img")],
+      els: [],
+      top: r === 0,
+    }));
+    let geo: { F: number; col: number; reach: number; span: number } | null = null;
+
+    /* The barrel, as the Playground's globe on one axis: perspective F with its origin on the screen, a
+       page at angle a (0 at the screen, negative to the left) is pushed out to the camera, turned, and
+       pulled back: translateZ(F) rotateY(-a) translateZ(-F). It lands at x = F tan(a), stretched by
+       1 / cos(a) and more, so the pages further left come nearer and stretch, each in its own slot. */
     const build = () => {
-      const B = book.getBoundingClientRect(), D = dev.getBoundingClientRect();
-      const H = D.height, h = H * 0.25, w = (h * 16) / 9;
+      dev.style.width = `${LOOK.laptop.width}%`;
+      fit(dev);
+      const B = book.getBoundingClientRect(), D = dev.getBoundingClientRect(), b = LOOK.barrel;
       const q = MAC.q;
       const sx = D.left - B.left + ((q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4) * D.width;
       const sy = D.top - B.top + ((q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4) * D.height;
-      const P = H * 2.2; // the perspective
-      const zNear = P * 0.36, zFar = -P * 1.7;
-      const x0 = -w * 0.5, rx = sx - x0, rz = zNear - zFar;
-      // the curve's length, so each line holds as many pages as fit along it with a gap between
-      let len = 0;
-      for (let i = 0, px = x0, pz = zNear; i <= 60; i++) {
-        const th = (i / 60) * TH, x = x0 + rx * Math.sin(th), z = zFar + rz * Math.cos(th);
-        len += Math.hypot(x - px, z - pz);
-        px = x;
-        pz = z;
-      }
-      book.style.perspective = `${P}px`;
+      const reach = (b.reach * Math.PI) / 180;
+      const F = sx / Math.tan(reach); // the page's left edge is `reach` round the barrel
+      const h = b.page * D.height, w = (h * 16) / 9;
+      const col = (w + b.gap * h) / F;
+      const n = Math.ceil((reach + col) / col) + 1;
+      geo = { F, col, reach, span: n * col };
+      book.style.perspective = `${F}px`;
       book.style.perspectiveOrigin = `${sx}px ${sy}px`;
-      geo = { w, h, sx, sy, x0, rx, rz, zFar, H };
       for (const L of lines) {
-        const n = Math.max(L.imgs.length, Math.ceil(len / (w * 1.08)));
-        if (n !== L.n) {
+        if (L.els.length !== n) {
           L.els.forEach((e) => e.remove());
-          L.els = Array.from({ length: n }, (_, i) => {
-            const img = L.imgs[i % L.imgs.length].cloneNode();
-            book.append(img);
-            return img;
-          });
-          L.n = n;
+          L.els = Array.from({ length: n }, (_, i) => book.appendChild(L.imgs[i % L.imgs.length].cloneNode() as HTMLImageElement));
         }
+        const y = sy + (L.top ? -1 : 1) * (h / 2 + (b.rowGap * h) / 2) - h / 2;
         for (const e of L.els) {
           e.style.width = `${w}px`;
           e.style.height = `${h}px`;
+          e.style.left = `${sx - w / 2}px`;
+          e.style.top = `${y}px`;
         }
       }
     };
-    const draw = (t) => {
+    const draw = (t: number) => {
       if (!geo) return;
-      const { w, h, sy, x0, rx, rz, zFar, H } = geo;
+      const { F, col, reach, span } = geo, lens = LOOK.lens;
       for (const L of lines) {
-        const y = sy + L.y * H * 0.9 - h / 2;
+        const lap = L.top ? LOOK.barrel.lapTop : LOOK.barrel.lapBottom;
+        const v = reach / lap; // radians a second, so a page crosses in `lap` seconds
         L.els.forEach((e, i) => {
-          const f = (((i / L.n + t / L.lap) % 1) + 1) % 1;
-          const th = f * TH;
-          const x = x0 + rx * Math.sin(th) - w / 2;
-          const z = zFar + rz * Math.cos(th);
-          const turn = 0.55 * Math.atan2(rz * Math.sin(th), rx * Math.cos(th)); // eased, so a page never goes edge-on
-          e.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,${z.toFixed(1)}px) rotateY(${turn.toFixed(4)}rad)`;
-          e.style.zIndex = String(Math.round(z + 4000));
+          const pos = (((i * col + t * v) % span) + span) % span;
+          const a = pos - span + col * 0.6; // from off the left edge to just past the screen's middle
+          if (a < -1.45 || a < -reach - col * 1.2) {
+            e.style.visibility = "hidden";
+            return;
+          }
+          e.style.visibility = "visible";
+          e.style.transform = `translateZ(${F.toFixed(1)}px) rotateY(${(-a).toFixed(4)}rad) translateZ(${(-F).toFixed(1)}px)`;
+          // the lens: the nearer a page comes on the left, the softer it is
+          const k = Math.max(0, -a) / reach;
+          const px = lens.blur * Math.pow(Math.min(k, 1.3), lens.curve);
+          e.style.filter = px > 0.25 ? `blur(${px.toFixed(2)}px)` : "";
         });
       }
     };
-    let on = false, raf = 0, t0 = 0, t = 7;
-    const frame = (now) => {
+
+    let on = false, raf = 0, t0 = 0, t = 9;
+    const frame = (now: number) => {
       raf = 0;
       if (!on) return;
       if (t0) t += Math.min(0.05, (now - t0) / 1000);
@@ -172,12 +201,14 @@ const rows = pairs
       draw(t);
       raf = requestAnimationFrame(frame);
     };
-    new ResizeObserver(() => {
+    const redo = () => {
       build();
       draw(t);
-    }).observe(pair);
+    };
+    new ResizeObserver(redo).observe(pair);
+    addEventListener("ks:brand-web-look", redo);
     // each row plays (its pages drifting, its site looping) while it is on screen, and rests when it isn't
-    const v = dev.querySelector("video[data-src]");
+    const v = dev.querySelector<HTMLVideoElement>("video[data-src]");
     new IntersectionObserver(
       ([e]) => {
         on = e.isIntersecting && !reduced;
@@ -187,17 +218,29 @@ const rows = pairs
         }
         if (!v || reduced) return;
         if (e.isIntersecting) {
-          if (!v.src) v.src = v.dataset.src;
+          if (!v.src) v.src = v.dataset.src!;
           v.play().catch(() => {});
         } else v.pause();
       },
       { rootMargin: "15% 0px" },
     ).observe(row);
   });
+
+  gradient();
+  if (section) new ResizeObserver(gradient).observe(section);
+  addEventListener("ks:brand-web-look", gradient);
 </script>
 
 <style is:global>
   @layer components {
+    .brand-web {
+      background: linear-gradient(
+        var(--bw-angle, 158deg),
+        var(--light-300) var(--bw-start, 58%),
+        color-mix(in srgb, #c8ff54 var(--bw-mix, 55%), var(--light-300)) var(--bw-accent, 70.6%),
+        var(--dark-900) var(--bw-end, 76%)
+      );
+    }
     .brand-web_head {
       display: flex;
       flex-direction: column;
@@ -218,7 +261,7 @@ const rows = pairs
     .brand-web_list {
       display: flex;
       flex-direction: column;
-      gap: var(--space-10, 8rem);
+      gap: var(--space-8);
       width: 100%;
       margin: 0;
       padding: 0;
@@ -234,33 +277,31 @@ const rows = pairs
       position: relative;
       display: flex;
       justify-content: flex-end;
-      padding-block: clamp(1rem, 3vw, 3rem);
+      padding-block: clamp(2rem, 5vw, 5rem);
     }
     .brand-web_book {
       position: absolute;
-      inset: -4rem 0 -4rem calc(-1 * var(--site-margin, 1.5rem));
+      inset: 0 0 0 calc(-1 * var(--site-margin, 1.5rem));
       margin: 0;
       overflow: hidden;
       pointer-events: none;
     }
     .brand-web_slide {
       position: absolute;
-      top: 0;
-      left: 0;
       display: block;
-      transform-origin: 50% 50%;
+      visibility: hidden;
       backface-visibility: hidden;
       box-shadow: 0 0 0 1px rgb(17 17 17 / 0.06);
-      will-change: transform;
+      will-change: transform, filter;
     }
     .brand-web_device {
       position: relative;
       z-index: 1;
       display: block;
-      width: min(68%, 62rem);
+      width: 68%;
       aspect-ratio: var(--mac-ratio, 1.6);
       @media (width < 48rem) {
-        width: 82%;
+        width: 74% !important;
       }
     }
     .brand-web_mac {
@@ -286,6 +327,10 @@ const rows = pairs
     }
     .brand-web_name {
       margin: 0;
+      transition: color 0.3s ease;
+      &.is-on-dark {
+        color: var(--light-100);
+      }
     }
   }
 </style>
