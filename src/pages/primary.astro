@@ -5,6 +5,7 @@ import PartnerBrandToWeb from "@/components/section/PartnerBrandToWeb.astro";
 import PartnerProcess from "@/components/section/PartnerProcess.astro";
 import PartnerClose from "@/components/section/PartnerClose.astro";
 import PartnerQuotes from "@/components/section/PartnerQuotes.astro";
+import PartnerStudio from "@/components/section/PartnerStudio.astro";
 import WorkWheel from "@/components/section/WorkWheel.astro";
 import { HOME } from "@/data/work.js";
 import primaryLogo from "@/assets/clients/primary.svg?raw";
@@ -140,6 +141,8 @@ const POINTS = [
     lanes={LANES}
     points={POINTS}
   />
+  {/* the Studio, from the proposal's tooling page, the brand book first (Hunter, Nov 17) */}
+  <PartnerStudio partner="Primary" />
   <WorkWheel heading="More websites | from Kinetic" only={rest} simple />
   <PartnerClose
     heading="Start with | a brand sprint"

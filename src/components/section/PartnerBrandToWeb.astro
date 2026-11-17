@@ -55,7 +55,7 @@ const rows = pairs
       )}
       <ul class="brand-web_list" style={`--mac-ratio:${MAC.width / MAC.height}`}>
         {rows.map(({ p, w, link }) => (
-          <li class="brand-web_row">
+          <li class="brand-web_row" data-slug={w.slug}>
             <div class="brand-web_pair">
               <figure class="brand-web_book" aria-label={`${w.name} brand guidelines by Primary`} data-book>
                 {[p.slides.filter((_, i) => i % 2 === 0), p.slides.filter((_, i) => i % 2 === 1)].map((line, r) => (
@@ -89,50 +89,91 @@ const rows = pairs
 <script>
   import MAC from "@/data/macbook-angle.json";
   import { BRAND_WEB_LOOK as LOOK } from "@/data/brand-web-look.js";
+  import { fitScreen } from "@/scripts/mac-screen.ts";
 
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   /* The ground (.bw-ground on the page, round the hero and these rows): the screen goes from light into dark
-     toward its bottom right, the neon on the light side of the edge, like the Primary proposal's cover. Its
-     layer sticks to the screen, so the dark stays in the bottom right as the rows scroll by; each row's name
-     takes the light text while the dark is behind it. */
+     toward its bottom right with a glow between, like the Primary proposal's cover but curved and soft: an
+     ellipse off the bottom right corner, its colours eased into each other (smoothstep, in many stops), the
+     glow in the colour of the client on screen, easing from one to the next as the rows scroll by. The layer
+     sticks to the screen; each row's name takes the light text while the dark is behind it. */
   const ground = document.querySelector<HTMLElement>("[data-ground]");
   const layer = ground?.querySelector<HTMLElement>(".bw-ground_layer");
   const names = [...document.querySelectorAll<HTMLElement>(".brand-web_name")];
+  const rowsEls = [...document.querySelectorAll<HTMLElement>(".brand-web_row")];
+  const hex = (h: string) => {
+    const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(h.trim());
+    return m ? m.slice(1).map((x) => parseInt(x, 16)) : [200, 255, 84];
+  };
+  const css = (v: string) => {
+    const probe = document.createElement("i");
+    probe.style.color = v;
+    ground?.append(probe);
+    const c = (getComputedStyle(probe).color.match(/[\d.]+/g) || ["0", "0", "0"]).slice(0, 3).map(Number);
+    probe.remove();
+    return c;
+  };
+  const DARK = css("var(--dark-900)"), LIGHT = css("var(--light-300)");
+  const mix = (a: number[], b: number[], t: number) => a.map((x, i) => Math.round(x + (b[i] - x) * t));
+  const smooth = (t: number) => t * t * (3 - 2 * t);
+  let glowNow = hex(LOOK.gradient.hero), glowTo = glowNow, glowRaf = 0;
+  const paint = () => {
+    if (!layer) return;
+    const g = LOOK.gradient, glow = mix(LIGHT, glowNow, g.glowMix);
+    const stops: string[] = [`rgb(${DARK}) 0%`, `rgb(${DARK}) ${(g.dark * 100).toFixed(1)}%`];
+    const run = (a: number[], b: number[], from: number, to: number) => {
+      for (let i = 1; i <= 10; i++) {
+        const t = i / 10;
+        stops.push(`rgb(${mix(a, b, smooth(t))}) ${((from + (to - from) * t) * 100).toFixed(1)}%`);
+      }
+    };
+    run(DARK, glow, g.dark, g.glow);
+    run(glow, LIGHT, g.glow, g.light);
+    layer.style.background = `radial-gradient(ellipse ${g.width}% ${g.height}% at ${g.x}% ${g.y}%, ${stops.join(", ")})`;
+  };
   const shade = () => {
     if (!layer) return;
-    const g = LOOK.gradient, S = layer.getBoundingClientRect(), rad = (g.angle * Math.PI) / 180, dx = Math.sin(rad), dy = -Math.cos(rad);
-    const len = Math.abs(S.width * dx) + Math.abs(S.height * dy);
+    const g = LOOK.gradient, S = layer.getBoundingClientRect();
+    const cx = S.left + (S.width * g.x) / 100, cy = S.top + (S.height * g.y) / 100, rx = (S.width * g.width) / 100, ry = (S.height * g.height) / 100;
     for (const n of names) {
       const r = n.getBoundingClientRect();
-      const t = ((r.left + r.width / 2 - S.left - S.width / 2) * dx + (r.top + r.height / 2 - S.top - S.height / 2) * dy) / len + 0.5;
-      n.classList.toggle("is-on-dark", t > (g.start + g.end) / 2);
+      const t = Math.hypot((r.left + r.width / 2 - cx) / rx, (r.top + r.height / 2 - cy) / ry);
+      n.classList.toggle("is-on-dark", t < (g.dark + g.glow) / 2);
     }
+    // the client on screen: the row nearest the middle, once its laptop is well up; the hero's neon before
+    const mid = innerHeight / 2;
+    let slug = "hero", best = Infinity;
+    for (const row of rowsEls) {
+      const r = row.getBoundingClientRect();
+      if (r.top > innerHeight * 0.55 || r.bottom < 0) continue;
+      const d = Math.abs(r.top + r.height / 2 - mid);
+      if (d < best) (best = d), (slug = row.dataset.slug ?? "hero");
+    }
+    const to = hex((g as Record<string, unknown>)[slug] as string ?? g.hero);
+    if (to.join() !== glowTo.join()) {
+      glowTo = to;
+      if (!glowRaf) glowRaf = requestAnimationFrame(fade);
+    }
+  };
+  // the glow eases from one client's colour to the next
+  const fade = () => {
+    glowRaf = 0;
+    glowNow = glowNow.map((c, i) => c + (glowTo[i] - c) * 0.08);
+    const done = glowNow.every((c, i) => Math.abs(c - glowTo[i]) < 0.5);
+    if (done) glowNow = glowTo.slice();
+    paint();
+    if (!done) glowRaf = requestAnimationFrame(fade);
   };
   const gradient = () => {
     if (!ground) return;
-    const g = LOOK.gradient, at = g.start + (g.end - g.start) * g.accentAt;
-    ground.style.setProperty("--bw-angle", `${g.angle}deg`);
-    ground.style.setProperty("--bw-start", `${g.start * 100}%`);
-    ground.style.setProperty("--bw-accent", `${at * 100}%`);
-    ground.style.setProperty("--bw-end", `${g.end * 100}%`);
-    ground.style.setProperty("--bw-mix", `${g.accentMix * 100}%`);
+    paint();
     shade();
   };
   let shading = 0;
   addEventListener("scroll", () => (shading ||= requestAnimationFrame(() => ((shading = 0), shade()))), { passive: true });
 
-  // the site loop laid onto the laptop's glass: the screen's corners, inset to the glass, as an affine map
-  const fit = (dev: HTMLElement) => {
-    const W = dev.clientWidth, H = dev.clientHeight, [sw, sh] = MAC.screen, s = dev.querySelector<HTMLElement>(".brand-web_screen")!;
-    const L = LOOK.laptop, q = MAC.q.map(([x, y]) => [x * W, y * H]);
-    const ux = [(q[1][0] - q[0][0]) / sw, (q[1][1] - q[0][1]) / sw], vy = [(q[3][0] - q[0][0]) / sh, (q[3][1] - q[0][1]) / sh];
-    const ix = L.insetX * sw, it = L.insetTop * sh, ib = L.insetBottom * sh;
-    s.style.width = `${sw - 2 * ix}px`;
-    s.style.height = `${sh - it - ib}px`;
-    const r = L.radius * sw;
-    s.style.borderRadius = `${r}px ${r}px ${r / 3}px ${r / 3}px`;
-    s.style.transform = `matrix(${ux[0]},${ux[1]},${vy[0]},${vy[1]},${q[0][0] + ux[0] * ix + vy[0] * it},${q[0][1] + ux[1] * ix + vy[1] * it})`;
-  };
+  // the site loop laid onto the laptop's glass (src/scripts/mac-screen.ts)
+  const fit = (dev: HTMLElement) => fitScreen(dev, dev.querySelector<HTMLElement>(".brand-web_screen")!, LOOK.laptop);
 
   document.querySelectorAll<HTMLElement>(".brand-web_pair").forEach((pair) => {
     const book = pair.querySelector<HTMLElement>("[data-book]")!;
@@ -262,12 +303,7 @@ const rows = pairs
       height: 100lvh;
       margin-bottom: -100lvh;
       pointer-events: none;
-      background: linear-gradient(
-        var(--bw-angle, 140deg),
-        var(--light-300) var(--bw-start, 46%),
-        color-mix(in srgb, #c8ff54 var(--bw-mix, 60%), var(--light-300)) var(--bw-accent, 59%),
-        var(--dark-900) var(--bw-end, 64%)
-      );
+      background: var(--light-300); /* the script paints the curve */
     }
     .brand-web_head {
       display: flex;

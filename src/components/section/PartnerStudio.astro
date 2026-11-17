@@ -1,0 +1,202 @@
+---
+import MarkLockup from "@/components/content/MarkLockup.astro";
+import Button from "@/components/Button.astro";
+import Modal from "@/components/interactive/Modal.astro";
+import MAC from "@/data/macbook-angle.json";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The partner's name, in the brand book point. */
+  partner: string;
+}
+
+const { render = true, partner } = Astro.props;
+/* The Studio, on /primary (Hunter, Nov 17: "a section as well that shows off the studio. You can look at the
+   Proposals section, which shows off a screenshot of the studio and talks about the features and how we
+   populate the brand book inside of there. Maybe we have a studio link that shows off the studio video").
+   The proposal's "Bleeding-edge custom tooling" page (briefs/migration/kinetic.mjs `studio`), with the brand
+   book first: the Studio running on the same MacBook as the brand rows, its points beside it, and a button
+   that opens the Studio film (the About page's, media/studio-film.mp4) with sound. */
+const POINTS = [
+  ["Your brand book, built in", `${partner}'s colours, type, logos and guidelines load into the Studio, so every wireframe and design starts on-brand.`],
+  ["One link for everything", "Every page, wireframe, prototype and design, in one place."],
+  ["Live prototypes", "Real, interactive builds to click through, not static mockups."],
+  ["Real-time commenting", "Pin a note to any spot, with replies, mentions and files."],
+  ["Parameter tuning", "Dial in motion, colour and type live, then lock it in."],
+  ["From approved to live", "Every revision kept, and live in one step, with a preview first."],
+];
+---
+
+{
+  render && (
+    <section class="studio-p theme-dark" aria-labelledby="studio-p-title">
+      <div class="studio-p_inner">
+        <div class="studio-p_text">
+          <div data-reveal>
+            <MarkLockup class="studio-p_lockup" label="Studio" />
+          </div>
+          <h2 id="studio-p-title" class="studio-p_title text-style-h2" data-reveal>
+            <span>Bleeding-edge</span>
+            <span>custom tooling</span>
+          </h2>
+          <p class="studio-p_lead text-style-main" data-reveal>
+            The whole project lives in the Kinetic Studio, a tool Kinetic built for itself. {partner}'s brand book goes in first, and everything after is built from it.
+          </p>
+          <ul class="studio-p_points">
+            {POINTS.map(([title, body], i) => (
+              <li class="studio-p_point" data-reveal style={`--reveal-delay:${(0.04 * i).toFixed(2)}s`}>
+                <h3 class="studio-p_point-title text-style-h5">{title}</h3>
+                <p class="studio-p_point-body text-style-label">{body}</p>
+              </li>
+            ))}
+          </ul>
+          <div data-reveal>
+            <Button element="button" data-modal-open="studio-film">Watch the Studio film</Button>
+          </div>
+        </div>
+        <div class="studio-p_device" data-studio-mac style={`--mac-ratio:${MAC.width / MAC.height}`}>
+          <img class="studio-p_mac" src={MAC.src} alt="" width={MAC.width} height={MAC.height} loading="lazy" decoding="async" />
+          <span class="studio-p_screen">
+            <video data-src="/media/kinetic-studio.mp4" poster="/media/kinetic-studio.webp" muted loop playsinline preload="none" aria-label="The Kinetic Studio, in use" />
+          </span>
+        </div>
+      </div>
+      <Modal id="studio-film" label="The Kinetic Studio film" variant="full-screen" class="studio-p_modal">
+        <video class="studio-p_film" data-src="/media/studio-film.mp4" poster="/media/studio-film.webp" controls playsinline preload="none" />
+      </Modal>
+    </section>
+  )
+}
+
+<script>
+  import { fitScreen } from "@/scripts/mac-screen.ts";
+
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll<HTMLElement>("[data-studio-mac]").forEach((dev) => {
+    const screen = dev.querySelector<HTMLElement>(".studio-p_screen")!;
+    new ResizeObserver(() => fitScreen(dev, screen)).observe(dev);
+    const v = dev.querySelector<HTMLVideoElement>("video")!;
+    new IntersectionObserver(
+      ([e]) => {
+        if (reduced) return;
+        if (e.isIntersecting) {
+          if (!v.src) v.src = v.dataset.src!;
+          v.play().catch(() => {});
+        } else v.pause();
+      },
+      { rootMargin: "10% 0px" },
+    ).observe(dev);
+  });
+  // the film loads and plays with sound when its dialog opens, and stops when it closes
+  document.querySelectorAll<HTMLDialogElement>("#studio-film").forEach((d) => {
+    const film = d.querySelector<HTMLVideoElement>("video")!;
+    new MutationObserver(() => {
+      if (d.open) {
+        if (!film.src) film.src = film.dataset.src!;
+        film.play().catch(() => {});
+      } else film.pause();
+    }).observe(d, { attributes: true, attributeFilter: ["open"] });
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .studio-p {
+      background: var(--background);
+      color: var(--text);
+      padding: var(--section-space-large) var(--site-margin);
+      overflow-x: clip;
+    }
+    /* the words on the left, the laptop on the right, turned toward them */
+    .studio-p_inner {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(2rem, 4vw, 4rem);
+      max-width: var(--max-width-main, 90rem);
+      margin: 0 auto;
+      @media (width < 56rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .studio-p_text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-5);
+    }
+    .studio-p_title {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      @media (width >= 56rem) {
+        white-space: nowrap;
+      }
+    }
+    .studio-p_lead {
+      max-width: 40ch;
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 72%, transparent);
+    }
+    .studio-p_points {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-5) var(--space-6);
+      width: 100%;
+      margin: var(--space-3) 0;
+      padding: 0;
+      list-style: none;
+      @media (width < 30rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .studio-p_point {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      padding-top: var(--space-3);
+      border-top: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+    }
+    .studio-p_point-title,
+    .studio-p_point-body {
+      margin: 0;
+    }
+    .studio-p_point-body {
+      color: color-mix(in srgb, var(--text) 65%, transparent);
+    }
+    .studio-p_device {
+      position: relative;
+      width: 100%;
+      aspect-ratio: var(--mac-ratio, 1.32);
+    }
+    .studio-p_mac {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .studio-p_screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+      transform-origin: 0 0;
+      background: #0d0d0c;
+      & video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    }
+    .studio-p_modal .studio-p_film {
+      display: block;
+      width: 100%;
+      height: 100%;
+      max-height: 100svh;
+      object-fit: contain;
+      background: #000;
+    }
+  }
+</style>

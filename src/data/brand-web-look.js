@@ -3,7 +3,7 @@
    them; on the page by itself P opens the panel. A tuning is kept in this browser until Reset; Copy props
    hands back this object to paste over it. */
 export const BRAND_WEB_FILE = "src/data/brand-web-look.js";
-export const BRAND_WEB_KEY = "ks-brand-web-look-2"; // new key Nov 17: older tunings (with the blur and insets) are dropped
+export const BRAND_WEB_KEY = "ks-brand-web-look-3"; // new key Nov 17: older tunings (with the blur and insets) are dropped
 
 export const BRAND_WEB_LOOK = {
   // the guideline pages, on the inside of a barrel whose axis runs through the laptop's screen: the further
@@ -31,14 +31,24 @@ export const BRAND_WEB_LOOK = {
     insetBottom: 0,
     radius: 0.004, // the glass's top corners, times its width (the bottom ones a third of that)
   },
-  // light into dark toward the bottom right of the screen, the neon glowing on the light side of the edge, as
-  // on the Primary proposal's cover (briefs/migration/kinetic.mjs desk(): bright accent at 0.7, mixed 0.55).
-  // It is the screen's, not the section's: it stays put behind the hero and the rows as they scroll
+  // light into dark toward the bottom right of the screen, a glow on the edge between, like the Primary
+  // proposal's cover, but curved and soft (Hunter, Nov 17: "This gradient needs to be non-linear ... have a
+  // curve to it and be softer, and then change color based on the client we're showing off"). An ellipse
+  // centred off the bottom right corner; the dark, the glow and the light ease into each other. The glow
+  // takes the colour of the client on screen (Primary's neon over the hero). It is the screen's, not the
+  // section's: it stays put behind the hero and the rows as they scroll
   gradient: {
-    angle: 140, // degrees, CSS (180 straight down, 135 to the bottom right)
-    start: 0.46, // where the light starts to turn, across the screen
-    end: 0.64, // where it is dark
-    accentAt: 0.72, // where the neon peaks between them
-    accentMix: 0.6, // how much neon
+    x: 108, // the ellipse's centre, % across the screen
+    y: 115, // % down
+    width: 112, // its radius across, % of the screen's width
+    height: 150, // its radius down, % of the screen's height
+    dark: 0.3, // where the dark starts to lift, along the radius
+    glow: 0.56, // where the glow is strongest
+    light: 0.9, // where it is all light
+    glowMix: 0.7, // how much of the client's colour, against the light
+    hero: "#c8ff54", // Primary's neon, over the hero
+    exe: "#3e6c76", // exe's teal (its site)
+    owner: "#25983f", // Owner's green (its brand book)
+    ramble: "#eeff83", // Ramble's lime (its brand book)
   },
 };
