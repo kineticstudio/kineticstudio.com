@@ -36,8 +36,8 @@ const rest = MORE.filter((slug) => HOME.includes(slug) && !PRIMARY.includes(slug
    Interim Brand Book); logos are the real files. */
 /* Nov 17: Primary's own guideline pages beside each site (Hunter: "the brand guidelines ... 16:9 static
    PDF that Primary sends over"). Pages from the brand book Figma files: exe (Primary's delivery, imported
-   by Hunter), Owner (the Owner Brand file). Ramble and Planned wait on their guideline exports (the Figma
-   view seat's API limit stopped the export at two Owner pages). */
+   by Hunter), Owner (Owner.com Website file, Brand page) and Ramble (Ramble file, Guidelines 2026). No
+   Planned row (Hunter, Nov 17: "dont do planned"). */
 const B = "/images/primary/brand";
 const PAIRS = [
   {
@@ -55,8 +55,24 @@ const PAIRS = [
   {
     slug: "owner",
     slides: [
-      { src: `${B}/owner-title.webp`, alt: "Owner brand guidelines, the title page" },
-      { src: `${B}/owner-logo.webp`, alt: "Owner logo" },
+      { src: `${B}/owner-title.webp`, alt: "Owner brand guidelines, the cover" },
+      { src: `${B}/owner-colour.webp`, alt: "Owner primary colour palette" },
+      { src: `${B}/owner-app.webp`, alt: "Owner app and listing exhibits" },
+      { src: `${B}/owner-ui.webp`, alt: "Owner UI integration" },
+      { src: `${B}/owner-stage.webp`, alt: "Owner on stage and on a badge" },
+      { src: `${B}/owner-gradients.webp`, alt: "Owner full-bleed gradients" },
+    ],
+  },
+  {
+    slug: "ramble",
+    slides: [
+      { src: `${B}/ramble-cover.webp`, alt: "Ramble brand guidelines, the cover" },
+      { src: `${B}/ramble-logo.webp`, alt: "Ramble logo system" },
+      { src: `${B}/ramble-posters.webp`, alt: "Ramble posters" },
+      { src: `${B}/ramble-colour.webp`, alt: "Ramble primary colours" },
+      { src: `${B}/ramble-type.webp`, alt: "Ramble brand fonts" },
+      { src: `${B}/ramble-tote.webp`, alt: "Ramble tote bag" },
+      { src: `${B}/ramble-patterns.webp`, alt: "Ramble macro patterns" },
     ],
   },
 ];
