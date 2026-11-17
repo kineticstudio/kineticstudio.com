@@ -38,7 +38,8 @@ const cols = columns.length;
         </h2>
         {lead && <p class="process_lead text-style-main">{lead}</p>}
       </div>
-      <div class="process_chart" style={`--cols:${cols}`} data-reveal>
+      <div class="process_chart" style={`--cols:${cols}`} data-process>
+        <canvas class="process_particles" aria-hidden="true" />
         <div class="process_axis" aria-hidden="true">
           <span />
           {columns.map((c) => <span class="process_col text-style-label">{c}</span>)}
@@ -48,7 +49,7 @@ const cols = columns.length;
             <p class="process_lane-name text-style-h5">{lane.name}</p>
             <ol class="process_bars">
               {lane.bars.map((b) => (
-                <li class:list={["process_bar", b.soft && "is-soft"]} style={`--from:${b.from};--to:${b.to + 1}`}>
+                <li class:list={["process_bar", b.soft && "is-soft"]} style={`--from:${b.from};--to:${b.to + 1}`} data-bar={lane.kind}>
                   <span class="process_when text-style-label">{b.when}</span>
                   <span class="process_bar-title text-style-h5">{b.title}</span>
                   <span class="process_bar-note text-style-label">{b.note}</span>
@@ -72,6 +73,83 @@ const cols = columns.length;
   )
 }
 
+<script>
+  /* Knowledge passing between the studios (Hunter, Nov 17: "visualize it with particles, like knowledge going
+     between ... Primary gets started, and then particles come down and start to build out the Kinetic
+     timeline work"). When the chart comes on screen: Primary's bar fills, then particles leave it and land in
+     each Kinetic bar in turn, lime turning to the bar's colour as they arrive, and each bar fills as its
+     particles land. Then a light trickle keeps passing between the lanes while the chart is on screen. Plays
+     once; nothing is tied to the scroll. Reduced motion: the finished chart, no particles. */
+  const LIME = [200, 255, 84];
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+  const rgb = (c: string) => (c.match(/[\d.]+/g) || ["0", "0", "0"]).slice(0, 3).map(Number);
+  document.querySelectorAll<HTMLElement>("[data-process]").forEach((chart) => {
+    if (reduced) return;
+    const canvas = chart.querySelector<HTMLCanvasElement>(".process_particles")!;
+    const ctx = canvas.getContext("2d")!;
+    const source = chart.querySelector<HTMLElement>('[data-bar="partner"]');
+    const targets = [...chart.querySelectorAll<HTMLElement>('[data-bar="kinetic"]')];
+    if (!source || !targets.length) return;
+    chart.classList.add("is-armed");
+    const fills = new Map<HTMLElement, number>([[source, 0], ...targets.map((t) => [t, 0] as [HTMLElement, number])]);
+    const setFill = (el: HTMLElement, f: number) => { fills.set(el, f); el.style.setProperty("--fill", f.toFixed(3)); };
+    let dpr = 1, W = 0, H = 0;
+    const rect = (el: HTMLElement) => { const c = chart.getBoundingClientRect(), r = el.getBoundingClientRect(); return { x: r.left - c.left, y: r.top - c.top, w: r.width, h: r.height }; };
+    const size = () => { const r = chart.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height; canvas.width = W * dpr; canvas.height = H * dpr; };
+    new ResizeObserver(size).observe(chart); size();
+    // how many particles each Kinetic bar takes to fill, by its area
+    const need = targets.map((t) => { const r = rect(t); return Math.max(24, Math.round((r.w * r.h) / 260)); });
+    const got = targets.map(() => 0);
+    const end = targets.map((t) => { const c = getComputedStyle(t).backgroundColor; const a = /rgba/.test(c) ? 0.55 : 1; return [...rgb(c), a]; });
+    type P = { t: number; dur: number; sx: number; sy: number; cx: number; cy: number; ex: number; ey: number; k: number; r: number; ambient: boolean };
+    const parts: P[] = [];
+    const spawn = (k: number, ambient = false) => {
+      const s = rect(source), d = rect(targets[k]);
+      const sx = s.x + s.w * (0.1 + Math.random() * 0.8), sy = s.y + s.h * (0.55 + Math.random() * 0.4);
+      // land just behind the bar's filling edge, so it builds left to right
+      const front = ambient ? Math.random() : Math.min(1, got[k] / need[k] + 0.12);
+      const ex = d.x + d.w * Math.max(0.03, front * Math.random()), ey = d.y + d.h * (0.15 + Math.random() * 0.7);
+      const cx = (sx + ex) / 2 + (Math.random() - 0.5) * 80, cy = Math.min(sy, ey) + Math.abs(ey - sy) * (0.2 + Math.random() * 0.5);
+      parts.push({ t: 0, dur: 700 + Math.random() * 600, sx, sy, cx, cy, ex, ey, k, r: 1.4 + Math.random() * 1.4, ambient });
+    };
+    let phase = 0, phaseT = 0, last = 0, acc = 0, cur = 0, onScreen = false, raf = 0, ambientAcc = 0;
+    const frame = (now: number) => {
+      const dt = Math.min(50, now - (last || now)); last = now; phaseT += dt;
+      if (phase === 0) { setFill(source, ease(Math.min(1, phaseT / 900))); if (phaseT > 1000) { phase = 1; phaseT = 0; } }
+      else if (phase === 1) {
+        // stream into the current bar until it has what it needs in flight, then move to the next
+        acc += dt * 0.14;
+        while (acc >= 1 && cur < targets.length) { acc -= 1; spawn(cur); if (parts.filter((p) => !p.ambient && p.k === cur).length + got[cur] >= need[cur]) cur++; }
+        if (cur >= targets.length && !parts.some((p) => !p.ambient)) phase = 2;
+      } else {
+        ambientAcc += dt * 0.006;
+        while (ambientAcc >= 1) { ambientAcc -= 1; spawn(Math.floor(Math.random() * targets.length), true); }
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i]; p.t += dt; const u = Math.min(1, p.t / p.dur), e = ease(u);
+        const x = (1 - e) * (1 - e) * p.sx + 2 * (1 - e) * e * p.cx + e * e * p.ex;
+        const y = (1 - e) * (1 - e) * p.sy + 2 * (1 - e) * e * p.cy + e * e * p.ey;
+        const c = end[p.k], m = Math.min(1, Math.max(0, (u - 0.35) / 0.65));
+        const col = [0, 1, 2].map((j) => Math.round(LIME[j] + (c[j] - LIME[j]) * m));
+        const a = p.ambient ? 0.5 * Math.sin(Math.PI * u) : u > 0.92 ? (1 - u) / 0.08 : 1;
+        ctx.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},${a})`;
+        ctx.beginPath(); ctx.arc(x, y, p.r * (u > 0.85 && !p.ambient ? (1 - u) / 0.15 + 0.2 : 1), 0, Math.PI * 2); ctx.fill();
+        if (u >= 1) {
+          parts.splice(i, 1);
+          if (!p.ambient) { got[p.k]++; setFill(targets[p.k], ease(Math.min(1, got[p.k] / need[p.k]))); }
+        }
+      }
+      raf = onScreen ? requestAnimationFrame(frame) : 0;
+    };
+    new IntersectionObserver(([e]) => {
+      onScreen = e.isIntersecting;
+      if (onScreen && !raf) { last = 0; raf = requestAnimationFrame(frame); }
+    }, { threshold: 0.35 }).observe(chart);
+  });
+</script>
+
 <style is:global>
   @layer components {
     .process_head {
@@ -93,6 +171,7 @@ const cols = columns.length;
     }
     .process_chart {
       --label-w: 8rem;
+      position: relative;
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
@@ -124,7 +203,19 @@ const cols = columns.length;
       padding: 0;
       list-style: none;
     }
+    .process_particles {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    /* each bar builds left to right as its particles land (--fill, from the script); with no script or with
+       reduced motion it is simply full */
     .process_bar {
+      --fill: 1;
+      clip-path: inset(0 calc((1 - var(--fill)) * 100%) 0 0 round var(--radius-media));
       grid-column: var(--from) / var(--to);
       display: flex;
       flex-direction: column;
@@ -147,6 +238,12 @@ const cols = columns.length;
     }
     .process_bar-title {
       margin: 0;
+    }
+    .process_chart.is-armed .process_bar {
+      --fill: 0;
+    }
+    .process_chart.is-armed .process_bar > * {
+      opacity: clamp(0, calc((var(--fill) - 0.6) * 3), 1);
     }
     .process_bar-note {
       opacity: 0.72;

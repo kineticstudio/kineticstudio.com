@@ -2,7 +2,6 @@
 import Section from "@/components/wrapper/Section.astro";
 import { WORK } from "@/data/work.js";
 import { projectLink, restLoop } from "@/data/project-link.js";
-import { MAT } from "@/data/card-embed.js";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -11,29 +10,26 @@ interface Props {
   heading: string;
   /** A line under the headline. */
   lead?: string;
-  /** Each pair: the brand as the partner delivered it, then the site we built from it. */
+  /** Each pair: pages of the partner's brand guidelines, then the site we built from them. */
   pairs: {
     /** The project's slug in src/data/work.js (its loop, link and name come from there). */
     slug: string;
-    /** The brand's own logo: raw SVG drawn in `ink`, or an image path. */
-    logo: { svg?: string; src?: string; width: number };
-    /** The brand book's ground and ink. */
-    ground: string;
-    ink: string;
-    /** A few of the brand book's colours, as they're named there. */
-    colours: [name: string, hex: string][];
-    /** The brand book's typefaces. */
-    type: string;
+    /** 16:9 pages of the brand guidelines, as the partner delivered them. */
+    slides: { src: string; alt: string }[];
   }[];
 }
 
 const { render = true, heading, lead, pairs } = Astro.props;
-/* Brand to website (Hunter and Nick, Nov 9: "some kind of transformation of the brand into web"):
-   each Primary brand as its brand book hands it over (the real logo, the colours and type named
-   as the book names them), beside the site Kinetic built from it, playing its loop. */
+/* Brand to website (Hunter, Nov 17: "a handful of the brand guidelines that are essentially a 16:9 static
+   PDF that Primary sends over. Those move from left to right, almost like a slow marquee, and then you see a
+   looped version of the website on the right. You see how those feed into the expressiveness of the
+   execution"). The pages are Primary's own (the brand book Figma files); the site plays on Kinetic's
+   MacBook, rendered head-on in Blender (Hunter: "it can't be a super aggressive angle"), its screen box
+   measured from the render (devices.py corners), so the loop sits exactly on the glass. */
+const SCREEN = { left: 6.0606, top: 7.1654, width: 87.8789, height: 65.6093 };
 const rows = pairs
   .map((p) => ({ p, w: WORK.find((w) => w.slug === p.slug) }))
-  .filter((r): r is { p: (typeof pairs)[number]; w: (typeof WORK)[number] } => Boolean(r.w && restLoop(r.w)))
+  .filter((r): r is { p: (typeof pairs)[number]; w: (typeof WORK)[number] } => Boolean(r.w && restLoop(r.w) && r.p.slides.length))
   .map(({ p, w }) => ({ p, w, loop: restLoop(w)!, link: projectLink(w) }));
 ---
 
@@ -50,25 +46,24 @@ const rows = pairs
         {rows.map(({ p, w, loop, link }) => (
           <li class="brand-web_row" data-reveal>
             <div class="brand-web_pair">
-              <figure class="brand-web_brand" style={`--ground:${p.ground};--ink:${p.ink}`}>
-                <span class="brand-web_tag text-style-label">Brand by Primary</span>
-                {p.logo.svg ? (
-                  <span class="brand-web_logo" style={`--logo-w:${p.logo.width}%`} set:html={p.logo.svg} aria-label={`${w.name} logo`} role="img" />
-                ) : (
-                  <img class="brand-web_logo" style={`--logo-w:${p.logo.width}%`} src={p.logo.src} alt={`${w.name} logo`} loading="lazy" />
-                )}
-                <figcaption class="brand-web_spec">
-                  <span class="brand-web_chips">
-                    {p.colours.map(([name, hex]) => (
-                      <span class="brand-web_chip" style={`--chip:${hex}`} title={`${name} ${hex}`} />
-                    ))}
-                  </span>
-                  <span class="brand-web_type text-style-label">{p.type}</span>
-                </figcaption>
+              <figure class="brand-web_book" aria-label={`${w.name} brand guidelines by Primary`}>
+                <div class="brand-web_track" style={`--count:${p.slides.length}`}>
+                  {[0, 1].map((copy) => (
+                    <div class="brand-web_set" aria-hidden={copy === 1 ? "true" : undefined}>
+                      {p.slides.map((s) => (
+                        <img class="brand-web_slide" src={s.src} alt={copy === 0 ? s.alt : ""} width="1280" height="720" loading="lazy" decoding="async" />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                <figcaption class="brand-web_tag text-style-label">Brand guidelines by Primary</figcaption>
               </figure>
-              <a class:list={["brand-web_site", loop.matted && "is-matted"]} style={`--ground:${loop.ground};--mat:${MAT * 100}cqw`} {...link} aria-label={`${w.name}, the website`}>
+              <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`}>
+                <img class="brand-web_mac" src="/images/primary/macbook-front.webp" alt="" width="1600" height="1377" loading="lazy" decoding="async" />
+                <span class="brand-web_screen" style={`left:${SCREEN.left}%;top:${SCREEN.top}%;width:${SCREEN.width}%;height:${SCREEN.height}%`}>
+                  <video class="brand-web_video" data-src={loop.src} poster={loop.poster} muted loop playsinline preload="none" aria-hidden="true" />
+                </span>
                 <span class="brand-web_tag brand-web_tag--site text-style-label">Website by Kinetic</span>
-                <video class="brand-web_video" data-src={loop.src} poster={loop.poster} muted loop playsinline preload="none" aria-hidden="true" />
               </a>
             </div>
             <p class="brand-web_caption">
@@ -83,14 +78,15 @@ const rows = pairs
 }
 
 <script>
-  // each site's loop plays while its row is on screen, and rests when it isn't
+  // each row plays (its pages drifting, its site looping) while it is on screen, and rests when it isn't
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   document.querySelectorAll<HTMLElement>("[data-brand-web]").forEach((root) => {
-    if (reduced) return;
     const io = new IntersectionObserver((entries) => {
       for (const e of entries) {
-        const v = e.target.querySelector<HTMLVideoElement>("video[data-src]");
-        if (!v) continue;
+        const row = e.target as HTMLElement;
+        row.classList.toggle("is-playing", e.isIntersecting && !reduced);
+        const v = row.querySelector<HTMLVideoElement>("video[data-src]");
+        if (!v || reduced) continue;
         if (e.isIntersecting) {
           if (!v.src) v.src = v.dataset.src!;
           v.play().catch(() => {});
@@ -134,100 +130,107 @@ const rows = pairs
       flex-direction: column;
       gap: var(--space-3);
     }
-    /* the brand and the site side by side, the same height, a small gap between */
+    /* the guidelines on the left, the laptop on the right, the same height */
     .brand-web_pair {
+      --row-h: clamp(16rem, 30vw, 30rem);
       display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-      gap: clamp(0.5rem, 1vw, 1rem);
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: clamp(1rem, 3vw, 3rem);
       @media (width < 48rem) {
+        --row-h: auto;
         grid-template-columns: 1fr;
       }
     }
-    .brand-web_brand,
-    .brand-web_site {
+    /* the brand book: its pages run left to right, slowly, edge to edge with no fade */
+    .brand-web_book {
       position: relative;
-      aspect-ratio: 16 / 10;
+      height: calc(var(--row-h) * 0.62);
       margin: 0;
       overflow: hidden;
       border-radius: var(--radius-media);
-    }
-    .brand-web_pair > .brand-web_brand {
-      aspect-ratio: auto;
       @media (width < 48rem) {
-        aspect-ratio: 16 / 10;
+        height: auto;
+        aspect-ratio: 16 / 7;
       }
     }
-    .brand-web_brand {
-      display: grid;
-      place-items: center;
-      background: var(--ground);
-      color: var(--ink);
+    .brand-web_track {
+      display: flex;
+      width: max-content;
+      height: 100%;
+      /* about seven seconds a page */
+      animation: brand-web-drift calc(var(--count) * 7s) linear infinite;
+      animation-play-state: paused;
     }
-    .brand-web_logo {
+    .brand-web_row.is-playing .brand-web_track {
+      animation-play-state: running;
+    }
+    .brand-web_set {
+      display: flex;
+      gap: 0.6rem;
+      height: 100%;
+      padding-right: 0.6rem;
+    }
+    .brand-web_slide {
       display: block;
-      width: var(--logo-w, 50%);
-      height: auto;
-      & svg {
-        display: block;
-        width: 100%;
-        height: auto;
+      height: 100%;
+      width: auto;
+      aspect-ratio: 16 / 9;
+      border-radius: calc(var(--radius-media) * 0.6);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+    }
+    /* left to right: the second copy starts where the first sits, so the loop has no seam */
+    @keyframes brand-web-drift {
+      from {
+        transform: translateX(-50%);
+      }
+      to {
+        transform: translateX(0);
       }
     }
     .brand-web_tag {
       position: absolute;
-      top: var(--space-4);
-      left: var(--space-4);
+      top: var(--space-3);
+      left: var(--space-3);
       z-index: 1;
-      color: color-mix(in srgb, var(--ink) 70%, transparent);
-    }
-    .brand-web_tag--site {
       padding: 0.3rem 0.6rem;
       border-radius: 99rem;
       background: var(--background);
       color: var(--text);
     }
-    .brand-web_spec {
-      position: absolute;
-      left: var(--space-4);
-      right: var(--space-4);
-      bottom: var(--space-4);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: var(--space-3);
+    .brand-web_tag--site {
+      left: auto;
+      right: 0;
+      top: 0;
     }
-    .brand-web_chips {
-      display: flex;
-      gap: 0.35rem;
-    }
-    .brand-web_chip {
-      width: 1.25rem;
-      height: 1.25rem;
-      border-radius: 50%;
-      background: var(--chip);
-      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 18%, transparent);
-    }
-    .brand-web_type {
-      color: color-mix(in srgb, var(--ink) 70%, transparent);
-      text-align: right;
-    }
-    .brand-web_site {
+    /* the laptop, head-on, with the site playing on its glass */
+    .brand-web_device {
+      position: relative;
       display: block;
-      background: var(--ground, var(--dark-700));
-      container-type: inline-size;
+      height: var(--row-h);
+      aspect-ratio: 1600 / 1377;
+      @media (width < 48rem) {
+        height: auto;
+        width: 100%;
+      }
+    }
+    .brand-web_mac {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .brand-web_screen {
+      position: absolute;
+      overflow: hidden;
+      border-radius: 0.4% / 0.6%;
+      background: #111;
     }
     .brand-web_video {
-      position: absolute;
-      inset: 0;
+      display: block;
       width: 100%;
       height: 100%;
       object-fit: cover;
-    }
-    .brand-web_site.is-matted .brand-web_video {
-      inset: var(--mat);
-      width: auto;
-      height: auto;
-      border-radius: calc(var(--radius-media) * 0.75);
+      object-position: top center;
     }
     .brand-web_caption {
       display: flex;
@@ -241,6 +244,12 @@ const rows = pairs
     }
     .brand-web_meta {
       color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .brand-web_track {
+        animation: none;
+        transform: translateX(-25%);
+      }
     }
   }
 </style>

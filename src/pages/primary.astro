@@ -8,8 +8,6 @@ import PartnerClose from "@/components/section/PartnerClose.astro";
 import WorkWheel from "@/components/section/WorkWheel.astro";
 import { HOME } from "@/data/work.js";
 import primaryLogo from "@/assets/clients/primary.svg?raw";
-import exeLogo from "@/assets/clients/exe-logo.svg?raw";
-import ownerLogo from "@/assets/clients/owner-logo.svg?raw";
 
 /* Nov 6: Primary (primary.studio) made Kinetic its web partner, and Hunter promised Brandon a page to
    share with prospects. Hunter: "we should show off exe.dev, owner.com, august health, ramble ... But
@@ -36,30 +34,30 @@ const rest = MORE.filter((slug) => HOME.includes(slug) && !PRIMARY.includes(slug
 /* Brand to website: each brand as Primary's brand book hands it over, beside the site. Colours and type
    are the brand books' own (exe: Primary's guidelines file; Owner: the site's tokens; Planned: the
    Interim Brand Book); logos are the real files. */
+/* Nov 17: Primary's own guideline pages beside each site (Hunter: "the brand guidelines ... 16:9 static
+   PDF that Primary sends over"). Pages from the brand book Figma files: exe (Primary's delivery, imported
+   by Hunter), Owner (the Owner Brand file). Ramble and Planned wait on their guideline exports (the Figma
+   view seat's API limit stopped the export at two Owner pages). */
+const B = "/images/primary/brand";
 const PAIRS = [
   {
     slug: "exe",
-    logo: { svg: exeLogo, width: 46 },
-    ground: "#F7F4EF",
-    ink: "#282624",
-    colours: [["Brand black", "#282624"], ["Paper", "#F7F4EF"], ["Light yellow", "#FFF7D6"], ["Orange", "#F48E00"]] as [string, string][],
-    type: "GT Alpina, GT Alpina Typewriter",
+    slides: [
+      { src: `${B}/exe-cover.webp`, alt: "exe brand guidelines, the cover" },
+      { src: `${B}/exe-logo.webp`, alt: "exe logo system" },
+      { src: `${B}/exe-illustration.webp`, alt: "exe field manual illustrations" },
+      { src: `${B}/exe-colour.webp`, alt: "exe neutral colours" },
+      { src: `${B}/exe-type.webp`, alt: "exe brand fonts" },
+      { src: `${B}/exe-layout.webp`, alt: "exe layout markers" },
+      { src: `${B}/exe-cap.webp`, alt: "exe cap" },
+    ],
   },
   {
     slug: "owner",
-    logo: { svg: ownerLogo, width: 42 },
-    ground: "#F9F3ED",
-    ink: "#094413",
-    colours: [["Dark green", "#094413"], ["Green", "#088924"], ["Lime", "#CDFC73"], ["Cream", "#F9F3ED"]] as [string, string][],
-    type: "STK Bureau Sans",
-  },
-  {
-    slug: "planned",
-    logo: { src: "/images/primary/planned-wordmark.png", width: 52 },
-    ground: "#F1EDE3",
-    ink: "#21333A",
-    colours: [["Black", "#21333A"], ["Paper", "#FCFBF4"], ["Seafoam", "#4F9897"], ["Mint", "#A8D8CD"], ["Gold", "#FFDBA6"]] as [string, string][],
-    type: "Geist",
+    slides: [
+      { src: `${B}/owner-title.webp`, alt: "Owner brand guidelines, the title page" },
+      { src: `${B}/owner-logo.webp`, alt: "Owner logo" },
+    ],
   },
 ];
 
@@ -101,13 +99,13 @@ const POINTS = [
   <PartnerHero
     partnerLogo={primaryLogo}
     partnerName="Primary"
-    heading="From brand | to website"
-    lead="Primary builds your brand in a two-week sprint. Kinetic carries it into a custom website, live four weeks later. Two studios working as one, so nothing gets lost in between."
+    heading="Put your Primary brand | out into the world"
+    lead="Primary is a world-class branding agency. Kinetic has deep expertise in taking the fundamentals of their work and bringing it into the world with motion and interactivity, in a custom website live four weeks after your sprint."
   />
   <PartnerWork only={PRIMARY} credits label="Websites for Primary brands" />
   <PartnerBrandToWeb
     heading="The brand, | carried through"
-    lead="Every site starts from Primary's own files: the logo, the colours, the type. Here's the brand as it's handed over, and the site it became."
+    lead="Every site starts from the brand book Primary hands over. Here are its pages, and the site they became."
     pairs={PAIRS}
   />
   <PartnerProcess
