@@ -1,0 +1,246 @@
+---
+import Section from "@/components/wrapper/Section.astro";
+import { WORK } from "@/data/work.js";
+import { projectLink, restLoop } from "@/data/project-link.js";
+import { MAT } from "@/data/card-embed.js";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The headline; a "|" breaks it onto a second line. */
+  heading: string;
+  /** A line under the headline. */
+  lead?: string;
+  /** Each pair: the brand as the partner delivered it, then the site we built from it. */
+  pairs: {
+    /** The project's slug in src/data/work.js (its loop, link and name come from there). */
+    slug: string;
+    /** The brand's own logo: raw SVG drawn in `ink`, or an image path. */
+    logo: { svg?: string; src?: string; width: number };
+    /** The brand book's ground and ink. */
+    ground: string;
+    ink: string;
+    /** A few of the brand book's colours, as they're named there. */
+    colours: [name: string, hex: string][];
+    /** The brand book's typefaces. */
+    type: string;
+  }[];
+}
+
+const { render = true, heading, lead, pairs } = Astro.props;
+/* Brand to website (Hunter and Nick, Nov 9: "some kind of transformation of the brand into web"):
+   each Primary brand as its brand book hands it over (the real logo, the colours and type named
+   as the book names them), beside the site Kinetic built from it, playing its loop. */
+const rows = pairs
+  .map((p) => ({ p, w: WORK.find((w) => w.slug === p.slug) }))
+  .filter((r): r is { p: (typeof pairs)[number]; w: (typeof WORK)[number] } => Boolean(r.w && restLoop(r.w)))
+  .map(({ p, w }) => ({ p, w, loop: restLoop(w)!, link: projectLink(w) }));
+---
+
+{
+  render && rows.length > 0 && (
+    <Section paddingTop="large" paddingBottom="large" class="brand-web" gap="0">
+      <div class="brand-web_head" data-reveal>
+        <h2 class="brand-web_title text-style-h2">
+          {heading.split("|").map((line) => <span>{line.trim()}</span>)}
+        </h2>
+        {lead && <p class="brand-web_lead text-style-main">{lead}</p>}
+      </div>
+      <ul class="brand-web_list" data-brand-web>
+        {rows.map(({ p, w, loop, link }) => (
+          <li class="brand-web_row" data-reveal>
+            <div class="brand-web_pair">
+              <figure class="brand-web_brand" style={`--ground:${p.ground};--ink:${p.ink}`}>
+                <span class="brand-web_tag text-style-label">Brand by Primary</span>
+                {p.logo.svg ? (
+                  <span class="brand-web_logo" style={`--logo-w:${p.logo.width}%`} set:html={p.logo.svg} aria-label={`${w.name} logo`} role="img" />
+                ) : (
+                  <img class="brand-web_logo" style={`--logo-w:${p.logo.width}%`} src={p.logo.src} alt={`${w.name} logo`} loading="lazy" />
+                )}
+                <figcaption class="brand-web_spec">
+                  <span class="brand-web_chips">
+                    {p.colours.map(([name, hex]) => (
+                      <span class="brand-web_chip" style={`--chip:${hex}`} title={`${name} ${hex}`} />
+                    ))}
+                  </span>
+                  <span class="brand-web_type text-style-label">{p.type}</span>
+                </figcaption>
+              </figure>
+              <a class:list={["brand-web_site", loop.matted && "is-matted"]} style={`--ground:${loop.ground};--mat:${MAT * 100}cqw`} {...link} aria-label={`${w.name}, the website`}>
+                <span class="brand-web_tag brand-web_tag--site text-style-label">Website by Kinetic</span>
+                <video class="brand-web_video" data-src={loop.src} poster={loop.poster} muted loop playsinline preload="none" aria-hidden="true" />
+              </a>
+            </div>
+            <p class="brand-web_caption">
+              <span class="brand-web_name text-style-h5">{w.name}</span>
+              <span class="brand-web_meta text-style-label">{w.industry}</span>
+            </p>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  )
+}
+
+<script>
+  // each site's loop plays while its row is on screen, and rests when it isn't
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll<HTMLElement>("[data-brand-web]").forEach((root) => {
+    if (reduced) return;
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        const v = e.target.querySelector<HTMLVideoElement>("video[data-src]");
+        if (!v) continue;
+        if (e.isIntersecting) {
+          if (!v.src) v.src = v.dataset.src!;
+          v.play().catch(() => {});
+        } else v.pause();
+      }
+    }, { rootMargin: "15% 0px" });
+    root.querySelectorAll(".brand-web_row").forEach((row) => io.observe(row));
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .brand-web_head {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      width: 100%;
+      margin-bottom: var(--space-8);
+    }
+    .brand-web_title {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+    }
+    .brand-web_lead {
+      max-width: 40ch;
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 72%, transparent);
+    }
+    .brand-web_list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .brand-web_row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    /* the brand and the site side by side, the same height, a small gap between */
+    .brand-web_pair {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      gap: clamp(0.5rem, 1vw, 1rem);
+      @media (width < 48rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .brand-web_brand,
+    .brand-web_site {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      margin: 0;
+      overflow: hidden;
+      border-radius: var(--radius-media);
+    }
+    .brand-web_pair > .brand-web_brand {
+      aspect-ratio: auto;
+      @media (width < 48rem) {
+        aspect-ratio: 16 / 10;
+      }
+    }
+    .brand-web_brand {
+      display: grid;
+      place-items: center;
+      background: var(--ground);
+      color: var(--ink);
+    }
+    .brand-web_logo {
+      display: block;
+      width: var(--logo-w, 50%);
+      height: auto;
+      & svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+    }
+    .brand-web_tag {
+      position: absolute;
+      top: var(--space-4);
+      left: var(--space-4);
+      z-index: 1;
+      color: color-mix(in srgb, var(--ink) 70%, transparent);
+    }
+    .brand-web_tag--site {
+      padding: 0.3rem 0.6rem;
+      border-radius: 99rem;
+      background: var(--background);
+      color: var(--text);
+    }
+    .brand-web_spec {
+      position: absolute;
+      left: var(--space-4);
+      right: var(--space-4);
+      bottom: var(--space-4);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    .brand-web_chips {
+      display: flex;
+      gap: 0.35rem;
+    }
+    .brand-web_chip {
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      background: var(--chip);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 18%, transparent);
+    }
+    .brand-web_type {
+      color: color-mix(in srgb, var(--ink) 70%, transparent);
+      text-align: right;
+    }
+    .brand-web_site {
+      display: block;
+      background: var(--ground, var(--dark-700));
+      container-type: inline-size;
+    }
+    .brand-web_video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .brand-web_site.is-matted .brand-web_video {
+      inset: var(--mat);
+      width: auto;
+      height: auto;
+      border-radius: calc(var(--radius-media) * 0.75);
+    }
+    .brand-web_caption {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-3);
+      margin: 0;
+    }
+    .brand-web_name {
+      margin: 0;
+    }
+    .brand-web_meta {
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+  }
+</style>

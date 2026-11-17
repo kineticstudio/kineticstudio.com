@@ -1,0 +1,209 @@
+---
+import Section from "@/components/wrapper/Section.astro";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The headline; a "|" breaks it onto a second line. */
+  heading: string;
+  /** A line under the headline. */
+  lead?: string;
+  /** Column labels, left to right (weeks, then what comes after). */
+  columns: string[];
+  /** One lane per studio: its bars, each spanning columns `from` to `to` (1-based, inclusive). */
+  lanes: {
+    name: string;
+    /** The lane's fill: "partner" (the partner's colour) or "kinetic" (ink). */
+    kind: "partner" | "kinetic";
+    bars: { title: string; note: string; from: number; to: number; when: string; soft?: boolean }[];
+  }[];
+  /** A few short points under the timeline. */
+  points?: { title: string; body: string }[];
+}
+
+const { render = true, heading, lead, columns, lanes, points = [] } = Astro.props;
+/* How the two studios hand off, week by week (Nick, Nov 9: "some clear process and timeline stuff";
+   Hunter, Nov 9: four weeks of web, "a much cleaner, rounder number"). A plain timeline: one lane for
+   Primary, one for Kinetic, each bar a phase; on phones each bar is a row with its weeks named. Nothing
+   moves with the scroll. */
+const cols = columns.length;
+---
+
+{
+  render && (
+    <Section theme="light" paddingTop="large" paddingBottom="large" class="process" gap="0">
+      <div class="process_head" data-reveal>
+        <h2 class="process_title text-style-h2">
+          {heading.split("|").map((line) => <span>{line.trim()}</span>)}
+        </h2>
+        {lead && <p class="process_lead text-style-main">{lead}</p>}
+      </div>
+      <div class="process_chart" style={`--cols:${cols}`} data-reveal>
+        <div class="process_axis" aria-hidden="true">
+          <span />
+          {columns.map((c) => <span class="process_col text-style-label">{c}</span>)}
+        </div>
+        {lanes.map((lane) => (
+          <div class:list={["process_lane", `is-${lane.kind}`]}>
+            <p class="process_lane-name text-style-h5">{lane.name}</p>
+            <ol class="process_bars">
+              {lane.bars.map((b) => (
+                <li class:list={["process_bar", b.soft && "is-soft"]} style={`--from:${b.from};--to:${b.to + 1}`}>
+                  <span class="process_when text-style-label">{b.when}</span>
+                  <span class="process_bar-title text-style-h5">{b.title}</span>
+                  <span class="process_bar-note text-style-label">{b.note}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ))}
+      </div>
+      {points.length > 0 && (
+        <ul class="process_points">
+          {points.map((p, i) => (
+            <li class="process_point" data-reveal style={`--reveal-delay:${(0.06 * i).toFixed(2)}s`}>
+              <h3 class="process_point-title text-style-h5">{p.title}</h3>
+              <p class="process_point-body text-style-main">{p.body}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .process_head {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      width: 100%;
+      margin-bottom: var(--space-8);
+    }
+    .process_title {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+    }
+    .process_lead {
+      max-width: 44ch;
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 72%, transparent);
+    }
+    .process_chart {
+      --label-w: 8rem;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      width: 100%;
+    }
+    .process_axis,
+    .process_lane {
+      display: grid;
+      grid-template-columns: var(--label-w) minmax(0, 1fr);
+      align-items: stretch;
+    }
+    .process_axis {
+      grid-template-columns: var(--label-w) repeat(var(--cols), minmax(0, 1fr));
+      padding-bottom: var(--space-3);
+      border-bottom: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+    }
+    .process_col {
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+    }
+    .process_lane-name {
+      margin: 0;
+      padding-top: var(--space-3);
+    }
+    .process_bars {
+      display: grid;
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+      gap: 0.4rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .process_bar {
+      grid-column: var(--from) / var(--to);
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-height: 7.5rem;
+      padding: var(--space-3);
+      border-radius: var(--radius-media);
+    }
+    .process_lane.is-partner .process_bar {
+      background: #c8ff54; /* Primary's neon, from primary.studio */
+      color: #111;
+    }
+    .process_lane.is-kinetic .process_bar {
+      background: var(--text);
+      color: var(--background);
+    }
+    .process_lane.is-kinetic .process_bar.is-soft {
+      background: color-mix(in srgb, var(--text) 12%, transparent);
+      color: var(--text);
+    }
+    .process_bar-title {
+      margin: 0;
+    }
+    .process_bar-note {
+      opacity: 0.72;
+    }
+    /* the weeks are read off the axis on wide screens; on phones each bar names its own */
+    .process_when {
+      display: none;
+    }
+    @media (width < 48rem) {
+      .process_axis {
+        display: none;
+      }
+      .process_lane {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+      }
+      .process_lane-name {
+        padding-top: var(--space-4);
+      }
+      .process_bars {
+        grid-template-columns: 1fr;
+      }
+      .process_bar {
+        grid-column: auto;
+        min-height: 0;
+      }
+      .process_when {
+        display: block;
+        opacity: 0.72;
+      }
+    }
+    .process_points {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-6);
+      width: 100%;
+      margin: var(--space-8) 0 0;
+      padding: 0;
+      list-style: none;
+      @media (width < 36rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .process_point {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      padding-top: var(--space-4);
+      border-top: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+    }
+    .process_point-title,
+    .process_point-body {
+      margin: 0;
+    }
+    .process_point-body {
+      max-width: 40ch;
+      color: color-mix(in srgb, var(--text) 72%, transparent);
+    }
+  }
+</style>

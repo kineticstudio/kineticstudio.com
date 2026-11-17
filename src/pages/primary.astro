@@ -2,10 +2,14 @@
 import Layout from "@/layouts/BaseLayout.astro";
 import PartnerHero from "@/components/section/PartnerHero.astro";
 import PartnerWork from "@/components/section/PartnerWork.astro";
-import PartnerHow from "@/components/section/PartnerHow.astro";
+import PartnerBrandToWeb from "@/components/section/PartnerBrandToWeb.astro";
+import PartnerProcess from "@/components/section/PartnerProcess.astro";
+import PartnerClose from "@/components/section/PartnerClose.astro";
 import WorkWheel from "@/components/section/WorkWheel.astro";
 import { HOME } from "@/data/work.js";
 import primaryLogo from "@/assets/clients/primary.svg?raw";
+import exeLogo from "@/assets/clients/exe-logo.svg?raw";
+import ownerLogo from "@/assets/clients/owner-logo.svg?raw";
 
 /* Nov 6: Primary (primary.studio) made Kinetic its web partner, and Hunter promised Brandon a page to
    share with prospects. Hunter: "we should show off exe.dev, owner.com, august health, ramble ... But
@@ -23,43 +27,100 @@ const PRIMARY = ["exe", "owner", "august-health", "ramble", "planned"];
 const MORE = ["wispr-flow", "dawn", "anthropic-community", "moses", "ethos", "rime", "rylo", "cambium", "venus-aerospace", "epirus", "new-era", "counsel-health"];
 const rest = MORE.filter((slug) => HOME.includes(slug) && !PRIMARY.includes(slug));
 
-/* The working relationship, from the Nov 6 call with Nick and Brandon, told in the order a client lives it:
-   the brand, the early web start, Hunter directly, launch. Prices stay off the page. */
-const HOW = [
+/* Nov 17 upgrade, from the group DM: Hunter, Nov 9: "a more proper landing page that explains the
+   relationship ... what it looks like to take the brand and bring it to the web"; Nick, Nov 9: "some kind of
+   transformation of the brand into web", "clear process and timeline", and "an inherent advantage to it
+   being light mode and feeling like primary" (Hunter: "Much more in line with where I want to take it");
+   Hunter, Nov 9: four weeks of web, not five ("Let's do 4 weeks"). Prices stay off the page. */
+
+/* Brand to website: each brand as Primary's brand book hands it over, beside the site. Colours and type
+   are the brand books' own (exe: Primary's guidelines file; Owner: the site's tokens; Planned: the
+   Interim Brand Book); logos are the real files. */
+const PAIRS = [
   {
-    title: "Brand first",
-    body: "Primary runs your brand sprint and delivers a launch-ready identity in two weeks.",
+    slug: "exe",
+    logo: { svg: exeLogo, width: 46 },
+    ground: "#F7F4EF",
+    ink: "#282624",
+    colours: [["Brand black", "#282624"], ["Paper", "#F7F4EF"], ["Light yellow", "#FFF7D6"], ["Orange", "#F48E00"]] as [string, string][],
+    type: "GT Alpina, GT Alpina Typewriter",
   },
   {
-    title: "A head start on web",
-    body: "Content and wireframes can start during the sprint, so the site is never waiting on the brand.",
+    slug: "owner",
+    logo: { svg: ownerLogo, width: 42 },
+    ground: "#F9F3ED",
+    ink: "#094413",
+    colours: [["Dark green", "#094413"], ["Green", "#088924"], ["Lime", "#CDFC73"], ["Cream", "#F9F3ED"]] as [string, string][],
+    type: "STK Bureau Sans",
   },
+  {
+    slug: "planned",
+    logo: { src: "/images/primary/planned-wordmark.png", width: 52 },
+    ground: "#F1EDE3",
+    ink: "#21333A",
+    colours: [["Black", "#21333A"], ["Paper", "#FCFBF4"], ["Seafoam", "#4F9897"], ["Mint", "#A8D8CD"], ["Gold", "#FFDBA6"]] as [string, string][],
+    type: "Geist",
+  },
+];
+
+/* The hand-off, week by week: the sprint is two weeks (primary.studio), web is four after it, and the
+   content and wireframes start in the sprint's second week. */
+const COLUMNS = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6", "After launch"];
+const LANES = [
+  {
+    name: "Primary",
+    kind: "partner" as const,
+    bars: [{ title: "Brand sprint", note: "Strategy, identity and the brand book", from: 1, to: 2, when: "Weeks 1 and 2" }],
+  },
+  {
+    name: "Kinetic",
+    kind: "kinetic" as const,
+    bars: [
+      { title: "Wireframes", note: "Content and structure, while the sprint wraps", from: 2, to: 2, when: "Week 2", soft: true },
+      { title: "Homepage design", note: "A live prototype you can comment on", from: 3, to: 4, when: "Weeks 3 and 4" },
+      { title: "Every page, built", note: "Custom code, tested, then launched", from: 5, to: 6, when: "Weeks 5 and 6" },
+      { title: "Keep going", note: "Site updates, decks and social", from: 7, to: 7, when: "After launch", soft: true },
+    ],
+  },
+];
+const POINTS = [
   {
     title: "Straight to the designer",
     body: "Hunter with Kinetic designs and builds your site directly. No junior hand-off, just quick answers and links to review.",
   },
   {
-    title: "Live in about five weeks",
-    body: "Up to about 15 pages, in custom code with a CMS your team can edit. After launch we can keep going with site updates, decks and social.",
+    title: "Yours to run",
+    body: "Up to about 15 pages in custom code, with a CMS your team can edit without a developer.",
   },
 ];
 ---
 
-<Layout footerForm={false} title="Primary x Kinetic" description="Primary builds the brand, Kinetic carries it into the website: award-winning sites for exe.dev, Owner, August Health, Ramble and Planned." image="/og-primary.jpg">
+<Layout theme="light" footerForm={false} title="Primary x Kinetic" description="Primary builds the brand in two weeks, Kinetic carries it into the website in four: sites for exe.dev, Owner, August Health, Ramble and Planned." image="/og-primary.jpg">
   {/* no logo intro here: the wheel arrives straight away (it waits for "ks:intro-done" otherwise) */}
   <script is:inline slot="head">document.documentElement.dataset.intro = "done";</script>
   <PartnerHero
     partnerLogo={primaryLogo}
     partnerName="Primary"
     heading="From brand | to website"
-    lead="Primary builds your brand in a two-week sprint. Kinetic carries it into your website, live in about five weeks. Two studios working as one, so nothing gets lost in between."
+    lead="Primary builds your brand in a two-week sprint. Kinetic carries it into a custom website, live four weeks later. Two studios working as one, so nothing gets lost in between."
   />
   <PartnerWork only={PRIMARY} credits label="Websites for Primary brands" />
-  <PartnerHow
+  <PartnerBrandToWeb
+    heading="The brand, | carried through"
+    lead="Every site starts from Primary's own files: the logo, the colours, the type. Here's the brand as it's handed over, and the site it became."
+    pairs={PAIRS}
+  />
+  <PartnerProcess
     heading="Two studios, | one team"
-    lead="Your site is designed from Primary's own system and files, so it feels like the brand from the first page, not a translation of it."
-    cta={{ label: "Start with Primary", href: "https://www.primary.studio/contact" }}
-    points={HOW}
+    lead="Kinetic is in the files before your sprint wraps, so nobody explains your company twice and there's no gap between brand and website."
+    columns={COLUMNS}
+    lanes={LANES}
+    points={POINTS}
   />
   <WorkWheel heading="More websites | from Kinetic" only={rest} simple />
+  <PartnerClose
+    heading="Start with | a brand sprint"
+    lead="Book your sprint with Primary, and your website comes from the same team, four weeks later."
+    cta={{ label: "Start with Primary", href: "https://www.primary.studio/contact" }}
+  />
 </Layout>

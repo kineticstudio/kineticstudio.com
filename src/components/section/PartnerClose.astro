@@ -1,0 +1,56 @@
+---
+import Section from "@/components/wrapper/Section.astro";
+import Button from "@/components/Button.astro";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The headline; a "|" breaks it onto a second line. */
+  heading: string;
+  /** A line under it. */
+  lead: string;
+  /** The one next step. */
+  cta: { label: string; href: string };
+}
+
+const { render = true, heading, lead, cta } = Astro.props;
+/* The page's one next step, at its foot on the studio's lime (Hunter, Nov 6: no contact form here; this
+   is a link to Primary, who sells the work). */
+---
+
+{
+  render && (
+    <Section theme="brand" paddingTop="large" paddingBottom="large" class="partner-close" gap="0">
+      <div class="partner-close_inner" data-reveal>
+        <h2 class="partner-close_title text-style-h2">
+          {heading.split("|").map((line) => <span>{line.trim()}</span>)}
+        </h2>
+        <p class="partner-close_lead text-style-main">{lead}</p>
+        <Button element="link" href={cta.href} target="_blank" rel="noopener">{cta.label}</Button>
+      </div>
+    </Section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .partner-close_inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-5);
+      width: 100%;
+      text-align: center;
+    }
+    .partner-close_title {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+    }
+    .partner-close_lead {
+      max-width: 36ch;
+      margin: 0;
+      text-wrap: balance;
+    }
+  }
+</style>
