@@ -10,7 +10,7 @@
 
    Adapted from the Elio site's scripts/relativize.mjs. Every root-absolute
    URL in an attribute (href, src, poster, and the data-src / data-preview the
-   loops load from) and in a CSS url(), in .css files and in the font CSS
+   loops load from, and the project modal's data-loop / data-still / data-framed / data-site) and in a CSS url(), in .css files and in the font CSS
    Astro inlines into each page, becomes relative to the file it sits in. A
    link to a page gets an explicit index.html, because the Studio's file
    server does not resolve directory indexes. Externals (http, //, #, data:)
@@ -56,7 +56,7 @@ for (const file of walk(DIST)) {
   if (file.endsWith(".html")) {
     src = readFileSync(file, "utf8");
     out = src.replace(
-      /(href|src|poster|data-src|data-preview)=("|')\/(?!\/)([^"']*)\2/g,
+      /(href|src|poster|data-src|data-preview|data-poster|data-phone|data-loop|data-still|data-framed|data-site)=("|')\/(?!\/)([^"']*)\2/g,
       (_, attr, q, path) => `${attr}=${q}${toRel(depth, path)}${q}`,
     );
     out = out.replace(/<style([^>]*)>([\s\S]*?)<\/style>/g, (_, a, css) => `<style${a}>${cssUrls(depth, css)}</style>`);
