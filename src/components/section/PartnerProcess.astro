@@ -1,5 +1,6 @@
 ---
 import Section from "@/components/wrapper/Section.astro";
+import kineticRaw from "@/assets/brand/logo.svg?raw";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -8,28 +9,45 @@ interface Props {
   heading: string;
   /** A line under the headline. */
   lead?: string;
-  /** Column labels, left to right (weeks, then what comes after). */
+  /** Week labels, in order (weeks, then what comes after); each week is five working days. */
   columns: string[];
-  /** One lane per studio: its bars, each spanning columns `from` to `to` (1-based, inclusive). */
+  /** One lane per studio: its phases, each spanning weeks `from` to `to` (1-based, inclusive). */
   lanes: {
     name: string;
-    /** The lane's fill: "partner" (the partner's colour) or "kinetic" (ink). */
+    /** "partner" (the partner's colour, on the left) or "kinetic" (ink, on the right). */
     kind: "partner" | "kinetic";
     bars: { title: string; note: string; from: number; to: number; when: string; soft?: boolean }[];
   }[];
+  /** The partner's wordmark, raw SVG, over its lane. */
+  partnerLogo?: string;
   /** A few short points under the timeline. */
   points?: { title: string; body: string }[];
 }
 
-const { render = true, heading, lead, columns, lanes, points = [] } = Astro.props;
-/* How the two studios hand off, week by week (Nick, Nov 9: "some clear process and timeline stuff";
-   Hunter, Nov 9: four weeks of web). Nov 17 (Hunter): dark, and vertical "so you see the days kind of stack
-   up, and then the ideas kind of bleed off to the right with Kinetic": the weeks run down the left, Primary
-   has its own column, and Kinetic's column runs off the page's right edge. The particle script reads each
-   bar's box, so it works in any layout. Nothing moves with the scroll. */
-const rows = columns.length;
+const { render = true, heading, lead, columns, lanes, partnerLogo, points = [] } = Astro.props;
+/* How the two studios hand off, day by day (Nick, Nov 9: "some clear process and timeline stuff"; Hunter,
+   Nov 9: four weeks of web). Nov 17 (Hunter): "As I scroll down ... the primary logo and the Kinetic logo. In
+   the middle, we have a timeline, and it's actually built out by days. You see a stronger line to show what
+   the day is. All of the phases are built out by ... little perfect squares, tiny little squares, almost like
+   pixels. The phase can be smaller ... a much smaller typeface."
+   Primary's lane on the left under its logo, Kinetic's on the right under its own, the days down the
+   middle. Each phase is a block of tiny squares, faint until the day line reaches it; the line is where the
+   scroll has got to, and the squares of each day light up at random as it passes. Nothing is pinned: the
+   page scrolls as ever. Reduced motion: every phase lit, no line. */
+const DAYS = columns.length * 5;
+const day = (week: number, end = false) => (end ? week * 5 : (week - 1) * 5 + 1);
 const partner = lanes.find((l) => l.kind === "partner");
 const kinetic = lanes.find((l) => l.kind === "kinetic");
+const phases = [partner, kinetic].flatMap((lane) =>
+  (lane?.bars ?? []).map((b) => ({ ...b, kind: lane!.kind, d0: day(b.from), d1: day(b.to, true) })),
+);
+const launch = (columns.findIndex((c) => /after/i.test(c)) + 1 || columns.length + 1) - 1; // weeks before launch
+const clean = (svg: string, label: string) =>
+  svg
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/\sid="[^"]*"/g, "")
+    .replace(/\saria-label="[^"]*"/g, "")
+    .replace(/<svg /, `<svg role="img" aria-label="${label}" `);
 ---
 
 {
@@ -41,28 +59,32 @@ const kinetic = lanes.find((l) => l.kind === "kinetic");
         </h2>
         {lead && <p class="process_lead text-style-main">{lead}</p>}
       </div>
-      <div class="process_chart" style={`--rows:${rows}`} data-process>
-        <canvas class="process_particles" aria-hidden="true" />
-        <span class="process_lane-name text-style-h5" style="grid-column:2;grid-row:1">{partner?.name}</span>
-        <span class="process_lane-name text-style-h5" style="grid-column:3;grid-row:1">{kinetic?.name}</span>
-        {columns.map((c, i) => (
-          <>
-            <span class="process_rule" style={`grid-row:${i + 2}`} aria-hidden="true" />
-            <span class="process_week text-style-label" style={`grid-row:${i + 2}`}>{c}</span>
-          </>
-        ))}
-        {[partner, kinetic].map((lane, col) =>
-          lane?.bars.map((b) => (
-            <div
-              class:list={["process_bar", `is-${lane.kind}`, b.soft && "is-soft"]}
-              style={`grid-column:${col + 2};grid-row:${b.from + 1} / ${b.to + 2}`}
-              data-bar={lane.kind}
-            >
-              <span class="process_bar-title text-style-h5">{b.title}</span>
-              <span class="process_bar-note text-style-label">{b.note}</span>
+      <div class="tl" style={`--days:${DAYS}`} data-tl data-days={DAYS} data-launch={launch * 5}>
+        <div class="tl_logo is-partner">{partnerLogo ? <span set:html={clean(partnerLogo, partner?.name ?? "Partner")} /> : <span class="text-style-h5">{partner?.name}</span>}</div>
+        <div class="tl_logo is-kinetic"><span set:html={clean(kineticRaw, "Kinetic")} /></div>
+        <div class="tl_body">
+          <canvas class="tl_canvas" aria-hidden="true" />
+          <div class="tl_lane is-partner" data-lane="partner" />
+          <div class="tl_axis" data-axis />
+          <div class="tl_lane is-kinetic" data-lane="kinetic" />
+          {columns.map((c, i) => (
+            <span class="tl_week text-style-label" style={`--d:${i * 5}`}>{c}</span>
+          ))}
+          {phases.map((p) => (
+            <div class:list={["tl_phase", `is-${p.kind}`, p.soft && "is-soft"]} style={`--d0:${p.d0 - 1};--d1:${p.d1}`} data-phase={p.kind} data-d0={p.d0} data-d1={p.d1}>
+              <span class="tl_phase-title text-style-label">{p.title}</span>
+              <span class="tl_phase-when text-style-label">{p.when}</span>
             </div>
-          )),
-        )}
+          ))}
+          <div class="tl_now" data-now aria-hidden="true">
+            <span class="tl_now-label text-style-label" data-now-label>Day 1</span>
+          </div>
+        </div>
+        <ol class="sr-only">
+          {phases.map((p) => (
+            <li>{`${p.kind === "partner" ? partner?.name : kinetic?.name}: ${p.title}, ${p.when}. ${p.note}`}</li>
+          ))}
+        </ol>
       </div>
       {points.length > 0 && (
         <ul class="process_points">
@@ -79,79 +101,100 @@ const kinetic = lanes.find((l) => l.kind === "kinetic");
 }
 
 <script>
-  /* Knowledge passing between the studios (Hunter, Nov 17: "visualize it with particles, like knowledge going
-     between ... Primary gets started, and then particles come down and start to build out the Kinetic
-     timeline work"). When the chart comes on screen: Primary's bar fills, then particles leave it and land in
-     each Kinetic bar in turn, lime turning to the bar's colour as they arrive, and each bar fills as its
-     particles land. Then a light trickle keeps passing between the lanes while the chart is on screen. Plays
-     once; nothing is tied to the scroll. Reduced motion: the finished chart, no particles. */
-  const LIME = [200, 255, 84];
+  /* The pixel timeline. One canvas over the body: each phase's block of its lane is a grid of tiny squares
+     (PITCH apart, SIZE across), a few rows to a day. A square belongs to a day; it lights once the day line
+     has passed that day plus its own random share of it, so a day fills in like pixels popping on as the
+     line goes by. Unlit squares stay faint, so the plan is there from the start. The day line follows the
+     scroll: day 0 as the chart's top reaches 70% down the window, the last day as its bottom does, eased. */
+  const PITCH = 6, SIZE = 4;
+  const NEON = [200, 255, 84], INK = [238, 241, 234];
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-  const rgb = (c: string) => (c.match(/[\d.]+/g) || ["0", "0", "0"]).slice(0, 3).map(Number);
-  document.querySelectorAll<HTMLElement>("[data-process]").forEach((chart) => {
-    if (reduced) return;
-    const canvas = chart.querySelector<HTMLCanvasElement>(".process_particles")!;
+
+  document.querySelectorAll<HTMLElement>("[data-tl]").forEach((tl) => {
+    const body = tl.querySelector<HTMLElement>(".tl_body")!;
+    const canvas = tl.querySelector<HTMLCanvasElement>(".tl_canvas")!;
     const ctx = canvas.getContext("2d")!;
-    const source = chart.querySelector<HTMLElement>('[data-bar="partner"]');
-    const targets = [...chart.querySelectorAll<HTMLElement>('[data-bar="kinetic"]')];
-    if (!source || !targets.length) return;
-    chart.classList.add("is-armed");
-    const fills = new Map<HTMLElement, number>([[source, 0], ...targets.map((t) => [t, 0] as [HTMLElement, number])]);
-    const setFill = (el: HTMLElement, f: number) => { fills.set(el, f); el.style.setProperty("--fill", f.toFixed(3)); };
-    let dpr = 1, W = 0, H = 0;
-    const rect = (el: HTMLElement) => { const c = chart.getBoundingClientRect(), r = el.getBoundingClientRect(); return { x: r.left - c.left, y: r.top - c.top, w: r.width, h: r.height }; };
-    const size = () => { const r = chart.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height; canvas.width = W * dpr; canvas.height = H * dpr; };
-    new ResizeObserver(size).observe(chart); size();
-    // how many particles each Kinetic bar takes to fill, by its area
-    const need = targets.map((t) => { const r = rect(t); return Math.min(70, Math.max(26, Math.round((r.w * r.h) / 700))); });
-    const got = targets.map(() => 0);
-    const end = targets.map((t) => { const c = getComputedStyle(t).backgroundColor; const a = /rgba/.test(c) ? 0.55 : 1; return [...rgb(c), a]; });
-    type P = { t: number; dur: number; sx: number; sy: number; cx: number; cy: number; ex: number; ey: number; k: number; r: number; ambient: boolean };
-    const parts: P[] = [];
-    const spawn = (k: number, ambient = false) => {
-      const s = rect(source), d = rect(targets[k]);
-      const sx = s.x + s.w * (0.1 + Math.random() * 0.8), sy = s.y + s.h * (0.55 + Math.random() * 0.4);
-      // land just behind the bar's filling edge, so it builds left to right
-      const front = ambient ? Math.random() : Math.min(1, got[k] / need[k] + 0.12);
-      const ex = d.x + d.w * Math.max(0.03, front * Math.random()), ey = d.y + d.h * (0.15 + Math.random() * 0.7);
-      const cx = (sx + ex) / 2 + (Math.random() - 0.5) * 80, cy = Math.min(sy, ey) + Math.abs(ey - sy) * (0.2 + Math.random() * 0.5);
-      parts.push({ t: 0, dur: 700 + Math.random() * 600, sx, sy, cx, cy, ex, ey, k, r: 1.4 + Math.random() * 1.4, ambient });
-    };
-    let phase = 0, phaseT = 0, last = 0, acc = 0, cur = 0, onScreen = false, raf = 0, ambientAcc = 0;
-    const frame = (now: number) => {
-      const dt = Math.min(50, now - (last || now)); last = now; phaseT += dt;
-      if (phase === 0) { setFill(source, ease(Math.min(1, phaseT / 900))); if (phaseT > 1000) { phase = 1; phaseT = 0; } }
-      else if (phase === 1) {
-        // stream into the current bar until it has what it needs in flight, then move to the next
-        acc += dt * 0.12;
-        while (acc >= 1 && cur < targets.length) { acc -= 1; spawn(cur); if (parts.filter((p) => !p.ambient && p.k === cur).length + got[cur] >= need[cur]) cur++; }
-        if (cur >= targets.length && !parts.some((p) => !p.ambient)) phase = 2;
-      } else {
-        ambientAcc += dt * 0.006;
-        while (ambientAcc >= 1) { ambientAcc -= 1; spawn(Math.floor(Math.random() * targets.length), true); }
-      }
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-      for (let i = parts.length - 1; i >= 0; i--) {
-        const p = parts[i]; p.t += dt; const u = Math.min(1, p.t / p.dur), e = ease(u);
-        const x = (1 - e) * (1 - e) * p.sx + 2 * (1 - e) * e * p.cx + e * e * p.ex;
-        const y = (1 - e) * (1 - e) * p.sy + 2 * (1 - e) * e * p.cy + e * e * p.ey;
-        const c = end[p.k], m = Math.min(1, Math.max(0, (u - 0.35) / 0.65));
-        const col = [0, 1, 2].map((j) => Math.round(LIME[j] + (c[j] - LIME[j]) * m));
-        const a = p.ambient ? 0.5 * Math.sin(Math.PI * u) : u > 0.92 ? (1 - u) / 0.08 : 1;
-        ctx.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},${a})`;
-        ctx.beginPath(); ctx.arc(x, y, p.r * (u > 0.85 && !p.ambient ? (1 - u) / 0.15 + 0.2 : 1), 0, Math.PI * 2); ctx.fill();
-        if (u >= 1) {
-          parts.splice(i, 1);
-          if (!p.ambient) { got[p.k]++; setFill(targets[p.k], ease(Math.min(1, got[p.k] / need[p.k]))); }
+    const now = tl.querySelector<HTMLElement>("[data-now]")!;
+    const nowLabel = tl.querySelector<HTMLElement>("[data-now-label]")!;
+    const DAYS = Number(tl.dataset.days), LAUNCH = Number(tl.dataset.launch);
+    type Cell = { x: number; y: number; day: number; r: number; rgb: number[]; soft: boolean };
+    let cells: Cell[] = [], W = 0, H = 0, dpr = 1, dayH = 18, axis = { x: 0, w: 0 };
+    let seed = 3;
+    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+    const build = () => {
+      const B = body.getBoundingClientRect();
+      W = B.width;
+      H = B.height;
+      dayH = H / DAYS;
+      dpr = Math.min(2, devicePixelRatio || 1);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      const a = tl.querySelector<HTMLElement>("[data-axis]")!.getBoundingClientRect();
+      axis = { x: a.left - B.left, w: a.width };
+      seed = 3;
+      cells = [];
+      const rowsPerDay = Math.max(1, Math.round(dayH / PITCH));
+      for (const ph of tl.querySelectorAll<HTMLElement>("[data-phase]")) {
+        const lane = tl.querySelector<HTMLElement>(`[data-lane="${ph.dataset.phase}"]`)!.getBoundingClientRect();
+        const partner = ph.dataset.phase === "partner";
+        const d0 = Number(ph.dataset.d0), d1 = Number(ph.dataset.d1);
+        // the squares hug the axis: the partner's block ends at its lane's right edge, Kinetic's starts at its left
+        const cols = Math.floor((lane.width + (PITCH - SIZE)) / PITCH);
+        const x0 = partner ? lane.right - B.left - cols * PITCH + (PITCH - SIZE) : lane.left - B.left;
+        for (let d = d0; d <= d1; d++) {
+          for (let r = 0; r < rowsPerDay; r++) {
+            const y = (d - 1) * dayH + (r * dayH) / rowsPerDay + (dayH / rowsPerDay - SIZE) / 2;
+            for (let c = 0; c < cols; c++) {
+              cells.push({ x: x0 + c * PITCH, y, day: d - 1, r: rand(), rgb: partner ? NEON : INK, soft: ph.classList.contains("is-soft") });
+            }
+          }
         }
       }
-      raf = onScreen ? requestAnimationFrame(frame) : 0;
     };
-    new IntersectionObserver(([e]) => {
-      onScreen = e.isIntersecting;
-      if (onScreen && !raf) { last = 0; raf = requestAnimationFrame(frame); }
-    }, { threshold: 0.35 }).observe(chart);
+
+    let target = reduced ? DAYS : 0, cur = target, raf = 0;
+    const draw = () => {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      // the days down the middle: a short tick each day, a longer one each week
+      ctx.fillStyle = "rgba(238,241,234,0.22)";
+      for (let d = 0; d <= DAYS; d++) {
+        const w = d % 5 === 0 ? axis.w * 0.5 : axis.w * 0.18;
+        ctx.fillRect(axis.x + (axis.w - w) / 2, Math.round(d * dayH), w, 1);
+      }
+      for (const c of cells) {
+        const lit = Math.min(1, Math.max(0, (cur - (c.day + c.r)) * 3));
+        const a = (c.soft ? 0.38 : 1) * lit + 0.09 * (1 - lit);
+        ctx.fillStyle = `rgba(${c.rgb[0]},${c.rgb[1]},${c.rgb[2]},${a.toFixed(3)})`;
+        ctx.fillRect(c.x, c.y, SIZE, SIZE);
+      }
+      // the day line, stronger, across everything
+      const y = Math.min(DAYS, cur) * dayH;
+      now.style.transform = `translateY(${y.toFixed(1)}px)`;
+      const d = Math.min(DAYS, Math.max(1, Math.ceil(cur)));
+      nowLabel.textContent = d > LAUNCH ? "After launch" : d === LAUNCH ? "Launch" : `Day ${d}`;
+    };
+    const tick = () => {
+      raf = 0;
+      cur += (target - cur) * 0.18;
+      if (Math.abs(target - cur) < 0.002) cur = target;
+      draw();
+      if (cur !== target) raf = requestAnimationFrame(tick);
+    };
+    const onScroll = () => {
+      if (reduced) return;
+      const r = body.getBoundingClientRect(), start = innerHeight * 0.7;
+      target = Math.min(DAYS, Math.max(0, ((start - r.top) / r.height) * DAYS));
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+    new ResizeObserver(() => {
+      build();
+      onScroll();
+      draw();
+    }).observe(body);
+    addEventListener("scroll", onScroll, { passive: true });
+    tl.classList.toggle("is-still", reduced);
   });
 </script>
 
@@ -174,85 +217,157 @@ const kinetic = lanes.find((l) => l.kind === "kinetic");
       margin: 0;
       color: color-mix(in srgb, var(--text) 72%, transparent);
     }
-    /* weeks down the left, Primary's column, then Kinetic's, which runs off the right edge of the page */
-    .process_chart {
-      --label-w: 7rem;
-      --row-h: clamp(5rem, 9vw, 7.5rem);
-      position: relative;
+    /* Primary's lane | the days | Kinetic's lane, each lane with its phases' names on its outer side */
+    /* the lanes are narrow and hug the days, the phases' names beside them, the whole thing centred */
+    .tl {
+      --day-h: 18px;
+      --axis-w: 5.5rem;
+      --lane-w: clamp(7rem, 17vw, 15rem);
+      --label-w: 9rem;
       display: grid;
-      grid-template-columns: var(--label-w) minmax(0, 1fr) minmax(0, 1.7fr);
-      grid-template-rows: auto repeat(var(--rows), var(--row-h));
-      column-gap: 0.5rem;
-      width: calc(100% + var(--site-margin, 1.5rem));
-      margin-right: calc(-1 * var(--site-margin, 1.5rem));
+      grid-template-columns: minmax(0, 1fr) var(--lane-w) var(--axis-w) var(--lane-w) minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      row-gap: var(--space-5);
+      width: 100%;
       @media (width < 48rem) {
-        --label-w: 3.5rem;
-        --row-h: 6.5rem;
-        grid-template-columns: var(--label-w) minmax(0, 1fr) minmax(0, 1.3fr);
-        column-gap: 0.35rem;
+        --day-h: 12px;
+        --axis-w: 3.25rem;
+        --lane-w: 4.5rem;
+        --label-w: 6rem;
       }
     }
-    .process_lane-name {
-      margin: 0;
-      padding-bottom: var(--space-3);
+    .tl_logo {
+      grid-row: 1;
+      display: flex;
+      align-items: flex-end;
+      height: 1.75rem;
+      color: var(--text);
+      & svg {
+        display: block;
+        width: auto;
+        height: 100%;
+      }
+      @media (width < 48rem) {
+        height: 1.25rem;
+      }
     }
-    .process_rule {
+    .tl_logo.is-partner {
+      grid-column: 2;
+      justify-content: flex-end;
+      & span {
+        height: 86%;
+      }
+    }
+    .tl_logo.is-kinetic {
+      grid-column: 4;
+      justify-content: flex-start;
+      & span {
+        height: 100%;
+      }
+    }
+    .tl_body {
+      position: relative;
+      grid-row: 2;
       grid-column: 1 / -1;
-      border-top: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+      display: grid;
+      grid-template-columns: subgrid;
+      height: calc(var(--days) * var(--day-h));
     }
-    .process_week {
-      grid-column: 1;
-      padding-top: var(--space-3);
-      color: color-mix(in srgb, var(--text) 55%, transparent);
-    }
-    .process_particles {
+    .tl_canvas {
       position: absolute;
       inset: 0;
-      z-index: 2;
       width: 100%;
       height: 100%;
       pointer-events: none;
     }
-    /* each bar builds left to right as its particles land (--fill, from the script); with no script or with
-       reduced motion it is simply full */
-    .process_bar {
-      --fill: 1;
-      position: relative;
-      z-index: 1;
+    .tl_lane.is-partner {
+      grid-column: 2;
+    }
+    .tl_axis {
+      grid-column: 3;
+    }
+    .tl_lane.is-kinetic {
+      grid-column: 4;
+    }
+    /* week names in the middle, at each week's first day */
+    .tl_week {
+      position: absolute;
+      top: calc(var(--d) * var(--day-h) + 4px);
+      left: calc(50% - var(--axis-w) / 2);
+      width: var(--axis-w);
+      text-align: center;
+      color: color-mix(in srgb, var(--text) 50%, transparent);
+      white-space: nowrap;
+      font-size: 0.6875rem;
+      @media (width < 48rem) {
+        font-size: 0.5625rem;
+      }
+    }
+    /* each phase's name, small, on its lane's outer side at its first day */
+    .tl_phase {
+      position: absolute;
+      top: calc(var(--d0) * var(--day-h));
       display: flex;
       flex-direction: column;
-      gap: 0.35rem;
-      margin: 0.3rem 0;
-      padding: var(--space-3);
-      border-radius: var(--radius-media);
-      clip-path: inset(0 calc((1 - var(--fill)) * 100%) 0 0 round var(--radius-media));
+      gap: 0.1rem;
+      width: calc(50% - var(--axis-w) / 2 - var(--lane-w)); /* the outer column beside its lane */
+      max-width: var(--label-w);
+      font-size: 0.6875rem;
+      line-height: 1.25;
+      & > * {
+        font-size: inherit;
+      }
+      @media (width < 48rem) {
+        font-size: 0.5625rem;
+      }
     }
-    .process_bar.is-partner {
-      background: #c8ff54; /* Primary's neon, from primary.studio */
-      color: #111;
+    .tl_phase.is-partner {
+      right: calc(50% + var(--axis-w) / 2 + var(--lane-w));
+      padding-right: 0.75rem;
+      text-align: right;
     }
-    .process_bar.is-kinetic {
-      background: var(--text);
-      color: var(--background);
-      /* off the page's right edge: square there, no rounding */
-      border-radius: var(--radius-media) 0 0 var(--radius-media);
-      clip-path: inset(0 calc((1 - var(--fill)) * 100%) 0 0 round var(--radius-media) 0 0 var(--radius-media));
+    .tl_phase.is-kinetic {
+      left: calc(50% + var(--axis-w) / 2 + var(--lane-w));
+      padding-left: 0.75rem;
     }
-    .process_bar.is-kinetic.is-soft {
-      background: color-mix(in srgb, var(--text) 16%, var(--background));
+    .tl_phase-title {
       color: var(--text);
     }
-    .process_bar-title {
-      margin: 0;
+    .tl_phase-when {
+      color: color-mix(in srgb, var(--text) 50%, transparent);
     }
-    .process_bar-note {
-      opacity: 0.72;
+    .tl_phase.is-soft .tl_phase-title {
+      color: color-mix(in srgb, var(--text) 70%, transparent);
     }
-    .process_chart.is-armed .process_bar {
-      --fill: 0;
+    /* the day line: the scroll's day, a stronger rule across the chart, its day in the middle */
+    .tl_now {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 0;
+      border-top: 1px solid color-mix(in srgb, var(--text) 85%, transparent);
+      will-change: transform;
+      pointer-events: none;
     }
-    .process_chart.is-armed .process_bar > * {
-      opacity: clamp(0, calc((var(--fill) - 0.6) * 3), 1);
+    .tl_now-label {
+      position: absolute;
+      top: 0;
+      left: calc(50% - var(--axis-w) / 2);
+      width: var(--axis-w);
+      translate: 0 -50%;
+      padding: 0.15rem 0;
+      background: var(--background);
+      color: var(--text);
+      text-align: center;
+      white-space: nowrap;
+      font-size: 0.6875rem;
+      @media (width < 48rem) {
+        font-size: 0.5625rem;
+      }
+    }
+    .tl.is-still .tl_now {
+      display: none;
     }
     .process_points {
       display: grid;

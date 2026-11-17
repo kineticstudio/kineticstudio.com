@@ -3,6 +3,7 @@ import Section from "@/components/wrapper/Section.astro";
 import { WORK } from "@/data/work.js";
 import { projectLink, restLoop } from "@/data/project-link.js";
 import MAC from "@/data/macbook-angle.json";
+import MEDIA from "@/data/media.json";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -43,7 +44,7 @@ const rows = pairs
 
 {
   render && rows.length > 0 && (
-    <Section paddingTop={heading ? "large" : "small"} paddingBottom="large" class="brand-web" gap="0" data-brand-web-section>
+    <Section paddingTop={heading ? "large" : "none"} paddingBottom="large" class="brand-web" gap="0">
       {heading && (
         <div class="brand-web_head" data-reveal>
           <h2 class="brand-web_title text-style-h2">
@@ -72,7 +73,7 @@ const rows = pairs
               </figure>
               <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`} data-mac>
                 <img class="brand-web_mac" src={MAC.src} alt="" width={MAC.width} height={MAC.height} loading="lazy" decoding="async" />
-                <span class="brand-web_screen">
+                <span class="brand-web_screen" style={`--site-ground:${(MEDIA as Record<string, { ground: string }>)[w.cover]?.ground ?? "#111"}`}>
                   <video class="brand-web_video" data-src={`/media/${w.cover}.mp4`} poster={`/media/${w.cover}.webp`} muted loop playsinline preload="none" aria-hidden="true" />
                 </span>
               </a>
@@ -90,26 +91,35 @@ const rows = pairs
   import { BRAND_WEB_LOOK as LOOK } from "@/data/brand-web-look.js";
 
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const section = document.querySelector<HTMLElement>("[data-brand-web-section]");
-
-  // light into dark toward the bottom right, the neon on the light side of the edge; each row's name takes
-  // the light text where the dark has reached it
-  const gradient = () => {
-    if (!section) return;
-    const g = LOOK.gradient, at = g.start + (g.end - g.start) * g.accentAt;
-    section.style.setProperty("--bw-angle", `${g.angle}deg`);
-    section.style.setProperty("--bw-start", `${g.start * 100}%`);
-    section.style.setProperty("--bw-accent", `${at * 100}%`);
-    section.style.setProperty("--bw-end", `${g.end * 100}%`);
-    section.style.setProperty("--bw-mix", `${g.accentMix * 100}%`);
-    const S = section.getBoundingClientRect(), rad = (g.angle * Math.PI) / 180, dx = Math.sin(rad), dy = -Math.cos(rad);
+  /* The ground (.bw-ground on the page, round the hero and these rows): the screen goes from light into dark
+     toward its bottom right, the neon on the light side of the edge, like the Primary proposal's cover. Its
+     layer sticks to the screen, so the dark stays in the bottom right as the rows scroll by; each row's name
+     takes the light text while the dark is behind it. */
+  const ground = document.querySelector<HTMLElement>("[data-ground]");
+  const layer = ground?.querySelector<HTMLElement>(".bw-ground_layer");
+  const names = [...document.querySelectorAll<HTMLElement>(".brand-web_name")];
+  const shade = () => {
+    if (!layer) return;
+    const g = LOOK.gradient, S = layer.getBoundingClientRect(), rad = (g.angle * Math.PI) / 180, dx = Math.sin(rad), dy = -Math.cos(rad);
     const len = Math.abs(S.width * dx) + Math.abs(S.height * dy);
-    section.querySelectorAll<HTMLElement>(".brand-web_name").forEach((n) => {
+    for (const n of names) {
       const r = n.getBoundingClientRect();
       const t = ((r.left + r.width / 2 - S.left - S.width / 2) * dx + (r.top + r.height / 2 - S.top - S.height / 2) * dy) / len + 0.5;
       n.classList.toggle("is-on-dark", t > (g.start + g.end) / 2);
-    });
+    }
   };
+  const gradient = () => {
+    if (!ground) return;
+    const g = LOOK.gradient, at = g.start + (g.end - g.start) * g.accentAt;
+    ground.style.setProperty("--bw-angle", `${g.angle}deg`);
+    ground.style.setProperty("--bw-start", `${g.start * 100}%`);
+    ground.style.setProperty("--bw-accent", `${at * 100}%`);
+    ground.style.setProperty("--bw-end", `${g.end * 100}%`);
+    ground.style.setProperty("--bw-mix", `${g.accentMix * 100}%`);
+    shade();
+  };
+  let shading = 0;
+  addEventListener("scroll", () => (shading ||= requestAnimationFrame(() => ((shading = 0), shade()))), { passive: true });
 
   // the site loop laid onto the laptop's glass: the screen's corners, inset to the glass, as an affine map
   const fit = (dev: HTMLElement) => {
@@ -142,6 +152,8 @@ const rows = pairs
        1 / cos(a) and more, so the pages further left come nearer and stretch, each in its own slot. */
     const build = () => {
       dev.style.width = `${LOOK.laptop.width}%`;
+      // the pages run in from the window's own left edge, however wide the window (not the content's)
+      book.style.left = `${-pair.getBoundingClientRect().left}px`;
       fit(dev);
       const B = book.getBoundingClientRect(), D = dev.getBoundingClientRect(), b = LOOK.barrel;
       const q = MAC.q;
@@ -227,18 +239,34 @@ const rows = pairs
   });
 
   gradient();
-  if (section) new ResizeObserver(gradient).observe(section);
+  addEventListener("resize", gradient);
   addEventListener("ks:brand-web-look", gradient);
 </script>
 
 <style is:global>
   @layer components {
-    .brand-web {
+    /* the ground round the hero and the rows: a layer the size of the screen, stuck to it */
+    .bw-ground {
+      position: relative;
+      isolation: isolate;
+      overflow: clip; /* the stuck layer ends with the rows, not over what follows (clip keeps it sticky) */
+      & > .section {
+        position: relative;
+        background: transparent;
+      }
+    }
+    .bw-ground_layer {
+      position: sticky;
+      top: 0;
+      z-index: -1;
+      height: 100lvh;
+      margin-bottom: -100lvh;
+      pointer-events: none;
       background: linear-gradient(
-        var(--bw-angle, 158deg),
-        var(--light-300) var(--bw-start, 58%),
-        color-mix(in srgb, #c8ff54 var(--bw-mix, 55%), var(--light-300)) var(--bw-accent, 70.6%),
-        var(--dark-900) var(--bw-end, 76%)
+        var(--bw-angle, 140deg),
+        var(--light-300) var(--bw-start, 46%),
+        color-mix(in srgb, #c8ff54 var(--bw-mix, 60%), var(--light-300)) var(--bw-accent, 59%),
+        var(--dark-900) var(--bw-end, 64%)
       );
     }
     .brand-web_head {
@@ -267,6 +295,9 @@ const rows = pairs
       padding: 0;
       list-style: none;
     }
+    .brand-web_row:first-child .brand-web_pair {
+      padding-top: 0;
+    }
     .brand-web_row {
       display: flex;
       flex-direction: column;
@@ -281,7 +312,7 @@ const rows = pairs
     }
     .brand-web_book {
       position: absolute;
-      inset: 0 0 0 calc(-1 * var(--site-margin, 1.5rem));
+      inset: 0 0 0 calc(-1 * var(--site-margin, 1.5rem)); /* left: set to the window's edge by the script */
       margin: 0;
       overflow: hidden;
       pointer-events: none;
@@ -316,16 +347,19 @@ const rows = pairs
       left: 0;
       overflow: hidden;
       transform-origin: 0 0;
-      background: #111;
+      background: var(--site-ground, #111);
     }
+    /* the whole recording, never cropped: the site's own ground fills any space under it (the loops are
+       16:10 and 16:9, the glass a little taller), so its margins stay as they were */
     .brand-web_video {
       display: block;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       object-position: top center;
     }
     .brand-web_name {
+      width: fit-content;
       margin: 0;
       transition: color 0.3s ease;
       &.is-on-dark {

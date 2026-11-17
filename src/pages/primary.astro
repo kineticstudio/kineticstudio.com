@@ -116,6 +116,10 @@ const POINTS = [
       barrel grid. Instead, left-align the primary to Kinetic lockup, the H1, and the subcopy. Make it smaller.
       Remove the carousel of work below that, and then we'll just go straight into the exe example."); the
       awards and client logos sit down by the wheel */}
+  {/* the hero and the rows share one ground: light into dark toward the screen's bottom right, like the
+      Primary proposal's cover (Hunter, Nov 17), stuck to the screen as they scroll (PartnerBrandToWeb) */}
+  <div class="bw-ground" data-ground>
+  <div class="bw-ground_layer" aria-hidden="true"></div>
   <PartnerHero
     compact
     partnerLogo={primaryLogo}
@@ -124,15 +128,18 @@ const POINTS = [
     lead="Primary is a world-class branding agency. Kinetic has deep expertise in taking the fundamentals of their work and bringing it into the world with motion and interactivity, in a custom website live four weeks after your sprint."
   />
   <PartnerBrandToWeb pairs={PAIRS} />
+  </div>
+  {/* client words, dark, between the rows and the timeline (Hunter, Nov 17: "we are totally missing the
+      testimonials"); only approved quotes render (src/data/testimonials.json), drafts in previews */}
+  <PartnerQuotes page="primary" theme="dark" />
   <PartnerProcess
+    partnerLogo={primaryLogo}
     heading="Two studios, | one team"
     lead="Kinetic is in the files before your sprint wraps, so nobody explains your company twice and there's no gap between brand and website."
     columns={COLUMNS}
     lanes={LANES}
     points={POINTS}
   />
-  {/* client words, after the timeline; only approved quotes render (src/data/testimonials.json) */}
-  <PartnerQuotes page="primary" />
   <WorkWheel heading="More websites | from Kinetic" only={rest} simple />
   <PartnerClose
     heading="Start with | a brand sprint"

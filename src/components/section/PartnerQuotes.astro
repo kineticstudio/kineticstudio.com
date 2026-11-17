@@ -6,15 +6,17 @@ interface Props {
   render?: boolean;
   /** Which page's quotes (each entry lists the pages it may appear on). */
   page: string;
+  /** "dark" to sit between dark sections (/primary: under the brand rows, into the timeline). */
+  theme?: "dark";
 }
 
-const { render = true, page } = Astro.props;
+const { render = true, page, theme } = Astro.props;
 /* Client words in one line, running slowly under the hero (Hunter, Nov 17: a marquee of testimonials below
    a hero). They come from src/data/testimonials.json, and only approved ones render: a preview build with
    PUBLIC_DRAFT_QUOTES=1 also shows unapproved ones, each marked Draft, so the placement can be judged before
    anyone has said yes. Confidential clients never show here. Text only, no cards; the line is cut hard at
    the page's edges, no fade; it pauses under the pointer. */
-const drafts = import.meta.env.PUBLIC_DRAFT_QUOTES === "1";
+const drafts = import.meta.env.PUBLIC_DRAFT_QUOTES === "1" || process.env.KS_STUDIO_BUILD === "1"; // previews and the Studio copy show drafts
 type Q = { id: string; quote: string; name: string; role?: string; company: string; approved: boolean; confidential?: boolean; pages: string[] };
 const quotes = (DATA.quotes as Q[]).filter((q) => q.pages.includes(page) && !q.confidential && (q.approved || drafts));
 const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
@@ -22,7 +24,7 @@ const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
 
 {
   render && quotes.length > 0 && (
-    <section class="quotes" aria-label="What clients say">
+    <section class:list={["quotes", theme && `theme-${theme}`]} aria-label="What clients say">
       <div class="quotes_track" style={`--count:${quotes.length}`}>
         {[0, 1].map((copy) => (
           <ul class="quotes_set" aria-hidden={copy === 1 ? "true" : undefined}>
@@ -46,6 +48,8 @@ const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
   @layer components {
     .quotes {
       width: 100%;
+      background: var(--background);
+      color: var(--text);
       overflow: hidden;
       padding-block: var(--space-6);
       border-block: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
