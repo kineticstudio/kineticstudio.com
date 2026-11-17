@@ -22,17 +22,16 @@ interface Props {
 
 const { render = true, heading, lead, pairs } = Astro.props;
 /* Brand to website (Hunter, Nov 17: "a handful of the brand guidelines that are essentially a 16:9 static
-   PDF that Primary sends over. Those move from left to right, almost like a slow marquee, and then you see a
-   looped version of the website on the right. You see how those feed into the expressiveness of the
-   execution"). The pages are Primary's own (the brand book Figma files); the site plays on Kinetic's
-   MacBook, rendered head-on in Blender (Hunter: "it can't be a super aggressive angle"), its screen box
-   measured from the render (devices.py corners), so the loop sits exactly on the glass. */
-/* Nov 17 (Hunter): "two rows of the marquee. The top one could go a little bit slower than the bottom one",
-   cut hard at the page edge. The laptop is one Blender render (devices.py, az -12, el 8), turned a little
-   toward the pages (Hunter: "just render it at a slightly sideways angle for now", after a scroll-driven
-   turn), with its screen's corners as fractions of the frame (src/data/macbook-angle.json); the script lays
-   the loop onto the screen with an affine transform (an orthographic camera turns the screen into an exact
-   parallelogram). */
+   PDF that Primary sends over ... and then you see a looped version of the website on the right"). The
+   pages are Primary's own (the brand book Figma files); the site plays on Kinetic's MacBook, a Blender
+   render (devices.py, el 8) with its screen's corners as fractions of the frame (src/data/macbook-angle.json),
+   so the loop sits exactly on the glass.
+   Later on Nov 17 (Hunter): the laptops turn to the left (az +12), bigger, the rows taller, no "Website
+   by Kinetic" tag or industry; and the pages ride a barrel: "they came in from the left, but they were
+   closer to us the more on the left they were, and then they got pulled into the website", going "all
+   the way behind the screen of the laptop". Each row's pages travel a curve in depth (a quarter of an
+   ellipse seen from inside): near and facing us at the page's left edge, turning and shrinking as they
+   run right, and slipping behind the laptop's screen. Two lines of pages, the top one slower. */
 const rows = pairs
   .map((p) => ({ p, w: WORK.find((w) => w.slug === p.slug) }))
   .filter((r): r is { p: (typeof pairs)[number]; w: (typeof WORK)[number] } => Boolean(r.w && restLoop(r.w) && r.p.slides.length))
@@ -48,36 +47,32 @@ const rows = pairs
         </h2>
         {lead && <p class="brand-web_lead text-style-main">{lead}</p>}
       </div>
-      <ul class="brand-web_list" data-brand-web style={`--turn-ratio:${MAC.width / MAC.height}`}>
+      <ul class="brand-web_list" data-brand-web style={`--mac-ratio:${MAC.width / MAC.height}`}>
         {rows.map(({ p, w, loop, link }) => (
           <li class="brand-web_row" data-reveal>
             <div class="brand-web_pair">
-              <figure class="brand-web_book" aria-label={`${w.name} brand guidelines by Primary`}>
+              <figure class="brand-web_book" aria-label={`${w.name} brand guidelines by Primary`} data-book>
                 {[p.slides.filter((_, i) => i % 2 === 0), p.slides.filter((_, i) => i % 2 === 1)].map((line, r) => (
-                  <div class:list={["brand-web_track", r === 0 ? "is-slow" : "is-fast"]} style={`--count:${line.length}`}>
-                    {[0, 1].map((copy) => (
-                      <div class="brand-web_set" aria-hidden={copy === 1 ? "true" : undefined}>
-                        {line.map((s) => (
-                          <img class="brand-web_slide" src={s.src} alt={copy === 0 ? s.alt : ""} width="1280" height="720" loading="lazy" decoding="async" />
-                        ))}
-                      </div>
+                  <template data-line={r}>
+                    {line.map((s) => (
+                      <img class="brand-web_slide" src={s.src} alt="" width="1280" height="720" decoding="async" draggable="false" />
                     ))}
-                  </div>
+                  </template>
                 ))}
-                <figcaption class="brand-web_tag text-style-label">Brand guidelines by Primary</figcaption>
+                <ul class="sr-only">
+                  {p.slides.map((s) => (
+                    <li>{s.alt}</li>
+                  ))}
+                </ul>
               </figure>
               <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`} data-mac>
                 <img class="brand-web_mac" src={MAC.src} alt="" width={MAC.width} height={MAC.height} loading="lazy" decoding="async" />
                 <span class="brand-web_screen">
                   <video class="brand-web_video" data-src={loop.src} poster={loop.poster} muted loop playsinline preload="none" aria-hidden="true" />
                 </span>
-                <span class="brand-web_tag brand-web_tag--site text-style-label">Website by Kinetic</span>
               </a>
             </div>
-            <p class="brand-web_caption">
-              <span class="brand-web_name text-style-h5">{w.name}</span>
-              <span class="brand-web_meta text-style-label">{w.industry}</span>
-            </p>
+            <p class="brand-web_name text-style-h5">{w.name}</p>
           </li>
         ))}
       </ul>
@@ -95,25 +90,109 @@ const rows = pairs
     s.style.transform = `matrix(${(q[1][0] - q[0][0]) / sw},${(q[1][1] - q[0][1]) / sw},${(q[3][0] - q[0][0]) / sh},${(q[3][1] - q[0][1]) / sh},${q[0][0]},${q[0][1]})`;
   };
   document.querySelectorAll("[data-mac]").forEach((dev) => { new ResizeObserver(() => fit(dev)).observe(dev); fit(dev); });
-</script>
 
-<script>
-  // each row plays (its pages drifting, its site looping) while it is on screen, and rests when it isn't
+  /* The barrel. In the book's own box (x right, y down, z toward us, the camera's perspective at the
+     laptop's screen), a page at angle th (0 to TH) sits on a quarter ellipse round the point
+     (left, far):  x = x0 + rx sin(th),  z = zFar + rz cos(th),  turned rotateY(atan(rz sin th / rx cos th))
+     so it lies along the curve. th runs at an even pace, so the pages keep their spacing. */
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  document.querySelectorAll<HTMLElement>("[data-brand-web]").forEach((root) => {
-    const io = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        const row = e.target as HTMLElement;
-        row.classList.toggle("is-playing", e.isIntersecting && !reduced);
-        const v = row.querySelector<HTMLVideoElement>("video[data-src]");
-        if (!v || reduced) continue;
+  const TH = 1.18; // where the curve ends, about 68 degrees round: behind the screen
+  const LINES = [
+    { y: -0.2, lap: 30 }, // seconds for a page to cross, top line slower
+    { y: 0.2, lap: 20 },
+  ];
+  document.querySelectorAll(".brand-web_pair").forEach((pair) => {
+    const book = pair.querySelector("[data-book]");
+    const dev = pair.querySelector("[data-mac]");
+    const row = pair.closest(".brand-web_row");
+    const lines = [...book.querySelectorAll("template[data-line]")].map((t, r) => {
+      const imgs = [...t.content.querySelectorAll("img")];
+      return { ...LINES[r], imgs, els: [], n: 0 };
+    });
+    let geo = null;
+    const build = () => {
+      const B = book.getBoundingClientRect(), D = dev.getBoundingClientRect();
+      const H = D.height, h = H * 0.25, w = (h * 16) / 9;
+      const q = MAC.q;
+      const sx = D.left - B.left + ((q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4) * D.width;
+      const sy = D.top - B.top + ((q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4) * D.height;
+      const P = H * 2.2; // the perspective
+      const zNear = P * 0.36, zFar = -P * 1.7;
+      const x0 = -w * 0.5, rx = sx - x0, rz = zNear - zFar;
+      // the curve's length, so each line holds as many pages as fit along it with a gap between
+      let len = 0;
+      for (let i = 0, px = x0, pz = zNear; i <= 60; i++) {
+        const th = (i / 60) * TH, x = x0 + rx * Math.sin(th), z = zFar + rz * Math.cos(th);
+        len += Math.hypot(x - px, z - pz);
+        px = x;
+        pz = z;
+      }
+      book.style.perspective = `${P}px`;
+      book.style.perspectiveOrigin = `${sx}px ${sy}px`;
+      geo = { w, h, sx, sy, x0, rx, rz, zFar, H };
+      for (const L of lines) {
+        const n = Math.max(L.imgs.length, Math.ceil(len / (w * 1.08)));
+        if (n !== L.n) {
+          L.els.forEach((e) => e.remove());
+          L.els = Array.from({ length: n }, (_, i) => {
+            const img = L.imgs[i % L.imgs.length].cloneNode();
+            book.append(img);
+            return img;
+          });
+          L.n = n;
+        }
+        for (const e of L.els) {
+          e.style.width = `${w}px`;
+          e.style.height = `${h}px`;
+        }
+      }
+    };
+    const draw = (t) => {
+      if (!geo) return;
+      const { w, h, sy, x0, rx, rz, zFar, H } = geo;
+      for (const L of lines) {
+        const y = sy + L.y * H * 0.9 - h / 2;
+        L.els.forEach((e, i) => {
+          const f = (((i / L.n + t / L.lap) % 1) + 1) % 1;
+          const th = f * TH;
+          const x = x0 + rx * Math.sin(th) - w / 2;
+          const z = zFar + rz * Math.cos(th);
+          const turn = 0.55 * Math.atan2(rz * Math.sin(th), rx * Math.cos(th)); // eased, so a page never goes edge-on
+          e.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,${z.toFixed(1)}px) rotateY(${turn.toFixed(4)}rad)`;
+          e.style.zIndex = String(Math.round(z + 4000));
+        });
+      }
+    };
+    let on = false, raf = 0, t0 = 0, t = 7;
+    const frame = (now) => {
+      raf = 0;
+      if (!on) return;
+      if (t0) t += Math.min(0.05, (now - t0) / 1000);
+      t0 = now;
+      draw(t);
+      raf = requestAnimationFrame(frame);
+    };
+    new ResizeObserver(() => {
+      build();
+      draw(t);
+    }).observe(pair);
+    // each row plays (its pages drifting, its site looping) while it is on screen, and rests when it isn't
+    const v = dev.querySelector("video[data-src]");
+    new IntersectionObserver(
+      ([e]) => {
+        on = e.isIntersecting && !reduced;
+        if (on && !raf) {
+          t0 = 0;
+          raf = requestAnimationFrame(frame);
+        }
+        if (!v || reduced) return;
         if (e.isIntersecting) {
-          if (!v.src) v.src = v.dataset.src!;
+          if (!v.src) v.src = v.dataset.src;
           v.play().catch(() => {});
         } else v.pause();
-      }
-    }, { rootMargin: "15% 0px" });
-    root.querySelectorAll(".brand-web_row").forEach((row) => io.observe(row));
+      },
+      { rootMargin: "15% 0px" },
+    ).observe(row);
   });
 </script>
 
@@ -139,7 +218,7 @@ const rows = pairs
     .brand-web_list {
       display: flex;
       flex-direction: column;
-      gap: var(--space-8);
+      gap: var(--space-10, 8rem);
       width: 100%;
       margin: 0;
       padding: 0;
@@ -150,99 +229,38 @@ const rows = pairs
       flex-direction: column;
       gap: var(--space-3);
     }
-    /* the guidelines on the left, the laptop on the right, the same height */
+    /* the laptop on the right, big; the pages run in behind it from the page's left edge */
     .brand-web_pair {
-      --row-h: clamp(16rem, 30vw, 30rem);
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: clamp(1rem, 3vw, 3rem);
-      @media (width < 48rem) {
-        --row-h: auto;
-        grid-template-columns: 1fr;
-      }
-    }
-    /* the brand book: two rows of its pages run left to right, the top one slower, cut hard at the page's
-       left edge and at the laptop's side, no rounding and no fade */
-    .brand-web_book {
       position: relative;
       display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      height: calc(var(--row-h) * 0.82);
-      margin: 0 0 0 calc(-1 * var(--site-margin, 1.5rem));
+      justify-content: flex-end;
+      padding-block: clamp(1rem, 3vw, 3rem);
+    }
+    .brand-web_book {
+      position: absolute;
+      inset: -4rem 0 -4rem calc(-1 * var(--site-margin, 1.5rem));
+      margin: 0;
       overflow: hidden;
-      @media (width < 48rem) {
-        height: auto;
-        margin-right: calc(-1 * var(--site-margin, 1.5rem));
-      }
-    }
-    .brand-web_track {
-      display: flex;
-      flex: 1 1 0;
-      min-height: 0;
-      width: max-content;
-      animation: brand-web-drift calc(var(--count) * var(--per)) linear infinite;
-      animation-play-state: paused;
-      @media (width < 48rem) {
-        flex: none;
-        height: 9rem;
-      }
-    }
-    .brand-web_track.is-slow {
-      --per: 11s;
-    }
-    .brand-web_track.is-fast {
-      --per: 7s;
-    }
-    .brand-web_row.is-playing .brand-web_track {
-      animation-play-state: running;
-    }
-    .brand-web_set {
-      display: flex;
-      gap: 0.6rem;
-      height: 100%;
-      padding-right: 0.6rem;
+      pointer-events: none;
     }
     .brand-web_slide {
-      display: block;
-      height: 100%;
-      width: auto;
-      aspect-ratio: 16 / 9;
-    }
-    /* left to right: the second copy starts where the first sits, so the loop has no seam */
-    @keyframes brand-web-drift {
-      from {
-        transform: translateX(-50%);
-      }
-      to {
-        transform: translateX(0);
-      }
-    }
-    .brand-web_tag {
       position: absolute;
-      top: var(--space-3);
-      left: calc(var(--site-margin, 1.5rem) + var(--space-3));
-      z-index: 1;
-      padding: 0.3rem 0.6rem;
-      border-radius: 99rem;
-      background: var(--background);
-      color: var(--text);
-    }
-    .brand-web_tag--site {
-      left: auto;
-      right: 0;
       top: 0;
+      left: 0;
+      display: block;
+      transform-origin: 50% 50%;
+      backface-visibility: hidden;
+      box-shadow: 0 0 0 1px rgb(17 17 17 / 0.06);
+      will-change: transform;
     }
-    /* the laptop, a little sideways, with the site playing on its screen */
     .brand-web_device {
       position: relative;
+      z-index: 1;
       display: block;
-      height: var(--row-h);
-      aspect-ratio: var(--turn-ratio, 1.333);
+      width: min(68%, 62rem);
+      aspect-ratio: var(--mac-ratio, 1.6);
       @media (width < 48rem) {
-        height: auto;
-        width: 100%;
+        width: 82%;
       }
     }
     .brand-web_mac {
@@ -266,27 +284,8 @@ const rows = pairs
       object-fit: cover;
       object-position: top center;
     }
-    .brand-web_caption {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: var(--space-3);
-      margin: 0;
-    }
     .brand-web_name {
       margin: 0;
-    }
-    .brand-web_meta {
-      color: color-mix(in srgb, var(--text) 55%, transparent);
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .brand-web_track {
-        animation: none;
-        transform: translateX(-25%);
-      }
-      .brand-web_track.is-fast {
-        transform: translateX(-10%);
-      }
     }
   }
 </style>

@@ -53,16 +53,6 @@
       "pages": ["primary", "home"]
     },
     {
-      "id": "moses-walker-john-moses",
-      "quote": "Very epic work. I love that 3D model.",
-      "name": "Walker John Moses",
-      "role": "",
-      "company": "moses",
-      "source": "Slack, Nov 13 2026",
-      "approved": false,
-      "pages": ["primary", "home"]
-    },
-    {
       "id": "elio-ron-litvak",
       "quote": "The loading animations are incredible!",
       "name": "Ron Litvak",

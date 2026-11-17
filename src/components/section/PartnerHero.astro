@@ -36,15 +36,15 @@ const clean = (svg: string, label: string) =>
   render && (
     <Section paddingTop="navoverlap" paddingBottom="medium" class="partner-hero" gap="0">
       <div class="partner-hero_inner">
-        <p class="partner-hero_lockup" data-reveal>
+        <p class="partner-hero_lockup" data-reveal data-globe-clear>
           <span class="partner-hero_partner" set:html={clean(partnerLogo, partnerName)} />
           <span class="partner-hero_x" aria-label="and">×</span>
           <span class="partner-hero_kinetic" set:html={clean(kineticRaw, "Kinetic")} />
         </p>
-        <h1 class="partner-hero_title text-style-h1" data-reveal style="--reveal-delay:0.08s">
+        <h1 class="partner-hero_title text-style-h1" data-reveal data-globe-clear style="--reveal-delay:0.08s">
           {heading.split("|").map((line) => <span class="partner-hero_line">{line.trim()}</span>)}
         </h1>
-        <p class="partner-hero_lead text-style-large" data-reveal style="--reveal-delay:0.16s">{lead}</p>
+        <p class="partner-hero_lead text-style-large" data-reveal data-globe-clear style="--reveal-delay:0.16s">{lead}</p>
         {pedigree && (
           <div class="partner-hero_pedigree" data-reveal style="--reveal-delay:0.24s">
             <AwardsLaurels compact />

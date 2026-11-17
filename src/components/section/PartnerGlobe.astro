@@ -1,0 +1,314 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Projects whose loops play on some tiles (their covers in /media). */
+  loops?: string[];
+  /** Columns and rows of the grid that wraps round the globe. */
+  cols?: number;
+  rows?: number;
+}
+
+const { render = true, loops = [], cols = 10, rows = 6 } = Astro.props;
+/* The /primary hero (Hunter, Nov 17: "The hero should look like the playground with the barrel effect of
+   the grid with different sections of different primary sites"): the Playground's globe in light, its
+   tiles the sites Kinetic built for Primary brands, section by section. The stills are screenshots of
+   the live sites, one per screen down each page (public/images/primary/sections/<slug>-<n>.webp, 800x500),
+   and a few tiles play the sites' own loops. It is a picture of the work, so the tiles aren't links:
+   drag to look around, the work below carries the links. */
+const DIR = "public/images/primary/sections";
+const stills = fs
+  .readdirSync(path.resolve(DIR))
+  .filter((f) => f.endsWith(".webp"))
+  .sort()
+  .map((f) => ({ still: `/images/primary/sections/${f}`, site: f.replace(/-\d+\.webp$/, ""), video: "" }));
+const films = loops.map((slug) => ({ still: `/media/${slug}-640.webp`, site: slug, video: `/media/${slug}.mp4` }));
+// the sites take turns, so neighbours come from different brands
+const bySite = new Map<string, typeof stills>();
+for (const p of [...films, ...stills]) bySite.set(p.site, [...(bySite.get(p.site) ?? []), p]);
+const pieces: typeof stills = [];
+for (let i = 0; pieces.length < stills.length + films.length; i++) for (const list of bySite.values()) if (list[i]) pieces.push(list[i]);
+// dealt round the globe, a piece never within two cells of itself, across the wrap seams too
+let seed = 11;
+const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const grid: number[][] = [];
+for (let v = 0; v < rows; v++) {
+  grid[v] = [];
+  for (let u = 0; u < cols; u++) {
+    const at = (du: number, dv: number) => grid[(v + dv + rows) % rows]?.[(u + du + cols) % cols];
+    const near = new Set<number | undefined>();
+    for (let dv = -2; dv <= 2; dv++) for (let du = -2; du <= 2; du++) if (du || dv) near.add(at(du, dv));
+    const nearSite = new Set([at(-1, 0), at(0, -1), at(1, -1), at(-1, -1)].map((i) => (i === undefined ? "" : pieces[i].site)));
+    const order = pieces.map((_, i) => i).sort(() => rand() - 0.5);
+    grid[v][u] = order.find((i) => !near.has(i) && !nearSite.has(pieces[i].site)) ?? order.find((i) => !near.has(i)) ?? order[0];
+  }
+}
+const cells = Array.from({ length: cols * rows }, (_, k) => ({ u: k % cols, v: Math.floor(k / cols), p: pieces[grid[Math.floor(k / cols)][k % cols]] }));
+---
+
+{
+  render && (
+    <section class="globe" data-globe aria-label="Sites Kinetic built for Primary brands">
+      <canvas class="globe_grid" aria-hidden="true" />
+      <div class="globe_world" data-world data-cols={cols} data-rows={rows} aria-hidden="true">
+        {cells.map(({ u, v, p }) => (
+          <div class="globe_tile" data-u={u} data-v={v}>
+            {p.video ? <video data-src={p.video} data-poster={p.still} muted loop playsinline preload="none" /> : <img data-src={p.still} alt="" decoding="async" draggable="false" />}
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+<script>
+  /* The Playground's globe (src/components/section/Playground.astro), after Ramble's barrel: the camera at
+     the centre of a sphere of radius F, the grid of tiles wrapping it without end across and down, the
+     tile ahead at true size and the ones toward the rim stretched; it drifts, and follows a drag.
+       x = cx + F tan(a),  y = cy - F tan(b) / cos(a) */
+  import { LITE } from "@/scripts/lite.js";
+
+  document.querySelectorAll<HTMLElement>("[data-globe]").forEach((root) => {
+    const world = root.querySelector<HTMLElement>("[data-world]")!;
+    const grid = root.querySelector<HTMLCanvasElement>(".globe_grid")!;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const COLS = Number(world.dataset.cols), ROWS = Number(world.dataset.rows);
+    const cells = [...root.querySelectorAll<HTMLElement>(".globe_tile")].map((el) => ({
+      el,
+      u: Number(el.dataset.u),
+      v: Number(el.dataset.v),
+      img: el.querySelector("img"),
+      video: el.querySelector("video"),
+      on: false,
+      got: false,
+    }));
+    let F = 1400, COL = 0.16, ROW = 0.11, TW = 260, TH = 162, viewA = 0.5, viewB = 0.35, W = 0, H = 0, dpr = 1;
+    const layout = () => {
+      W = world.clientWidth;
+      H = world.clientHeight;
+      F = Math.max(760, W * 0.92);
+      TW = Math.min(300, Math.max(170, W * 0.18));
+      TH = TW * 0.625;
+      const gap = Math.max(16, TW * 0.12);
+      COL = (TW + gap) / F;
+      ROW = (TH + gap) / F;
+      viewA = Math.atan(W / 2 / F) + COL;
+      viewB = Math.atan(H / 2 / F) + ROW;
+      world.style.perspective = `${F}px`;
+      world.style.setProperty("--tile-w", `${TW}px`);
+      dpr = Math.min(2, devicePixelRatio || 1);
+      grid.width = W * dpr;
+      grid.height = H * dpr;
+    };
+    const wrap = (x: number, span: number) => ((((x + span / 2) % span) + span) % span) - span / 2;
+
+    // the hero's words sit over the globe: tiles behind them drop back so the words read (data-globe-clear)
+    const clears = [...(root.parentElement?.querySelectorAll<HTMLElement>("[data-globe-clear]") ?? [])];
+    let rects: { l: number; t: number; r: number; b: number }[] = [];
+    const measure = () => {
+      const w = world.getBoundingClientRect();
+      // each line of the words, tight to its letters, not the block's full width
+      rects = clears.flatMap((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return [...range.getClientRects()].filter((r) => r.width > 1).map((r) => ({ l: r.left - w.left, t: r.top - w.top, r: r.right - w.left, b: r.bottom - w.top }));
+      });
+    };
+    const clearing = (x: number, y: number) => {
+      let k = 1;
+      for (const r of rects) {
+        const dx = Math.max(r.l - x, 0, x - r.r) - TW * 0.3, dy = Math.max(r.t - y, 0, y - r.b) - TH * 0.3;
+        const d = Math.max(dx, dy);
+        k = Math.min(k, d <= 0 ? 0.14 : Math.min(1, 0.14 + (0.86 * d) / (TW * 0.4)));
+      }
+      return k;
+    };
+    let panA = 0.04, panB = 0.02, va = reduced ? 0 : 0.016, vb = reduced ? 0 : 0.006, raf = 0, last = 0, seen = false;
+    const DRIFT_A = va, DRIFT_B = vb;
+    let dragging = false, lastX = 0, lastY = 0, lastT = 0;
+
+    const drawGrid = () => {
+      const g = grid.getContext("2d")!;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, W, H);
+      g.strokeStyle = "rgb(17 17 17 / 0.07)";
+      g.lineWidth = 1;
+      const cx = W / 2, cy = H / 2;
+      const px = (a: number, b: number): [number, number] => [cx + F * Math.tan(a), cy - (F * Math.tan(b)) / Math.cos(a)];
+      const a0 = wrap(-panA - COL / 2, COL), b0 = wrap(-panB - ROW / 2, ROW);
+      g.beginPath();
+      for (let a = a0 - Math.ceil(viewA / COL) * COL; a <= viewA; a += COL)
+        for (let b = -viewB; b <= viewB; b += ROW / 6) {
+          const [x, y] = px(a, b);
+          b === -viewB ? g.moveTo(x, y) : g.lineTo(x, y);
+        }
+      for (let b = b0 - Math.ceil(viewB / ROW) * ROW; b <= viewB; b += ROW)
+        for (let a = -viewA; a <= viewA; a += COL / 6) {
+          const [x, y] = px(a, b);
+          a === -viewA ? g.moveTo(x, y) : g.lineTo(x, y);
+        }
+      g.stroke();
+    };
+
+    const place = () => {
+      const spanA = COLS * COL, spanB = ROWS * ROW;
+      let playing = 0;
+      for (const c of cells) {
+        const a = wrap(c.u * COL - panA, spanA);
+        const b = wrap(c.v * ROW - panB, spanB);
+        const show = Math.abs(a) < viewA && Math.abs(b) < viewB;
+        c.el.style.visibility = show ? "visible" : "hidden";
+        // a tile's picture comes as it nears the view
+        if (!c.got && Math.abs(a) < viewA + COL && Math.abs(b) < viewB + ROW) {
+          c.got = true;
+          if (c.img) c.img.src = c.img.dataset.src!;
+          if (c.video) c.video.poster = c.video.dataset.poster!;
+        }
+        if (show) {
+          c.el.style.transform = `translateZ(${F}px) rotateY(${(-a).toFixed(4)}rad) rotateX(${(-b).toFixed(4)}rad) translateZ(${-F}px)`;
+          const edge = Math.max(Math.abs(a) / viewA, Math.abs(b) / viewB);
+          const x = W / 2 + F * Math.tan(a), y = H / 2 - (F * Math.tan(b)) / Math.cos(a);
+          c.el.style.opacity = (Math.min(1, Math.max(0, (1 - edge) / 0.22)) * clearing(x, y)).toFixed(3);
+        }
+        if (!c.video) continue;
+        // the loops near the middle play; a phone holds their stills
+        const want = !LITE && !reduced && seen && show && Math.abs(a) < viewA * 0.6 && Math.abs(b) < viewB * 0.65 && playing < 4;
+        if (want) playing++;
+        if (want !== c.on) {
+          c.on = want;
+          if (want) {
+            if (!c.video.src) c.video.src = c.video.dataset.src!;
+            c.video.play().catch(() => {});
+          } else c.video.pause();
+        }
+      }
+      drawGrid();
+    };
+
+    const frame = (t: number) => {
+      raf = 0;
+      if (document.hidden || !seen) return;
+      const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+      last = t;
+      if (!dragging) {
+        // a flick coasts, then eases back into the slow drift
+        const k = 1 - Math.exp(-dt * 1.6);
+        va += (DRIFT_A - va) * k;
+        vb += (DRIFT_B - vb) * k;
+        panA += va * dt;
+        panB += vb * dt;
+      }
+      place();
+      raf = requestAnimationFrame(frame);
+    };
+    const spin = () => {
+      if (raf) return;
+      last = 0;
+      raf = requestAnimationFrame(frame);
+    };
+
+    world.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "touch") return; // on a phone the page scrolls; the globe drifts on its own
+      dragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      lastT = performance.now();
+      world.setPointerCapture(e.pointerId);
+      world.classList.add("is-dragging");
+    });
+    world.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const now = performance.now();
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      const dt = Math.max(0.008, (now - lastT) / 1000);
+      lastX = e.clientX;
+      lastY = e.clientY;
+      lastT = now;
+      panA -= dx / F;
+      panB += dy / F;
+      va = -dx / F / dt;
+      vb = dy / F / dt;
+      if (reduced) place();
+    });
+    const release = () => {
+      dragging = false;
+      world.classList.remove("is-dragging");
+    };
+    world.addEventListener("pointerup", release);
+    world.addEventListener("pointercancel", release);
+    new ResizeObserver(() => {
+      layout();
+      measure();
+      place();
+    }).observe(world);
+    layout();
+    measure();
+    setTimeout(measure, 1600); // once the words have revealed into place
+    place();
+    new IntersectionObserver(([en]) => {
+      seen = en.isIntersecting;
+      if (seen) spin();
+      else place();
+    }).observe(world);
+    document.addEventListener("visibilitychange", () => !document.hidden && spin());
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    /* the hero: the globe fills it, the lockup and headline sit on top (src/pages/primary.astro) */
+    .globe {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .globe_grid {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .globe_world {
+      --tile-w: clamp(10.5rem, 18vw, 18.75rem);
+      position: absolute;
+      inset: 0;
+      perspective-origin: 50% 50%;
+      cursor: grab;
+      user-select: none;
+      &.is-dragging {
+        cursor: grabbing;
+      }
+      @media (pointer: coarse) {
+        cursor: auto;
+      }
+    }
+    .globe_tile {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: var(--tile-w);
+      aspect-ratio: 16 / 10;
+      margin: calc(var(--tile-w) * -0.3125) 0 0 calc(var(--tile-w) * -0.5);
+      visibility: hidden;
+      backface-visibility: hidden;
+      border-radius: var(--radius-media);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 0 0 1px rgb(17 17 17 / 0.07);
+      will-change: transform, opacity;
+      transition: opacity 0.35s ease;
+      & img,
+      & video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+      }
+    }
+  }
+</style>
