@@ -258,7 +258,8 @@ const rows = pairs
         L.els.forEach((e, i) => {
           const pos = (((i * col + t * v) % span) + span) % span;
           const a = pos - span + col * 0.6; // from off the left edge to just past the screen's middle
-          if (a < -1.45 || a < -reach - col * 1.2) {
+          // gone once it is well behind the screen, so none peeks out past the laptop's right side
+          if (a < -1.45 || a < -reach - col * 1.2 || a > -col * 0.4) {
             e.style.visibility = "hidden";
             return;
           }
@@ -316,7 +317,10 @@ const rows = pairs
           io.disconnect();
           const video = dev.querySelector<HTMLVideoElement>("video")!;
           if (!video.src) video.src = video.dataset.src!;
-          import("@/scripts/mac-3d.ts").then(({ mountMac3D }) => mountMac3D(dev, { model: "/models/macbook.glb", video })).catch(() => {});
+          // from the site's root, so it also loads in the Studio's copy, which lives in a folder
+          const root = document.querySelector<HTMLLinkElement>('link[rel="site-root"]')?.href ?? location.origin + "/";
+          const model = new URL("models/macbook.glb", root).href;
+          import("@/scripts/mac-3d.ts").then(({ mountMac3D }) => mountMac3D(dev, { model, video })).catch(() => {});
         },
         { rootMargin: "60% 0px" },
       );
