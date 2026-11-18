@@ -384,26 +384,28 @@ const PILL_EARLY = `try{var n=document.currentScript.previousElementSibling,m=JS
         document.head.append(Object.assign(document.createElement("link"), { rel: "prefetch", href: a.href }));
       }, { once: true }),
     );
-    // On a light page, the nav turns dark while a dark section (the Creative
-    // Studio, the footer) runs under it, so its words and its fade match
-    if (document.documentElement.classList.contains("theme-light")) {
-      const under = new Set<Element>();
-      const watch = new IntersectionObserver((entries) => {
-        for (const e of entries) e.isIntersecting ? under.add(e.target) : under.delete(e.target);
-        nav.classList.toggle("theme-dark", under.size > 0);
-      }, { rootMargin: "0px 0px -94% 0px" });
-      document.querySelectorAll("main .theme-dark, footer.theme-dark").forEach((el) => watch.observe(el));
-    } else {
-      // and the other way round: on a dark page, light while a light band runs under it (/primary, Nov 6)
-      const bands = document.querySelectorAll("main .theme-light");
-      if (bands.length) {
-        const under = new Set<Element>();
-        const watch = new IntersectionObserver((entries) => {
-          for (const e of entries) e.isIntersecting ? under.add(e.target) : under.delete(e.target);
-          nav.classList.toggle("theme-light", under.size > 0);
-        }, { rootMargin: "0px 0px -94% 0px" });
-        bands.forEach((el) => watch.observe(el));
-      }
+    // On a light page, the nav turns dark while a dark section (the Creative Studio, the footer) runs under it,
+    // so its words and its fade match; on a dark page, light while a light band runs under it (/primary, Nov 6).
+    // Read off the sections' boxes on scroll and resize rather than an IntersectionObserver, which missed the
+    // switch in the Creative Studio's framed copy (its frames are laid out at 0 x 0 while hidden; Nov 17).
+    const lightPage = document.documentElement.classList.contains("theme-light");
+    const bands = [...document.querySelectorAll<HTMLElement>(lightPage ? "main .theme-dark, footer.theme-dark" : "main .theme-light")];
+    if (bands.length) {
+      let queued = 0;
+      const check = () => {
+        queued = 0;
+        const y = nav.getBoundingClientRect().bottom * 0.5 + 4;
+        const under = bands.some((b) => {
+          const r = b.getBoundingClientRect();
+          return r.top <= y && r.bottom > y;
+        });
+        nav.classList.toggle(lightPage ? "theme-dark" : "theme-light", under);
+      };
+      const queue = () => (queued ||= requestAnimationFrame(check));
+      addEventListener("scroll", queue, { passive: true });
+      addEventListener("resize", queue);
+      new ResizeObserver(queue).observe(document.documentElement);
+      check();
     }
   });
 </script>

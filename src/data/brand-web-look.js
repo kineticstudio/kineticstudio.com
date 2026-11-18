@@ -3,15 +3,15 @@
    them; on the page by itself P opens the panel. A tuning is kept in this browser until Reset; Copy props
    hands back this object to paste over it. */
 export const BRAND_WEB_FILE = "src/data/brand-web-look.js";
-export const BRAND_WEB_KEY = "ks-brand-web-look-5"; // new key Nov 17: older tunings (with the blur and insets) are dropped
+export const BRAND_WEB_KEY = "ks-brand-web-look-6"; // new key Nov 17: older tunings (with the blur and insets) are dropped
 
 export const BRAND_WEB_LOOK = {
   // the guideline pages, on the inside of a barrel whose axis runs through the laptop's screen: the further
   // left a page is, the nearer and more stretched; evenly spaced round it, so they never overlap
   barrel: {
     reach: 38, // degrees round the barrel at the page's left edge (more: stronger skew on the left)
-    page: 0.13, // a page's height at the screen, times the laptop's height
-    gap: 0.08, // between pages along a line, times a page's height
+    page: 0.2, // a page's height at the screen, times the laptop's height
+    gap: 0.06, // between pages along a line, times a page's height
     rowGap: 0.1, // between the two lines, times a page's height
     lapTop: 34, // seconds for a page to cross, top line (slower)
     lapBottom: 24, // bottom line

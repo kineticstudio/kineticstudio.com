@@ -182,15 +182,15 @@ const POINTS = [
     lanes={LANES}
   />
   {/* Nick's words, after the timeline (Hunter, Nov 17); drafts only until Nick approves them */}
-  <PartnerFeatureQuote page="primary" logo={primaryLogo} />
+  <PartnerFeatureQuote page="primary" />
   {/* the Studio, from the proposal's tooling page, the brand book first (Hunter, Nov 17) */}
   <PartnerStudio partner="Primary" />
   {/* the offer (Hunter, Nov 17), from the Primary proposal's "What you get" and fixed-price card; replaces the
       timeline's two points ("Straight to the designer", "Yours to run"), which said the same */}
   <PartnerOffer
     heading="A special relationship | with Primary"
-    price="$50,000"
-    offer="A live website, four weeks after your sprint. It includes:"
+    price="Live in 4 weeks | for $50,000"
+    offer="Counted from the end of your Primary sprint. It includes:"
     includes={[
       { icon: "doc", text: "Up to about 15 pages" },
       { icon: "sitemap", text: "Story, sitemap and wireframes" },
@@ -203,7 +203,6 @@ const POINTS = [
       { icon: "speed", text: "SEO, AEO and a performance pass" },
       { icon: "calendar", text: "A start during your brand sprint" },
     ]}
-    cta={{ label: "Start with Primary", href: "https://www.primary.studio/contact" }}
   />
   <WorkWheel heading="More websites | from Kinetic" only={rest} simple />
   <PartnerClose

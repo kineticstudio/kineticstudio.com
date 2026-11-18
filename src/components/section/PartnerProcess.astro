@@ -71,9 +71,12 @@ const clean = (svg: string, label: string) =>
         {lead && <p class="process_lead text-style-main">{lead}</p>}
       </div>
       <div class="tl" style={`--body-h:${yAt(DAYS)}`} data-tl data-days={DAYS} data-sprint={SPRINT} data-launch={launch * 5}>
-        <div class="tl_logo is-partner">{partnerLogo ? <span set:html={clean(partnerLogo, partner?.name ?? "Partner")} /> : <span class="text-style-h5">{partner?.name}</span>}</div>
-        <div class="tl_plus" aria-label="and">+</div>
-        <div class="tl_logo is-kinetic"><span set:html={clean(kineticRaw, "Kinetic")} /></div>
+        {/* the two studios stay at the top of the screen while the days run under them (Hunter, Nov 17) */}
+        <div class="tl_heads">
+          <div class="tl_logo is-partner">{partnerLogo ? <span set:html={clean(partnerLogo, partner?.name ?? "Partner")} /> : <span class="text-style-h5">{partner?.name}</span>}</div>
+          <div class="tl_plus" aria-label="and">+</div>
+          <div class="tl_logo is-kinetic"><span set:html={clean(kineticRaw, "Kinetic")} /></div>
+        </div>
         <div class="tl_body">
           <canvas class="tl_canvas" aria-hidden="true" />
           <div class="tl_lane is-partner" data-lane="partner" />
@@ -152,7 +155,7 @@ const clean = (svg: string, label: string) =>
     const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner", sx: 0, ex: 0 }));
     let edges = { partner: 0, kinetic: 0 };
     let spans = { partner: [0, 0], kinetic: [0, 0] };
-    type Cell = { x: number; y: number; day: number; r: number; d2: number; rgb: number[]; soft: boolean; partner: boolean; sx: number; sy: number; fly: boolean };
+    type Cell = { x: number; y: number; day: number; r: number; d2: number; rgb: number[]; soft: boolean; partner: boolean; sx: number; sy: number; fly: boolean; u: number };
     let cells: Cell[] = [], W = 0, H = 0, dpr = 1, tall = 130, short = 26, axis = { x: 0, w: 0 };
     let seed = 3;
     const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -198,11 +201,14 @@ const clean = (svg: string, label: string) =>
             for (let c = 0; c < cols; c++) {
               // in the tall days a square lights at its own row's share of the day, so the block fills downward
               const share = dh > 40 ? (r + rand()) / rows : rand();
-              cells.push({ x: x0 + c * PITCH, y, day: d - 1, r: share, d2: rand(), rgb: partner ? NEON : INK, soft: ph.classList.contains("is-soft"), partner, sx: 0, sy: 0, fly: false });
+              cells.push({ x: x0 + c * PITCH, y, day: d - 1, r: share, d2: rand(), rgb: partner ? NEON : INK, soft: ph.classList.contains("is-soft"), partner, sx: 0, sy: 0, fly: false, u: 0 });
             }
           }
         }
       }
+      // where each square sits across both lanes, 0 at Primary's outer edge, 1 at Kinetic's
+      const x0All = spans.partner[0], x1All = spans.kinetic[1];
+      for (const c of cells) c.u = (c.x - x0All) / Math.max(1, x1All - x0All);
       // through the sprint every Kinetic square is one of Primary's, thrown across: it leaves a square of
       // Primary's block on the same day and lands in its own place
       const byDay = new Map<number, Cell[]>();
@@ -245,9 +251,16 @@ const clean = (svg: string, label: string) =>
          own squares come on in place. */
       const FLY_SQ = 1.1; // days a square is in the air: slow enough to follow
       for (const c of cells) {
-        const dens = c.partner ? 1 : Math.min(1, 0.12 + c.day / 12);
-        if (c.d2 >= dens) continue;
+        /* the work as one band that slides across (Hunter, Nov 17: "instead of two perfect vertical columns, the
+           work starts tapering off from the left of primary and moves to the right of Kinetic, so the work gets
+           transitioned over"): each day the band's left edge eats into Primary from the outside and its right edge
+           grows out across Kinetic, ragged at both edges; by the end of the sprint Primary is a sliver at the
+           middle and Kinetic is full width */
         const at = c.day + c.r;
+        const k = Math.min(1, at / SPRINT), ease = k * k * (3 - 2 * k);
+        const left = 0.43 * ease, right = 0.58 + 0.42 * Math.min(1, (at / SPRINT) * 1.25);
+        const rag = (c.d2 - 0.5) * 0.16;
+        if (c.partner ? c.u < left + rag : c.u > right + rag) continue;
         if (!c.partner && c.day < SPRINT && c.sy && c.fly) {
           // thrown as the day line reaches its row, so the whole flight happens above the line, in the past
           const u = (cur - at) / FLY_SQ;
@@ -357,12 +370,29 @@ const clean = (svg: string, label: string) =>
       grid-template-rows: auto auto;
       row-gap: var(--space-5);
       width: 100%;
+      /* the room for Launch sits below the grid, so the sticky logos let go at the launch line, above it */
+      margin-bottom: clamp(5rem, 9vw, 8rem);
       @media (width < 48rem) {
         --day-tall: 80px;
         --day-h: 16px;
         --axis-w: 3.25rem;
         --lane-w: 4.5rem;
         --label-w: 6rem;
+      }
+    }
+    /* the logos stick under the nav on the section's own grey, a solid band the squares pass beneath */
+    .tl_heads {
+      position: sticky;
+      top: var(--tl-heads-top, 4.875rem); /* right under the nav bar */
+      z-index: 3;
+      grid-row: 1;
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: subgrid;
+      padding: var(--space-3) 0;
+      background: var(--background);
+      @media (width < 48rem) {
+        --tl-heads-top: 4.125rem;
       }
     }
     .tl_logo {
@@ -410,7 +440,6 @@ const clean = (svg: string, label: string) =>
       display: grid;
       grid-template-columns: subgrid;
       height: var(--body-h);
-      margin-bottom: clamp(5rem, 9vw, 8rem);
     }
     .tl_canvas {
       position: absolute;

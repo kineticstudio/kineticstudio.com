@@ -37,16 +37,19 @@ import { fileURLToPath } from "node:url";
 import { launch, SITE } from "./card-frames.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const OUT = join(ROOT, "public/media/scroll");
+// --tall: the /primary glass frames' own shape, 16 : 11.5 (Hunter, Nov 17: "None of these should ever get cut
+// off"), into public/media/scroll-tall, leaving the homepage's loops and scroll-loops.json alone
+const TALL = process.argv.includes("--tall");
+const OUT = join(ROOT, TALL ? "public/media/scroll-tall" : "public/media/scroll");
 const DATA = join(ROOT, "src/data/scroll-loops.json");
 const SITES = JSON.parse(readFileSync(join(ROOT, "src/data/sites.json"), "utf8"));
 const { WORK, HOME } = await import(new URL("../src/data/work.js", import.meta.url).href);
 const args = process.argv.slice(2);
 const ENCODE = args.includes("--encode"); // again from the kept takes, no recording
 const only = args.filter((a) => !a.startsWith("--"));
-const TMP = process.env.SCROLL_TMP ?? join(tmpdir(), "scroll-loops");
+const TMP = process.env.SCROLL_TMP ?? join(tmpdir(), TALL ? "scroll-loops-tall" : "scroll-loops");
 
-const W = 1600, H = 1000, FPS = 30;
+const W = 1600, H = TALL ? 1150 : 1000, FPS = 30;
 // about 4 MB a loop; a page heavy with film and texture may take up to 6 MB rather than smear
 const MAX_BYTES = 4.2e6, HEAVY_BYTES = 6.0e6, TARGET_BYTES = 5.8e6;
 // the pace: px a second at full speed, the clip's scroll time kept in 12..22 s
@@ -378,6 +381,7 @@ for (const slug of only.length ? only : HOME) {
     const { mb, how } = encode(slug, meta);
     const { url, room, S, v, total, frames, median, p95 } = meta;
     console.log(`${slug.padEnd(20)} ${url}\n${"".padEnd(20)} ${room}px in ${S.toFixed(1)}s (${Math.round(v)} px/s), ${total.toFixed(1)}s loop, ${mb.toFixed(2)} MB (${how}), ${frames} frames, median ${(1000 * median).toFixed(1)}ms, p95 ${(1000 * p95).toFixed(1)}ms`);
+    if (TALL) continue;
     data[slug] = { video: `/media/scroll/${slug}.mp4`, poster: `/media/scroll/${slug}.jpg`, duration: Number(total.toFixed(2)), from: url.replace(SITE, "") };
     // in the homepage order
     const sorted = Object.fromEntries(Object.entries(data).sort(([x], [y]) => (HOME.indexOf(x) + 1 || 99) - (HOME.indexOf(y) + 1 || 99)));

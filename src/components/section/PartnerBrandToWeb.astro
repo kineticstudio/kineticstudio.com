@@ -71,7 +71,9 @@ const rows = pairs
           <li class="brand-web_row" data-slug={w.slug}>
             <div class="brand-web_pair">
               <figure class="brand-web_book" aria-label={`${w.name} brand guidelines by Primary`} data-book>
-                {[p.slides.filter((_, i) => i % 2 === 0), p.slides.filter((_, i) => i % 2 === 1)].map((line, r) => (
+                {/* one line of every page: a brand book has six or seven, enough for an unbroken run with no page
+                    on screen twice (two lines left gaps or repeats; Hunter, Nov 17: "a continual flow") */}
+                {[p.slides].map((line, r) => (
                   <template data-line={r}>
                     {line.map((s) => (
                       <img class="brand-web_slide" src={s.src} alt="" width="1280" height="720" decoding="async" draggable="false" />
@@ -112,7 +114,7 @@ const rows = pairs
                   try a straight-on view, but with a border of glass morphism"); the pages pass behind the glass */}
               <a class="brand-web_device is-glass" href={w.url} target="_blank" rel="noopener" aria-label={`${w.name}, the live site`} data-mac data-glass>
                 <span class="brand-web_glass">
-                  <video class="brand-web_video" data-src={`/media/scroll/${w.cover}.mp4`} poster={`/media/scroll/${w.cover}.jpg`} muted loop playsinline preload="none" aria-hidden="true" />
+                  <video class="brand-web_video" data-src={`/media/scroll-tall/${w.cover}.mp4`} poster={`/media/scroll-tall/${w.cover}.jpg`} muted loop playsinline preload="none" aria-hidden="true" />
                 </span>
               </a>
             </div>
@@ -257,7 +259,7 @@ const rows = pairs
       // every page once round the loop, never two copies on screen (Hunter, Nov 17: "there are duplicates"); the
       // loop is at least the visible arc plus a slot, so a line with few pages runs with gaps between them
       const n = Math.max(...lines.map((L) => L.imgs.length));
-      const span = Math.max(n * col, reach + col * 2);
+      const span = n * col;
       geo = { F, col, reach, span };
       book.style.perspective = `${F}px`;
       book.style.perspectiveOrigin = `${sx}px ${sy}px`;
@@ -266,7 +268,7 @@ const rows = pairs
           L.els.forEach((e) => e.remove());
           L.els = L.imgs.map((img) => book.appendChild(img.cloneNode() as HTMLImageElement));
         }
-        const y = sy + (L.top ? -1 : 1) * (h / 2 + (b.rowGap * h) / 2) - h / 2;
+        const y = lines.length > 1 ? sy + (L.top ? -1 : 1) * (h / 2 + (b.rowGap * h) / 2) - h / 2 : sy - h / 2;
         for (const e of L.els) {
           e.style.width = `${w}px`;
           e.style.height = `${h}px`;
@@ -486,7 +488,7 @@ const rows = pairs
     }
     /* the glass frame: a frosted border round the site, the pages blurred as they pass behind it */
     .brand-web_device.is-glass {
-      aspect-ratio: 16 / 11.5; /* a bit taller than the recordings (Hunter, Nov 17), cropped at the sides */
+      aspect-ratio: auto; /* the glass inside sets the shape */
       margin-bottom: -9%; /* past the row's bottom, cut at the line */
       @media (width < 48rem) {
         width: 88% !important;
@@ -529,10 +531,12 @@ const rows = pairs
       background: #c8ff54;
       color: #111;
     }
+    /* 16 : 11.5 inside the frame (Hunter, Nov 17: "a bit taller"), the recordings made at exactly that shape
+       (media/scroll-tall, scripts/record-scroll-loops.mjs --tall), so no site is ever cut off */
     .brand-web_glass {
       display: block;
       width: 100%;
-      height: 100%;
+      aspect-ratio: 16 / 11.5;
       overflow: hidden;
       border-radius: clamp(0.5rem, 0.9vw, 0.85rem);
       background: #111;
