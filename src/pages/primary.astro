@@ -42,12 +42,13 @@ const rest = MORE.filter((slug) => HOME.includes(slug) && !PRIMARY.includes(slug
    by Hunter), Owner (Owner.com Website file, Brand page) and Ramble (Ramble file, Guidelines 2026). No
    Planned row (Hunter, Nov 17: "dont do planned"). */
 const B = "/images/primary/brand";
+// each row's line says what the client does, not who made what (Hunter, Nov 18)
 const PAIRS = [
   {
     slug: "exe",
     // no launch film here for now (Hunter, Nov 17); it is at public/media/exe-launch-film.mp4 if wanted:
     // film: { src: "/media/exe-launch-film.mp4", poster: "/media/exe-launch-film.jpg", label: "Watch the launch film" },
-    line: "Primary's engravings and field-manual type, built into a site where the illustrations move as you scroll.",
+    line: "A private computer for your agents: real servers you reach over SSH, kept running for you.",
     slides: [
       { src: `${B}/exe-cover.webp`, alt: "exe brand guidelines, the cover" },
       { src: `${B}/exe-logo.webp`, alt: "exe logo system" },
@@ -60,7 +61,7 @@ const PAIRS = [
   },
   {
     slug: "owner",
-    line: "Primary's greens and gradients, carried into the site restaurants use to win online.",
+    line: "Websites, online ordering and marketing that help independent restaurants grow their own sales.",
     slides: [
       { src: `${B}/owner-title.webp`, alt: "Owner brand guidelines, the cover" },
       { src: `${B}/owner-colour.webp`, alt: "Owner primary colour palette" },
@@ -72,7 +73,7 @@ const PAIRS = [
   },
   {
     slug: "ramble",
-    line: "Primary's lime, purple and blue, turned into a loud, live home for big group chats.",
+    line: "Group chats for big communities, hosted by the podcasters, reality stars and sports teams fans follow.",
     slides: [
       { src: `${B}/ramble-cover.webp`, alt: "Ramble brand guidelines, the cover" },
       { src: `${B}/ramble-logo.webp`, alt: "Ramble logo system" },
