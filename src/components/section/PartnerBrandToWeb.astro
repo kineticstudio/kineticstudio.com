@@ -1,7 +1,7 @@
 ---
 import Section from "@/components/wrapper/Section.astro";
 import { WORK } from "@/data/work.js";
-import { projectLink, restLoop } from "@/data/project-link.js";
+import { restLoop } from "@/data/project-link.js";
 import MAC from "@/data/macbook-angle.json";
 import MEDIA from "@/data/media.json";
 import Modal from "@/components/interactive/Modal.astro";
@@ -46,7 +46,7 @@ const { render = true, heading, lead, pairs } = Astro.props;
 const rows = pairs
   .map((p) => ({ p, w: WORK.find((w) => w.slug === p.slug) }))
   .filter((r): r is { p: (typeof pairs)[number]; w: (typeof WORK)[number] } => Boolean(r.w && restLoop(r.w) && r.p.slides.length))
-  .map(({ p, w }) => ({ p, w, link: projectLink(w) }));
+  .map(({ p, w }) => ({ p, w }));
 ---
 
 {
@@ -61,7 +61,7 @@ const rows = pairs
         </div>
       )}
       <ul class="brand-web_list" style={`--mac-ratio:${MAC.width / MAC.height}`}>
-        {rows.map(({ p, w, link }) => (
+        {rows.map(({ p, w }) => (
           <li class="brand-web_row" data-slug={w.slug}>
             <div class="brand-web_pair">
               <figure class="brand-web_book" aria-label={`${w.name} brand guidelines by Primary`} data-book>
@@ -92,7 +92,7 @@ const rows = pairs
                   <a class="brand-web_visit text-style-label" href={w.url} target="_blank" rel="noopener">View the site <span aria-hidden="true">↗</span></a>
                 </div>
               </div>
-              <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`} data-mac data-mac3d={p.live3d ? "" : undefined}>
+              <a class="brand-web_device" href={w.url} target="_blank" rel="noopener" aria-label={`${w.name}, the live site`} data-mac data-mac3d={p.live3d ? "" : undefined}>
                 <img class="brand-web_mac" src={MAC.src} alt="" width={MAC.width} height={MAC.height} loading="lazy" decoding="async" />
                 <span class="brand-web_screen" style={`--site-ground:${(MEDIA as Record<string, { ground: string }>)[w.cover]?.ground ?? "#111"}`}>
                   <video class="brand-web_video" data-src={`/media/scroll/${w.cover}.mp4`} poster={`/media/scroll/${w.cover}.jpg`} muted loop playsinline preload="none" aria-hidden="true" />

@@ -9,7 +9,7 @@ import type * as T from "three";
 
 type Opts = { model: string; video: HTMLVideoElement; yaw?: number; pitch?: number };
 
-export async function mountMac3D(host: HTMLElement, { model, video, yaw = 0.21, pitch = 0.14 }: Opts) {
+export async function mountMac3D(host: HTMLElement, { model, video, yaw = 0.21, pitch = 0.035 }: Opts) {
   const [THREE, { GLTFLoader }, { RoomEnvironment }] = await Promise.all([
     import("three"),
     import("three/addons/loaders/GLTFLoader.js"),
@@ -28,15 +28,19 @@ export async function mountMac3D(host: HTMLElement, { model, video, yaw = 0.21, 
   }
   renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMapping = THREE.AgXToneMapping;
+  renderer.toneMappingExposure = 1.15;
 
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  const key = new THREE.DirectionalLight(0xffffff, 1.4);
-  key.position.set(-2, 4, 3);
+  // a soft key from the front left, a cool rim from behind right to draw the lid's edge, as a product shot
+  const key = new THREE.DirectionalLight(0xffffff, 1.6);
+  key.position.set(-3, 3, 4);
   scene.add(key);
+  const rim = new THREE.DirectionalLight(0xdfe8ff, 1.2);
+  rim.position.set(3, 2, -4);
+  scene.add(rim);
 
   const gltf = await new GLTFLoader().loadAsync(model);
   const mac = gltf.scene;
@@ -48,12 +52,14 @@ export async function mountMac3D(host: HTMLElement, { model, video, yaw = 0.21, 
     const m = o as T.Mesh;
     if (!m.isMesh) return;
     if (/display/.test(m.name)) m.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
-    else if (/glass/.test(m.name)) m.visible = false;
+    // the glass: almost clear, just enough to catch the room's reflections across the screen
+    else if (/glass/.test(m.name))
+      m.material = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.04, transparent: true, opacity: 0.07, envMapIntensity: 2.2, depthWrite: false });
     else {
       // Blender's procedural materials come over as flat colours: set them to read like the render's space-grey
       const name = ((m.material as T.Material)?.name ?? "").toLowerCase();
       const look: Record<string, [number, number, number]> = {
-        metal_space: [0x4b4d51, 0.85, 0.38],
+        metal_space: [0x6b6e73, 1, 0.34],
         trackpad: [0x55575b, 0.7, 0.32],
         grille: [0x1c1d1f, 0.4, 0.8],
         keys: [0x101112, 0.1, 0.55],
@@ -65,7 +71,11 @@ export async function mountMac3D(host: HTMLElement, { model, video, yaw = 0.21, 
       const hit = Object.keys(look).find((k) => name.includes(k));
       if (hit) {
         const [color, metalness, roughness] = look[hit];
-        m.material = new THREE.MeshStandardMaterial({ color, metalness, roughness, envMapIntensity: 1.1 });
+        // anodised aluminium: fully metal with a faint clear coat; the rest plain
+        m.material =
+          hit === "metal_space"
+            ? new THREE.MeshPhysicalMaterial({ color, metalness, roughness, clearcoat: 0.25, clearcoatRoughness: 0.4, envMapIntensity: 1.5 })
+            : new THREE.MeshStandardMaterial({ color, metalness, roughness, envMapIntensity: 1.1 });
       }
     }
   });
@@ -121,7 +131,7 @@ export async function mountMac3D(host: HTMLElement, { model, video, yaw = 0.21, 
     if (!on) return;
     const r = row.getBoundingClientRect();
     const through = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight + r.height))); // 0 entering, 1 leaving
-    const wantY = yaw + (0.5 - through) * 0.5 + px * 0.35, wantX = py * 0.12;
+    const wantY = yaw + (0.5 - through) * 0.5 + px * 0.35, wantX = py * 0.04;
     ry += (wantY - ry) * 0.08;
     rx += (wantX - rx) * 0.08;
     turn.rotation.set(rx, ry, 0);

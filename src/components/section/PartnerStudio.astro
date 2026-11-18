@@ -64,12 +64,14 @@ const POINTS = [
           </ul>
         </div>
         <div class="studio-p_stage" data-studio-stage data-reveal>
+          <div class="studio-p_frame">
           <video data-src="/media/kinetic-studio.mp4" poster="/media/kinetic-studio.webp" muted loop playsinline preload="none" aria-label="The Kinetic Studio, in use" />
           <div class="studio-p_play">
             <button class="studio-p_film-btn text-style-h5" type="button" data-modal-open="studio-film">
               <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" /></svg>
               Watch the film
             </button>
+          </div>
           </div>
         </div>
       </div>
@@ -181,35 +183,45 @@ const POINTS = [
        to right, where it looks like it's kind of full bleed off to the right"; no hard line on the left or the
        top): the stage runs off the window's right edge, its edges are the section's own dark, and the film
        itself runs off the right too */
+    /* the film big, running off the right and the bottom of the section (Hunter, Nov 17: "The video should be
+       bigger here. Full bleed towards the bottom"), its left and top edges melting into the grey */
     .studio-p_stage {
       --bleed: calc(var(--site-margin) + max(0px, (100vw - 2 * var(--site-margin) - var(--max-width-main, 90rem)) / 2));
       position: relative;
       align-self: stretch;
       display: flex;
-      align-items: center;
-      min-height: 28rem;
+      align-items: flex-end;
+      min-height: 32rem;
       margin-right: calc(-1 * var(--bleed));
-      padding: clamp(3rem, 8%, 6rem) 0 clamp(3rem, 8%, 6rem) clamp(2rem, 9%, 6rem);
+      margin-bottom: calc(-1 * var(--section-space-large));
       overflow: hidden;
+      & .studio-p_frame {
+        position: relative;
+        flex: none;
+        width: 150%;
+      }
       & video {
         display: block;
-        flex: none;
-        width: 118%;
+        width: 100%;
         aspect-ratio: 16 / 9;
         object-fit: cover;
-        object-position: left center;
-        /* no glow behind it; a scrim melts its left and right edges into the section (Hunter, Nov 17) */
-        -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%);
-        mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%);
+        object-position: left top;
+        -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 18%), linear-gradient(to bottom, transparent 0%, #000 16%);
+        -webkit-mask-composite: source-in;
+        mask-image: linear-gradient(to right, transparent 0%, #000 18%), linear-gradient(to bottom, transparent 0%, #000 16%);
+        mask-composite: intersect;
       }
       @media (width < 56rem) {
         margin-left: calc(-1 * var(--site-margin));
         min-height: 0;
+        & .studio-p_frame {
+          width: 120%;
+        }
       }
     }
     .studio-p_play {
       position: absolute;
-      inset: 0;
+      inset: 0 50% 0 0;
       display: grid;
       place-items: center;
       pointer-events: none;

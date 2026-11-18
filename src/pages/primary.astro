@@ -90,7 +90,10 @@ const PAIRS = [
 
 /* The hand-off, week by week: the sprint is two weeks (primary.studio), web is four after it, and the
    content and wireframes start in the sprint's second week. */
-const COLUMNS = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6", "After launch"];
+const COLUMNS = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6"];
+// Kinetic is working from day one (Hunter, Nov 17: "Right now, it looks like work doesn't happen until week 2.
+// That's not quite right"): discovery through the sprint's first week, wireframes in its second; launch is the
+// bottom of the chart ("I need Launch to be at the bottom")
 const LANES = [
   {
     name: "Primary",
@@ -101,10 +104,10 @@ const LANES = [
     name: "Kinetic",
     kind: "kinetic" as const,
     bars: [
+      { title: "Discovery", note: "Questions, research and the site map, alongside the sprint", from: 1, to: 1, when: "Week 1", soft: true },
       { title: "Wireframes", note: "Content and structure, while the sprint wraps", from: 2, to: 2, when: "Week 2", soft: true },
       { title: "Homepage design", note: "A live prototype you can comment on", from: 3, to: 4, when: "Weeks 3 and 4" },
       { title: "Every page, built", note: "Custom code, tested, then launched", from: 5, to: 6, when: "Weeks 5 and 6" },
-      { title: "Keep going", note: "Site updates, decks and social", from: 7, to: 7, when: "After launch", soft: true },
     ],
   },
 ];
@@ -113,27 +116,30 @@ const LANES = [
    ideas going back and forth: when it gets 'nope ideas,' then it gets colored, then ... the brand system gets
    set up, etc., back and forth"). `day` is the working day, its fraction how far into that day. */
 const EXCHANGES = [
-  { day: 1.2, from: "partner", label: "Kickoff notes" },
-  { day: 1.6, from: "kinetic", label: "Questions on the site" },
+  { day: 1.15, from: "partner", label: "Kickoff" },
+  { day: 1.5, from: "kinetic", label: "Questions" },
+  { day: 1.8, from: "partner", label: "Research" },
   { day: 2.2, from: "partner", label: "First ideas" },
-  { day: 2.6, from: "kinetic", label: "Site map" },
-  { day: 3.2, from: "partner", label: "Moodboards" },
-  { day: 3.6, from: "kinetic", label: "Nope, not that one" },
-  { day: 4.2, from: "partner", label: "New ideas" },
-  { day: 4.6, from: "kinetic", label: "Content doc" },
-  { day: 5.2, from: "partner", label: "General direction" },
-  { day: 5.6, from: "kinetic", label: "Thumbs up" },
-  { day: 6.2, from: "partner", label: "Colour" },
-  { day: 6.6, from: "kinetic", label: "Colour on the web" },
-  { day: 7.2, from: "partner", label: "Type" },
-  { day: 7.6, from: "kinetic", label: "Wireframes" },
-  { day: 8.2, from: "partner", label: "Logo" },
-  { day: 8.6, from: "kinetic", label: "Motion tests" },
-  { day: 9.2, from: "partner", label: "Brand system" },
-  { day: 9.6, from: "kinetic", label: "Homepage sketch" },
+  { day: 2.55, from: "kinetic", label: "Reactions" },
+  { day: 2.85, from: "partner", label: "Moodboards" },
+  { day: 3.2, from: "partner", label: "Exec presentation" },
+  { day: 3.6, from: "kinetic", label: "Notes from the room" },
+  { day: 3.9, from: "partner", label: "Direction picked" },
+  { day: 4.25, from: "kinetic", label: "Site map" },
+  { day: 4.6, from: "partner", label: "Colour" },
+  { day: 5.2, from: "kinetic", label: "Content doc" },
+  { day: 5.6, from: "partner", label: "Type" },
+  { day: 6.2, from: "partner", label: "Logo" },
+  { day: 6.6, from: "kinetic", label: "Wireframes" },
+  { day: 7.2, from: "partner", label: "Brand system" },
+  { day: 7.6, from: "kinetic", label: "Homepage sketch" },
+  { day: 8.3, from: "partner", label: "Brand book draft" },
+  { day: 8.7, from: "kinetic", label: "Motion tests" },
+  { day: 9.3, from: "partner", label: "Final presentation" },
+  { day: 9.7, from: "kinetic", label: "Homepage direction" },
   { day: 10.3, from: "partner", label: "Brand book" },
   { day: 13, from: "kinetic", label: "Homepage for review" },
-  { day: 16, from: "partner", label: "Brand check" },
+  { day: 17, from: "partner", label: "Brand check" },
 ] as const;
 const POINTS = [
   {

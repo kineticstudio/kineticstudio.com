@@ -83,13 +83,15 @@ const clean = (svg: string, label: string) =>
           {columns.map((c, i) => (
             <span class="tl_week text-style-label" style={`--y:${yAt(i * 5)}`}>{c}</span>
           ))}
+          {/* launch, the chart's last line (Hunter, Nov 17: "I need Launch to be at the bottom") */}
+          {launch * 5 === DAYS && <span class="tl_week tl_launch text-style-label" style={`--y:${yAt(DAYS)}`}>Launch</span>}
           {phases.map((p) => (
             <div class:list={["tl_phase", `is-${p.kind}`, p.soft && "is-soft"]} style={`--y:${yAt(p.d0 - 1)}`} data-phase={p.kind} data-d0={p.d0} data-d1={p.d1}>
               <span class="tl_phase-title text-style-label">{p.title}</span>
             </div>
           ))}
           {exchanges.map((x) => (
-            <span class:list={["tl_pass", `is-${x.from}`, "text-style-label"]} style={`--y:${yAt(x.day - 1)}`} data-pass data-day={x.day} data-from={x.from} aria-hidden="true">
+            <span class:list={["tl_pass", `is-${x.from}`, "text-style-label"]} data-pass data-day={x.day} data-from={x.from} aria-hidden="true">
               <i />
               {x.label}
             </span>
@@ -139,8 +141,9 @@ const clean = (svg: string, label: string) =>
     const nowLabel = tl.querySelector<HTMLElement>("[data-now-label]")!;
     const DAYS = Number(tl.dataset.days), LAUNCH = Number(tl.dataset.launch), SPRINT = Number(tl.dataset.sprint);
     const spine = tl.querySelector<HTMLElement>("[data-spine]")!;
-    const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner" }));
+    const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner", sx: 0, ex: 0 }));
     let edges = { partner: 0, kinetic: 0 };
+    let spans = { partner: [0, 0], kinetic: [0, 0] };
     type Cell = { x: number; y: number; day: number; r: number; rgb: number[]; soft: boolean; partner: boolean; was: boolean };
     type Dot = { sx: number; sy: number; ex: number; ey: number; cx: number; cy: number; t: number; dur: number };
     const dots: Dot[] = [];
@@ -167,6 +170,13 @@ const clean = (svg: string, label: string) =>
       // the blocks' inner edges, either side of the middle: where things leave and land
       const lp = tl.querySelector<HTMLElement>('[data-lane="partner"]')!.getBoundingClientRect(), lk = tl.querySelector<HTMLElement>('[data-lane="kinetic"]')!.getBoundingClientRect();
       edges = { partner: lp.right - B.left - SIZE, kinetic: lk.left - B.left };
+      spans = { partner: [lp.left - B.left, lp.right - B.left], kinetic: [lk.left - B.left, lk.right - B.left] };
+      // each thing passed leaves from somewhere in the sender's block and lands somewhere in the other's
+      for (const p of passes) {
+        const from = p.partner ? spans.partner : spans.kinetic, to = p.partner ? spans.kinetic : spans.partner;
+        p.sx = from[0] + (from[1] - from[0]) * (0.25 + rand() * 0.6);
+        p.ex = to[0] + (to[1] - to[0]) * (0.15 + rand() * 0.6);
+      }
       seed = 3;
       cells = [];
       for (const ph of tl.querySelectorAll<HTMLElement>("[data-phase]")) {
@@ -229,19 +239,21 @@ const clean = (svg: string, label: string) =>
         ctx.fillRect(x, y, SIZE, SIZE);
         if (u >= 1) dots.splice(i, 1);
       }
-      /* the things passed across, scrubbed by the scroll: on its moment a square leaves the sender's block,
-         crosses the middle in a low arc and drops into the other's; its name sits in the sender's margin, a
-         running log beside the blocks (never on top of the squares), bright while it is in the air, then dimmer */
-      const FLY = 0.45;
+      /* the things passed across, scrubbed by the scroll: on its moment a square leaves the sender's block with its
+         name beside it, arcs over the middle and drops into the other's; the name travels with it and is gone
+         once it lands (Hunter, Nov 17: no legend, it "should happen with this interaction") */
+      const FLY = 0.7;
       for (const p of passes) {
         const u = (cur - p.at) / FLY;
-        p.el.style.opacity = u < 0 ? "0" : u < 1 ? String(Math.min(1, u * 4)) : "0.6";
-        if (u <= 0 || u >= 1) continue;
-        const k = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
-        const sx = p.partner ? edges.partner : edges.kinetic, ex = p.partner ? edges.kinetic : edges.partner;
-        const y0 = yOf(p.at) + 6, y = y0 + (hOf(p.at) * 0.25) * k - Math.sin(Math.PI * k) * 18;
-        ctx.fillStyle = p.partner ? `rgb(${NEON})` : `rgb(${INK})`;
-        ctx.fillRect(sx + (ex - sx) * k - 1, y - 1, SIZE + 2, SIZE + 2);
+        if (u <= 0 || u >= 1.2) {
+          p.el.style.opacity = "0";
+          continue;
+        }
+        const k = Math.min(1, u), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        const y0 = yOf(p.at), drop = hOf(p.at) * 0.3;
+        const x = p.sx + (p.ex - p.sx) * e, y = y0 + drop * e - Math.sin(Math.PI * e) * 26;
+        p.el.style.opacity = String(Math.min(1, u * 8, u > 1 ? (1.2 - u) / 0.2 : 1));
+        p.el.style.transform = `translate(${x.toFixed(1)}px, ${(y - 6).toFixed(1)}px)`;
       }
       // the day line, stronger, across everything, and the line down the middle filled to it
       const y = yOf(Math.min(DAYS, cur));
@@ -456,41 +468,35 @@ const clean = (svg: string, label: string) =>
     .tl_phase-title {
       color: var(--text);
     }
-    /* a thing passed across: its name in the sender's margin at its moment, a square of the sender's colour
-       before it (the square itself flies on the canvas) */
+    /* a thing passed across: a square and its name, flying together (the script moves them) */
     .tl_pass {
       position: absolute;
-      top: calc(var(--y) + 0.15rem);
+      top: 0;
+      left: 0;
+      z-index: 3;
       display: flex;
       align-items: center;
-      gap: 0.45rem;
-      width: calc(50% - var(--axis-w) / 2 - var(--lane-w));
-      max-width: var(--label-w);
-      padding-inline: 0.75rem;
+      gap: 0.4rem;
       opacity: 0;
-      color: color-mix(in srgb, var(--text) 80%, transparent);
+      white-space: nowrap;
       font-size: 0.75rem;
-      line-height: 1.2;
+      line-height: 1;
       pointer-events: none;
-      transition: opacity 0.2s linear;
+      will-change: transform, opacity;
       @media (width < 48rem) {
         font-size: 0.5625rem;
       }
       & i {
         display: block;
         flex: none;
-        width: 5px;
-        height: 5px;
+        width: 7px;
+        height: 7px;
         background: var(--light-100);
       }
-    }
-    .tl_pass.is-partner {
-      right: calc(50% + var(--axis-w) / 2 + var(--lane-w));
-      flex-direction: row-reverse;
-      text-align: right;
-    }
-    .tl_pass.is-kinetic {
-      left: calc(50% + var(--axis-w) / 2 + var(--lane-w));
+      & {
+        color: var(--light-100);
+        text-shadow: 0 0 6px var(--background), 0 0 2px var(--background);
+      }
     }
     .tl_pass.is-partner i {
       background: #c8ff54;
@@ -524,6 +530,9 @@ const clean = (svg: string, label: string) =>
       @media (width < 48rem) {
         font-size: 0.5625rem;
       }
+    }
+    .tl_launch {
+      color: #c8ff54;
     }
     .tl.is-still .tl_now {
       display: none;

@@ -33,7 +33,6 @@ const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
               <li class="quotes_item">
                 {/* no attribution in the marquee (Hunter, Nov 17); the names are in the data and the approvals */}
                 <blockquote class="quotes_quote" aria-label={`${q.quote}, ${by(q)}`}>{q.quote}</blockquote>
-                {!q.approved && <p class="quotes_by text-style-label"><span class="quotes_draft">Draft, not approved</span></p>}
               </li>
             ))}
           </ul>
@@ -62,11 +61,11 @@ const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
     .quotes:hover .quotes_track {
       animation-play-state: paused;
     }
+    /* a hairline between quotes (Hunter, Nov 17: "vertical dividers") */
     .quotes_set {
       display: flex;
-      gap: clamp(2.5rem, 6vw, 6rem);
       margin: 0;
-      padding: 0 clamp(2.5rem, 6vw, 6rem) 0 0;
+      padding: 0;
       list-style: none;
     }
     .quotes_item {
@@ -74,6 +73,8 @@ const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
       flex-direction: column;
       gap: var(--space-3);
       width: clamp(19rem, 38vw, 36rem);
+      padding-inline: clamp(1.5rem, 3vw, 3rem);
+      border-left: 1px solid color-mix(in srgb, var(--text) 28%, transparent);
     }
     .quotes_quote {
       margin: 0;
