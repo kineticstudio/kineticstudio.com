@@ -3,11 +3,15 @@
   "name": "kineticstudio-com",
   "compatibility_date": "2026-08-13",
 
-  // The built site. There is no `main`, so this deploys as an assets-only
-  // Worker: Cloudflare serves the files and no script runs per request.
+  // The built site. Cloudflare serves the files straight from dist/; the
+  // script in worker/ runs only for POST /e, the click tracker (Nov 18 2026),
+  // so no page request runs any code.
+  "main": "worker/index.js",
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     "not_found_handling": "404-page",
+    "run_worker_first": ["/e"],
   },
 
   // Add a `routes` entry to serve this on your own domain. Until then it is
