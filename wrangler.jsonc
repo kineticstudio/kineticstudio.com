@@ -14,9 +14,6 @@
     "run_worker_first": ["/e"],
   },
 
-  // Clicks, kept three months (worker/index.js, scripts/clicks.mjs)
-  "analytics_engine_datasets": [{ "binding": "CLICKS", "dataset": "ks_clicks" }],
-
   // Add a `routes` entry to serve this on your own domain. Until then it is
   // reachable at https://kineticstudio-com.<your-subdomain>.workers.dev.
 

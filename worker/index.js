@@ -2,10 +2,10 @@
    page", then yes to tracking clicks on Visit site and the contact button). The site is otherwise static:
    Cloudflare serves dist/ and this script runs only for POST /e (wrangler.jsonc, run_worker_first), so page
    loads never touch it. Page views stay with Cloudflare Web Analytics (BaseHead.astro); this records the
-   clicks it can't. Each click goes two places:
-   - Workers Logs (Cloudflare dashboard > Workers & Pages > kineticstudio-com > Observability), searchable
-     right away, kept for a few days;
-   - Workers Analytics Engine, dataset ks_clicks, kept three months, read with scripts/clicks.mjs.
+   clicks it can't. Each click is a log line in Workers Logs (Cloudflare dashboard > Workers & Pages >
+   kineticstudio-com > Observability), searchable and countable there. An Analytics Engine dataset (kept
+   three months) failed the Workers Build on Nov 18, so it is off; writeDataPoint runs only if a CLICKS
+   binding is ever added back.
    No cookies, no IP or user agent stored: the event, the link, the page, the referrer, a country and
    phone or desktop. */
 const ORIGINS = /^https:\/\/(www\.)?kineticstudio\.com$/;
