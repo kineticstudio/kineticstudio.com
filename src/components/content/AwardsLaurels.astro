@@ -249,6 +249,10 @@ const {
       :where(.theme-light) & {
         filter: brightness(0) opacity(0.85);
       }
+      /* a dark section on a light page (/primary's work wheel, Nov 18): light again */
+      :where(.theme-light .theme-dark) & {
+        filter: brightness(0) invert(0.92);
+      }
     }
     .awards_line {
       max-width: 22ch;

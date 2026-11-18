@@ -56,6 +56,10 @@ const W = 1600, H = TALL ? 1150 : 1000, FPS = TALL ? 60 : 30;
 const MAX_BYTES = TALL ? 6e6 : 4.2e6, HEAVY_BYTES = TALL ? 6e6 : 6.0e6, TARGET_BYTES = TALL ? 5.6e6 : 5.8e6;
 // the pace: px a second at full speed, the clip's scroll time kept in 12..22 s
 const SPEED = TALL ? 290 : 520, MIN_S = 12, MAX_S = TALL ? 40 : 22;
+// --tall records at half speed, the page's own CSS animations slowed to match, and plays it back at full: the
+// screencast misses about one frame in twenty in real time, which showed as a stutter every second or so
+// (Hunter, Nov 18: "It still feels a little jumpy"); at half speed a late frame falls between output frames
+const SLOW = TALL ? 2 : 1;
 const RAMP = 1.1; // s to reach full speed, and to stop
 const HOLD_TOP = 1.2, HOLD_END = 1.4, FADE = 0.8; // s
 
@@ -269,6 +273,10 @@ async function record(browser, slug) {
   mkdirSync(dir, { recursive: true });
   const frames = [];
   const cdp = await ctx.newCDPSession(page);
+  if (SLOW !== 1) {
+    await cdp.send("Animation.enable").catch(() => {});
+    await cdp.send("Animation.setPlaybackRate", { playbackRate: 1 / SLOW }).catch(() => {});
+  }
   cdp.on("Page.screencastFrame", ({ data, metadata, sessionId }) => {
     const file = join(dir, `${String(frames.length).padStart(5, "0")}.jpg`);
     frames.push({ file, t: metadata.timestamp });
@@ -301,14 +309,14 @@ async function record(browser, slug) {
     requestAnimationFrame(step);
   }), o);
   if (mo) {
-    await glide({ y0: 0, y1: stopAt, S: S0, v: 0, RAMP, delay: HOLD_TOP });
+    await glide({ y0: 0, y1: stopAt, S: S0 * SLOW, v: 0, RAMP: RAMP * SLOW, delay: HOLD_TOP * SLOW });
     await mo.play(page, handFor(page));
-    await glide({ y0: stopAt, y1: room, S, v, RAMP, delay: 0.1 });
+    await glide({ y0: stopAt, y1: room, S: S * SLOW, v: v / SLOW, RAMP: RAMP * SLOW, delay: 0.1 });
   } else {
-    await glide({ y0: 0, y1: room, S, v, RAMP, delay: HOLD_TOP });
+    await glide({ y0: 0, y1: room, S: S * SLOW, v: v / SLOW, RAMP: RAMP * SLOW, delay: HOLD_TOP * SLOW });
   }
-  await page.waitForTimeout(HOLD_END * 1000 + 100);
-  const total = Date.now() / 1000 - 0.1 - t0; // as long as it took, to the end of the bottom hold
+  await page.waitForTimeout(HOLD_END * SLOW * 1000 + 100);
+  const took = Date.now() / 1000 - 0.1 - t0, total = took / SLOW; // as long as it took, to the end of the bottom hold
   await cdp.send("Page.stopScreencast");
   await page.waitForTimeout(200);
   await ctx.close();
@@ -323,8 +331,8 @@ async function record(browser, slug) {
   const p95 = intervals[Math.floor(intervals.length * 0.95)];
   let txt = "";
   for (let i = 0; i < list.length; i++) {
-    const end = i + 1 < list.length ? list[i + 1].t : t0 + total;
-    const d = Math.max(0.001, end - Math.max(list[i].t, t0));
+    const end = i + 1 < list.length ? list[i + 1].t : t0 + took;
+    const d = Math.max(0.001, (end - Math.max(list[i].t, t0)) / SLOW);
     txt += `file '${list[i].file}'\nduration ${d.toFixed(4)}\n`;
   }
   txt += `file '${list.at(-1).file}'\n`;

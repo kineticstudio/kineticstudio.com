@@ -113,29 +113,29 @@ const LANES = [
    ideas going back and forth: when it gets 'nope ideas,' then it gets colored, then ... the brand system gets
    set up, etc., back and forth"). `day` is the working day, its fraction how far into that day. */
 const EXCHANGES = [
-  { day: 1.15, from: "partner", label: "Kickoff" },
+  { day: 1.15, from: "partner", label: "Kickoff", stick: true },
   { day: 1.5, from: "kinetic", label: "Questions" },
   { day: 1.8, from: "partner", label: "Research" },
   { day: 2.2, from: "partner", label: "First ideas" },
   { day: 2.55, from: "kinetic", label: "Reactions" },
-  { day: 2.85, from: "partner", label: "Moodboards" },
+  { day: 2.85, from: "partner", label: "Moodboards", stick: true },
   { day: 3.2, from: "partner", label: "Exec presentation" },
   { day: 3.6, from: "kinetic", label: "Notes from the room" },
   { day: 3.9, from: "partner", label: "Direction picked" },
-  { day: 4.25, from: "kinetic", label: "Site map" },
+  { day: 4.25, from: "kinetic", label: "Site map", stick: true },
   { day: 4.6, from: "partner", label: "Colour" },
   { day: 5.2, from: "kinetic", label: "Content doc" },
   { day: 5.6, from: "partner", label: "Type" },
   { day: 6.2, from: "partner", label: "Logo" },
-  { day: 6.6, from: "kinetic", label: "Wireframes" },
-  { day: 7.2, from: "partner", label: "Brand system" },
+  { day: 6.6, from: "kinetic", label: "Wireframes", stick: true },
+  { day: 7.2, from: "partner", label: "Brand system", stick: true },
   { day: 7.6, from: "kinetic", label: "Homepage sketch" },
   { day: 8.3, from: "partner", label: "Brand book draft" },
-  { day: 8.7, from: "kinetic", label: "Motion tests" },
+  { day: 8.7, from: "kinetic", label: "Motion ideas", stick: true },
   { day: 9.3, from: "partner", label: "Final presentation" },
   { day: 9.7, from: "kinetic", label: "Homepage direction" },
-  { day: 10.3, from: "partner", label: "Brand book" },
-  { day: 13, from: "kinetic", label: "Homepage for review" },
+  { day: 10.3, from: "partner", label: "Brand book", stick: true },
+  { day: 13, from: "kinetic", label: "Homepage for review", stick: true },
   { day: 17, from: "partner", label: "Brand check" },
 ] as const;
 const POINTS = [
@@ -170,9 +170,8 @@ const POINTS = [
   />
   <PartnerBrandToWeb pairs={PAIRS} />
   </div>
-  {/* client words, dark, between the rows and the timeline (Hunter, Nov 17: "we are totally missing the
-      testimonials"); only approved quotes render (src/data/testimonials.json), drafts in previews */}
-  <PartnerQuotes page="primary" theme="neon" />
+  {/* Nick's words, right under the last brand row (Hunter, Nov 18); drafts only until Nick approves them */}
+  <PartnerFeatureQuote page="primary" />
   <PartnerProcess
     partnerLogo={primaryLogo}
     exchanges={[...EXCHANGES]}
@@ -181,15 +180,13 @@ const POINTS = [
     columns={COLUMNS}
     lanes={LANES}
   />
-  {/* Nick's words, after the timeline (Hunter, Nov 17); drafts only until Nick approves them */}
-  <PartnerFeatureQuote page="primary" />
   {/* the Studio, from the proposal's tooling page, the brand book first (Hunter, Nov 17) */}
   <PartnerStudio partner="Primary" />
   {/* the offer (Hunter, Nov 17), from the Primary proposal's "What you get" and fixed-price card; replaces the
       timeline's two points ("Straight to the designer", "Yours to run"), which said the same */}
   <PartnerOffer
     heading="A special relationship | with Primary"
-    price="Live in 4 weeks | for $50,000"
+    price="[Live in] 4 weeks | [for] $50,000"
     includes={[
       { icon: "doc", text: "Up to about 15 pages" },
       { icon: "sitemap", text: "Story, sitemap and wireframes" },
@@ -203,7 +200,9 @@ const POINTS = [
       { icon: "calendar", text: "A start during your brand sprint" },
     ]}
   />
-  <WorkWheel heading="More websites | from Kinetic" only={rest} simple />
+  <WorkWheel heading="More websites | from Kinetic" only={rest} simple dark />
+  {/* the other clients' words, further down, on the page's own light so they don't run into the close's neon (Hunter, Nov 18) */}
+  <PartnerQuotes page="primary" />
   <PartnerClose
     heading="Start with | a brand sprint"
     lead="Book your sprint with Primary, and your website comes from the same team, four weeks later."

@@ -71,9 +71,10 @@ const rows = pairs
           <li class="brand-web_row" data-slug={w.slug}>
             <div class="brand-web_pair">
               <figure class="brand-web_book" aria-label={`${w.name} brand guidelines by Primary`} data-book>
-                {/* one line of every page: a brand book has six or seven, enough for an unbroken run with no page
-                    on screen twice (two lines left gaps or repeats; Hunter, Nov 17: "a continual flow") */}
-                {[p.slides].map((line, r) => (
+                {/* two lines of pages fed in (Hunter, Nov 18: "bring it back to where there are two rows"), each the
+                    whole book so neither runs with gaps; the lower starts halfway through, so a page is never
+                    stacked over itself */}
+                {[p.slides, [...p.slides.slice(Math.ceil(p.slides.length / 2)), ...p.slides.slice(0, Math.ceil(p.slides.length / 2))]].map((line, r) => (
                   <template data-line={r}>
                     {line.map((s) => (
                       <img class="brand-web_slide" src={s.src} alt="" width="1280" height="720" decoding="async" draggable="false" />
@@ -93,7 +94,7 @@ const rows = pairs
                 ) : (
                   <p class="brand-web_name text-style-h4">{w.name}</p>
                 )}
-                {p.line && <p class="brand-web_line text-style-main">{p.line}</p>}
+                {/* no line under the name (Hunter, Nov 18: "I don't think it's adding much") */}
                 <div class="brand-web_links">
                   {/* the CTA to the live site: a circle with an arrow and "Visit site", by the subcopy (Hunter, Nov 17) */}
                   <a class="brand-web_visit2 text-style-main" href={w.url} target="_blank" rel="noopener">
@@ -458,7 +459,8 @@ const rows = pairs
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
-      padding-top: clamp(2rem, 5vw, 5rem);
+      /* taller rows, so one client's glow doesn't run into the next (Hunter, Nov 18) */
+      padding-top: clamp(3rem, 9vw, 9rem);
     }
     .brand-web_book {
       position: absolute;

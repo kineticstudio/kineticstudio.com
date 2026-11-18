@@ -23,11 +23,13 @@ interface Props {
   credits?: boolean;
   /** Every tile rests on its loop, no live 3D card on hover (just a small lift) and no particles (/primary). */
   simple?: boolean;
+  /** On the dark ground, on a light page (/primary, Hunter, Nov 18: "this should be dark mode"). */
+  dark?: boolean;
   /** Leave the awards and logos out of the header (on /primary they sit in the hero, Nov 17). */
   bare?: boolean;
 }
 
-const { render = true, heading = "Captivating websites that | tell compelling stories", rows = 8, only, credits = false, simple = false, bare = false } = Astro.props;
+const { render = true, heading = "Captivating websites that | tell compelling stories", rows = 8, only, credits = false, simple = false, bare = false, dark = false } = Astro.props;
 const media = MEDIA as Record<string, { w: number; h: number; ground: string; video: boolean }>;
 const pool = only
   ? only.map((slug) => WORK.find((w) => w.slug === slug)).filter((w): w is (typeof WORK)[number] => Boolean(w && media[w.cover]))
@@ -55,7 +57,7 @@ const EAGER = 0;
 
 {
   render && (
-    <section class:list={["wheel_wrap", simple && "is-simple"]} data-wheel data-simple={simple ? "" : undefined}>
+    <section class:list={["wheel_wrap", simple && "is-simple", dark && "theme-dark is-dark"]} data-wheel data-simple={simple ? "" : undefined}>
       <div class="wheel_stage">
         <div class="wheel_space">
           <div class="wheel_drum">
@@ -439,6 +441,10 @@ const EAGER = 0;
 
 <style is:global>
   @layer components {
+    .wheel_wrap.is-dark {
+      background: var(--background);
+      color: var(--text);
+    }
     .wheel_wrap {
       position: relative;
     }

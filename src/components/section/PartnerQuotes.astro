@@ -49,7 +49,7 @@ const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
       background: var(--background);
       color: var(--text);
       overflow: hidden;
-      padding-block: var(--space-6);
+      padding-block: 0; /* on the quotes, so the hairlines between them run the band's full height (Hunter, Nov 18) */
       border-block: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
     }
     .quotes_track {
@@ -73,7 +73,7 @@ const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
       flex-direction: column;
       gap: var(--space-3);
       width: clamp(17rem, 30vw, 28rem);
-      padding-inline: clamp(1.5rem, 3vw, 3rem);
+      padding: var(--space-6) clamp(1.5rem, 3vw, 3rem);
       border-left: 1px solid color-mix(in srgb, var(--text) 28%, transparent);
     }
     .quotes_quote {

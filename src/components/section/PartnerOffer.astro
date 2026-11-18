@@ -4,7 +4,7 @@ interface Props {
   render?: boolean;
   /** The headline; a "|" breaks it onto a second line. */
   heading: string;
-  /** The promise and the price, set big; a "|" breaks it ("Live in 4 weeks | for $50,000"). */
+  /** The promise and the price, set big; a "|" breaks it, words in [ ] are muted ("[Live in] 4 weeks | [for] $50,000"). */
   price: string;
   /** The line under the price ("A live website, four weeks after your sprint"). */
   offer?: string;
@@ -49,7 +49,11 @@ const ICONS: Record<string, string> = {
           )}
         </div>
         <div class="offer_price" data-reveal>
-          <p class="offer_amount">{price.split("|").map((line) => <span>{line.trim()}</span>)}</p>
+          <p class="offer_amount">
+            {price.split("|").map((line) => (
+              <span>{line.trim().split(/(\[[^\]]*\])/).filter(Boolean).map((bit) => (bit.startsWith("[") ? <span class="offer_mute">{bit.slice(1, -1)}</span> : bit))}</span>
+            ))}
+          </p>
           {offer && <p class="offer_line text-style-large">{offer}</p>}
         </div>
         <ul class="offer_list">
@@ -126,6 +130,10 @@ const ICONS: Record<string, string> = {
       line-height: 0.92;
       padding-bottom: 0.08em;
       letter-spacing: -0.02em;
+    }
+    /* the joining words, muted, so the number and the price carry it (Hunter, Nov 18) */
+    .offer_mute {
+      color: color-mix(in srgb, var(--text) 42%, transparent);
     }
     .offer_line {
       max-width: 30ch;

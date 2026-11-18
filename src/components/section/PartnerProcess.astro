@@ -22,7 +22,8 @@ interface Props {
   partnerLogo?: string;
   /** Things passed between the studios, each a labelled square thrown from one lane to the other on its day
       (1-based working day). */
-  exchanges?: { day: number; from: "partner" | "kinetic"; label: string }[];
+  /** `stick`: the pill stays where it lands, so a few milestones stay on the chart (Hunter, Nov 18). */
+  exchanges?: { day: number; from: "partner" | "kinetic"; label: string; stick?: boolean }[];
   /** A few short points under the timeline. */
   points?: { title: string; body: string }[];
 }
@@ -105,7 +106,7 @@ const clean = (svg: string, label: string) =>
             </div>
           ))}
           {exchanges.map((x) => (
-            <span class:list={["tl_pass", `is-${x.from}`, "text-style-label"]} data-pass data-day={x.day} data-from={x.from} aria-hidden="true">
+            <span class:list={["tl_pass", `is-${x.from}`, "text-style-label"]} data-pass data-day={x.day} data-from={x.from} data-stick={x.stick ? "" : undefined} aria-hidden="true">
               <i />
               <b>{x.label}</b>
             </span>
@@ -153,9 +154,11 @@ const clean = (svg: string, label: string) =>
     const ctx = canvas.getContext("2d")!;
     const now = tl.querySelector<HTMLElement>("[data-now]")!;
     const nowLabel = tl.querySelector<HTMLElement>("[data-now-label]")!;
+    // the fixed day and week names, hidden while the moving one sits on them, so a name never shows twice
+    const marks = [...tl.querySelectorAll<HTMLElement>(".tl_week")].map((el) => ({ el, y: 0 }));
     const DAYS = Number(tl.dataset.days), LAUNCH = Number(tl.dataset.launch), SPRINT = Number(tl.dataset.sprint);
     const spine = tl.querySelector<HTMLElement>("[data-spine]")!;
-    const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner", sx: 0, ex: 0 }));
+    const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner", stick: el.hasAttribute("data-stick"), sx: 0, ex: 0 }));
     let edges = { partner: 0, kinetic: 0 };
     let spans = { partner: [0, 0], kinetic: [0, 0] };
     type Cell = { x: number; y: number; day: number; r: number; d2: number; rgb: number[]; soft: boolean; partner: boolean; sx: number; sy: number; fly: boolean; u: number };
@@ -168,6 +171,7 @@ const clean = (svg: string, label: string) =>
     const hOf = (d: number) => (d < SPRINT ? tall : short);
 
     const build = () => {
+      for (const m of marks) m.y = m.el.offsetTop;
       const B = body.getBoundingClientRect(), cs = getComputedStyle(tl);
       tall = parseFloat(cs.getPropertyValue("--day-tall")) || 130;
       short = parseFloat(cs.getPropertyValue("--day-h")) || 26;
@@ -187,6 +191,8 @@ const clean = (svg: string, label: string) =>
         const from = p.partner ? spans.partner : spans.kinetic, to = p.partner ? spans.kinetic : spans.partner;
         p.sx = from[0] + (from[1] - from[0]) * (0.25 + rand() * 0.6);
         p.ex = to[0] + (to[1] - to[0]) * (0.15 + rand() * 0.6);
+        // a pill that stays lands where it fits: wholly inside Primary's lane, or from inside Kinetic's outward
+        if (p.stick) p.ex = p.partner ? to[0] + (to[1] - to[0]) * 0.12 : Math.max(to[0], Math.min(p.ex, to[1] - p.el.offsetWidth - 4));
       }
       seed = 3;
       cells = [];
@@ -261,8 +267,10 @@ const clean = (svg: string, label: string) =>
            middle and Kinetic is full width */
         const at = c.day + c.r;
         const k = Math.min(1, at / SPRINT), ease = k * k * (3 - 2 * k);
-        const left = 0.43 * ease, right = 0.58 + 0.42 * Math.min(1, (at / SPRINT) * 1.25);
-        const rag = (c.d2 - 0.5) * 0.16;
+        // Primary keeps most of its width to the end: their sprint is two full weeks, then a hard stop (Hunter,
+        // Nov 18: "keep Primary's side a bit wider"), so its edge only frays a little
+        const left = 0.18 * ease, right = 0.58 + 0.42 * Math.min(1, (at / SPRINT) * 1.25);
+        const rag = (c.d2 - 0.5) * (c.partner ? 0.1 : 0.16);
         if (c.partner ? c.u < left + rag : c.u > right + rag) continue;
         if (!c.partner && c.day < SPRINT && c.sy && c.fly) {
           // thrown as the day line reaches its row, so the whole flight happens above the line, in the past
@@ -291,18 +299,20 @@ const clean = (svg: string, label: string) =>
       }
       /* the things passed across, scrubbed by the scroll: on its moment a square leaves the sender's block with its
          name beside it, arcs over the middle and drops into the other's; the name travels with it and is gone
-         once it lands (Hunter, Nov 17: no legend, it "should happen with this interaction") */
+         once it lands (Hunter, Nov 17: no legend, it "should happen with this interaction"), except a few
+         milestones (`stick`), which stay where they land as pills (Hunter, Nov 18: "some pill stick") */
       const FLY = 0.7;
       for (const p of passes) {
         const u = (cur - p.at) / FLY;
-        if (u <= 0 || u >= 1.2) {
+        if (u <= 0 || (u >= 1.2 && !p.stick)) {
           p.el.style.opacity = "0";
           continue;
         }
         const k = Math.min(1, u), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
         const y0 = yOf(p.at), drop = hOf(p.at) * 0.3;
         const x = p.sx + (p.ex - p.sx) * e, y = y0 + drop * e - Math.sin(Math.PI * e) * 26;
-        p.el.style.opacity = String(Math.min(1, u * 8, u > 1 ? (1.2 - u) / 0.2 : 1));
+        p.el.style.opacity = String(Math.min(1, u * 8, u > 1 && !p.stick ? (1.2 - u) / 0.2 : 1));
+        p.el.classList.toggle("is-stuck", p.stick && u >= 1);
         p.el.style.transform = `translate(${x.toFixed(1)}px, ${(y - 6).toFixed(1)}px)`;
       }
       // the day line, stronger, across everything, and the line down the middle filled to it
@@ -312,6 +322,9 @@ const clean = (svg: string, label: string) =>
       tl.querySelector("[data-launch-band]")?.classList.toggle("is-on", cur >= DAYS - 0.05);
       const d = Math.min(DAYS, Math.max(1, Math.ceil(cur)));
       nowLabel.textContent = d > LAUNCH ? "After launch" : `Day ${d}`;
+      // the current day's own name (at the top of its day) goes too: the moving line carries it
+      const dayTop = yOf(d - 1);
+      for (const m of marks) m.el.style.visibility = cur < DAYS - 0.05 && cur > 0.05 && (Math.abs(m.y - y) < 26 || Math.abs(m.y - dayTop) < 2) ? "hidden" : "";
       now.classList.toggle("is-done", cur >= DAYS - 0.05); // the Launch node takes over from the day line
     };
     const tick = () => {
@@ -364,8 +377,10 @@ const clean = (svg: string, label: string) =>
     /* Primary's lane | the days | Kinetic's lane, each lane with its phases' names on its outer side */
     /* the lanes are narrow and hug the days, the phases' names beside them, the whole thing centred */
     .tl {
-      --day-tall: 130px; /* a day of the sprint */
-      --day-h: 26px; /* a day after it */
+      /* one scale from kickoff to launch (Hunter, Nov 18: "the scale shouldn't change for this section"; the sprint's
+         days were five times taller than the rest) */
+      --day-h: 72px;
+      --day-tall: var(--day-h);
       --axis-w: 5.5rem;
       --lane-w: clamp(7rem, 17vw, 15rem);
       --label-w: 9rem;
@@ -375,10 +390,9 @@ const clean = (svg: string, label: string) =>
       row-gap: var(--space-5);
       width: 100%;
       /* the room for the Launch node's words sits below the grid, so the sticky logos let go at the launch line */
-      margin-bottom: clamp(5rem, 8vw, 6.5rem);
+      margin-bottom: clamp(8rem, 12vw, 11rem);
       @media (width < 48rem) {
-        --day-tall: 80px;
-        --day-h: 16px;
+        --day-h: 44px;
         --axis-w: 3.25rem;
         --lane-w: 4.5rem;
         --label-w: 6rem;
@@ -388,7 +402,7 @@ const clean = (svg: string, label: string) =>
     .tl_heads {
       position: sticky;
       top: var(--tl-heads-top, 4.875rem); /* right under the nav bar */
-      z-index: 3;
+      z-index: 5; /* over the pills that stay on the chart */
       grid-row: 1;
       grid-column: 1 / -1;
       display: grid;
@@ -616,7 +630,7 @@ const clean = (svg: string, label: string) =>
       width: 1.1rem;
       aspect-ratio: 1;
       margin-top: -0.55rem;
-      margin-bottom: 0.4rem;
+      margin-bottom: 1.4rem; /* room round the node (Hunter, Nov 18: "more vertical padding here") */
       border-radius: 50%;
       border: 1px solid color-mix(in srgb, var(--text) 40%, transparent);
       background: var(--background);
