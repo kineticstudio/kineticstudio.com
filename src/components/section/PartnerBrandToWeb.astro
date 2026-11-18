@@ -102,9 +102,10 @@ const rows = pairs
                   <a class="brand-web_visit text-style-label" href={w.url} target="_blank" rel="noopener">View the site <span aria-hidden="true">↗</span></a>
                 </div>
               </div>
-              <a class="brand-web_device" href={w.url} target="_blank" rel="noopener" aria-label={`${w.name}, the live site`} data-mac data-mac3d={p.live3d ? "" : undefined}>
-                <img class="brand-web_mac" src={MAC.src} alt="" width={MAC.width} height={MAC.height} loading="lazy" decoding="async" />
-                <span class="brand-web_screen" style={`--site-ground:${(MEDIA as Record<string, { ground: string }>)[w.cover]?.ground ?? "#111"}`}>
+              {/* the site straight on in a frosted glass frame, no laptop (Hunter, Nov 17: "Instead of mockups, let's
+                  try a straight-on view, but with a border of glass morphism"); the pages pass behind the glass */}
+              <a class="brand-web_device is-glass" href={w.url} target="_blank" rel="noopener" aria-label={`${w.name}, the live site`} data-mac data-glass>
+                <span class="brand-web_glass">
                   <video class="brand-web_video" data-src={`/media/scroll/${w.cover}.mp4`} poster={`/media/scroll/${w.cover}.jpg`} muted loop playsinline preload="none" aria-hidden="true" />
                 </span>
               </a>
@@ -236,11 +237,13 @@ const rows = pairs
     const build = () => {
       dev.style.width = `${LOOK.laptop.width}%`;
       pair.style.setProperty("--dev-w", `${LOOK.laptop.width}%`);
-      fit(dev);
+      const glass = dev.hasAttribute("data-glass");
+      if (!glass) fit(dev);
       const B = book.getBoundingClientRect(), D = dev.getBoundingClientRect(), b = LOOK.barrel;
       const q = MAC.q;
-      const sx = D.left - B.left + ((q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4) * D.width;
-      const sy = D.top - B.top + ((q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4) * D.height;
+      // the barrel's axis runs through the screen: the frame's middle, or the laptop's glass
+      const sx = D.left - B.left + (glass ? 0.5 : (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4) * D.width;
+      const sy = D.top - B.top + (glass ? 0.5 : (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4) * D.height;
       const reach = (b.reach * Math.PI) / 180;
       const F = sx / Math.tan(reach); // the page's left edge is `reach` round the barrel
       const h = b.page * D.height, w = (h * 16) / 9;
@@ -446,6 +449,34 @@ const rows = pairs
       aspect-ratio: var(--mac-ratio, 1.6);
       @media (width < 48rem) {
         width: 74% !important;
+      }
+    }
+    /* the glass frame: a frosted border round the site, the pages blurred as they pass behind it */
+    .brand-web_device.is-glass {
+      aspect-ratio: 16 / 10;
+      padding: clamp(0.6rem, 1.1vw, 1.1rem);
+      border-radius: clamp(1rem, 1.8vw, 1.75rem);
+      background: color-mix(in srgb, #fff 18%, transparent);
+      border: 1px solid color-mix(in srgb, #fff 55%, transparent);
+      box-shadow:
+        inset 0 1px 0 color-mix(in srgb, #fff 70%, transparent),
+        0 2rem 4rem -1.5rem rgb(0 0 0 / 0.35);
+      -webkit-backdrop-filter: blur(18px) saturate(1.4);
+      backdrop-filter: blur(18px) saturate(1.4);
+    }
+    .brand-web_glass {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: clamp(0.5rem, 0.9vw, 0.85rem);
+      background: #111;
+      & video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top center;
       }
     }
     .brand-web_mac {

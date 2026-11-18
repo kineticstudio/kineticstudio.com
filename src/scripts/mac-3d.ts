@@ -9,7 +9,7 @@ import type * as T from "three";
 
 type Opts = { model: string; video: HTMLVideoElement; yaw?: number; pitch?: number; screen?: RegExp; turn?: number };
 
-export async function mountMac3D(host: HTMLElement, { model, video, yaw = -0.5, pitch = 0.42, screen = /display|sfCQkHOWyrsLmor/, turn = 0 }: Opts) {
+export async function mountMac3D(host: HTMLElement, { model, video, yaw = -Math.PI / 4, pitch = 0.6155, screen = /display|sfCQkHOWyrsLmor/, turn = 0 }: Opts) {
   const [THREE, { GLTFLoader }] = await Promise.all([import("three"), import("three/addons/loaders/GLTFLoader.js")]);
   const canvas = document.createElement("canvas");
   canvas.className = "mac3d";
@@ -24,8 +24,8 @@ export async function mountMac3D(host: HTMLElement, { model, video, yaw = -0.5, 
   }
   renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.AgXToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = 1.05;
 
   const scene = new THREE.Scene();
   // a product-shot room (Hunter, Nov 17, the PROLED XDR mockup): light from above fading to dark below, a big
@@ -42,11 +42,18 @@ export async function mountMac3D(host: HTMLElement, { model, video, yaw = -0.5, 
     }),
   );
   room.add(dome);
-  const softbox = new THREE.Mesh(new THREE.PlaneGeometry(6, 4), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-  softbox.material.color.multiplyScalar(3.2);
-  softbox.position.set(7, 4, 2);
-  softbox.lookAt(0, 0, 0);
-  room.add(softbox);
+  // two softboxes: a long one overhead for the sheen across the deck and lid, a big one on the right; the left
+  // stays dark, so the aluminium falls off toward the pages
+  const panel = (w: number, h: number, power: number, pos: [number, number, number]) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+    m.material.color.multiplyScalar(power);
+    m.position.set(...pos);
+    m.lookAt(0, 0, 0);
+    room.add(m);
+  };
+  panel(10, 3, 2.4, [0, 8, 1]);
+  panel(5, 6, 3.4, [8, 3, 3]);
+  panel(4, 2, 0.8, [-2, 2, 8]);
   scene.environment = pmrem.fromScene(room, 0.03).texture;
   const key = new THREE.DirectionalLight(0xffffff, 1.1);
   key.position.set(4, 5, 2);
@@ -78,6 +85,16 @@ export async function mountMac3D(host: HTMLElement, { model, video, yaw = -0.5, 
         m.material = new THREE.MeshBasicMaterial({ map: t, toneMapped: false });
       } else m.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
       return;
+    }
+    // the model's own metals: smoother and brighter, so the softboxes run across them like a product shot
+    const std = m.material as T.MeshStandardMaterial;
+    if (std?.isMeshStandardMaterial && std.metalness > 0.4) {
+      std.metalness = 1;
+      std.roughness = Math.min(std.roughness, 0.3);
+      std.roughnessMap = null;
+      std.metalnessMap = null;
+      std.envMapIntensity = 1.35;
+      std.needsUpdate = true;
     }
     if (/display/.test(m.name)) m.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
     // the glass: almost clear, just enough to catch the room's reflections across the screen
