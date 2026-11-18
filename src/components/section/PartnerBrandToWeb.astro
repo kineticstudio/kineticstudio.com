@@ -311,12 +311,12 @@ const rows = pairs
        row comes up the screen */
     const BOOST = 0.014; // seconds of drift per px scrolled
     let lastY = scrollY;
-    const SLIDE = 0.16; // the site starts this much of its width to the right
+    const SLIDE = 0.34; // the site starts this much of its width to the right (more, Nov 18)
     const wide = matchMedia("(width >= 48rem)");
     const enter = () => {
       const r = row.getBoundingClientRect();
       const k = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight * 0.85)));
-      return 1 - Math.pow(1 - k, 3);
+      return 1 - Math.pow(1 - k, 2); // gentle, so the slide is seen through most of the scroll in
     };
     let on = false, raf = 0, t0 = 0, t = 9;
     const frame = (now: number) => {
