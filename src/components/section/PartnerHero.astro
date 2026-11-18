@@ -31,9 +31,13 @@ const { render = true, partnerLogo, partnerName, heading, lead, pedigree = false
 // the Kinetic logo's parts named for the intro: its five lines (and their straight form, as the nav draws them away
 // from home), the pill and the word
 const kStripes = kineticRaw.match(/id="mark"[^>]*\sd="([^"]+)"/)![1].split("M").filter(Boolean).map((d) => "M" + d.trim());
-const kStraight = morphAll(kStripes).map((m) => m.at(0)).join(" ");
+const kShapes = morphAll(kStripes);
+// the mark drawn as its five lines, one path each, so they can come in one after another (the nav draws them so too)
+const kStripePaths = kStripes
+  .map((d, i) => `<path data-stripe="${i}" data-straight="${kShapes[i].at(0)}" d="${d}" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"/>`)
+  .join("");
 const kineticSvg = kineticRaw
-  .replace('id="mark"', `data-mark="" data-straight="${kStraight}"`)
+  .replace(/<path id="mark"[^>]*\/>/, kStripePaths)
   .replace('id="pill"', 'data-pill=""')
   .replace('id="word"', 'data-word=""');
 const clean = (svg: string, label: string) =>
@@ -45,30 +49,24 @@ const clean = (svg: string, label: string) =>
 ---
 
 <script>
-  /* the Kinetic lines in the intro (Hunter, Nov 18: "the Kinetic logo or Kinetic pill come in and compress the five
-     vertical lines"): they start straight, as the nav draws them away from home; as the pill docks against them
-     they bend into the logo's curve with a little spring */
+  /* the Kinetic lines in the intro (Hunter, Nov 18: "the Kinetic pill collapses the five lines, identical to how it
+     does in the navigation"): the lines stay straight while the pill is away and bend as it closes in, by the nav's
+     own pull (the same morph, eased the same way over the last stretch of its travel) */
   import { morphAll } from "@/scripts/mark.js";
-  const t0 = (window as unknown as { __phIntro?: number }).__phIntro;
-  const mark = document.querySelector<SVGPathElement>(".partner-hero.has-intro .partner-hero_kinetic [data-mark]");
-  const curved = mark?.getAttribute("data-curved");
-  if (t0 !== undefined && mark && curved) {
-    const shapes = morphAll(curved.split("M").filter(Boolean).map((d) => "M" + d.trim()));
-    const at = (k: number) => shapes.map((m) => m.at(k)).join(" ");
-    const BEND = 1150, DUR = 750; // ms from the intro's start: as the pill lands
-    const spring = (u: number) => 1 - Math.cos(u * Math.PI * 2.2) * Math.exp(-5 * u);
-    const frame = (now: number) => {
-      const u = (now - t0 - BEND) / DUR;
-      if (u <= 0) {
-        requestAnimationFrame(frame);
-        return;
-      }
-      if (u >= 1) {
-        mark.setAttribute("d", curved);
-        return;
-      }
-      mark.setAttribute("d", at(spring(u)));
-      requestAnimationFrame(frame);
+  const w = window as unknown as { __phIntro?: number; __phPill?: Animation };
+  const stripes = [...document.querySelectorAll<SVGPathElement>(".partner-hero.has-intro .partner-hero_kinetic [data-stripe]")];
+  const pill = w.__phPill;
+  if (w.__phIntro !== undefined && stripes.length && pill) {
+    const shapes = morphAll(stripes.map((p) => p.getAttribute("data-curved")!));
+    const TRAVEL = 460, REACH = 150; // the pill's run in, and how near it pulls the lines (logo units)
+    const frame = () => {
+      const p = pill.effect?.getComputedTiming().progress;
+      const done = pill.playState === "finished" || p === null && (pill.currentTime ?? 0) > 0;
+      const left = done ? 0 : (1 - (p ?? 0)) * TRAVEL; // how far the pill still has to go
+      const k = Math.max(0, 1 - left / REACH), t = k * k * (3 - 2 * k);
+      stripes.forEach((s, i) => s.setAttribute("d", shapes[i].at(t)));
+      if (t < 1) requestAnimationFrame(frame);
+      else stripes.forEach((s) => s.setAttribute("d", s.getAttribute("data-curved")!));
     };
     requestAnimationFrame(frame);
   }
@@ -98,42 +96,37 @@ const clean = (svg: string, label: string) =>
             var dx = innerWidth / 2 - cx, dy = innerHeight / 2 - cy;
             h.classList.add("is-intro", "has-intro");
             document.documentElement.classList.add("ph-intro");
-            // the Kinetic lines start straight, on their own: the pill and the word slide in from the right and
-            // the lines bend as it docks (the bend is the hero script's, on window.__phIntro's clock)
-            var mark = l.querySelector("[data-mark]");
-            if (mark) {
-              mark.setAttribute("data-curved", mark.getAttribute("d"));
-              mark.setAttribute("d", mark.getAttribute("data-straight"));
-            }
-            l.querySelectorAll("[data-pill], [data-word]").forEach(function (el) {
-              el.animate([{ transform: "translateX(170px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 700, delay: 750, easing: "cubic-bezier(0.2, 0.7, 0.1, 1)", fill: "backwards" });
+            // Kinetic's five lines come in from the right one after another, straight, as the nav draws them away from
+            // home; the pill and the word follow just behind, and as the pill docks the lines bend, the nav's own pull
+            // (the hero's script, on window.__phIntro's clock); the moment they have, the lockup heads to its place
+            var stripes = l.querySelectorAll("[data-stripe]"), anims = [];
+            stripes.forEach(function (p, i) {
+              p.setAttribute("data-curved", p.getAttribute("d"));
+              p.setAttribute("d", p.getAttribute("data-straight"));
+              p.animate([{ transform: "translateX(420px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 650, delay: 300 + i * 85, easing: "cubic-bezier(0.2, 0.7, 0.1, 1)", fill: "backwards" });
             });
+            l.querySelectorAll("[data-pill], [data-word]").forEach(function (el) {
+              anims.push(el.animate([{ transform: "translateX(460px)", opacity: 0, offset: 0 }, { opacity: 1, offset: 0.3 }, { transform: "none", opacity: 1 }], { duration: 800, delay: 650, easing: "cubic-bezier(0.3, 0.6, 0.15, 1)", fill: "backwards" }));
+            });
+            window.__phPill = anims[0];
             // the lockup large in the middle of the screen, then down into its place
             l.style.transformOrigin = cx - r.left + "px " + (cy - r.top) + "px";
             var big = "translate(" + dx + "px, " + dy + "px) scale(" + s + ")";
             l.animate(
               [
                 { transform: big, offset: 0 },
-                { transform: big, offset: 0.655, easing: "cubic-bezier(0.65, 0, 0.15, 1)" },
+                { transform: big, offset: 0.62, easing: "cubic-bezier(0.65, 0, 0.15, 1)" },
                 { transform: "none", offset: 1 },
               ],
-              { duration: 2900, fill: "backwards" },
+              { duration: 2450, fill: "backwards" },
             );
-            // the page opens white; the gradient rises from the bottom past its place, then sinks back down,
-            // and the headline comes up as it goes
+            // the page opens on the gradient's own off-white, and the gradient just fades in as the logos come
+            // together (Hunter, Nov 18: "use opacity to have it fade from 0 to 100%")
             var g = document.querySelector(".bw-ground_layer");
-            if (g)
-              g.animate(
-                [
-                  { translate: "0 100%", easing: "cubic-bezier(0.2, 0.6, 0.2, 1)" },
-                  { translate: "0 -22%", offset: 0.5, easing: "cubic-bezier(0.6, 0, 0.25, 1)" },
-                  { translate: "0 0" },
-                ],
-                { duration: 2600, delay: 450, fill: "backwards" },
-              );
+            if (g) g.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2100, delay: 350, easing: "ease-in-out", fill: "backwards" });
             window.__phIntro = performance.now();
-            setTimeout(function () { h.classList.remove("is-intro"); }, 2350);
-            setTimeout(function () { document.documentElement.classList.remove("ph-intro"); }, 2850);
+            setTimeout(function () { h.classList.remove("is-intro"); }, 2050);
+            setTimeout(function () { document.documentElement.classList.remove("ph-intro"); }, 2500);
           })();
         </script>
         <h1 class:list={["partner-hero_title", compact ? "text-style-h2" : "text-style-h1"]} data-hero-in>
@@ -273,10 +266,10 @@ const clean = (svg: string, label: string) =>
           animation-delay: 0.65s;
         }
       }
-      /* the page white till the gradient has risen */
+      /* the page on the gradient's off-white (its light edge) while the gradient fades in */
       html.ph-intro,
       html.ph-intro body {
-        background-color: #fff;
+        background-color: var(--light-300);
       }
       /* and the rows below stay out of the way till it has settled */
       html.ph-intro .brand-web {
