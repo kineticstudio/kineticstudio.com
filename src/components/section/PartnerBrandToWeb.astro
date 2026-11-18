@@ -57,7 +57,7 @@ const rows = pairs
 
 {
   render && rows.length > 0 && (
-    <Section paddingTop={heading ? "large" : "none"} paddingBottom="large" class="brand-web" gap="0">
+    <Section paddingTop={heading ? "large" : "none"} paddingBottom="none" class="brand-web" gap="0">
       {heading && (
         <div class="brand-web_head" data-reveal>
           <h2 class="brand-web_title text-style-h2">
@@ -94,7 +94,7 @@ const rows = pairs
                 ) : (
                   <p class="brand-web_name text-style-h4">{w.name}</p>
                 )}
-                {/* no line under the name (Hunter, Nov 18: "I don't think it's adding much") */}
+                {p.line && <p class="brand-web_line text-style-main">{p.line}</p>}
                 <div class="brand-web_links">
                   {/* the CTA to the live site: a circle with an arrow and "Visit site", by the subcopy (Hunter, Nov 17) */}
                   <a class="brand-web_visit2 text-style-main" href={w.url} target="_blank" rel="noopener">
@@ -449,8 +449,9 @@ const rows = pairs
       &:first-child::before {
         display: none;
       }
+      /* the last site runs straight into the next section, no gap and no line (Hunter, Nov 18) */
       &:last-child::after {
-        bottom: 0;
+        display: none;
       }
     }
     /* the laptop on the right, big; the pages run in behind it from the page's left edge */
