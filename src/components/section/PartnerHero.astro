@@ -60,9 +60,11 @@ const clean = (svg: string, label: string) =>
     const shapes = morphAll(stripes.map((p) => p.getAttribute("data-curved")!));
     const TRAVEL = 460, REACH = 150; // the pill's run in, and how near it pulls the lines (logo units)
     const frame = () => {
+      // the pill's own progress; null while it waits to set off, so the lines stay straight till it is under way
       const p = pill.effect?.getComputedTiming().progress;
-      const done = pill.playState === "finished" || p === null && (pill.currentTime ?? 0) > 0;
-      const left = done ? 0 : (1 - (p ?? 0)) * TRAVEL; // how far the pill still has to go
+      const end = Number(pill.effect?.getComputedTiming().endTime ?? 0);
+      const landed = pill.playState === "finished" || Number(pill.currentTime ?? 0) >= end;
+      const left = landed ? 0 : (1 - (p ?? 0)) * TRAVEL; // how far the pill still has to go
       const k = Math.max(0, 1 - left / REACH), t = k * k * (3 - 2 * k);
       stripes.forEach((s, i) => s.setAttribute("d", shapes[i].at(t)));
       if (t < 1) requestAnimationFrame(frame);
@@ -99,14 +101,21 @@ const clean = (svg: string, label: string) =>
             // Kinetic's five lines come in from the right one after another, straight, as the nav draws them away from
             // home; the pill and the word follow just behind, and as the pill docks the lines bend, the nav's own pull
             // (the hero's script, on window.__phIntro's clock); the moment they have, the lockup heads to its place
-            var stripes = l.querySelectorAll("[data-stripe]"), anims = [];
-            stripes.forEach(function (p, i) {
+            // Primary first; then Kinetic's lines, the far left one first (Hunter, Nov 18), each sliding straight
+            // in from the right with no bend till the pill is close; then the pill
+            var stripes = [].slice.call(l.querySelectorAll("[data-stripe]")), anims = [];
+            stripes.forEach(function (p) {
               p.setAttribute("data-curved", p.getAttribute("d"));
               p.setAttribute("d", p.getAttribute("data-straight"));
-              p.animate([{ transform: "translateX(420px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 650, delay: 300 + i * 85, easing: "cubic-bezier(0.2, 0.7, 0.1, 1)", fill: "backwards" });
             });
+            stripes
+              .map(function (p) { return { p: p, x: p.getBBox().x }; })
+              .sort(function (a, b) { return a.x - b.x; })
+              .forEach(function (o, rank) {
+                o.p.animate([{ transform: "translateX(420px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 620, delay: 650 + rank * 110, easing: "cubic-bezier(0.2, 0.7, 0.1, 1)", fill: "backwards" });
+              });
             l.querySelectorAll("[data-pill], [data-word]").forEach(function (el) {
-              anims.push(el.animate([{ transform: "translateX(460px)", opacity: 0, offset: 0 }, { opacity: 1, offset: 0.3 }, { transform: "none", opacity: 1 }], { duration: 800, delay: 650, easing: "cubic-bezier(0.3, 0.6, 0.15, 1)", fill: "backwards" }));
+              anims.push(el.animate([{ transform: "translateX(460px)", opacity: 0, offset: 0 }, { opacity: 1, offset: 0.3 }, { transform: "none", opacity: 1 }], { duration: 800, delay: 1250, easing: "cubic-bezier(0.3, 0.6, 0.15, 1)", fill: "backwards" }));
             });
             window.__phPill = anims[0];
             // the lockup large in the middle of the screen, then down into its place
@@ -115,18 +124,18 @@ const clean = (svg: string, label: string) =>
             l.animate(
               [
                 { transform: big, offset: 0 },
-                { transform: big, offset: 0.62, easing: "cubic-bezier(0.65, 0, 0.15, 1)" },
+                { transform: big, offset: 0.7, easing: "cubic-bezier(0.65, 0, 0.15, 1)" },
                 { transform: "none", offset: 1 },
               ],
-              { duration: 2450, fill: "backwards" },
+              { duration: 3100, fill: "backwards" },
             );
             // the page opens on the gradient's own off-white, and the gradient just fades in as the logos come
             // together (Hunter, Nov 18: "use opacity to have it fade from 0 to 100%")
             var g = document.querySelector(".bw-ground_layer");
-            if (g) g.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2100, delay: 350, easing: "ease-in-out", fill: "backwards" });
+            if (g) g.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2500, delay: 350, easing: "ease-in-out", fill: "backwards" });
             window.__phIntro = performance.now();
-            setTimeout(function () { h.classList.remove("is-intro"); }, 2050);
-            setTimeout(function () { document.documentElement.classList.remove("ph-intro"); }, 2500);
+            setTimeout(function () { h.classList.remove("is-intro"); }, 2700);
+            setTimeout(function () { document.documentElement.classList.remove("ph-intro"); }, 3150);
           })();
         </script>
         <h1 class:list={["partner-hero_title", compact ? "text-style-h2" : "text-style-h1"]} data-hero-in>
@@ -257,10 +266,10 @@ const clean = (svg: string, label: string) =>
       /* in the intro the two marks start further apart (has-intro stays on, so nothing replays) */
       .partner-hero.has-intro {
         & .partner-hero_lockup .partner-hero_partner {
-          animation: ph-intro-left 1.15s 0.1s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+          animation: ph-intro-left 0.8s 0.1s cubic-bezier(0.2, 0.7, 0.1, 1) both;
         }
         & .partner-hero_lockup .partner-hero_kinetic {
-          animation: ph-fade 0.6s 0.15s ease both;
+          animation: none;
         }
         & .partner-hero_lockup .partner-hero_x {
           animation-delay: 0.65s;

@@ -14,13 +14,13 @@ interface Props {
 }
 
 const { render = true, heading, lead, cta } = Astro.props;
-/* The page's one next step, at its foot on the studio's lime (Hunter, Nov 6: no contact form here; this
+/* The page's one next step, at its foot, on white (Hunter, Nov 18; was the studio's lime (Hunter, Nov 6: no contact form here; this
    is a link to Primary, who sells the work). */
 ---
 
 {
   render && (
-    <Section theme="brand" paddingTop="large" paddingBottom="large" class="partner-close" gap="0">
+    <Section theme="light" paddingTop="large" paddingBottom="large" class="partner-close" gap="0">
       <div class="partner-close_inner" data-reveal>
         <h2 class="partner-close_title text-style-h2">
           {heading.split("|").map((line) => <span>{line.trim()}</span>)}
@@ -34,6 +34,10 @@ const { render = true, heading, lead, cta } = Astro.props;
 
 <style is:global>
   @layer components {
+    .partner-close {
+      --background: #fff;
+      background: var(--background);
+    }
     .partner-close_inner {
       display: flex;
       flex-direction: column;
