@@ -3,6 +3,7 @@ import Section from "@/components/wrapper/Section.astro";
 import kineticRaw from "@/assets/brand/logo.svg?raw";
 import AwardsLaurels from "@/components/content/AwardsLaurels.astro";
 import ClientLogos from "@/components/content/ClientLogos.astro";
+import { morphAll } from "@/scripts/mark.js";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -27,6 +28,14 @@ const { render = true, partnerLogo, partnerName, heading, lead, pedigree = false
 /* A partner page's opening (Hunter, Nov 6, /primary: "Maybe we show a lockup of primary × Kinetic"):
    the partner's own wordmark, a times sign, and Kinetic's logo, both in their real files and at one
    cap height; then the headline and one line under it. */
+// the Kinetic logo's parts named for the intro: its five lines (and their straight form, as the nav draws them away
+// from home), the pill and the word
+const kStripes = kineticRaw.match(/id="mark"[^>]*\sd="([^"]+)"/)![1].split("M").filter(Boolean).map((d) => "M" + d.trim());
+const kStraight = morphAll(kStripes).map((m) => m.at(0)).join(" ");
+const kineticSvg = kineticRaw
+  .replace('id="mark"', `data-mark="" data-straight="${kStraight}"`)
+  .replace('id="pill"', 'data-pill=""')
+  .replace('id="word"', 'data-word=""');
 const clean = (svg: string, label: string) =>
   svg
     .replace(/<!--[\s\S]*?-->/g, "")
@@ -36,26 +45,30 @@ const clean = (svg: string, label: string) =>
 ---
 
 <script>
-  /* the Kinetic bars in the intro (Hunter, Nov 18: "the bars compress, and then ... settle into their normal spot"),
-     like the press on the nav's logo: once the two marks have met in the middle, the five arcs pull straight,
-     hold a beat, then spring back to their curve; then the lockup glides into place */
-  import { morph } from "@/scripts/mark.js";
+  /* the Kinetic lines in the intro (Hunter, Nov 18: "the Kinetic logo or Kinetic pill come in and compress the five
+     vertical lines"): they start straight, as the nav draws them away from home; as the pill docks against them
+     they bend into the logo's curve with a little spring */
+  import { morphAll } from "@/scripts/mark.js";
   const t0 = (window as unknown as { __phIntro?: number }).__phIntro;
   const mark = document.querySelector<SVGPathElement>(".partner-hero.has-intro .partner-hero_kinetic [data-mark]");
-  if (t0 !== undefined && mark) {
-    const m = morph(mark.getAttribute("d")!);
-    const SQUEEZE = 1150, HOLD = 1500, BACK = 1950; // ms from the intro's start
-    const ease = (u: number) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
-    const spring = (u: number) => 1 + Math.sin(u * Math.PI * 1.5) * Math.exp(-4.5 * u) * 0.18 - Math.exp(-6 * u) * (1 - u);
+  const curved = mark?.getAttribute("data-curved");
+  if (t0 !== undefined && mark && curved) {
+    const shapes = morphAll(curved.split("M").filter(Boolean).map((d) => "M" + d.trim()));
+    const at = (k: number) => shapes.map((m) => m.at(k)).join(" ");
+    const BEND = 1150, DUR = 750; // ms from the intro's start: as the pill lands
+    const spring = (u: number) => 1 - Math.cos(u * Math.PI * 2.2) * Math.exp(-5 * u);
     const frame = (now: number) => {
-      const t = now - t0;
-      let k = 1;
-      if (t >= SQUEEZE && t < HOLD) k = 1 - ease(Math.min(1, (t - SQUEEZE) / 280));
-      else if (t >= HOLD && t < BACK) k = 0;
-      else if (t >= BACK) k = Math.max(0, spring(Math.min(1, (t - BACK) / 650)));
-      mark.setAttribute("d", m.at(Math.min(1.25, k)));
-      if (t < BACK + 700) requestAnimationFrame(frame);
-      else mark.setAttribute("d", m.at(1));
+      const u = (now - t0 - BEND) / DUR;
+      if (u <= 0) {
+        requestAnimationFrame(frame);
+        return;
+      }
+      if (u >= 1) {
+        mark.setAttribute("d", curved);
+        return;
+      }
+      mark.setAttribute("d", at(spring(u)));
+      requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
   }
@@ -68,7 +81,7 @@ const clean = (svg: string, label: string) =>
         <p class="partner-hero_lockup" data-hero-in>
           <span class="partner-hero_partner" set:html={clean(partnerLogo, partnerName)} />
           <span class="partner-hero_x" aria-label="and">×</span>
-          <span class="partner-hero_kinetic" set:html={clean(kineticRaw.replace('id="mark"', 'data-mark=""'), "Kinetic")} />
+          <span class="partner-hero_kinetic" set:html={clean(kineticSvg, "Kinetic")} />
         </p>
         {/* the intro (Hunter, Nov 18: "Primary and Kinetic logos coming together and then settling into place"): the
             lockup starts large in the middle of the screen while the two marks slide together, then glides down
@@ -85,19 +98,42 @@ const clean = (svg: string, label: string) =>
             var dx = innerWidth / 2 - cx, dy = innerHeight / 2 - cy;
             h.classList.add("is-intro", "has-intro");
             document.documentElement.classList.add("ph-intro");
+            // the Kinetic lines start straight, on their own: the pill and the word slide in from the right and
+            // the lines bend as it docks (the bend is the hero script's, on window.__phIntro's clock)
+            var mark = l.querySelector("[data-mark]");
+            if (mark) {
+              mark.setAttribute("data-curved", mark.getAttribute("d"));
+              mark.setAttribute("d", mark.getAttribute("data-straight"));
+            }
+            l.querySelectorAll("[data-pill], [data-word]").forEach(function (el) {
+              el.animate([{ transform: "translateX(170px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 700, delay: 750, easing: "cubic-bezier(0.2, 0.7, 0.1, 1)", fill: "backwards" });
+            });
+            // the lockup large in the middle of the screen, then down into its place
             l.style.transformOrigin = cx - r.left + "px " + (cy - r.top) + "px";
             var big = "translate(" + dx + "px, " + dy + "px) scale(" + s + ")";
             l.animate(
               [
                 { transform: big, offset: 0 },
-                { transform: big, offset: 0.66, easing: "cubic-bezier(0.65, 0, 0.15, 1)" },
+                { transform: big, offset: 0.655, easing: "cubic-bezier(0.65, 0, 0.15, 1)" },
                 { transform: "none", offset: 1 },
               ],
-              { duration: 3000, fill: "backwards" },
+              { duration: 2900, fill: "backwards" },
             );
-            window.__phIntro = performance.now(); // the hero's script squeezes the Kinetic bars on this clock
-            setTimeout(function () { h.classList.remove("is-intro"); }, 2650);
-            setTimeout(function () { document.documentElement.classList.remove("ph-intro"); }, 2900);
+            // the page opens white; the gradient rises from the bottom past its place, then sinks back down,
+            // and the headline comes up as it goes
+            var g = document.querySelector(".bw-ground_layer");
+            if (g)
+              g.animate(
+                [
+                  { translate: "0 100%", easing: "cubic-bezier(0.2, 0.6, 0.2, 1)" },
+                  { translate: "0 -22%", offset: 0.5, easing: "cubic-bezier(0.6, 0, 0.25, 1)" },
+                  { translate: "0 0" },
+                ],
+                { duration: 2600, delay: 450, fill: "backwards" },
+              );
+            window.__phIntro = performance.now();
+            setTimeout(function () { h.classList.remove("is-intro"); }, 2350);
+            setTimeout(function () { document.documentElement.classList.remove("ph-intro"); }, 2850);
           })();
         </script>
         <h1 class:list={["partner-hero_title", compact ? "text-style-h2" : "text-style-h1"]} data-hero-in>
@@ -231,11 +267,16 @@ const clean = (svg: string, label: string) =>
           animation: ph-intro-left 1.15s 0.1s cubic-bezier(0.2, 0.7, 0.1, 1) both;
         }
         & .partner-hero_lockup .partner-hero_kinetic {
-          animation: ph-intro-right 1.15s 0.1s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+          animation: ph-fade 0.6s 0.15s ease both;
         }
         & .partner-hero_lockup .partner-hero_x {
           animation-delay: 0.65s;
         }
+      }
+      /* the page white till the gradient has risen */
+      html.ph-intro,
+      html.ph-intro body {
+        background-color: #fff;
       }
       /* and the rows below stay out of the way till it has settled */
       html.ph-intro .brand-web {

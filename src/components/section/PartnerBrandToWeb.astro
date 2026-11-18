@@ -553,7 +553,7 @@ const rows = pairs
       margin-bottom: -8%; /* past the row's bottom, cut at the line (Hunter, Nov 18: "Bottom here should still be cut off") */
       @media (width < 48rem) {
         width: 100% !important;
-        margin-bottom: 0;
+        margin-bottom: -14%;
       }
       padding: clamp(0.6rem, 1.1vw, 1.1rem);
       border-radius: clamp(1rem, 1.8vw, 1.75rem);
@@ -678,12 +678,15 @@ const rows = pairs
       /* well clear of the site (Hunter, Nov 18: "the subcopy is too close") */
       width: calc(100% - var(--dev-w, 68%) - clamp(2.5rem, 5vw, 5.5rem));
       max-width: 24rem;
+      /* on a phone the words come first, over the site, on its left edge, and the site runs past the row's line
+         and is cut there (Hunter, Nov 18) */
       @media (width < 48rem) {
         position: static;
-        order: 2;
+        order: -1;
         width: 100%;
-        margin-top: var(--space-4);
-        padding-bottom: var(--space-6); /* room between "Visit site" and the row's line (Hunter, Nov 18) */
+        max-width: none;
+        margin: 0 0 var(--space-5);
+        padding: 0;
       }
     }
     .brand-web_line {

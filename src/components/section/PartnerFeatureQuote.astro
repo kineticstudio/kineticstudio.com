@@ -101,7 +101,7 @@ const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid
       letter-spacing: var(--h2-letter-spacing);
       font-size: clamp(2.5rem, 6.4vw, 6rem);
       line-height: 0.95;
-      max-width: 15em;
+      max-width: 12em; /* a narrower measure (Hunter, Nov 18) */
       color: var(--text); /* full ink, lit word by word (Hunter, Nov 17) */
       text-wrap: pretty;
       &.is-scrubbed .fquote_w {
