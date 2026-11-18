@@ -5,6 +5,12 @@ import { restLoop } from "@/data/project-link.js";
 import MAC from "@/data/macbook-angle.json";
 import MEDIA from "@/data/media.json";
 import Modal from "@/components/interactive/Modal.astro";
+import exeLogo from "@/assets/clients/exe.svg?raw";
+import ownerLogo from "@/assets/clients/owner.svg?raw";
+import rambleLogo from "@/assets/clients/ramble.svg?raw";
+// each client's own logo heads its caption (Hunter, Nov 17: "we should use logos here"), from the Studio's
+// clients/<slug>/brand/logo.svg, drawn in the text colour
+const LOGOS: Record<string, string> = { exe: exeLogo, owner: ownerLogo, ramble: rambleLogo };
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -80,7 +86,11 @@ const rows = pairs
               </figure>
               {/* under the pages: the name, one line, and the live site (Hunter, Nov 17) */}
               <div class="brand-web_caption">
-                <p class="brand-web_name text-style-h4">{w.name}</p>
+                {LOGOS[w.slug] ? (
+                  <p class="brand-web_logo" role="img" aria-label={w.name} set:html={LOGOS[w.slug].replace(/<svg /, '<svg aria-hidden="true" ')} />
+                ) : (
+                  <p class="brand-web_name text-style-h4">{w.name}</p>
+                )}
                 {p.line && <p class="brand-web_line text-style-main">{p.line}</p>}
                 <div class="brand-web_links">
                   {p.film && (
@@ -107,6 +117,12 @@ const rows = pairs
           </li>
         ))}
       </ul>
+      {/* the laptop model's licence (CC BY 4.0) asks for a credit */}
+      {rows.some(({ p }) => p.live3d) && (
+        <p class="brand-web_credit text-style-label">
+          MacBook Pro model by <a href="https://sketchfab.com/3d-models/macbook-pro-m3-16-inch-2024-8e34fc2b303144f78490007d91ff57c4" target="_blank" rel="noopener">jackbaeten</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>
+        </p>
+      )}
     </Section>
   )
 }
@@ -220,8 +236,6 @@ const rows = pairs
     const build = () => {
       dev.style.width = `${LOOK.laptop.width}%`;
       pair.style.setProperty("--dev-w", `${LOOK.laptop.width}%`);
-      // the pages run in from the window's own left edge, however wide the window (not the content's)
-      book.style.left = `${-pair.getBoundingClientRect().left}px`;
       fit(dev);
       const B = book.getBoundingClientRect(), D = dev.getBoundingClientRect(), b = LOOK.barrel;
       const q = MAC.q;
@@ -319,7 +333,7 @@ const rows = pairs
           if (!video.src) video.src = video.dataset.src!;
           // from the site's root, so it also loads in the Studio's copy, which lives in a folder
           const root = document.querySelector<HTMLLinkElement>('link[rel="site-root"]')?.href ?? location.origin + "/";
-          const model = new URL("models/macbook.glb", root).href;
+          const model = new URL("models/macbook-pro.glb", root).href; // jackbaeten, CC BY 4.0 (credited under the rows)
           import("@/scripts/mac-3d.ts").then(({ mountMac3D }) => mountMac3D(dev, { model, video })).catch(() => {});
         },
         { rootMargin: "60% 0px" },
@@ -410,7 +424,8 @@ const rows = pairs
     }
     .brand-web_book {
       position: absolute;
-      inset: 0 0 0 calc(-1 * var(--site-margin, 1.5rem)); /* left: set to the window's edge by the script */
+      /* from the window's own left edge, however wide the window: the pair is centred, so half the difference */
+      inset: 0 0 0 calc((100% - 100vw) / 2);
       margin: 0;
       overflow: hidden;
       pointer-events: none;
@@ -536,6 +551,25 @@ const rows = pairs
       text-decoration-thickness: 1px;
       &:hover {
         text-decoration-thickness: 2px;
+      }
+    }
+    .brand-web_credit {
+      margin: var(--space-6) 0 0;
+      font-size: 0.6875rem;
+      opacity: 0.5;
+      color: var(--light-100);
+      & a {
+        color: inherit;
+      }
+    }
+    .brand-web_logo {
+      display: block;
+      height: clamp(1.6rem, 2.4vw, 2.25rem);
+      margin: 0 0 var(--space-2, 0.5rem);
+      & svg {
+        display: block;
+        width: auto;
+        height: 100%;
       }
     }
     .brand-web_name {

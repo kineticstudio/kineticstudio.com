@@ -83,6 +83,10 @@ const clean = (svg: string, label: string) =>
           {columns.map((c, i) => (
             <span class="tl_week text-style-label" style={`--y:${yAt(i * 5)}`}>{c}</span>
           ))}
+          {/* a clear break for every day of the sprint, its number in the middle (Hunter, Nov 17) */}
+          {Array.from({ length: SPRINT }, (_, d) => d).filter((d) => d % 5 !== 0).map((d) => (
+            <span class="tl_week tl_day text-style-label" style={`--y:${yAt(d)}`}>Day {d + 1}</span>
+          ))}
           {/* launch, the chart's last line (Hunter, Nov 17: "I need Launch to be at the bottom") */}
           {launch * 5 === DAYS && <span class="tl_week tl_launch text-style-label" style={`--y:${yAt(DAYS)}`}>Launch</span>}
           {phases.map((p) => (
@@ -144,7 +148,7 @@ const clean = (svg: string, label: string) =>
     const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner", sx: 0, ex: 0 }));
     let edges = { partner: 0, kinetic: 0 };
     let spans = { partner: [0, 0], kinetic: [0, 0] };
-    type Cell = { x: number; y: number; day: number; r: number; rgb: number[]; soft: boolean; partner: boolean; was: boolean };
+    type Cell = { x: number; y: number; day: number; r: number; d2: number; rgb: number[]; soft: boolean; partner: boolean; was: boolean };
     type Dot = { sx: number; sy: number; ex: number; ey: number; cx: number; cy: number; t: number; dur: number };
     const dots: Dot[] = [];
     let last = 0;
@@ -193,7 +197,7 @@ const clean = (svg: string, label: string) =>
             for (let c = 0; c < cols; c++) {
               // in the tall days a square lights at its own row's share of the day, so the block fills downward
               const share = dh > 40 ? (r + rand()) / rows : rand();
-              cells.push({ x: x0 + c * PITCH, y, day: d - 1, r: share, rgb: partner ? NEON : INK, soft: ph.classList.contains("is-soft"), partner, was: false });
+              cells.push({ x: x0 + c * PITCH, y, day: d - 1, r: share, d2: rand(), rgb: partner ? NEON : INK, soft: ph.classList.contains("is-soft"), partner, was: false });
             }
           }
         }
@@ -204,18 +208,30 @@ const clean = (svg: string, label: string) =>
     const draw = () => {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
-      // the days down the middle: a short tick each day, a longer one each week
-      ctx.fillStyle = "rgba(238,241,234,0.22)";
+      // the days down the middle: a short tick each day, a longer one each week; through the sprint every day
+      // gets a clear break right across, once the line has reached it
       for (let d = 0; d <= DAYS; d++) {
+        const y = Math.round(yOf(d));
+        ctx.fillStyle = "rgba(238,241,234,0.22)";
         const w = d % 5 === 0 ? axis.w * 0.5 : axis.w * 0.18;
-        ctx.fillRect(axis.x + (axis.w - w) / 2, Math.round(yOf(d)), w, 1);
+        ctx.fillRect(axis.x + (axis.w - w) / 2, y, w, 1);
+        if (d > 0 && d < SPRINT && d <= cur) {
+          ctx.fillStyle = "rgba(238,241,234,0.1)";
+          ctx.fillRect(0, y, W, 1);
+        }
       }
       const sources = cells.filter((c) => c.partner && c.was);
+      /* only what has happened shows (Hunter, Nov 17: "You also shouldn't see the future"), and the work moves
+         across: Primary's sprint is dense at the start and thins as it hands over, Kinetic's builds up from a few
+         squares in discovery to solid by the homepage */
       for (const c of cells) {
-        const lit = Math.min(1, Math.max(0, (cur - (c.day + c.r)) * 3));
-        const a = (c.soft ? 0.38 : 1) * lit + 0.09 * (1 - lit);
-        ctx.fillStyle = `rgba(${c.rgb[0]},${c.rgb[1]},${c.rgb[2]},${a.toFixed(3)})`;
-        ctx.fillRect(c.x, c.y, SIZE, SIZE);
+        const dens = c.partner ? 1 - 0.75 * Math.min(1, c.day / Math.max(1, SPRINT - 1)) : Math.min(1, 0.12 + c.day / 12);
+        const lit = c.d2 < dens ? Math.min(1, Math.max(0, (cur - (c.day + c.r)) * 3)) : 0;
+        const a = (c.soft ? 0.5 : 1) * lit;
+        if (a > 0.01) {
+          ctx.fillStyle = `rgba(${c.rgb[0]},${c.rgb[1]},${c.rgb[2]},${a.toFixed(3)})`;
+          ctx.fillRect(c.x, c.y, SIZE, SIZE);
+        }
         // one phase populating the other: as a Kinetic square comes on, now and then a neon square flies to
         // it from Primary's block (Hunter, Nov 17: "little dots coming from the left over to the right")
         const on = lit > 0;
@@ -530,6 +546,9 @@ const clean = (svg: string, label: string) =>
       @media (width < 48rem) {
         font-size: 0.5625rem;
       }
+    }
+    .tl_day {
+      color: color-mix(in srgb, var(--text) 32%, transparent);
     }
     .tl_launch {
       color: #c8ff54;

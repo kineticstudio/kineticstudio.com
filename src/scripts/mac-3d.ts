@@ -7,14 +7,10 @@
    render underneath, which stays in place until the 3D is drawing. */
 import type * as T from "three";
 
-type Opts = { model: string; video: HTMLVideoElement; yaw?: number; pitch?: number };
+type Opts = { model: string; video: HTMLVideoElement; yaw?: number; pitch?: number; screen?: RegExp; turn?: number };
 
-export async function mountMac3D(host: HTMLElement, { model, video, yaw = 0.21, pitch = 0.035 }: Opts) {
-  const [THREE, { GLTFLoader }, { RoomEnvironment }] = await Promise.all([
-    import("three"),
-    import("three/addons/loaders/GLTFLoader.js"),
-    import("three/addons/environments/RoomEnvironment.js"),
-  ]);
+export async function mountMac3D(host: HTMLElement, { model, video, yaw = -0.5, pitch = 0.42, screen = /display|sfCQkHOWyrsLmor/, turn = 0 }: Opts) {
+  const [THREE, { GLTFLoader }] = await Promise.all([import("three"), import("three/addons/loaders/GLTFLoader.js")]);
   const canvas = document.createElement("canvas");
   canvas.className = "mac3d";
   canvas.setAttribute("aria-hidden", "true");
@@ -32,15 +28,29 @@ export async function mountMac3D(host: HTMLElement, { model, video, yaw = 0.21, 
   renderer.toneMappingExposure = 1.15;
 
   const scene = new THREE.Scene();
+  // a product-shot room (Hunter, Nov 17, the PROLED XDR mockup): light from above fading to dark below, a big
+  // softbox on the right, nothing on the left, so the aluminium reads bright on top and falls off to the left
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  // a soft key from the front left, a cool rim from behind right to draw the lid's edge, as a product shot
-  const key = new THREE.DirectionalLight(0xffffff, 1.6);
-  key.position.set(-3, 3, 4);
+  const room = new THREE.Scene();
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(10, 48, 24),
+    new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      uniforms: {},
+      vertexShader: "varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: "varying vec3 vP; void main(){ float y = vP.y * 0.5 + 0.5; float side = smoothstep(-0.6, 0.9, vP.x); vec3 c = mix(vec3(0.05), vec3(0.95), pow(y, 1.6)) * mix(0.35, 1.0, side); gl_FragColor = vec4(c, 1.0); }",
+    }),
+  );
+  room.add(dome);
+  const softbox = new THREE.Mesh(new THREE.PlaneGeometry(6, 4), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  softbox.material.color.multiplyScalar(3.2);
+  softbox.position.set(7, 4, 2);
+  softbox.lookAt(0, 0, 0);
+  room.add(softbox);
+  scene.environment = pmrem.fromScene(room, 0.03).texture;
+  const key = new THREE.DirectionalLight(0xffffff, 1.1);
+  key.position.set(4, 5, 2);
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0xdfe8ff, 1.2);
-  rim.position.set(3, 2, -4);
-  scene.add(rim);
 
   const gltf = await new GLTFLoader().loadAsync(model);
   const mac = gltf.scene;
@@ -51,6 +61,24 @@ export async function mountMac3D(host: HTMLElement, { model, video, yaw = 0.21, 
   mac.traverse((o) => {
     const m = o as T.Mesh;
     if (!m.isMesh) return;
+    const matName = (m.material as T.Material)?.name ?? "";
+    if (screen.test(m.name) || screen.test(matName)) {
+      // the screen plays the site, its picture fitted to the screen mesh's own UVs (an atlas may use only part)
+      const uv = m.geometry.getAttribute("uv");
+      if (uv) {
+        let u0 = 1, v0 = 1, u1 = 0, v1 = 0;
+        for (let i = 0; i < uv.count; i++) {
+          u0 = Math.min(u0, uv.getX(i)); u1 = Math.max(u1, uv.getX(i));
+          v0 = Math.min(v0, uv.getY(i)); v1 = Math.max(v1, uv.getY(i));
+        }
+        const t = tex.clone();
+        // this model's screen runs its v the other way up, so the picture is turned upright here
+        t.repeat.set(1 / (u1 - u0 || 1), -1 / (v1 - v0 || 1));
+        t.offset.set(-u0 / (u1 - u0 || 1), v1 / (v1 - v0 || 1));
+        m.material = new THREE.MeshBasicMaterial({ map: t, toneMapped: false });
+      } else m.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
+      return;
+    }
     if (/display/.test(m.name)) m.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
     // the glass: almost clear, just enough to catch the room's reflections across the screen
     else if (/glass/.test(m.name))
@@ -83,9 +111,12 @@ export async function mountMac3D(host: HTMLElement, { model, video, yaw = 0.21, 
   const box = new THREE.Box3().setFromObject(mac);
   const size = box.getSize(new THREE.Vector3()), mid = box.getCenter(new THREE.Vector3());
   mac.position.sub(mid);
-  const turn = new THREE.Group();
-  turn.add(mac);
-  scene.add(turn);
+  const pivot = new THREE.Group();
+  pivot.rotation.y = turn; // the model's own facing, so its front faces the camera at yaw 0
+  pivot.add(mac);
+  const turnG = new THREE.Group();
+  turnG.add(pivot);
+  scene.add(turnG);
 
   // a soft shadow on the ground under it
   const sh = document.createElement("canvas");
@@ -99,18 +130,22 @@ export async function mountMac3D(host: HTMLElement, { model, video, yaw = 0.21, 
   const shadow = new THREE.Mesh(new THREE.PlaneGeometry(size.x * 1.25, size.z * 1.6), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sh), transparent: true, depthWrite: false }));
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.y = -size.y / 2 + 0.0005;
-  turn.add(shadow);
+  turnG.add(shadow);
 
-  const camera = new THREE.PerspectiveCamera(18, 1, 0.01, 50);
-  const radius = size.length();
+  // an orthographic camera from above and to the side (Hunter, Nov 17: "i like the isometric look"), no
+  // perspective, so it reads like the product mockups
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 100);
+  const radius = size.length() / 2;
   const place = () => {
     const w = canvas.clientWidth || host.clientWidth, h = canvas.clientHeight || host.clientHeight;
     renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    // far enough that the laptop fills about the frame the render did
-    const dist = (radius * 0.5) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / Math.min(1, camera.aspect) * 0.86;
-    camera.position.set(0, Math.sin(pitch) * dist, Math.cos(pitch) * dist);
-    camera.lookAt(0, -size.y * 0.05, 0);
+    const aspect = w / h, half = radius * 0.98;
+    camera.left = -half * aspect;
+    camera.right = half * aspect;
+    camera.top = half;
+    camera.bottom = -half;
+    camera.position.set(0, Math.sin(pitch) * radius * 6, Math.cos(pitch) * radius * 6);
+    camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
   };
   new ResizeObserver(place).observe(canvas);
@@ -134,7 +169,7 @@ export async function mountMac3D(host: HTMLElement, { model, video, yaw = 0.21, 
     const wantY = yaw + (0.5 - through) * 0.5 + px * 0.35, wantX = py * 0.04;
     ry += (wantY - ry) * 0.08;
     rx += (wantX - rx) * 0.08;
-    turn.rotation.set(rx, ry, 0);
+    turnG.rotation.set(rx, ry, 0);
     renderer.render(scene, camera);
     raf = requestAnimationFrame(frame);
   };
