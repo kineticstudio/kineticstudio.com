@@ -15,7 +15,9 @@ const { render = true, page, logo } = Astro.props;
    there is a quote from Nick [Pattison], the founder of Primary. Let's make a big quote for that"). The same
    rule as every quote: only approved words render; preview builds (PUBLIC_DRAFT_QUOTES=1) and the Studio copy
    show it marked as a draft. */
-const drafts = import.meta.env.PUBLIC_DRAFT_QUOTES === "1" || process.env.KS_STUDIO_BUILD === "1";
+// PUBLIC_DRAFT_QUOTES=featured (the staging copy sent to the partner for approval, Nov 18) shows this quote in
+// draft but none of the other clients' unapproved quotes
+const drafts = ["1", "featured"].includes(import.meta.env.PUBLIC_DRAFT_QUOTES) || process.env.KS_STUDIO_BUILD === "1";
 type Q = { quote: string; name: string; role?: string; company: string; approved: boolean; featured?: boolean; avatar?: string; pages: string[] };
 const q = (DATA.quotes as Q[]).find((x) => x.featured && x.pages.includes(page) && (x.approved || drafts));
 const words = q ? `\u201C${q.quote}\u201D`.split(/\s+/) : [];
