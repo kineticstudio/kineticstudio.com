@@ -253,10 +253,11 @@ const rows = pairs
       const q = MAC.q;
       // the barrel's axis runs through the screen: the frame's middle, or the laptop's glass
       const sx = D.left - B.left + (glass ? 0.5 : (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4) * D.width;
-      const sy = D.top - B.top + (glass ? 0.24 : (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4) * D.height;
+      const sy = D.top - B.top + (glass ? 0.3 : (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4) * D.height;
       const reach = (b.reach * Math.PI) / 180;
       const F = sx / Math.tan(reach); // the page's left edge is `reach` round the barrel
-      const h = b.page * D.height, w = (h * 16) / 9;
+      // a touch smaller on narrower screens, where the caption wraps taller, so the pages stay clear of it
+      const h = b.page * D.height * (innerWidth < 1240 ? 0.85 : 1), w = (h * 16) / 9;
       const col = (w + b.gap * h) / F;
       // every page once round the loop, never two copies on screen (Hunter, Nov 17: "there are duplicates"); the
       // loop is at least the visible arc plus a slot, so a line with few pages runs with gaps between them
@@ -474,7 +475,7 @@ const rows = pairs
       flex-wrap: wrap;
       justify-content: flex-end;
       /* taller rows, so one client's glow doesn't run into the next (Hunter, Nov 18) */
-      padding-top: clamp(3rem, 9vw, 9rem);
+      padding-top: clamp(3.5rem, 11vw, 11rem);
     }
     .brand-web_book {
       position: absolute;
@@ -509,7 +510,7 @@ const rows = pairs
     /* the glass frame: a frosted border round the site, the pages blurred as they pass behind it */
     .brand-web_device.is-glass {
       aspect-ratio: auto; /* the glass inside sets the shape */
-      margin-bottom: -9%; /* past the row's bottom, cut at the line */
+      margin-bottom: -3%; /* just past the row's bottom, cut at the line; taller rows (Hunter, Nov 18) */
       @media (width < 48rem) {
         width: 100% !important;
         margin-bottom: 0;

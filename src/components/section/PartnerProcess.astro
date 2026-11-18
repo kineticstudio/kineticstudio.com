@@ -170,8 +170,8 @@ const clean = (svg: string, label: string) =>
     const marks = [...tl.querySelectorAll<HTMLElement>(".tl_week")].map((el) => ({ el, y: 0 }));
     const DAYS = Number(tl.dataset.days), LAUNCH = Number(tl.dataset.launch), SPRINT = Number(tl.dataset.sprint);
     const spine = tl.querySelector<HTMLElement>("[data-spine]")!;
-    const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner", stick: el.hasAttribute("data-stick"), sx: 0, ex: 0 }));
-    const steps = [...tl.querySelectorAll<HTMLElement>("[data-step]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, x: 0 }));
+    const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner", stick: el.hasAttribute("data-stick"), sx: 0, ex: 0, sy: 0, ey: 0, ix: 0, iy: 0 }));
+    const steps = [...tl.querySelectorAll<HTMLElement>("[data-step]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, x: 0, y: 0 }));
     // Kinetic's hand-backs carry a little burst of squares into Primary's block, which stay there, so the work is
     // seen going both ways (Hunter, Nov 18)
     type Burst = { at: number; sx: number; sy: number; ex: number; ey: number };
@@ -186,6 +186,17 @@ const clean = (svg: string, label: string) =>
     const yOf = (d: number) => Math.min(d, SPRINT) * tall + Math.max(d - SPRINT, 0) * short;
     const dOf = (y: number) => (y <= SPRINT * tall ? y / tall : SPRINT + (y - SPRINT * tall) / short);
     const hOf = (d: number) => (d < SPRINT ? tall : short);
+    // every square that moves lands on the grid, the grid's own size (Hunter, Nov 18: "dots need to be size of
+    // other dots and fit on the grid"): a lane's columns, and the rows inside each day
+    let colsAt = { partner: 0, kinetic: 0 };
+    const snapX = (x: number, partner: boolean) => {
+      const x0 = partner ? colsAt.partner : colsAt.kinetic;
+      return x0 + Math.round((x - x0) / PITCH) * PITCH;
+    };
+    const snapY = (y: number) => {
+      const d = Math.max(0, Math.min(DAYS - 1, Math.floor(dOf(y)))), top = yOf(d), dh = hOf(d), rows = Math.max(1, Math.round(dh / PITCH)), rh = dh / rows;
+      return top + (rh - SIZE) / 2 + Math.max(0, Math.min(rows - 1, Math.round((y - top - (rh - SIZE) / 2) / rh))) * rh;
+    };
 
     const build = () => {
       for (const m of marks) m.y = m.el.offsetTop;
@@ -203,6 +214,10 @@ const clean = (svg: string, label: string) =>
       const lp = tl.querySelector<HTMLElement>('[data-lane="partner"]')!.getBoundingClientRect(), lk = tl.querySelector<HTMLElement>('[data-lane="kinetic"]')!.getBoundingClientRect();
       edges = { partner: lp.right - B.left - SIZE, kinetic: lk.left - B.left };
       spans = { partner: [lp.left - B.left, lp.right - B.left], kinetic: [lk.left - B.left, lk.right - B.left] };
+      {
+        const cp = Math.floor((lp.width + (PITCH - SIZE)) / PITCH);
+        colsAt = { partner: lp.right - B.left - cp * PITCH + (PITCH - SIZE), kinetic: lk.left - B.left };
+      }
       // each thing passed leaves from somewhere in the sender's block and lands somewhere in the other's
       for (const p of passes) {
         const from = p.partner ? spans.partner : spans.kinetic, to = p.partner ? spans.kinetic : spans.partner;
@@ -210,9 +225,21 @@ const clean = (svg: string, label: string) =>
         p.ex = to[0] + (to[1] - to[0]) * (0.15 + rand() * 0.6);
         // a pill that stays lands where it fits: wholly inside Primary's lane, or from inside Kinetic's outward
         if (p.stick) p.ex = p.partner ? to[0] + (to[1] - to[0]) * 0.12 : Math.max(to[0], Math.min(p.ex, to[1] - p.el.offsetWidth - 4));
+        // the square leads the pill: where it starts and lands are grid cells
+        p.sx = snapX(p.sx, p.partner);
+        p.ex = snapX(p.ex, !p.partner);
+        p.ey = snapY(yOf(p.at) + hOf(p.at) * 0.3);
+        p.sy = snapY(yOf(p.at));
+        const i = p.el.querySelector("i") as HTMLElement | null;
+        p.ix = i?.offsetLeft ?? 0;
+        p.iy = i?.offsetTop ?? 0;
       }
       // Kinetic's own steps sit in its block, just in from the middle
-      for (const st of steps) st.x = spans.kinetic[0] + 6;
+      for (const st of steps) {
+        const i = st.el.querySelector("i") as HTMLElement | null;
+        st.x = colsAt.kinetic + PITCH - (i?.offsetLeft ?? 0);
+        st.y = snapY(yOf(st.at) + PITCH * 1.5) - (i?.offsetTop ?? 0);
+      }
       bursts = [];
       for (const p of passes) {
         if (p.partner) continue;
@@ -220,10 +247,10 @@ const clean = (svg: string, label: string) =>
           const at = p.at - 0.05 + k * 0.06;
           bursts.push({
             at,
-            sx: spans.kinetic[0] + rand() * (spans.kinetic[1] - spans.kinetic[0]) * 0.7,
-            sy: yOf(at) + rand() * hOf(at) * 0.6,
-            ex: spans.partner[0] + (0.2 + rand() * 0.75) * (spans.partner[1] - spans.partner[0]),
-            ey: yOf(at) + (0.3 + rand() * 0.6) * hOf(at),
+            sx: snapX(spans.kinetic[0] + rand() * (spans.kinetic[1] - spans.kinetic[0]) * 0.7, false),
+            sy: snapY(yOf(at) + rand() * hOf(at) * 0.6),
+            ex: snapX(spans.partner[0] + (0.2 + rand() * 0.75) * (spans.partner[1] - spans.partner[0]), true),
+            ey: snapY(yOf(at) + (0.3 + rand() * 0.6) * hOf(at)),
           });
         }
       }
@@ -322,15 +349,15 @@ const clean = (svg: string, label: string) =>
             const y = (1 - e) * (1 - e) * c.sy + 2 * (1 - e) * e * cy + e * e * c.y;
             const col = NEON.map((n, j) => Math.round(n + (INK[j] - n) * Math.max(0, (e - 0.7) / 0.3)));
             ctx.fillStyle = `rgb(${col})`;
-            ctx.fillRect(x - 1.5, y - 1.5, SIZE + 3, SIZE + 3); // a touch bigger in the air
+            ctx.fillRect(x, y, SIZE, SIZE);
             continue;
           }
-          ctx.fillStyle = `rgba(${INK},${c.soft ? 0.55 : 1})`;
+          ctx.fillStyle = `rgb(${INK})`;
           ctx.fillRect(c.x, c.y, SIZE, SIZE);
           continue;
         }
         const lit = Math.min(1, Math.max(0, (cur - at) * 3));
-        const a = (c.soft ? 0.55 : 1) * lit;
+        const a = lit; // Kinetic's early weeks at full strength too (Hunter, Nov 18)
         if (a > 0.01) {
           ctx.fillStyle = `rgba(${c.rgb[0]},${c.rgb[1]},${c.rgb[2]},${a.toFixed(3)})`;
           ctx.fillRect(c.x, c.y, SIZE, SIZE);
@@ -348,11 +375,10 @@ const clean = (svg: string, label: string) =>
           continue;
         }
         const k = Math.min(1, u), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-        const y0 = yOf(p.at), drop = hOf(p.at) * 0.3;
-        const x = p.sx + (p.ex - p.sx) * e, y = y0 + drop * e - Math.sin(Math.PI * e) * 26;
+        const x = p.sx + (p.ex - p.sx) * e, y = p.sy + (p.ey - p.sy) * e - Math.sin(Math.PI * e) * 26;
         p.el.style.opacity = String(Math.min(1, u * 8, u > 1 && !p.stick ? (1.2 - u) / 0.2 : 1));
         p.el.classList.toggle("is-stuck", p.stick && u >= 1);
-        p.el.style.transform = `translate(${x.toFixed(1)}px, ${(y - 6).toFixed(1)}px)`;
+        p.el.style.transform = `translate(${(x - p.ix).toFixed(1)}px, ${(y - p.iy).toFixed(1)}px)`;
       }
       for (const b of bursts) {
         const u = (cur - b.at) / FLY_SQ;
@@ -363,7 +389,7 @@ const clean = (svg: string, label: string) =>
           const x = (1 - e) * (1 - e) * b.sx + 2 * (1 - e) * e * cx + e * e * b.ex;
           const y = (1 - e) * (1 - e) * b.sy + 2 * (1 - e) * e * cy + e * e * b.ey;
           ctx.fillStyle = `rgb(${INK})`;
-          ctx.fillRect(x - 1.5, y - 1.5, SIZE + 3, SIZE + 3);
+          ctx.fillRect(x, y, SIZE, SIZE);
         } else {
           ctx.fillStyle = `rgb(${INK})`;
           ctx.fillRect(b.ex, b.ey, SIZE, SIZE);
@@ -372,7 +398,7 @@ const clean = (svg: string, label: string) =>
       for (const st of steps) {
         const on = Math.min(1, Math.max(0, (cur - st.at) * 4));
         st.el.style.opacity = String(on);
-        st.el.style.transform = `translate(${st.x.toFixed(1)}px, ${(yOf(st.at) + 4 + (1 - on) * 8).toFixed(1)}px)`;
+        st.el.style.transform = `translate(${st.x.toFixed(1)}px, ${(st.y + (1 - on) * 8).toFixed(1)}px)`;
       }
       // the day line, stronger, across everything, and the line down the middle filled to it
       const y = yOf(Math.min(DAYS, cur));
@@ -578,7 +604,7 @@ const clean = (svg: string, label: string) =>
     /* each phase's name, small, on its lane's outer side at its first day */
     .tl_phase {
       position: absolute;
-      top: calc(var(--y) - 0.1rem);
+      top: calc(var(--y) + 0.55rem); /* inside its first day, under the line, never on it (Hunter, Nov 18) */
       display: flex;
       flex-direction: column;
       gap: 0;
@@ -627,8 +653,8 @@ const clean = (svg: string, label: string) =>
       & i {
         display: block;
         flex: none;
-        width: 7px;
-        height: 7px;
+        width: 4px; /* the grid's own square (PITCH 6, SIZE 4) */
+        height: 4px;
         background: var(--light-100);
       }
       /* the name in a black block, square corners, so it reads over the squares (Hunter, Nov 17) */
@@ -644,7 +670,7 @@ const clean = (svg: string, label: string) =>
       background: var(--brand-500);
     }
     .tl_phase.is-soft .tl_phase-title {
-      color: color-mix(in srgb, var(--text) 70%, transparent);
+      color: inherit;
     }
     /* the day line: the scroll's day, a stronger rule across the chart, its day in the middle */
     .tl_now {
