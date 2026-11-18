@@ -62,6 +62,7 @@ const schema = {
     exe: L.gradient.exe,
     owner: L.gradient.owner,
     ramble: L.gradient.ramble,
+    "august-health": L.gradient["august-health"],
   },
   copyProps: { type: "action", label: "Copy props" },
   reset: { type: "action", label: "Reset" },

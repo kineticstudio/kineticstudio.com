@@ -62,5 +62,6 @@ export const BRAND_WEB_LOOK = {
     exe: "#3e6c76", // exe's teal (its site)
     owner: "#25983f", // Owner's green (its brand book)
     ramble: "#a8ff66", // Kinetic's lime, not a second yellow-green (Hunter, Nov 18)
+    "august-health": "#4865ff", // August's blue (its logo)
   },
 };
