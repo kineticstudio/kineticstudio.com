@@ -97,10 +97,13 @@ const clean = (svg: string, label: string) =>
               bottom, not this big [neon] thing"; "all of this can happen in 6 weeks from kickoff with Primary") */}
           {launch * 5 === DAYS && (
             <div class="tl_launch" style={`--y:${yAt(DAYS)}`} data-launch-band>
-              {/* "End of week 6" above the node, Launch under it (Hunter, Nov 18) */}
-              <span class="tl_launch-when text-style-label">End of week {launch}</span>
+              {/* the node on the line, its words beside it, off the line: "End of week 6" over "Launch" (Hunter, Nov
+                  18: "this looks messy") */}
               <i class="tl_launch-node" aria-hidden="true" />
-              <span class="tl_launch-word text-style-h5">Launch</span>
+              <span class="tl_launch-text">
+                <span class="tl_launch-when text-style-label">End of week {launch}</span>
+                <span class="tl_launch-word text-style-h5">Launch</span>
+              </span>
             </div>
           )}
           {phases.map((p) => (
@@ -705,51 +708,51 @@ const clean = (svg: string, label: string) =>
       color: color-mix(in srgb, var(--text) 32%, transparent);
     }
     /* launch: a node on the line's last day, faint until the day line reaches it, then neon */
+    /* launch: a node on the line's last day, faint until the day line reaches it, then lime; its words to the left */
     .tl_launch {
       position: absolute;
       z-index: 2;
       top: var(--y);
-      left: 50%;
-      translate: -50% 0;
+      right: 50%;
       display: flex;
-      flex-direction: column;
+      flex-direction: row-reverse; /* the words on the empty left, clear of Kinetic's block */
       align-items: center;
-      gap: 0.35rem;
-      text-align: center;
+      gap: 0.9rem;
+      translate: 0.5rem -50%;
+      text-align: right;
       white-space: nowrap;
     }
     .tl_launch-node {
       display: block;
-      width: 1.1rem;
+      flex: none;
+      width: 1rem;
       aspect-ratio: 1;
-      margin-top: -0.55rem;
-      margin-bottom: 1.4rem; /* room round the node (Hunter, Nov 18: "more vertical padding here") */
       border-radius: 50%;
       border: 1px solid color-mix(in srgb, var(--text) 40%, transparent);
       background: var(--background);
-      transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.6s ease, scale 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+      transition: background-color 0.4s ease, border-color 0.4s ease, scale 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+    }
+    .tl_launch-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.2rem;
+    }
+    .tl_launch-when {
+      color: color-mix(in srgb, var(--text) 55%, transparent);
     }
     .tl_launch-word {
       margin: 0;
+      line-height: 1;
       color: color-mix(in srgb, var(--text) 45%, transparent);
       transition: color 0.4s ease;
-    }
-    .tl_launch-when {
-      position: absolute;
-      bottom: calc(100% + 1.4rem);
-      left: 50%;
-      translate: -50% 0;
-      padding-block: 0.2rem;
-      background: var(--background);
-      color: color-mix(in srgb, var(--text) 60%, transparent);
     }
     .tl_launch.is-on,
     .tl.is-still .tl_launch {
       & .tl_launch-node {
         background: var(--brand-500);
         border-color: var(--brand-500);
-        box-shadow: 0 0 0 0.45rem color-mix(in srgb, var(--brand-500) 18%, transparent);
-        scale: 1.25;
+        scale: 1.2;
       }
       & .tl_launch-word {
         color: var(--text);
