@@ -97,7 +97,7 @@ const rows = pairs
                 {p.line && <p class="brand-web_line text-style-main">{p.line}</p>}
                 <div class="brand-web_links">
                   {/* the CTA to the live site: a black pill the size and type of the nav's Contact (Hunter, Nov 18) */}
-                  <a class="brand-web_visit2" href={w.url} target="_blank" rel="noopener">
+                  <a class="brand-web_visit2" href={w.url} target="_blank" rel="noopener" data-track={`Visit site, ${w.name}`}>
                     Visit site
                     <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="square" /></svg>
                   </a>
@@ -111,7 +111,7 @@ const rows = pairs
               </div>
               {/* the site straight on in a frosted glass frame, no laptop (Hunter, Nov 17: "Instead of mockups, let's
                   try a straight-on view, but with a border of glass morphism"); the pages pass behind the glass */}
-              <a class="brand-web_device is-glass" href={w.url} target="_blank" rel="noopener" aria-label={`${w.name}, the live site`} data-mac data-glass>
+              <a class="brand-web_device is-glass" href={w.url} target="_blank" rel="noopener" aria-label={`${w.name}, the live site`} data-track={`Laptop, ${w.name}`} data-mac data-glass>
                 <span class="brand-web_glass">
                   <video class="brand-web_video" data-src={`/media/scroll-tall/${w.cover}.mp4`} poster={`/media/scroll-tall/${w.cover}.jpg`} muted loop playsinline preload="none" aria-hidden="true" />
                 </span>
