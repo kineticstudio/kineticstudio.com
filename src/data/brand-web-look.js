@@ -10,7 +10,7 @@ export const BRAND_WEB_LOOK = {
   // left a page is, the nearer and more stretched; evenly spaced round it, so they never overlap
   barrel: {
     reach: 38, // degrees round the barrel at the page's left edge (more: stronger skew on the left)
-    page: 0.14, // a page's height at the screen, times the frame's height (smaller Nov 18: clear of the logo and the site's top)
+    page: 0.13, // a page's height at the screen, times the frame's height (smaller Nov 18: clear of the logo and the site's top)
     gap: 0.06, // between pages along a line, times a page's height
     rowGap: 0.1, // between the two lines, times a page's height
     lapTop: 34, // seconds for a page to cross, top line (slower)
