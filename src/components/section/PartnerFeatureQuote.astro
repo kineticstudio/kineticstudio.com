@@ -58,7 +58,11 @@ const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid
         </blockquote>
         <figcaption class="fquote_by text-style-main">
           {q.avatar && <img class="fquote_avatar" src={q.avatar} alt="" width="96" height="96" loading="lazy" decoding="async" />}
-          <span>{q.name}{q.role ? `, ${q.role} of ${q.company}` : `, ${q.company}`}</span>
+          {/* his name, then his title under it (Hunter, Nov 18: "two different lines") */}
+          <span class="fquote_who">
+            <span>{q.name}</span>
+            <span class="fquote_role">{q.role ? `${q.role} of ${q.company}` : q.company}</span>
+          </span>
         </figcaption>
       </figure>
     </section>
@@ -113,6 +117,14 @@ const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid
       margin: 0;
       color: var(--text);
       font-size: clamp(1.1rem, 1.4vw, 1.35rem);
+    }
+    .fquote_who {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+    .fquote_role {
+      color: color-mix(in srgb, var(--text) 60%, transparent);
     }
     .fquote_avatar {
       display: block;

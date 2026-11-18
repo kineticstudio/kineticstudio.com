@@ -96,12 +96,10 @@ const rows = pairs
                 )}
                 {p.line && <p class="brand-web_line text-style-main">{p.line}</p>}
                 <div class="brand-web_links">
-                  {/* the CTA to the live site: a circle with an arrow and "Visit site", by the subcopy (Hunter, Nov 17) */}
-                  <a class="brand-web_visit2 text-style-main" href={w.url} target="_blank" rel="noopener">
-                    <span class="brand-web_go" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" /></svg>
-                    </span>
+                  {/* the CTA to the live site: a black pill the size and type of the nav's Contact (Hunter, Nov 18) */}
+                  <a class="brand-web_visit2" href={w.url} target="_blank" rel="noopener">
                     Visit site
+                    <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="square" /></svg>
                   </a>
                   {p.film && (
                     <button class="brand-web_film text-style-label" type="button" data-modal-open={`film-${w.slug}`}>
@@ -261,15 +259,19 @@ const rows = pairs
       const col = (w + b.gap * h) / F;
       // every page once round the loop, never two copies on screen (Hunter, Nov 17: "there are duplicates"); the
       // loop is at least the visible arc plus a slot, so a line with few pages runs with gaps between them
-      const n = Math.max(...lines.map((L) => L.imgs.length));
+      // a line is always full from the window's left edge to the site: when a book has too few pages for the arc
+      // (the pages got smaller, Nov 18: "these should already be loaded"), it repeats, its copies a whole book apart
+      const book1 = Math.max(...lines.map((L) => L.imgs.length));
+      const reps = Math.max(1, Math.ceil((reach + col * 2.2) / (book1 * col)));
+      const n = book1 * reps;
       const span = n * col;
       geo = { F, col, reach, span };
       book.style.perspective = `${F}px`;
       book.style.perspectiveOrigin = `${sx}px ${sy}px`;
       for (const L of lines) {
-        if (L.els.length !== L.imgs.length) {
+        if (L.els.length !== L.imgs.length * reps) {
           L.els.forEach((e) => e.remove());
-          L.els = L.imgs.map((img) => book.appendChild(img.cloneNode() as HTMLImageElement));
+          L.els = Array.from({ length: reps }, () => L.imgs).flat().map((img) => book.appendChild(img.cloneNode() as HTMLImageElement));
         }
         const y = lines.length > 1 ? sy + (L.top ? -1 : 1) * (h / 2 + (b.rowGap * h) / 2) - h / 2 : sy - h / 2;
         for (const e of L.els) {
@@ -304,9 +306,11 @@ const rows = pairs
       }
     };
 
-    /* scrolling in (Hunter, Nov 18): the pages rush on with the scroll, a few seconds' travel spent as the row
-       comes up the screen, and the site slides in from the right to its place; both settle once the row is up */
-    const RUSH = 7; // seconds of the pages' drift spent by the scroll in
+    /* the pages drift on their own and go faster the faster you scroll, either way (Hunter, Nov 18: "speed of
+       brand pdfs going into website should speed up tied to scroll"); the site slides in from the right as the
+       row comes up the screen */
+    const BOOST = 0.014; // seconds of drift per px scrolled
+    let lastY = scrollY;
     const SLIDE = 0.16; // the site starts this much of its width to the right
     const wide = matchMedia("(width >= 48rem)");
     const enter = () => {
@@ -320,14 +324,16 @@ const rows = pairs
       if (!on) return;
       if (t0) t += Math.min(0.05, (now - t0) / 1000);
       t0 = now;
+      t += Math.min(1.2, Math.abs(scrollY - lastY) * BOOST);
+      lastY = scrollY;
       const e = enter();
-      draw(t + e * RUSH);
+      draw(t);
       dev.style.translate = wide.matches ? `${((1 - e) * SLIDE * 100).toFixed(2)}% 0` : "";
       raf = requestAnimationFrame(frame);
     };
     const redo = () => {
       build();
-      draw(t + enter() * RUSH);
+      draw(t);
     };
     new ResizeObserver(redo).observe(pair);
     addEventListener("ks:brand-web-look", redo);
@@ -338,6 +344,7 @@ const rows = pairs
         on = e.isIntersecting && !reduced;
         if (on && !raf) {
           t0 = 0;
+          lastY = scrollY;
           raf = requestAnimationFrame(frame);
         }
         if (!v || reduced) return;
@@ -475,7 +482,7 @@ const rows = pairs
       flex-wrap: wrap;
       justify-content: flex-end;
       /* taller rows, so one client's glow doesn't run into the next (Hunter, Nov 18) */
-      padding-top: clamp(3.5rem, 11vw, 11rem);
+      padding-top: clamp(4.5rem, 16vw, 16rem); /* taller rows again (Hunter, Nov 18) */
     }
     .brand-web_book {
       position: absolute;
@@ -510,7 +517,7 @@ const rows = pairs
     /* the glass frame: a frosted border round the site, the pages blurred as they pass behind it */
     .brand-web_device.is-glass {
       aspect-ratio: auto; /* the glass inside sets the shape */
-      margin-bottom: -3%; /* just past the row's bottom, cut at the line; taller rows (Hunter, Nov 18) */
+      margin-bottom: 0; /* the whole frame, its foot on the row's line; taller rows (Hunter, Nov 18) */
       @media (width < 48rem) {
         width: 100% !important;
         margin-bottom: 0;
@@ -528,9 +535,30 @@ const rows = pairs
     .brand-web_visit2 {
       display: inline-flex;
       align-items: center;
-      gap: 0.7rem;
-      color: inherit;
+      gap: 0.45rem;
+      height: var(--pill-height);
+      padding: 0.1rem var(--pill-pad) 0;
+      border-radius: var(--radius-round);
+      background: #111;
+      color: var(--light-100);
+      font-family: var(--display-family);
+      font-size: var(--pill-type);
+      line-height: 1;
+      text-transform: uppercase;
       text-decoration: none;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      & svg {
+        margin-top: -0.1rem;
+      }
+      &:hover,
+      &:focus-visible {
+        background: var(--brand-500);
+        color: var(--brand-text);
+      }
+    }
+    .brand-web_caption.is-on-dark .brand-web_visit2 {
+      background: var(--light-100);
+      color: var(--dark-900);
     }
     .brand-web_go {
       display: grid;
