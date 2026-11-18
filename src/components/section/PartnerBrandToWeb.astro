@@ -93,6 +93,13 @@ const rows = pairs
                 )}
                 {p.line && <p class="brand-web_line text-style-main">{p.line}</p>}
                 <div class="brand-web_links">
+                  {/* the CTA to the live site: a circle with an arrow and "Visit site", by the subcopy (Hunter, Nov 17) */}
+                  <a class="brand-web_visit2 text-style-main" href={w.url} target="_blank" rel="noopener">
+                    <span class="brand-web_go" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" /></svg>
+                    </span>
+                    Visit site
+                  </a>
                   {p.film && (
                     <button class="brand-web_film text-style-label" type="button" data-modal-open={`film-${w.slug}`}>
                       <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" /></svg>
@@ -106,10 +113,6 @@ const rows = pairs
               <a class="brand-web_device is-glass" href={w.url} target="_blank" rel="noopener" aria-label={`${w.name}, the live site`} data-mac data-glass>
                 <span class="brand-web_glass">
                   <video class="brand-web_video" data-src={`/media/scroll/${w.cover}.mp4`} poster={`/media/scroll/${w.cover}.jpg`} muted loop playsinline preload="none" aria-hidden="true" />
-                </span>
-                {/* the CTA to the live site: a circle with an arrow, at the frame's top right (Hunter, Nov 17) */}
-                <span class="brand-web_go" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="22" height="22"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" /></svg>
                 </span>
               </a>
             </div>
@@ -251,14 +254,17 @@ const rows = pairs
       const F = sx / Math.tan(reach); // the page's left edge is `reach` round the barrel
       const h = b.page * D.height, w = (h * 16) / 9;
       const col = (w + b.gap * h) / F;
-      const n = Math.ceil((reach + col) / col) + 1;
-      geo = { F, col, reach, span: n * col };
+      // every page once round the loop, never two copies on screen (Hunter, Nov 17: "there are duplicates"); the
+      // loop is at least the visible arc plus a slot, so a line with few pages runs with gaps between them
+      const n = Math.max(...lines.map((L) => L.imgs.length));
+      const span = Math.max(n * col, reach + col * 2);
+      geo = { F, col, reach, span };
       book.style.perspective = `${F}px`;
       book.style.perspectiveOrigin = `${sx}px ${sy}px`;
       for (const L of lines) {
-        if (L.els.length !== n) {
+        if (L.els.length !== L.imgs.length) {
           L.els.forEach((e) => e.remove());
-          L.els = Array.from({ length: n }, (_, i) => book.appendChild(L.imgs[i % L.imgs.length].cloneNode() as HTMLImageElement));
+          L.els = L.imgs.map((img) => book.appendChild(img.cloneNode() as HTMLImageElement));
         }
         const y = sy + (L.top ? -1 : 1) * (h / 2 + (b.rowGap * h) / 2) - h / 2;
         for (const e of L.els) {
@@ -276,7 +282,7 @@ const rows = pairs
         const lap = L.top ? LOOK.barrel.lapTop : LOOK.barrel.lapBottom;
         const v = reach / lap; // radians a second, so a page crosses in `lap` seconds
         L.els.forEach((e, i) => {
-          const pos = (((i * col + t * v) % span) + span) % span;
+          const pos = (((i * (span / L.els.length) + t * v) % span) + span) % span;
           const a = pos - span + col * 0.6; // from off the left edge to just past the screen's middle
           // gone once it is well behind the screen, so none peeks out past the laptop's right side
           if (a < -1.45 || a < -reach - col * 1.2 || a > -col * 0.4) {
@@ -320,6 +326,7 @@ const rows = pairs
         if (!v || reduced) return;
         if (e.isIntersecting) {
           if (!v.src) v.src = v.dataset.src!;
+          v.playbackRate = 0.55; // the recordings scroll fast; slowed so the site reads (Hunter, Nov 17)
           v.play().catch(() => {});
         } else v.pause();
       },
@@ -479,7 +486,7 @@ const rows = pairs
     }
     /* the glass frame: a frosted border round the site, the pages blurred as they pass behind it */
     .brand-web_device.is-glass {
-      aspect-ratio: 16 / 10;
+      aspect-ratio: 16 / 11.5; /* a bit taller than the recordings (Hunter, Nov 17), cropped at the sides */
       margin-bottom: -9%; /* past the row's bottom, cut at the line */
       @media (width < 48rem) {
         width: 88% !important;
@@ -495,25 +502,32 @@ const rows = pairs
       -webkit-backdrop-filter: blur(18px) saturate(1.4);
       backdrop-filter: blur(18px) saturate(1.4);
     }
+    .brand-web_visit2 {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      color: inherit;
+      text-decoration: none;
+    }
     .brand-web_go {
-      position: absolute;
-      top: clamp(1.25rem, 2.2vw, 2rem);
-      right: clamp(1.25rem, 2.2vw, 2rem);
-      z-index: 2;
       display: grid;
       place-items: center;
-      width: clamp(2.5rem, 4.4vw, 4rem);
+      width: 2.75rem;
       aspect-ratio: 1;
       border-radius: 50%;
+      background: var(--text);
+      color: var(--background);
+      transition: transform 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+    }
+    .brand-web_caption.is-on-dark .brand-web_go {
       background: var(--light-100);
       color: var(--dark-900);
-      box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.18);
-      transition: transform 0.25s ease, background-color 0.25s ease;
     }
-    .brand-web_device:hover .brand-web_go,
-    .brand-web_device:focus-visible .brand-web_go {
+    .brand-web_visit2:hover .brand-web_go,
+    .brand-web_visit2:focus-visible .brand-web_go {
       transform: scale(1.08);
       background: #c8ff54;
+      color: #111;
     }
     .brand-web_glass {
       display: block;

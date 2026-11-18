@@ -152,7 +152,7 @@ const clean = (svg: string, label: string) =>
     const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner", sx: 0, ex: 0 }));
     let edges = { partner: 0, kinetic: 0 };
     let spans = { partner: [0, 0], kinetic: [0, 0] };
-    type Cell = { x: number; y: number; day: number; r: number; d2: number; rgb: number[]; soft: boolean; partner: boolean; sx: number; sy: number };
+    type Cell = { x: number; y: number; day: number; r: number; d2: number; rgb: number[]; soft: boolean; partner: boolean; sx: number; sy: number; fly: boolean };
     let cells: Cell[] = [], W = 0, H = 0, dpr = 1, tall = 130, short = 26, axis = { x: 0, w: 0 };
     let seed = 3;
     const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -198,7 +198,7 @@ const clean = (svg: string, label: string) =>
             for (let c = 0; c < cols; c++) {
               // in the tall days a square lights at its own row's share of the day, so the block fills downward
               const share = dh > 40 ? (r + rand()) / rows : rand();
-              cells.push({ x: x0 + c * PITCH, y, day: d - 1, r: share, d2: rand(), rgb: partner ? NEON : INK, soft: ph.classList.contains("is-soft"), partner, sx: 0, sy: 0 });
+              cells.push({ x: x0 + c * PITCH, y, day: d - 1, r: share, d2: rand(), rgb: partner ? NEON : INK, soft: ph.classList.contains("is-soft"), partner, sx: 0, sy: 0, fly: false });
             }
           }
         }
@@ -215,6 +215,9 @@ const clean = (svg: string, label: string) =>
         const pool = (byDay.get(c.day) ?? []).filter((p) => p.day + p.r < launch).concat(c.day > 0 ? byDay.get(c.day - 1) ?? [] : []);
         const src = pool[Math.floor(rand() * pool.length)];
         if (src) (c.sx = src.x), (c.sy = src.y);
+        // only a few squares make the trip, so each one can be followed (Hunter, Nov 17: "hard to see what's moving
+        // ... feels very messy"); the rest come on in place
+        c.fly = rand() < 0.045;
       }
     };
 
@@ -240,12 +243,12 @@ const clean = (svg: string, label: string) =>
          in Primary's neon and settling in Kinetic's ink, more of them each day, so Kinetic's block builds from a
          scatter to solid. It is all scrubbed by the scroll, so it runs backwards too. After the sprint Kinetic's
          own squares come on in place. */
-      const FLY_SQ = 0.5; // days a square is in the air
+      const FLY_SQ = 1.1; // days a square is in the air: slow enough to follow
       for (const c of cells) {
         const dens = c.partner ? 1 : Math.min(1, 0.12 + c.day / 12);
         if (c.d2 >= dens) continue;
         const at = c.day + c.r;
-        if (!c.partner && c.day < SPRINT && c.sy) {
+        if (!c.partner && c.day < SPRINT && c.sy && c.fly) {
           // thrown as the day line reaches its row, so the whole flight happens above the line, in the past
           const u = (cur - at) / FLY_SQ;
           if (u <= 0) continue;
@@ -254,9 +257,9 @@ const clean = (svg: string, label: string) =>
             const cx = (c.sx + c.x) / 2, cy = Math.min(c.sy, c.y) - 24;
             const x = (1 - e) * (1 - e) * c.sx + 2 * (1 - e) * e * cx + e * e * c.x;
             const y = (1 - e) * (1 - e) * c.sy + 2 * (1 - e) * e * cy + e * e * c.y;
-            const col = NEON.map((n, j) => Math.round(n + (INK[j] - n) * Math.max(0, (e - 0.6) / 0.4)));
+            const col = NEON.map((n, j) => Math.round(n + (INK[j] - n) * Math.max(0, (e - 0.7) / 0.3)));
             ctx.fillStyle = `rgb(${col})`;
-            ctx.fillRect(x, y, SIZE, SIZE);
+            ctx.fillRect(x - 1.5, y - 1.5, SIZE + 3, SIZE + 3); // a touch bigger in the air
             continue;
           }
           ctx.fillStyle = `rgba(${INK},${c.soft ? 0.55 : 1})`;

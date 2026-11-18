@@ -114,12 +114,13 @@ const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
         color: #c8ff54;
       }
     }
+    /* left to right (Hunter, Nov 17) */
     @keyframes quotes-run {
       from {
-        transform: translateX(0);
+        transform: translateX(-50%);
       }
       to {
-        transform: translateX(-50%);
+        transform: translateX(0);
       }
     }
     @media (prefers-reduced-motion: reduce) {
