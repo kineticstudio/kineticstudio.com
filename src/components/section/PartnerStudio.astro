@@ -109,7 +109,9 @@ const POINTS = [
 
 <style is:global>
   @layer components {
+    /* a slightly lighter grey than the dark around it (Hunter, Nov 17) */
     .studio-p {
+      --background: var(--dark-800);
       background: var(--background);
       color: var(--text);
       padding: var(--section-space-large) var(--site-margin);
@@ -189,7 +191,6 @@ const POINTS = [
       margin-right: calc(-1 * var(--bleed));
       padding: clamp(3rem, 8%, 6rem) 0 clamp(3rem, 8%, 6rem) clamp(2rem, 9%, 6rem);
       overflow: hidden;
-      background: radial-gradient(ellipse 85% 75% at 100% 50%, color-mix(in srgb, #c8ff54 85%, var(--light-300)) 0%, color-mix(in srgb, #c8ff54 55%, var(--background)) 32%, color-mix(in srgb, #c8ff54 14%, var(--background)) 62%, var(--background) 92%);
       & video {
         display: block;
         flex: none;
@@ -197,8 +198,9 @@ const POINTS = [
         aspect-ratio: 16 / 9;
         object-fit: cover;
         object-position: left center;
-        border-radius: calc(var(--radius-media) * 0.75) 0 0 calc(var(--radius-media) * 0.75);
-        box-shadow: 0 2rem 4rem rgb(0 0 0 / 0.45);
+        /* no glow behind it; a scrim melts its left and right edges into the section (Hunter, Nov 17) */
+        -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%);
+        mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%);
       }
       @media (width < 56rem) {
         margin-left: calc(-1 * var(--site-margin));

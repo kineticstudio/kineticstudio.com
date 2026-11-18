@@ -45,6 +45,7 @@ const B = "/images/primary/brand";
 const PAIRS = [
   {
     slug: "exe",
+    live3d: true,
     line: "Primary's engraved field manual, brought to life as a site you scroll through like a sea chart.",
     slides: [
       { src: `${B}/exe-cover.webp`, alt: "exe brand guidelines, the cover" },
@@ -183,16 +184,16 @@ const POINTS = [
     heading="A special relationship | with Primary"
     offer="$50,000 for a live website in four weeks, including:"
     includes={[
-      "Up to about 15 pages",
-      "Story, sitemap and wireframes",
-      "Web design, animation and interaction",
-      "Custom code, with a CMS your team can edit",
-      "Unlimited revisions",
-      "Creative direction from Hunter, no hand-off",
-      "Access to the Kinetic Studio",
-      "A production-ready component library",
-      "SEO, AEO and a performance pass",
-      "A start during your brand sprint",
+      { icon: "doc", text: "Up to about 15 pages" },
+      { icon: "sitemap", text: "Story, sitemap and wireframes" },
+      { icon: "spark", text: "Web design, animation and interaction" },
+      { icon: "code", text: "Custom code, with a CMS your team can edit" },
+      { icon: "pen", text: "Unlimited revisions" },
+      { icon: "chat", text: "Creative direction from Hunter, no hand-off" },
+      { icon: "browser", text: "Access to the Kinetic Studio" },
+      { icon: "grid", text: "A production-ready component library" },
+      { icon: "speed", text: "SEO, AEO and a performance pass" },
+      { icon: "calendar", text: "A start during your brand sprint" },
     ]}
     cta={{ label: "Start with Primary", href: "https://www.primary.studio/contact" }}
   />

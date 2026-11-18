@@ -16,7 +16,7 @@ const { render = true, page, logo } = Astro.props;
    rule as every quote: only approved words render; preview builds (PUBLIC_DRAFT_QUOTES=1) and the Studio copy
    show it marked as a draft. */
 const drafts = import.meta.env.PUBLIC_DRAFT_QUOTES === "1" || process.env.KS_STUDIO_BUILD === "1";
-type Q = { quote: string; name: string; role?: string; company: string; approved: boolean; featured?: boolean; pages: string[] };
+type Q = { quote: string; name: string; role?: string; company: string; approved: boolean; featured?: boolean; avatar?: string; pages: string[] };
 const q = (DATA.quotes as Q[]).find((x) => x.featured && x.pages.includes(page) && (x.approved || drafts));
 const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid="[^"]*"/g, "").replace(/<svg /, '<svg aria-hidden="true" ');
 ---
@@ -27,6 +27,7 @@ const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid
       <figure class="fquote_inner" data-reveal>
         <blockquote class="fquote_text">{q.quote}</blockquote>
         <figcaption class="fquote_by text-style-label">
+          {q.avatar && <img class="fquote_avatar" src={q.avatar} alt="" width="96" height="96" loading="lazy" decoding="async" />}
           {logo && <span class="fquote_logo" set:html={clean(logo)} />}
           <span>{[q.name, q.role, logo ? "" : q.company].filter(Boolean).join(", ")}</span>
           {!q.approved && <span class="fquote_draft">Draft, not approved</span>}
@@ -73,6 +74,13 @@ const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid
       gap: 0.75rem;
       margin: 0;
       color: color-mix(in srgb, var(--text) 65%, transparent);
+    }
+    .fquote_avatar {
+      display: block;
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 50%;
+      object-fit: cover;
     }
     .fquote_logo {
       display: block;

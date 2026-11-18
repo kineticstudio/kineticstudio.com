@@ -128,11 +128,15 @@ const clean = (svg: string, label: string) =>
       color: color-mix(in srgb, var(--text) 70%, transparent);
       text-wrap: balance;
     }
+    /* less room over it, so the first brand comes up sooner (Hunter, Nov 17) */
+    .section.partner-hero.is-compact {
+      padding-top: clamp(6.5rem, 14vh, 9.5rem);
+    }
     .partner-hero.is-compact {
       & .partner-hero_inner {
         align-items: flex-start;
         gap: var(--space-5);
-        padding-top: var(--space-4);
+        padding-top: 0;
         text-align: left;
       }
       & .partner-hero_lockup {

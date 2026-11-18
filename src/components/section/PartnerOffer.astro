@@ -6,17 +6,31 @@ interface Props {
   heading: string;
   /** The offer, one line ("$50,000 for a live website in 4 weeks"). */
   offer: string;
-  /** What it includes, each a short line beside a check. */
-  includes: string[];
+  /** What it includes, each a short line beside its icon (the proposal's line icons). */
+  includes: { icon: string; text: string }[];
   /** A link under the list. */
   cta?: { label: string; href: string };
 }
 
 const { render = true, heading, offer, includes, cta } = Astro.props;
+// the proposal's line icons (kinetic-contracts briefs/migration-sheet.mjs ICONS)
+const ICONS: Record<string, string> = {
+  doc: "M5.5 3h9l4 4v14h-13z M14.5 3v4h4 M8.5 11h7 M8.5 14.5h7 M8.5 18h4",
+  sitemap: "M9 3h6v4H9z M3 17h6v4H3z M15 17h6v4h-6z M12 7v5 M6 17v-5h12v5",
+  spark: "M12 3v5 M12 16v5 M3 12h5 M16 12h5 M6 6l3 3 M15 15l3 3 M18 6l-3 3 M9 15l-3 3",
+  code: "M8 7l-5 5 5 5 M16 7l5 5-5 5 M13.5 4.5l-3 15",
+  pen: "M12 3l6 7.5L12 21 6 10.5z M12 10.5v5.5",
+  chat: "M3.5 5h17v11h-9l-4.5 3.5V16H3.5z M7.5 9.5h9 M7.5 12.5h6",
+  browser: "M3 5h18v14H3z M3 9h18 M6 7h1 M9 7h1",
+  grid: "M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z",
+  speed: "M4 16a8 8 0 1 1 16 0 M12 16l4.5-5 M3 19.5h18",
+  calendar: "M4 6h16v14H4z M4 10h16 M8 3v4 M16 3v4 M8 14h2 M12 14h2",
+};
 /* The offer (Hunter, Nov 17: "A special relationship with Primary ... '$50,000 for a live website in 4 weeks that
    includes,' and it has a checkbox of everything it includes", from the Primary proposal's "What you get" and
-   its fixed-price card, kinetic-contracts briefs/migration/primary.mjs). Light, on the page's own ground: the
-   headline and the offer on the left, the list of checks on the right. */
+   its fixed-price card, kinetic-contracts briefs/migration/primary.mjs). On Primary's neon, ink on it, an icon
+   for each line (Hunter, Nov 17: "This should be the neon color and should be icons for each"): the headline
+   and the offer on the left, the list on the right. */
 ---
 
 {
@@ -37,10 +51,8 @@ const { render = true, heading, offer, includes, cta } = Astro.props;
         <ul class="offer_list">
           {includes.map((item, i) => (
             <li class="offer_item text-style-main" data-reveal style={`--reveal-delay:${(0.03 * i).toFixed(2)}s`}>
-              <span class="offer_check" aria-hidden="true">
-                <svg viewBox="0 0 16 16" width="12" height="12"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" /></svg>
-              </span>
-              {item}
+              <svg class="offer_icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d={ICONS[item.icon] ?? ICONS.spark} /></svg>
+              {item.text}
             </li>
           ))}
         </ul>
@@ -52,6 +64,8 @@ const { render = true, heading, offer, includes, cta } = Astro.props;
 <style is:global>
   @layer components {
     .offer {
+      --background: #c8ff54; /* Primary's neon */
+      --text: #111;
       background: var(--background);
       color: var(--text);
       padding: var(--section-space-large) var(--site-margin);
@@ -105,18 +119,14 @@ const { render = true, heading, offer, includes, cta } = Astro.props;
       align-items: flex-start;
       gap: 0.75rem;
       padding: var(--space-4) 0;
-      border-top: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+      border-top: 1px solid color-mix(in srgb, var(--text) 22%, transparent);
     }
-    .offer_check {
-      display: grid;
-      place-items: center;
+    .offer_icon {
+      display: block;
       flex: none;
-      width: 1.35rem;
-      height: 1.35rem;
-      margin-top: 0.1rem;
-      border-radius: 0.25rem;
-      background: #c8ff54; /* Primary's neon */
-      color: #111;
+      width: 1.5rem;
+      height: 1.5rem;
+      margin-top: -0.05rem;
     }
   }
 </style>

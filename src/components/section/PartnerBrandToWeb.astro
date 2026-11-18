@@ -20,6 +20,8 @@ interface Props {
     slides: { src: string; alt: string }[];
     /** One line under the name: what the brand became on the web. */
     line?: string;
+    /** A live 3D laptop instead of the render (Hunter, Nov 17: "Try it on exe"). */
+    live3d?: boolean;
   }[];
 }
 
@@ -79,7 +81,7 @@ const rows = pairs
                 {p.line && <p class="brand-web_line text-style-main">{p.line}</p>}
                 <a class="brand-web_visit text-style-label" href={w.url} target="_blank" rel="noopener">View the site <span aria-hidden="true">↗</span></a>
               </div>
-              <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`} data-mac>
+              <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`} data-mac data-mac3d={p.live3d ? "" : undefined}>
                 <img class="brand-web_mac" src={MAC.src} alt="" width={MAC.width} height={MAC.height} loading="lazy" decoding="async" />
                 <span class="brand-web_screen" style={`--site-ground:${(MEDIA as Record<string, { ground: string }>)[w.cover]?.ground ?? "#111"}`}>
                   <video class="brand-web_video" data-src={`/media/scroll/${w.cover}.mp4`} poster={`/media/scroll/${w.cover}.jpg`} muted loop playsinline preload="none" aria-hidden="true" />
@@ -97,6 +99,7 @@ const rows = pairs
   import MAC from "@/data/macbook-angle.json";
   import { BRAND_WEB_LOOK as LOOK } from "@/data/brand-web-look.js";
   import { fitScreen } from "@/scripts/mac-screen.ts";
+  import { LITE } from "@/scripts/lite.js";
 
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   /* The ground (.bw-ground on the page, round the hero and these rows): the screen goes from light into dark
@@ -287,6 +290,23 @@ const rows = pairs
     ).observe(row);
   });
 
+  // the live 3D laptop (src/scripts/mac-3d.ts) on the rows that ask for it, loaded as the row nears the screen;
+  // the render stays underneath until the 3D is drawing, and is all a phone or reduced motion ever gets
+  if (!LITE && !reduced)
+    document.querySelectorAll<HTMLElement>("[data-mac3d]").forEach((dev) => {
+      const io = new IntersectionObserver(
+        ([e]) => {
+          if (!e.isIntersecting) return;
+          io.disconnect();
+          const video = dev.querySelector<HTMLVideoElement>("video")!;
+          if (!video.src) video.src = video.dataset.src!;
+          import("@/scripts/mac-3d.ts").then(({ mountMac3D }) => mountMac3D(dev, { model: "/models/macbook.glb", video })).catch(() => {});
+        },
+        { rootMargin: "60% 0px" },
+      );
+      io.observe(dev);
+    });
+
   gradient();
   addEventListener("resize", gradient);
   addEventListener("ks:brand-web-look", gradient);
@@ -386,6 +406,18 @@ const rows = pairs
       inset: 0;
       width: 100%;
       height: 100%;
+    }
+    /* the live 3D laptop over the render; once it draws, the render steps aside */
+    .brand-web_device .mac3d {
+      position: absolute;
+      inset: -12% -8%;
+      width: 116%;
+      height: 124%;
+      pointer-events: none;
+    }
+    .brand-web_device.is-3d > .brand-web_mac,
+    .brand-web_device.is-3d > .brand-web_screen {
+      visibility: hidden;
     }
     .brand-web_screen {
       position: absolute;
