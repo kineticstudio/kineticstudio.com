@@ -20,11 +20,14 @@ interface Props {
   }[];
   /** The partner's wordmark, raw SVG, over its lane. */
   partnerLogo?: string;
+  /** Things passed between the studios, each a labelled square thrown from one lane to the other on its day
+      (1-based working day). */
+  exchanges?: { day: number; from: "partner" | "kinetic"; label: string }[];
   /** A few short points under the timeline. */
   points?: { title: string; body: string }[];
 }
 
-const { render = true, heading, lead, columns, lanes, partnerLogo, points = [] } = Astro.props;
+const { render = true, heading, lead, columns, lanes, partnerLogo, exchanges = [], points = [] } = Astro.props;
 /* How the two studios hand off, day by day (Nick, Nov 9: "some clear process and timeline stuff"; Hunter,
    Nov 9: four weeks of web). Nov 17 (Hunter): "As I scroll down ... the primary logo and the Kinetic logo. In
    the middle, we have a timeline, and it's actually built out by days. You see a stronger line to show what
@@ -33,7 +36,11 @@ const { render = true, heading, lead, columns, lanes, partnerLogo, points = [] }
    Primary's lane on the left under its logo, Kinetic's on the right under its own, the days down the
    middle. Each phase is a block of tiny squares, faint until the day line reaches it; the line is where the
    scroll has got to, and the squares of each day light up at random as it passes. Nothing is pinned: the
-   page scrolls as ever. Reduced motion: every phase lit, no line. */
+   page scrolls as ever. Reduced motion: every phase lit, no line.
+   Later on Nov 17 (Hunter): no week under each phase's name (the weeks are in the middle), the week names
+   on the middle line, a line down the whole thing that fills as you scroll, "Primary + Kinetic" at the top,
+   and, through the sprint, "things ... tossed back and forth between the two, but they're labeled":
+   `exchanges`, each a square with its name thrown across the middle on its day, slower and taller. */
 const DAYS = columns.length * 5;
 const day = (week: number, end = false) => (end ? week * 5 : (week - 1) * 5 + 1);
 const partner = lanes.find((l) => l.kind === "partner");
@@ -61,20 +68,27 @@ const clean = (svg: string, label: string) =>
       </div>
       <div class="tl" style={`--days:${DAYS}`} data-tl data-days={DAYS} data-launch={launch * 5}>
         <div class="tl_logo is-partner">{partnerLogo ? <span set:html={clean(partnerLogo, partner?.name ?? "Partner")} /> : <span class="text-style-h5">{partner?.name}</span>}</div>
+        <div class="tl_plus" aria-label="and">+</div>
         <div class="tl_logo is-kinetic"><span set:html={clean(kineticRaw, "Kinetic")} /></div>
         <div class="tl_body">
           <canvas class="tl_canvas" aria-hidden="true" />
           <div class="tl_lane is-partner" data-lane="partner" />
           <div class="tl_axis" data-axis />
           <div class="tl_lane is-kinetic" data-lane="kinetic" />
+          <div class="tl_spine" aria-hidden="true"><span class="tl_spine-fill" data-spine /></div>
           {columns.map((c, i) => (
             <span class="tl_week text-style-label" style={`--d:${i * 5}`}>{c}</span>
           ))}
           {phases.map((p) => (
             <div class:list={["tl_phase", `is-${p.kind}`, p.soft && "is-soft"]} style={`--d0:${p.d0 - 1};--d1:${p.d1}`} data-phase={p.kind} data-d0={p.d0} data-d1={p.d1}>
               <span class="tl_phase-title text-style-label">{p.title}</span>
-              <span class="tl_phase-when text-style-label">{p.when}</span>
             </div>
+          ))}
+          {exchanges.map((x) => (
+            <span class:list={["tl_pass", `is-${x.from}`]} data-pass data-day={x.day} data-from={x.from} aria-hidden="true">
+              <i />
+              <span class="text-style-label">{x.label}</span>
+            </span>
           ))}
           <div class="tl_now" data-now aria-hidden="true">
             <span class="tl_now-label text-style-label" data-now-label>Day 1</span>
@@ -83,6 +97,9 @@ const clean = (svg: string, label: string) =>
         <ol class="sr-only">
           {phases.map((p) => (
             <li>{`${p.kind === "partner" ? partner?.name : kinetic?.name}: ${p.title}, ${p.when}. ${p.note}`}</li>
+          ))}
+          {exchanges.map((x) => (
+            <li>{`Day ${x.day}: ${x.label}, from ${x.from === "partner" ? partner?.name : kinetic?.name} to ${x.from === "partner" ? kinetic?.name : partner?.name}`}</li>
           ))}
         </ol>
       </div>
@@ -117,6 +134,9 @@ const clean = (svg: string, label: string) =>
     const now = tl.querySelector<HTMLElement>("[data-now]")!;
     const nowLabel = tl.querySelector<HTMLElement>("[data-now-label]")!;
     const DAYS = Number(tl.dataset.days), LAUNCH = Number(tl.dataset.launch);
+    const spine = tl.querySelector<HTMLElement>("[data-spine]")!;
+    const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, day: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner" }));
+    let lanesX = { partner: 0, kinetic: 0 };
     type Cell = { x: number; y: number; day: number; r: number; rgb: number[]; soft: boolean; partner: boolean; was: boolean };
     type Dot = { sx: number; sy: number; ex: number; ey: number; cx: number; cy: number; t: number; dur: number };
     const dots: Dot[] = [];
@@ -135,6 +155,8 @@ const clean = (svg: string, label: string) =>
       canvas.height = Math.round(H * dpr);
       const a = tl.querySelector<HTMLElement>("[data-axis]")!.getBoundingClientRect();
       axis = { x: a.left - B.left, w: a.width };
+      const lp = tl.querySelector<HTMLElement>('[data-lane="partner"]')!.getBoundingClientRect(), lk = tl.querySelector<HTMLElement>('[data-lane="kinetic"]')!.getBoundingClientRect();
+      lanesX = { partner: lp.left - B.left + lp.width * 0.62, kinetic: lk.left - B.left + lk.width * 0.38 };
       seed = 3;
       cells = [];
       const rowsPerDay = Math.max(1, Math.round(dayH / PITCH));
@@ -196,8 +218,26 @@ const clean = (svg: string, label: string) =>
         ctx.fillRect(x, y, SIZE, SIZE);
         if (u >= 1) dots.splice(i, 1);
       }
-      // the day line, stronger, across everything
+      // the things passed across: thrown on their day, a day and a half in the air (scrubbed by the scroll,
+      // so they go back if you scroll back), then they rest a few days where they landed and fade
+      const FLY = 1.6;
+      for (const p of passes) {
+        const u = (cur - p.day) / FLY;
+        if (u < 0 || cur > p.day + FLY + 5) {
+          p.el.style.opacity = "0";
+          continue;
+        }
+        const e = Math.min(1, u), k = e < 0.5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2;
+        const sx = p.partner ? lanesX.partner : lanesX.kinetic, ex = p.partner ? lanesX.kinetic : lanesX.partner;
+        const sy = (p.day + 0.5) * dayH, ey = (p.day + FLY + 0.5) * dayH, lift = Math.abs(ex - sx) * 0.12;
+        const x = sx + (ex - sx) * k, y = sy + (ey - sy) * k - Math.sin(Math.PI * k) * lift;
+        const fade = cur > p.day + FLY + 4 ? 1 - (cur - p.day - FLY - 4) : 1;
+        p.el.style.opacity = String(Math.max(0, Math.min(1, u * 6, fade)));
+        p.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+      }
+      // the day line, stronger, across everything, and the line down the middle filled to it
       const y = Math.min(DAYS, cur) * dayH;
+      spine.style.height = `${y.toFixed(1)}px`;
       now.style.transform = `translateY(${y.toFixed(1)}px)`;
       const d = Math.min(DAYS, Math.max(1, Math.ceil(cur)));
       nowLabel.textContent = d > LAUNCH ? "After launch" : d === LAUNCH ? "Launch" : `Day ${d}`;
@@ -263,7 +303,7 @@ const clean = (svg: string, label: string) =>
     /* Primary's lane | the days | Kinetic's lane, each lane with its phases' names on its outer side */
     /* the lanes are narrow and hug the days, the phases' names beside them, the whole thing centred */
     .tl {
-      --day-h: 18px;
+      --day-h: 26px;
       --axis-w: 5.5rem;
       --lane-w: clamp(7rem, 17vw, 15rem);
       --label-w: 9rem;
@@ -273,7 +313,7 @@ const clean = (svg: string, label: string) =>
       row-gap: var(--space-5);
       width: 100%;
       @media (width < 48rem) {
-        --day-h: 12px;
+        --day-h: 16px;
         --axis-w: 3.25rem;
         --lane-w: 4.5rem;
         --label-w: 6rem;
@@ -300,6 +340,15 @@ const clean = (svg: string, label: string) =>
       & span {
         height: 86%;
       }
+    }
+    .tl_plus {
+      grid-row: 1;
+      grid-column: 3;
+      align-self: end;
+      text-align: center;
+      font-size: 1.5rem;
+      line-height: 1;
+      color: color-mix(in srgb, var(--text) 60%, transparent);
     }
     .tl_logo.is-kinetic {
       grid-column: 4;
@@ -332,10 +381,30 @@ const clean = (svg: string, label: string) =>
     .tl_lane.is-kinetic {
       grid-column: 4;
     }
-    /* week names in the middle, at each week's first day */
+    /* the line down the middle, faint, filled bright down to the day line */
+    .tl_spine {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 1px;
+      background: color-mix(in srgb, var(--text) 16%, transparent);
+      pointer-events: none;
+    }
+    .tl_spine-fill {
+      display: block;
+      width: 100%;
+      height: 0;
+      background: color-mix(in srgb, var(--text) 85%, transparent);
+    }
+    /* week names on the middle line, at each week's first day, over the line */
     .tl_week {
       position: absolute;
-      top: calc(var(--d) * var(--day-h) + 4px);
+      z-index: 1;
+      top: calc(var(--d) * var(--day-h));
+      translate: 0 -50%;
+      padding-block: 0.2rem;
+      background: var(--background);
       left: calc(50% - var(--axis-w) / 2);
       width: var(--axis-w);
       text-align: center;
@@ -349,16 +418,17 @@ const clean = (svg: string, label: string) =>
     /* each phase's name, small, on its lane's outer side at its first day */
     .tl_phase {
       position: absolute;
-      top: calc(var(--d0) * var(--day-h));
+      top: calc(var(--d0) * var(--day-h) - 0.1rem);
       display: flex;
       flex-direction: column;
-      gap: 0.1rem;
+      gap: 0;
       width: calc(50% - var(--axis-w) / 2 - var(--lane-w)); /* the outer column beside its lane */
       max-width: var(--label-w);
-      font-size: 0.6875rem;
-      line-height: 1.25;
+      font-size: 0.75rem;
+      line-height: 1.2;
       & > * {
         font-size: inherit;
+        line-height: inherit;
       }
       @media (width < 48rem) {
         font-size: 0.5625rem;
@@ -376,8 +446,39 @@ const clean = (svg: string, label: string) =>
     .tl_phase-title {
       color: var(--text);
     }
-    .tl_phase-when {
-      color: color-mix(in srgb, var(--text) 50%, transparent);
+    /* a thing passed across: a square and its name, thrown from one lane to the other */
+    .tl_pass {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      opacity: 0;
+      white-space: nowrap;
+      pointer-events: none;
+      will-change: transform, opacity;
+      & i {
+        display: block;
+        flex: none;
+        width: 6px;
+        height: 6px;
+        translate: -3px 0;
+        background: var(--light-100);
+      }
+      & span {
+        padding: 0.1rem 0.35rem;
+        background: var(--background);
+        font-size: 0.6875rem;
+        line-height: 1.2;
+        @media (width < 48rem) {
+          font-size: 0.5625rem;
+        }
+      }
+    }
+    .tl_pass.is-partner i {
+      background: #c8ff54;
     }
     .tl_phase.is-soft .tl_phase-title {
       color: color-mix(in srgb, var(--text) 70%, transparent);

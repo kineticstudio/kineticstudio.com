@@ -98,6 +98,20 @@ const LANES = [
     ],
   },
 ];
+/* What passes between the studios through the sprint (Hunter, Nov 17: "colors established, general direction
+   figured out, and things get tossed back and forth between the two, but they're labeled"), by working day. */
+const EXCHANGES = [
+  { day: 2, from: "partner", label: "Positioning" },
+  { day: 3, from: "kinetic", label: "Site map" },
+  { day: 4, from: "partner", label: "General direction" },
+  { day: 5, from: "kinetic", label: "Content doc" },
+  { day: 6, from: "partner", label: "Colours established" },
+  { day: 7, from: "kinetic", label: "Wireframes" },
+  { day: 8, from: "partner", label: "Type" },
+  { day: 9, from: "kinetic", label: "Motion ideas" },
+  { day: 10, from: "partner", label: "Logo and brand book" },
+  { day: 15, from: "kinetic", label: "Homepage for review" },
+] as const;
 const POINTS = [
   {
     title: "Straight to the designer",
@@ -135,6 +149,7 @@ const POINTS = [
   <PartnerQuotes page="primary" theme="dark" />
   <PartnerProcess
     partnerLogo={primaryLogo}
+    exchanges={[...EXCHANGES]}
     heading="Two studios, | one team"
     lead="Kinetic is in the files before your sprint wraps, so nobody explains your company twice and there's no gap between brand and website."
     columns={COLUMNS}
