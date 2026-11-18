@@ -393,6 +393,19 @@ const rows = pairs
   gradient();
   addEventListener("resize", gradient);
   addEventListener("ks:brand-web-look", gradient);
+  // the shade down each row and the line between them, from the look (Params > shade)
+  const applyShade = () => {
+    const S = LOOK.shade;
+    if (!S) return;
+    const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(S.color || "#000000");
+    const rgb = m ? m.slice(1).map((x) => parseInt(x, 16)).join(" ") : "0 0 0";
+    for (const list of document.querySelectorAll<HTMLElement>(".brand-web_list")) {
+      list.style.setProperty("--row-shade", `linear-gradient(${S.angle}deg, rgb(${rgb} / ${S.from}) ${S.start}%, rgb(${rgb} / ${S.to}) ${S.end}%)`);
+      list.style.setProperty("--row-line", String(S.line));
+    }
+  };
+  applyShade();
+  addEventListener("ks:brand-web-look", applyShade);
 </script>
 
 <style is:global>
@@ -460,7 +473,8 @@ const rows = pairs
         left: calc((100% - 100vw) / 2);
         width: 100vw;
         height: 1px;
-        background: color-mix(in srgb, var(--text) 18%, transparent);
+        background: var(--text);
+        opacity: var(--row-line, 0.18);
         z-index: 3;
       }
       &::before {
@@ -483,7 +497,7 @@ const rows = pairs
         width: 100vw;
         height: auto;
         z-index: -1;
-        background: linear-gradient(to bottom, rgb(0 0 0 / 0), rgb(0 0 0 / 0.05));
+        background: var(--row-shade, linear-gradient(to bottom, rgb(0 0 0 / 0), rgb(0 0 0 / 0.05)));
         pointer-events: none;
       }
     }

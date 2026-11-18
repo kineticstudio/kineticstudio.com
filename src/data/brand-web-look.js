@@ -31,6 +31,17 @@ export const BRAND_WEB_LOOK = {
     insetBottom: 0,
     radius: 0.004, // the glass's top corners, times its width (the bottom ones a third of that)
   },
+  // the shade down each brand row, over the moving ground, so one project ends before the next (Hunter, Nov 18:
+  // "a very, very slight gradient that goes from 0% to 5% black"), and the line between rows
+  shade: {
+    angle: 180, // degrees: 180 runs top to bottom
+    from: 0, // strength at the first stop, 0 to 1
+    to: 0.05, // strength at the last stop
+    start: 0, // first stop, % down the row
+    end: 100, // last stop, %
+    color: "#000000",
+    line: 0.18, // the line between rows, its strength
+  },
   // light into dark toward the bottom right of the screen, a glow on the edge between, like the Primary
   // proposal's cover, but curved and soft (Hunter, Nov 17: "This gradient needs to be non-linear ... have a
   // curve to it and be softer, and then change color based on the client we're showing off"). An ellipse

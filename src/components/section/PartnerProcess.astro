@@ -100,10 +100,7 @@ const clean = (svg: string, label: string) =>
               {/* the node on the line, its words beside it, off the line: "End of week 6" over "Launch" (Hunter, Nov
                   18: "this looks messy") */}
               <i class="tl_launch-node" aria-hidden="true" />
-              <span class="tl_launch-text">
-                <span class="tl_launch-when text-style-label">End of week {launch}</span>
-                <span class="tl_launch-word text-style-h5">Launch</span>
-              </span>
+              <span class="tl_launch-word text-style-h5">Launch</span>
             </div>
           )}
           {phases.map((p) => (
@@ -124,7 +121,7 @@ const clean = (svg: string, label: string) =>
             </span>
           ))}
           <div class="tl_now" data-now aria-hidden="true">
-            <span class="tl_now-label text-style-label" data-now-label>Day 1</span>
+            <span class="tl_now-label" data-now-label>Day 1</span>
           </div>
         </div>
         <ol class="sr-only">
@@ -694,32 +691,35 @@ const clean = (svg: string, label: string) =>
       left: calc(50% - var(--axis-w) / 2);
       width: var(--axis-w);
       translate: 0 -50%;
-      padding: 0.15rem 0;
+      padding: 0.3rem 0 0.15rem;
       background: var(--background);
-      color: var(--text);
+      /* the day counter: big, lime, in the headline face, counting up the middle as you scroll (Hunter, Nov 18) */
+      color: var(--brand-500);
+      font-family: var(--display-family);
+      font-size: clamp(1.25rem, 1.9vw, 1.75rem);
+      line-height: 1;
+      text-transform: uppercase;
       text-align: center;
       white-space: nowrap;
-      font-size: 0.6875rem;
       @media (width < 48rem) {
-        font-size: 0.5625rem;
+        font-size: 1rem;
       }
     }
     .tl_day {
       color: color-mix(in srgb, var(--text) 32%, transparent);
     }
-    /* launch: a node on the line's last day, faint until the day line reaches it, then neon */
-    /* launch: a node on the line's last day, faint until the day line reaches it, then lime; its words to the left */
+    /* launch: a node on the line's last day, faint until the day line reaches it, then lime; "Launch" centred
+       under it (Hunter, Nov 18: "remove end of week 6 and put launch on the bottom middle") */
     .tl_launch {
       position: absolute;
       z-index: 2;
       top: var(--y);
-      right: 50%;
+      left: 50%;
       display: flex;
-      flex-direction: row-reverse; /* the words on the empty left, clear of Kinetic's block */
+      flex-direction: column;
       align-items: center;
       gap: 0.9rem;
-      translate: 0.5rem -50%;
-      text-align: right;
+      translate: -50% -0.5rem;
       white-space: nowrap;
     }
     .tl_launch-node {
@@ -731,15 +731,6 @@ const clean = (svg: string, label: string) =>
       border: 1px solid color-mix(in srgb, var(--text) 40%, transparent);
       background: var(--background);
       transition: background-color 0.4s ease, border-color 0.4s ease, scale 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
-    }
-    .tl_launch-text {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 0.2rem;
-    }
-    .tl_launch-when {
-      color: color-mix(in srgb, var(--text) 55%, transparent);
     }
     .tl_launch-word {
       margin: 0;

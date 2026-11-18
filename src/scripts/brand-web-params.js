@@ -40,6 +40,15 @@ const schema = {
     insetBottom: [L.laptop.insetBottom, 0, 0.08, 0.001],
     radius: [L.laptop.radius, 0, 0.06, 0.001],
   },
+  shade: {
+    angle: [L.shade.angle, 0, 360, 1],
+    from: [L.shade.from, 0, 0.4, 0.005],
+    to: [L.shade.to, 0, 0.4, 0.005],
+    start: [L.shade.start, 0, 100, 1],
+    end: [L.shade.end, 0, 100, 1],
+    color: L.shade.color,
+    line: [L.shade.line, 0, 0.6, 0.01],
+  },
   gradient: {
     x: [L.gradient.x, 50, 150, 1],
     y: [L.gradient.y, 50, 160, 1],

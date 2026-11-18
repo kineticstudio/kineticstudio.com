@@ -1,24 +1,25 @@
 {
-  "_about": "Client words about Kinetic, collected from Slack and Gmail by the Kinetic Assistant hub (Nov 17 2026). None were written as testimonials. A quote renders on the site only when approved is true, and approval means Hunter has the client's OK on the exact words and the attribution (name, role, company, logo). Builds with PUBLIC_DRAFT_QUOTES=1 (the preview only) also show unapproved ones, marked as drafts; the production build never sets it. The hub tracks asking and approval on the board (clients/<slug>.testimonial). confidential: true means the client is confidential and must never be shown, even in a draft preview, without their explicit OK.",
+  "_about": "Client words about Kinetic, collected from Slack and Gmail by the Kinetic Assistant hub (Nov 17 2026). None were written as testimonials. A quote renders on the site only when approved is true, and approval means Hunter has the client's OK on the exact words and the attribution (name, role, company, logo). Builds with PUBLIC_DRAFT_QUOTES=1 (the preview only) also show unapproved ones, marked as drafts; the production build never sets it. The hub tracks asking and approval on the board (clients/<slug>.testimonial). confidential: true means the client is confidential and must never be shown, even in a draft preview, without their explicit OK. Hunter picked and edited the keepers in the Creative Studio (kinetic, Prototypes > Testimonials) on Nov 18; `original` keeps the client's own words where he changed them.",
   "quotes": [
     {
       "id": "primary-nick-pattison",
-      "quote": "Kinetic is our most trusted web partner. We’re integrating our processes so this feels like one coordinated engagement, from kickoff through launch.",
+      "quote": "Our processes are fully integrated, so it feels like one coordinated team.",
       "name": "Nick Pattison",
       "role": "Founder",
       "company": "Primary",
       "source": "Nick's email to a Primary client (OpenCode), Slack DM Oct 29 2026",
       "featured": true,
-      "note": "The big quote on /primary. Nick's own words to a client, not written as a testimonial: needs his OK on the wording and his title before it shows. Hunter changed \"Hunter is\" to \"Kinetic is\" (Nov 17); Nick approves the edited wording.",
+      "note": "The big quote on /primary. Hunter's shorter version of Nick's own words to a client (Nov 18): Nick approves this wording and his title before it shows.",
       "approved": false,
       "pages": [
         "primary"
       ],
-      "avatar": "/images/primary/people/nick-pattison.webp"
+      "avatar": "/images/primary/people/nick-pattison.webp",
+      "original": "Hunter is our most trusted web partner. We’re integrating our processes so this feels like one coordinated engagement, from kickoff through launch."
     },
     {
       "id": "ramble-jessica-lo",
-      "quote": "It's been incredible how fast you were able to stitch these all together, and +1 to the sphere effect!! I love how well it represents you get immersed in a world of multiple communities on stage!",
+      "quote": "It's been incredible how fast you were able to stitch these all together!! I love how well it represents us. You get immersed!",
       "name": "Jessica Lo",
       "role": "",
       "company": "Ramble",
@@ -28,11 +29,13 @@
       "pages": [
         "primary",
         "home"
-      ]
+      ],
+      "original": "It's been incredible how fast you were able to stitch these all together, and +1 to the sphere effect!! I love how well it represents you get immersed in a world of multiple communities on stage!",
+      "note": "Hunter's edit of the client's words (Nov 18, Studio Prototypes > Testimonials); the client approves this wording before it shows."
     },
     {
       "id": "dorm-room-fund-madi-jacox",
-      "quote": "The feedback Molly and I are getting from co-investors, LPs, press, founders ... People are blown away.",
+      "quote": "The feedback we are getting from co-investors, LPs, press, founders ... People are blown away.",
       "name": "Madi Jacox",
       "role": "",
       "company": "Dorm Room Fund",
@@ -41,11 +44,13 @@
       "pages": [
         "primary",
         "home"
-      ]
+      ],
+      "original": "The feedback Molly and I are getting from co-investors, LPs, press, founders ... People are blown away.",
+      "note": "Hunter's edit of the client's words (Nov 18, Studio Prototypes > Testimonials); the client approves this wording before it shows."
     },
     {
       "id": "pave-russell-abdo",
-      "quote": "I've loved working with you... I'm already SO impressed about the progress we're making.",
+      "quote": "I've loved working with you... always SO impressed how you work",
       "name": "Russell Abdo",
       "role": "",
       "company": "Pave",
@@ -54,7 +59,9 @@
       "pages": [
         "primary",
         "home"
-      ]
+      ],
+      "original": "I've loved working with you... I'm already SO impressed about the progress we're making.",
+      "note": "Hunter's edit of the client's words (Nov 18, Studio Prototypes > Testimonials); the client approves this wording before it shows."
     },
     {
       "id": "new-era-stephanie-petricca",
@@ -64,10 +71,8 @@
       "company": "New Era",
       "source": "Gmail, Oct 30 2026",
       "approved": false,
-      "pages": [
-        "primary",
-        "home"
-      ]
+      "pages": [],
+      "note": "Not kept (Hunter's picks, Nov 18): shown nowhere."
     },
     {
       "id": "wispr-kim-stoner",
@@ -77,14 +82,12 @@
       "company": "Wispr Flow",
       "source": "Slack, Sep 15 2026 (about the Studio tool)",
       "approved": false,
-      "pages": [
-        "primary",
-        "home"
-      ]
+      "pages": [],
+      "note": "Not kept (Hunter's picks, Nov 18): shown nowhere."
     },
     {
       "id": "elio-ron-litvak",
-      "quote": "The loading animations are incredible!",
+      "quote": "The loading animations and hero are ABSOLUTELY incredible!",
       "name": "Ron Litvak",
       "role": "",
       "company": "Elio",
@@ -93,7 +96,9 @@
       "pages": [
         "primary",
         "home"
-      ]
+      ],
+      "original": "The loading animations are incredible!",
+      "note": "Hunter's edit of the client's words (Nov 18, Studio Prototypes > Testimonials); the client approves this wording before it shows."
     },
     {
       "id": "natural-capital-kira-mccroden",
@@ -103,9 +108,8 @@
       "company": "Natural Capital",
       "source": "Gmail, Nov 13 2026",
       "approved": false,
-      "pages": [
-        "home"
-      ]
+      "pages": [],
+      "note": "Not kept (Hunter's picks, Nov 18): shown nowhere."
     },
     {
       "id": "goodside-jessica-strelioff",
@@ -115,9 +119,8 @@
       "company": "Goodside",
       "source": "Slack DM, Oct 2 2026",
       "approved": false,
-      "pages": [
-        "home"
-      ]
+      "pages": [],
+      "note": "Not kept (Hunter's picks, Nov 18): shown nowhere."
     },
     {
       "id": "pave-teresa-cullen",
@@ -127,9 +130,8 @@
       "company": "Pave",
       "source": "Slack, Sep 24 2026",
       "approved": false,
-      "pages": [
-        "home"
-      ]
+      "pages": [],
+      "note": "Not kept (Hunter's picks, Nov 18): shown nowhere."
     },
     {
       "id": "overland-sophia-umansky",
@@ -139,9 +141,8 @@
       "company": "Overland",
       "source": "Slack, Sep 11 2026",
       "approved": false,
-      "pages": [
-        "home"
-      ]
+      "pages": [],
+      "note": "Not kept (Hunter's picks, Nov 18): shown nowhere."
     },
     {
       "id": "auxia-meyli-doersch",

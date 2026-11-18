@@ -83,36 +83,6 @@ const ICONS: Record<string, string> = {
   )
 }
 
-<script>
-  // the numbers count up as the price comes on screen (Hunter, Nov 18: "increment the numbers for 4 weeks and
-  // $50,000 as you scroll in"); each keeps its final width, so the line never shifts while it counts
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  document.querySelectorAll<HTMLElement>(".offer_amount").forEach((amount) => {
-    const nums = [...amount.querySelectorAll<HTMLElement>("[data-count]")];
-    if (reduced || !nums.length) return;
-    const fmt = (el: HTMLElement, v: number) => (el.textContent = `${el.dataset.prefix ?? ""}${Math.round(v).toLocaleString("en-US")}`);
-    const run = () => {
-      nums.forEach((el) => {
-        el.style.minWidth = `${el.getBoundingClientRect().width}px`;
-        fmt(el, 0);
-      });
-      const t0 = performance.now(), DUR = 1600;
-      const step = (now: number) => {
-        const k = Math.min(1, (now - t0) / DUR), e = 1 - Math.pow(1 - k, 4);
-        nums.forEach((el) => fmt(el, Number(el.dataset.count) * e));
-        if (k < 1) requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
-    };
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      io.disconnect();
-      run();
-    }, { threshold: 0.4 });
-    io.observe(amount);
-  });
-</script>
-
 <style is:global>
   @layer components {
     .offer {
