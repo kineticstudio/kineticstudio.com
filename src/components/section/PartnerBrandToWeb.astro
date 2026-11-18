@@ -4,6 +4,7 @@ import { WORK } from "@/data/work.js";
 import { projectLink, restLoop } from "@/data/project-link.js";
 import MAC from "@/data/macbook-angle.json";
 import MEDIA from "@/data/media.json";
+import Modal from "@/components/interactive/Modal.astro";
 
 interface Props {
   /** Set to `false` to omit the component. */
@@ -22,6 +23,8 @@ interface Props {
     line?: string;
     /** A live 3D laptop instead of the render (Hunter, Nov 17: "Try it on exe"). */
     live3d?: boolean;
+    /** A launch film, opened full screen with sound from a play button under the name. */
+    film?: { src: string; poster: string; label: string };
   }[];
 }
 
@@ -79,7 +82,15 @@ const rows = pairs
               <div class="brand-web_caption">
                 <p class="brand-web_name text-style-h4">{w.name}</p>
                 {p.line && <p class="brand-web_line text-style-main">{p.line}</p>}
-                <a class="brand-web_visit text-style-label" href={w.url} target="_blank" rel="noopener">View the site <span aria-hidden="true">↗</span></a>
+                <div class="brand-web_links">
+                  {p.film && (
+                    <button class="brand-web_film text-style-label" type="button" data-modal-open={`film-${w.slug}`}>
+                      <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" /></svg>
+                      {p.film.label}
+                    </button>
+                  )}
+                  <a class="brand-web_visit text-style-label" href={w.url} target="_blank" rel="noopener">View the site <span aria-hidden="true">↗</span></a>
+                </div>
               </div>
               <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`} data-mac data-mac3d={p.live3d ? "" : undefined}>
                 <img class="brand-web_mac" src={MAC.src} alt="" width={MAC.width} height={MAC.height} loading="lazy" decoding="async" />
@@ -88,6 +99,11 @@ const rows = pairs
                 </span>
               </a>
             </div>
+            {p.film && (
+              <Modal id={`film-${w.slug}`} label={`${w.name}, ${p.film.label}`} variant="full-screen" class="brand-web_modal">
+                <video class="brand-web_film-video" data-src={p.film.src} poster={p.film.poster} controls playsinline preload="none" data-film />
+              </Modal>
+            )}
           </li>
         ))}
       </ul>
@@ -307,6 +323,18 @@ const rows = pairs
       io.observe(dev);
     });
 
+  // a launch film loads and plays with sound when its dialog opens, and stops when it closes
+  document.querySelectorAll<HTMLDialogElement>(".brand-web_modal").forEach((d) => {
+    const film = d.querySelector<HTMLVideoElement>("video[data-film]");
+    if (!film) return;
+    new MutationObserver(() => {
+      if (d.open) {
+        if (!film.src) film.src = film.dataset.src!;
+        film.play().catch(() => {});
+      } else film.pause();
+    }).observe(d, { attributes: true, attributeFilter: ["open"] });
+  });
+
   gradient();
   addEventListener("resize", gradient);
   addEventListener("ks:brand-web-look", gradient);
@@ -459,8 +487,45 @@ const rows = pairs
       margin: 0;
       color: color-mix(in srgb, currentColor 72%, transparent);
     }
-    .brand-web_visit {
+    .brand-web_links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.6rem 1.25rem;
       margin-top: var(--space-2, 0.5rem);
+    }
+    /* the film's play button: a pill in the text colour */
+    .brand-web_film {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.45rem 0.85rem 0.45rem 0.7rem;
+      border: 0;
+      border-radius: 99rem;
+      background: currentColor;
+      cursor: pointer;
+      & svg,
+      & {
+        color: inherit;
+      }
+    }
+    .brand-web_film {
+      background: var(--text);
+      color: var(--background);
+    }
+    .brand-web_caption.is-on-dark .brand-web_film {
+      background: var(--light-100);
+      color: var(--dark-900);
+    }
+    .brand-web_film-video {
+      display: block;
+      width: 100%;
+      height: 100%;
+      max-height: 100svh;
+      object-fit: contain;
+      background: #000;
+    }
+    .brand-web_visit {
       color: inherit;
       text-decoration: underline;
       text-underline-offset: 0.2em;
