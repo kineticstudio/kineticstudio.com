@@ -56,6 +56,7 @@ const rows = pairs
       <ul class="brand-web_list" style={`--mac-ratio:${MAC.width / MAC.height}`}>
         {rows.map(({ p, w, link }) => (
           <li class="brand-web_row" data-slug={w.slug}>
+            <p class="brand-web_name text-style-h3">{w.name}</p>
             <div class="brand-web_pair">
               <figure class="brand-web_book" aria-label={`${w.name} brand guidelines by Primary`} data-book>
                 {[p.slides.filter((_, i) => i % 2 === 0), p.slides.filter((_, i) => i % 2 === 1)].map((line, r) => (
@@ -74,11 +75,10 @@ const rows = pairs
               <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`} data-mac>
                 <img class="brand-web_mac" src={MAC.src} alt="" width={MAC.width} height={MAC.height} loading="lazy" decoding="async" />
                 <span class="brand-web_screen" style={`--site-ground:${(MEDIA as Record<string, { ground: string }>)[w.cover]?.ground ?? "#111"}`}>
-                  <video class="brand-web_video" data-src={`/media/${w.cover}.mp4`} poster={`/media/${w.cover}.webp`} muted loop playsinline preload="none" aria-hidden="true" />
+                  <video class="brand-web_video" data-src={`/media/scroll/${w.cover}.mp4`} poster={`/media/scroll/${w.cover}.jpg`} muted loop playsinline preload="none" aria-hidden="true" />
                 </span>
               </a>
             </div>
-            <p class="brand-web_name text-style-h5">{w.name}</p>
           </li>
         ))}
       </ul>
@@ -331,13 +331,14 @@ const rows = pairs
       padding: 0;
       list-style: none;
     }
-    .brand-web_row:first-child .brand-web_pair {
-      padding-top: 0;
-    }
+    /* each client its own block: a rule across, its name, then its pages and site (Hunter, Nov 17: "clear
+       delineation between each of the options") */
     .brand-web_row {
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
+      padding-top: var(--space-5);
+      border-top: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
     }
     /* the laptop on the right, big; the pages run in behind it from the page's left edge */
     .brand-web_pair {
@@ -385,16 +386,18 @@ const rows = pairs
       transform-origin: 0 0;
       background: var(--site-ground, #111);
     }
-    /* the whole recording, never cropped: the site's own ground fills any space under it (the loops are
-       16:10 and 16:9, the glass a little taller), so its margins stay as they were */
+    /* the site's own scroll-through, recorded full bleed at 16:10 (media/scroll, not the matted card loops,
+       which put the site in a frame inside the screen: Hunter, Nov 17, "cropped in very weird ways"); the glass
+       is a touch taller (1.54), so the recording fills it exactly, stretched 4% tall rather than cropped */
     .brand-web_video {
       display: block;
       width: 100%;
       height: 100%;
-      object-fit: contain;
-      object-position: top center;
+      object-fit: fill;
     }
     .brand-web_name {
+      position: relative;
+      z-index: 2;
       width: fit-content;
       margin: 0;
       transition: color 0.3s ease;
