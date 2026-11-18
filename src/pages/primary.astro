@@ -6,6 +6,8 @@ import PartnerProcess from "@/components/section/PartnerProcess.astro";
 import PartnerClose from "@/components/section/PartnerClose.astro";
 import PartnerQuotes from "@/components/section/PartnerQuotes.astro";
 import PartnerStudio from "@/components/section/PartnerStudio.astro";
+import PartnerOffer from "@/components/section/PartnerOffer.astro";
+import PartnerFeatureQuote from "@/components/section/PartnerFeatureQuote.astro";
 import WorkWheel from "@/components/section/WorkWheel.astro";
 import { HOME } from "@/data/work.js";
 import primaryLogo from "@/assets/clients/primary.svg?raw";
@@ -30,7 +32,7 @@ const rest = MORE.filter((slug) => HOME.includes(slug) && !PRIMARY.includes(slug
    relationship ... what it looks like to take the brand and bring it to the web"; Nick, Nov 9: "some kind of
    transformation of the brand into web", "clear process and timeline", and "an inherent advantage to it
    being light mode and feeling like primary" (Hunter: "Much more in line with where I want to take it");
-   Hunter, Nov 9: four weeks of web, not five ("Let's do 4 weeks"). Prices stay off the page. */
+   Hunter, Nov 9: four weeks of web, not five ("Let's do 4 weeks"). Prices stayed off the page until Nov 17, when Hunter asked for the $50,000 offer section. */
 
 /* Brand to website: each brand as Primary's brand book hands it over, beside the site. Colours and type
    are the brand books' own (exe: Primary's guidelines file; Owner: the site's tokens; Planned: the
@@ -43,6 +45,7 @@ const B = "/images/primary/brand";
 const PAIRS = [
   {
     slug: "exe",
+    line: "Primary's engraved field manual, brought to life as a site you scroll through like a sea chart.",
     slides: [
       { src: `${B}/exe-cover.webp`, alt: "exe brand guidelines, the cover" },
       { src: `${B}/exe-logo.webp`, alt: "exe logo system" },
@@ -55,6 +58,7 @@ const PAIRS = [
   },
   {
     slug: "owner",
+    line: "Primary's greens and gradients, carried into the site restaurants use to win online.",
     slides: [
       { src: `${B}/owner-title.webp`, alt: "Owner brand guidelines, the cover" },
       { src: `${B}/owner-colour.webp`, alt: "Owner primary colour palette" },
@@ -66,6 +70,7 @@ const PAIRS = [
   },
   {
     slug: "ramble",
+    line: "Primary's lime, purple and blue, turned into a loud, live home for big group chats.",
     slides: [
       { src: `${B}/ramble-cover.webp`, alt: "Ramble brand guidelines, the cover" },
       { src: `${B}/ramble-logo.webp`, alt: "Ramble logo system" },
@@ -99,18 +104,31 @@ const LANES = [
   },
 ];
 /* What passes between the studios through the sprint (Hunter, Nov 17: "colors established, general direction
-   figured out, and things get tossed back and forth between the two, but they're labeled"), by working day. */
+   figured out, and things get tossed back and forth between the two, but they're labeled"; then "You could see
+   ideas going back and forth: when it gets 'nope ideas,' then it gets colored, then ... the brand system gets
+   set up, etc., back and forth"). `day` is the working day, its fraction how far into that day. */
 const EXCHANGES = [
-  { day: 2, from: "partner", label: "Positioning" },
-  { day: 3, from: "kinetic", label: "Site map" },
-  { day: 4, from: "partner", label: "General direction" },
-  { day: 5, from: "kinetic", label: "Content doc" },
-  { day: 6, from: "partner", label: "Colours established" },
-  { day: 7, from: "kinetic", label: "Wireframes" },
-  { day: 8, from: "partner", label: "Type" },
-  { day: 9, from: "kinetic", label: "Motion ideas" },
-  { day: 10, from: "partner", label: "Logo and brand book" },
-  { day: 15, from: "kinetic", label: "Homepage for review" },
+  { day: 1.2, from: "partner", label: "Kickoff notes" },
+  { day: 1.6, from: "kinetic", label: "Questions on the site" },
+  { day: 2.2, from: "partner", label: "First ideas" },
+  { day: 2.6, from: "kinetic", label: "Site map" },
+  { day: 3.2, from: "partner", label: "Moodboards" },
+  { day: 3.6, from: "kinetic", label: "Nope, not that one" },
+  { day: 4.2, from: "partner", label: "New ideas" },
+  { day: 4.6, from: "kinetic", label: "Content doc" },
+  { day: 5.2, from: "partner", label: "General direction" },
+  { day: 5.6, from: "kinetic", label: "Thumbs up" },
+  { day: 6.2, from: "partner", label: "Colour" },
+  { day: 6.6, from: "kinetic", label: "Colour on the web" },
+  { day: 7.2, from: "partner", label: "Type" },
+  { day: 7.6, from: "kinetic", label: "Wireframes" },
+  { day: 8.2, from: "partner", label: "Logo" },
+  { day: 8.6, from: "kinetic", label: "Motion tests" },
+  { day: 9.2, from: "partner", label: "Brand system" },
+  { day: 9.6, from: "kinetic", label: "Homepage sketch" },
+  { day: 10.3, from: "partner", label: "Brand book" },
+  { day: 13, from: "kinetic", label: "Homepage for review" },
+  { day: 16, from: "partner", label: "Brand check" },
 ] as const;
 const POINTS = [
   {
@@ -139,14 +157,16 @@ const POINTS = [
     compact
     partnerLogo={primaryLogo}
     partnerName="Primary"
-    heading="Put your Primary brand | out into the world"
-    lead="Primary is a world-class branding agency. Kinetic has deep expertise in taking the fundamentals of their work and bringing it into the world with motion and interactivity, in a custom website live four weeks after your sprint."
+    heading="Get your Primary brand | out into the world"
+    lead="Primary is a world-class branding agency. Kinetic turns their work into a website full of motion and interaction, live four weeks after your sprint."
   />
   <PartnerBrandToWeb pairs={PAIRS} />
   </div>
   {/* client words, dark, between the rows and the timeline (Hunter, Nov 17: "we are totally missing the
       testimonials"); only approved quotes render (src/data/testimonials.json), drafts in previews */}
-  <PartnerQuotes page="primary" theme="dark" />
+  <PartnerQuotes page="primary" theme="neon" />
+  {/* Nick's words, big, into the timeline (Hunter, Nov 17); drafts only until Nick approves them */}
+  <PartnerFeatureQuote page="primary" logo={primaryLogo} />
   <PartnerProcess
     partnerLogo={primaryLogo}
     exchanges={[...EXCHANGES]}
@@ -154,10 +174,28 @@ const POINTS = [
     lead="Kinetic is in the files before your sprint wraps, so nobody explains your company twice and there's no gap between brand and website."
     columns={COLUMNS}
     lanes={LANES}
-    points={POINTS}
   />
   {/* the Studio, from the proposal's tooling page, the brand book first (Hunter, Nov 17) */}
   <PartnerStudio partner="Primary" />
+  {/* the offer (Hunter, Nov 17), from the Primary proposal's "What you get" and fixed-price card; replaces the
+      timeline's two points ("Straight to the designer", "Yours to run"), which said the same */}
+  <PartnerOffer
+    heading="A special relationship | with Primary"
+    offer="$50,000 for a live website in four weeks, including:"
+    includes={[
+      "Up to about 15 pages",
+      "Story, sitemap and wireframes",
+      "Web design, animation and interaction",
+      "Custom code, with a CMS your team can edit",
+      "Unlimited revisions",
+      "Creative direction from Hunter, no hand-off",
+      "Access to the Kinetic Studio",
+      "A production-ready component library",
+      "SEO, AEO and a performance pass",
+      "A start during your brand sprint",
+    ]}
+    cta={{ label: "Start with Primary", href: "https://www.primary.studio/contact" }}
+  />
   <WorkWheel heading="More websites | from Kinetic" only={rest} simple />
   <PartnerClose
     heading="Start with | a brand sprint"

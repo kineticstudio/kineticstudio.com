@@ -1,6 +1,5 @@
 ---
 import MarkLockup from "@/components/content/MarkLockup.astro";
-import Button from "@/components/Button.astro";
 import Modal from "@/components/interactive/Modal.astro";
 
 interface Props {
@@ -20,13 +19,22 @@ const { render = true, partner } = Astro.props;
    over on top of the gradient looped video": the Studio loop sits on a curved gradient like the page's own
    (neon into dark), with the button over it, which opens the film (the About page's, media/studio-film.mp4)
    with sound. */
+// the proposal's line icons (kinetic-contracts briefs/migration-sheet.mjs ICONS), one per point
+const ICONS: Record<string, string> = {
+  doc: "M5.5 3h9l4 4v14h-13z M14.5 3v4h4 M8.5 11h7 M8.5 14.5h7 M8.5 18h4",
+  browser: "M3 5h18v14H3z M3 9h18 M6 7h1 M9 7h1",
+  play: "M3.5 5h17v14h-17z M10 9v6l5-3z",
+  pin: "M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z M12 7.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5",
+  sliders: "M4 6h9 M17 6h3 M4 12h3 M11 12h9 M4 18h11 M19 18h1 M15 4v4 M9 10v4 M17 16v4",
+  deploy: "M4 20h16 M12 16V4 M7.5 8.5L12 4l4.5 4.5",
+};
 const POINTS = [
-  ["Your brand book, built in", `${partner}'s colours, type, logos and guidelines load into the Studio, so every wireframe and design starts on-brand.`],
-  ["One link for everything", "Every page, wireframe, prototype and design, in one place."],
-  ["Live prototypes", "Real, interactive builds to click through, not static mockups."],
-  ["Real-time commenting", "Pin a note to any spot, with replies, mentions and files."],
-  ["Parameter tuning", "Dial in motion, colour and type live, then lock it in."],
-  ["From approved to live", "Every revision kept, and live in one step, with a preview first."],
+  ["doc", "Your brand book, built in", `${partner}'s colours, type, logos and guidelines load into the Studio, so every wireframe and design starts on-brand.`],
+  ["browser", "One link for everything", "Every page, wireframe, prototype and design, in one place."],
+  ["play", "Live prototypes", "Real, interactive builds to click through, not static mockups."],
+  ["pin", "Real-time commenting", "Pin a note to any spot, with replies, mentions and files."],
+  ["sliders", "Parameter tuning", "Dial in motion, colour and type live, then lock it in."],
+  ["deploy", "From approved to live", "Every revision kept, and live in one step, with a preview first."],
 ];
 ---
 
@@ -46,8 +54,9 @@ const POINTS = [
             The whole project lives in the Kinetic Studio, a tool Kinetic built for itself. {partner}'s brand book goes in first, and everything after is built from it.
           </p>
           <ul class="studio-p_points">
-            {POINTS.map(([title, body], i) => (
+            {POINTS.map(([icon, title, body], i) => (
               <li class="studio-p_point" data-reveal style={`--reveal-delay:${(0.04 * i).toFixed(2)}s`}>
+                <svg class="studio-p_icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d={ICONS[icon]} /></svg>
                 <h3 class="studio-p_point-title text-style-h5">{title}</h3>
                 <p class="studio-p_point-body text-style-label">{body}</p>
               </li>
@@ -57,7 +66,10 @@ const POINTS = [
         <div class="studio-p_stage" data-studio-stage data-reveal>
           <video data-src="/media/kinetic-studio.mp4" poster="/media/kinetic-studio.webp" muted loop playsinline preload="none" aria-label="The Kinetic Studio, in use" />
           <div class="studio-p_play">
-            <Button element="button" data-modal-open="studio-film">Watch the film</Button>
+            <button class="studio-p_film-btn text-style-h5" type="button" data-modal-open="studio-film">
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" /></svg>
+              Watch the film
+            </button>
           </div>
         </div>
       </div>
@@ -157,26 +169,40 @@ const POINTS = [
     .studio-p_point-body {
       margin: 0;
     }
+    .studio-p_point-title {
+      font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+    }
     .studio-p_point-body {
       color: color-mix(in srgb, var(--text) 65%, transparent);
     }
-    /* the Studio loop on a curved gradient, the page's own (neon into the dark), the film's button over it */
+    /* the Studio loop on a glow that rises out of the dark from the right (Hunter, Nov 17: "a gradient from left
+       to right, where it looks like it's kind of full bleed off to the right"; no hard line on the left or the
+       top): the stage runs off the window's right edge, its edges are the section's own dark, and the film
+       itself runs off the right too */
     .studio-p_stage {
+      --bleed: calc(var(--site-margin) + max(0px, (100vw - 2 * var(--site-margin) - var(--max-width-main, 90rem)) / 2));
       position: relative;
-      display: grid;
-      place-items: center;
-      padding: clamp(2rem, 7%, 5rem) clamp(1.5rem, 5%, 3.5rem);
-      border-radius: var(--radius-media);
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      min-height: 28rem;
+      margin-right: calc(-1 * var(--bleed));
+      padding: clamp(3rem, 8%, 6rem) 0 clamp(3rem, 8%, 6rem) clamp(2rem, 9%, 6rem);
       overflow: hidden;
-      background:
-        radial-gradient(ellipse 120% 95% at 0% 0%, var(--light-300) 0%, color-mix(in srgb, #c8ff54 70%, var(--light-300)) 30%, color-mix(in srgb, #c8ff54 55%, var(--dark-900)) 55%, var(--dark-900) 82%);
+      background: radial-gradient(ellipse 85% 75% at 100% 50%, color-mix(in srgb, #c8ff54 85%, var(--light-300)) 0%, color-mix(in srgb, #c8ff54 55%, var(--background)) 32%, color-mix(in srgb, #c8ff54 14%, var(--background)) 62%, var(--background) 92%);
       & video {
         display: block;
-        width: 100%;
+        flex: none;
+        width: 118%;
         aspect-ratio: 16 / 9;
         object-fit: cover;
-        border-radius: calc(var(--radius-media) * 0.75);
-        box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 0.35);
+        object-position: left center;
+        border-radius: calc(var(--radius-media) * 0.75) 0 0 calc(var(--radius-media) * 0.75);
+        box-shadow: 0 2rem 4rem rgb(0 0 0 / 0.45);
+      }
+      @media (width < 56rem) {
+        margin-left: calc(-1 * var(--site-margin));
+        min-height: 0;
       }
     }
     .studio-p_play {
@@ -188,6 +214,32 @@ const POINTS = [
       & > * {
         pointer-events: auto;
       }
+    }
+    /* a play button: the triangle in a dark pill, the words beside it */
+    .studio-p_film-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.7rem 1.2rem 0.7rem 0.9rem;
+      border: 0;
+      border-radius: 99rem;
+      background: var(--light-100);
+      color: var(--dark-900);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      &:hover {
+        transform: scale(1.04);
+      }
+      & svg {
+        display: block;
+      }
+    }
+    .studio-p_icon {
+      display: block;
+      width: 1.75rem;
+      height: 1.75rem;
+      margin-bottom: 0.25rem;
+      color: #c8ff54;
     }
     .studio-p_modal .studio-p_film {
       display: block;

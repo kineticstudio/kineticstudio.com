@@ -48,6 +48,10 @@ const kinetic = lanes.find((l) => l.kind === "kinetic");
 const phases = [partner, kinetic].flatMap((lane) =>
   (lane?.bars ?? []).map((b) => ({ ...b, kind: lane!.kind, d0: day(b.from), d1: day(b.to, true) })),
 );
+// the sprint's days are as tall as a later week (Hunter, Nov 17: "the height of 1 week should be the height of 1
+// day"), so the back and forth has room; every day after it is compact
+const SPRINT = Math.max(0, ...phases.filter((p) => p.kind === "partner").map((p) => p.d1));
+const yAt = (d: number) => `calc(${Math.min(d, SPRINT)} * var(--day-tall) + ${Math.max(d - SPRINT, 0)} * var(--day-h))`;
 const launch = (columns.findIndex((c) => /after/i.test(c)) + 1 || columns.length + 1) - 1; // weeks before launch
 const clean = (svg: string, label: string) =>
   svg
@@ -66,7 +70,7 @@ const clean = (svg: string, label: string) =>
         </h2>
         {lead && <p class="process_lead text-style-main">{lead}</p>}
       </div>
-      <div class="tl" style={`--days:${DAYS}`} data-tl data-days={DAYS} data-launch={launch * 5}>
+      <div class="tl" style={`--body-h:${yAt(DAYS)}`} data-tl data-days={DAYS} data-sprint={SPRINT} data-launch={launch * 5}>
         <div class="tl_logo is-partner">{partnerLogo ? <span set:html={clean(partnerLogo, partner?.name ?? "Partner")} /> : <span class="text-style-h5">{partner?.name}</span>}</div>
         <div class="tl_plus" aria-label="and">+</div>
         <div class="tl_logo is-kinetic"><span set:html={clean(kineticRaw, "Kinetic")} /></div>
@@ -77,17 +81,17 @@ const clean = (svg: string, label: string) =>
           <div class="tl_lane is-kinetic" data-lane="kinetic" />
           <div class="tl_spine" aria-hidden="true"><span class="tl_spine-fill" data-spine /></div>
           {columns.map((c, i) => (
-            <span class="tl_week text-style-label" style={`--d:${i * 5}`}>{c}</span>
+            <span class="tl_week text-style-label" style={`--y:${yAt(i * 5)}`}>{c}</span>
           ))}
           {phases.map((p) => (
-            <div class:list={["tl_phase", `is-${p.kind}`, p.soft && "is-soft"]} style={`--d0:${p.d0 - 1};--d1:${p.d1}`} data-phase={p.kind} data-d0={p.d0} data-d1={p.d1}>
+            <div class:list={["tl_phase", `is-${p.kind}`, p.soft && "is-soft"]} style={`--y:${yAt(p.d0 - 1)}`} data-phase={p.kind} data-d0={p.d0} data-d1={p.d1}>
               <span class="tl_phase-title text-style-label">{p.title}</span>
             </div>
           ))}
           {exchanges.map((x) => (
-            <span class:list={["tl_pass", `is-${x.from}`]} data-pass data-day={x.day} data-from={x.from} aria-hidden="true">
+            <span class:list={["tl_pass", `is-${x.from}`, "text-style-label"]} style={`--y:${yAt(x.day - 1)}`} data-pass data-day={x.day} data-from={x.from} aria-hidden="true">
               <i />
-              <span class="text-style-label">{x.label}</span>
+              {x.label}
             </span>
           ))}
           <div class="tl_now" data-now aria-hidden="true">
@@ -133,33 +137,38 @@ const clean = (svg: string, label: string) =>
     const ctx = canvas.getContext("2d")!;
     const now = tl.querySelector<HTMLElement>("[data-now]")!;
     const nowLabel = tl.querySelector<HTMLElement>("[data-now-label]")!;
-    const DAYS = Number(tl.dataset.days), LAUNCH = Number(tl.dataset.launch);
+    const DAYS = Number(tl.dataset.days), LAUNCH = Number(tl.dataset.launch), SPRINT = Number(tl.dataset.sprint);
     const spine = tl.querySelector<HTMLElement>("[data-spine]")!;
-    const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, day: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner" }));
-    let lanesX = { partner: 0, kinetic: 0 };
+    const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner" }));
+    let edges = { partner: 0, kinetic: 0 };
     type Cell = { x: number; y: number; day: number; r: number; rgb: number[]; soft: boolean; partner: boolean; was: boolean };
     type Dot = { sx: number; sy: number; ex: number; ey: number; cx: number; cy: number; t: number; dur: number };
     const dots: Dot[] = [];
     let last = 0;
-    let cells: Cell[] = [], W = 0, H = 0, dpr = 1, dayH = 18, axis = { x: 0, w: 0 };
+    let cells: Cell[] = [], W = 0, H = 0, dpr = 1, tall = 130, short = 26, axis = { x: 0, w: 0 };
     let seed = 3;
     const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    // a day's top, in px (the sprint's days tall, the rest short), and back
+    const yOf = (d: number) => Math.min(d, SPRINT) * tall + Math.max(d - SPRINT, 0) * short;
+    const dOf = (y: number) => (y <= SPRINT * tall ? y / tall : SPRINT + (y - SPRINT * tall) / short);
+    const hOf = (d: number) => (d < SPRINT ? tall : short);
 
     const build = () => {
-      const B = body.getBoundingClientRect();
+      const B = body.getBoundingClientRect(), cs = getComputedStyle(tl);
+      tall = parseFloat(cs.getPropertyValue("--day-tall")) || 130;
+      short = parseFloat(cs.getPropertyValue("--day-h")) || 26;
       W = B.width;
       H = B.height;
-      dayH = H / DAYS;
       dpr = Math.min(2, devicePixelRatio || 1);
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       const a = tl.querySelector<HTMLElement>("[data-axis]")!.getBoundingClientRect();
       axis = { x: a.left - B.left, w: a.width };
+      // the blocks' inner edges, either side of the middle: where things leave and land
       const lp = tl.querySelector<HTMLElement>('[data-lane="partner"]')!.getBoundingClientRect(), lk = tl.querySelector<HTMLElement>('[data-lane="kinetic"]')!.getBoundingClientRect();
-      lanesX = { partner: lp.left - B.left + lp.width * 0.62, kinetic: lk.left - B.left + lk.width * 0.38 };
+      edges = { partner: lp.right - B.left - SIZE, kinetic: lk.left - B.left };
       seed = 3;
       cells = [];
-      const rowsPerDay = Math.max(1, Math.round(dayH / PITCH));
       for (const ph of tl.querySelectorAll<HTMLElement>("[data-phase]")) {
         const lane = tl.querySelector<HTMLElement>(`[data-lane="${ph.dataset.phase}"]`)!.getBoundingClientRect();
         const partner = ph.dataset.phase === "partner";
@@ -168,10 +177,13 @@ const clean = (svg: string, label: string) =>
         const cols = Math.floor((lane.width + (PITCH - SIZE)) / PITCH);
         const x0 = partner ? lane.right - B.left - cols * PITCH + (PITCH - SIZE) : lane.left - B.left;
         for (let d = d0; d <= d1; d++) {
-          for (let r = 0; r < rowsPerDay; r++) {
-            const y = (d - 1) * dayH + (r * dayH) / rowsPerDay + (dayH / rowsPerDay - SIZE) / 2;
+          const top = yOf(d - 1), dh = hOf(d - 1), rows = Math.max(1, Math.round(dh / PITCH));
+          for (let r = 0; r < rows; r++) {
+            const y = top + (r * dh) / rows + (dh / rows - SIZE) / 2;
             for (let c = 0; c < cols; c++) {
-              cells.push({ x: x0 + c * PITCH, y, day: d - 1, r: rand(), rgb: partner ? NEON : INK, soft: ph.classList.contains("is-soft"), partner, was: false });
+              // in the tall days a square lights at its own row's share of the day, so the block fills downward
+              const share = dh > 40 ? (r + rand()) / rows : rand();
+              cells.push({ x: x0 + c * PITCH, y, day: d - 1, r: share, rgb: partner ? NEON : INK, soft: ph.classList.contains("is-soft"), partner, was: false });
             }
           }
         }
@@ -186,7 +198,7 @@ const clean = (svg: string, label: string) =>
       ctx.fillStyle = "rgba(238,241,234,0.22)";
       for (let d = 0; d <= DAYS; d++) {
         const w = d % 5 === 0 ? axis.w * 0.5 : axis.w * 0.18;
-        ctx.fillRect(axis.x + (axis.w - w) / 2, Math.round(d * dayH), w, 1);
+        ctx.fillRect(axis.x + (axis.w - w) / 2, Math.round(yOf(d)), w, 1);
       }
       const sources = cells.filter((c) => c.partner && c.was);
       for (const c of cells) {
@@ -197,10 +209,9 @@ const clean = (svg: string, label: string) =>
         // one phase populating the other: as a Kinetic square comes on, now and then a neon square flies to
         // it from Primary's block (Hunter, Nov 17: "little dots coming from the left over to the right")
         const on = lit > 0;
-        if (on && !c.was && !c.partner && sources.length && dots.length < 160 && rand() < 0.16) {
+        if (on && !c.was && !c.partner && sources.length && dots.length < 120 && rand() < 0.1) {
           const s0 = sources[Math.floor(rand() * sources.length)];
-          const sx = s0.x, sy = s0.y, ex = c.x, ey = c.y;
-          dots.push({ sx, sy, ex, ey, cx: (sx + ex) / 2, cy: Math.min(sy, ey) - 20 - rand() * 40, t: 0, dur: 650 + rand() * 500 });
+          dots.push({ sx: s0.x, sy: s0.y, ex: c.x, ey: c.y, cx: (s0.x + c.x) / 2, cy: Math.min(s0.y, c.y) - 20 - rand() * 40, t: 0, dur: 650 + rand() * 500 });
         }
         c.was = on;
       }
@@ -218,25 +229,22 @@ const clean = (svg: string, label: string) =>
         ctx.fillRect(x, y, SIZE, SIZE);
         if (u >= 1) dots.splice(i, 1);
       }
-      // the things passed across: thrown on their day, a day and a half in the air (scrubbed by the scroll,
-      // so they go back if you scroll back), then they rest a few days where they landed and fade
-      const FLY = 1.6;
+      /* the things passed across, scrubbed by the scroll: on its moment a square leaves the sender's block,
+         crosses the middle in a low arc and drops into the other's; its name sits in the sender's margin, a
+         running log beside the blocks (never on top of the squares), bright while it is in the air, then dimmer */
+      const FLY = 0.45;
       for (const p of passes) {
-        const u = (cur - p.day) / FLY;
-        if (u < 0 || cur > p.day + FLY + 5) {
-          p.el.style.opacity = "0";
-          continue;
-        }
-        const e = Math.min(1, u), k = e < 0.5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2;
-        const sx = p.partner ? lanesX.partner : lanesX.kinetic, ex = p.partner ? lanesX.kinetic : lanesX.partner;
-        const sy = (p.day + 0.5) * dayH, ey = (p.day + FLY + 0.5) * dayH, lift = Math.abs(ex - sx) * 0.12;
-        const x = sx + (ex - sx) * k, y = sy + (ey - sy) * k - Math.sin(Math.PI * k) * lift;
-        const fade = cur > p.day + FLY + 4 ? 1 - (cur - p.day - FLY - 4) : 1;
-        p.el.style.opacity = String(Math.max(0, Math.min(1, u * 6, fade)));
-        p.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+        const u = (cur - p.at) / FLY;
+        p.el.style.opacity = u < 0 ? "0" : u < 1 ? String(Math.min(1, u * 4)) : "0.6";
+        if (u <= 0 || u >= 1) continue;
+        const k = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+        const sx = p.partner ? edges.partner : edges.kinetic, ex = p.partner ? edges.kinetic : edges.partner;
+        const y0 = yOf(p.at) + 6, y = y0 + (hOf(p.at) * 0.25) * k - Math.sin(Math.PI * k) * 18;
+        ctx.fillStyle = p.partner ? `rgb(${NEON})` : `rgb(${INK})`;
+        ctx.fillRect(sx + (ex - sx) * k - 1, y - 1, SIZE + 2, SIZE + 2);
       }
       // the day line, stronger, across everything, and the line down the middle filled to it
-      const y = Math.min(DAYS, cur) * dayH;
+      const y = yOf(Math.min(DAYS, cur));
       spine.style.height = `${y.toFixed(1)}px`;
       now.style.transform = `translateY(${y.toFixed(1)}px)`;
       const d = Math.min(DAYS, Math.max(1, Math.ceil(cur)));
@@ -252,7 +260,7 @@ const clean = (svg: string, label: string) =>
     const onScroll = () => {
       if (reduced) return;
       const r = body.getBoundingClientRect(), start = innerHeight * 0.7;
-      target = Math.min(DAYS, Math.max(0, ((start - r.top) / r.height) * DAYS));
+      target = Math.min(DAYS, Math.max(0, dOf(start - r.top)));
       if (!raf) raf = requestAnimationFrame(tick);
     };
     new ResizeObserver(() => {
@@ -266,7 +274,7 @@ const clean = (svg: string, label: string) =>
     new IntersectionObserver(([e]) => (seen = e.isIntersecting)).observe(body);
     setInterval(() => {
       if (!seen || reduced || document.hidden || dots.length > 40) return;
-      const src = cells.filter((c) => c.partner && c.was), dst = cells.filter((c) => !c.partner && c.was && Math.abs(c.day - cur) < 2.5);
+      const src = cells.filter((c) => c.partner && c.was), dst = cells.filter((c) => !c.partner && c.was && Math.abs(c.day - cur) < 1.5);
       if (!src.length || !dst.length) return;
       const a = src[Math.floor(rand() * src.length)], b = dst[Math.floor(rand() * dst.length)];
       dots.push({ sx: a.x, sy: a.y, ex: b.x, ey: b.y, cx: (a.x + b.x) / 2, cy: Math.min(a.y, b.y) - 20 - rand() * 40, t: 0, dur: 800 + rand() * 600 });
@@ -303,7 +311,8 @@ const clean = (svg: string, label: string) =>
     /* Primary's lane | the days | Kinetic's lane, each lane with its phases' names on its outer side */
     /* the lanes are narrow and hug the days, the phases' names beside them, the whole thing centred */
     .tl {
-      --day-h: 26px;
+      --day-tall: 130px; /* a day of the sprint */
+      --day-h: 26px; /* a day after it */
       --axis-w: 5.5rem;
       --lane-w: clamp(7rem, 17vw, 15rem);
       --label-w: 9rem;
@@ -313,6 +322,7 @@ const clean = (svg: string, label: string) =>
       row-gap: var(--space-5);
       width: 100%;
       @media (width < 48rem) {
+        --day-tall: 80px;
         --day-h: 16px;
         --axis-w: 3.25rem;
         --lane-w: 4.5rem;
@@ -363,7 +373,7 @@ const clean = (svg: string, label: string) =>
       grid-column: 1 / -1;
       display: grid;
       grid-template-columns: subgrid;
-      height: calc(var(--days) * var(--day-h));
+      height: var(--body-h);
     }
     .tl_canvas {
       position: absolute;
@@ -401,7 +411,7 @@ const clean = (svg: string, label: string) =>
     .tl_week {
       position: absolute;
       z-index: 1;
-      top: calc(var(--d) * var(--day-h));
+      top: var(--y);
       translate: 0 -50%;
       padding-block: 0.2rem;
       background: var(--background);
@@ -418,7 +428,7 @@ const clean = (svg: string, label: string) =>
     /* each phase's name, small, on its lane's outer side at its first day */
     .tl_phase {
       position: absolute;
-      top: calc(var(--d0) * var(--day-h) - 0.1rem);
+      top: calc(var(--y) - 0.1rem);
       display: flex;
       flex-direction: column;
       gap: 0;
@@ -446,36 +456,41 @@ const clean = (svg: string, label: string) =>
     .tl_phase-title {
       color: var(--text);
     }
-    /* a thing passed across: a square and its name, thrown from one lane to the other */
+    /* a thing passed across: its name in the sender's margin at its moment, a square of the sender's colour
+       before it (the square itself flies on the canvas) */
     .tl_pass {
       position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 2;
+      top: calc(var(--y) + 0.15rem);
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.45rem;
+      width: calc(50% - var(--axis-w) / 2 - var(--lane-w));
+      max-width: var(--label-w);
+      padding-inline: 0.75rem;
       opacity: 0;
-      white-space: nowrap;
+      color: color-mix(in srgb, var(--text) 80%, transparent);
+      font-size: 0.75rem;
+      line-height: 1.2;
       pointer-events: none;
-      will-change: transform, opacity;
+      transition: opacity 0.2s linear;
+      @media (width < 48rem) {
+        font-size: 0.5625rem;
+      }
       & i {
         display: block;
         flex: none;
-        width: 6px;
-        height: 6px;
-        translate: -3px 0;
+        width: 5px;
+        height: 5px;
         background: var(--light-100);
       }
-      & span {
-        padding: 0.1rem 0.35rem;
-        background: var(--background);
-        font-size: 0.6875rem;
-        line-height: 1.2;
-        @media (width < 48rem) {
-          font-size: 0.5625rem;
-        }
-      }
+    }
+    .tl_pass.is-partner {
+      right: calc(50% + var(--axis-w) / 2 + var(--lane-w));
+      flex-direction: row-reverse;
+      text-align: right;
+    }
+    .tl_pass.is-kinetic {
+      left: calc(50% + var(--axis-w) / 2 + var(--lane-w));
     }
     .tl_pass.is-partner i {
       background: #c8ff54;

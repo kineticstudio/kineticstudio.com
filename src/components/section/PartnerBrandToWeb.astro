@@ -18,6 +18,8 @@ interface Props {
     slug: string;
     /** 16:9 pages of the brand guidelines, as the partner delivered them. */
     slides: { src: string; alt: string }[];
+    /** One line under the name: what the brand became on the web. */
+    line?: string;
   }[];
 }
 
@@ -56,7 +58,6 @@ const rows = pairs
       <ul class="brand-web_list" style={`--mac-ratio:${MAC.width / MAC.height}`}>
         {rows.map(({ p, w, link }) => (
           <li class="brand-web_row" data-slug={w.slug}>
-            <p class="brand-web_name text-style-h3">{w.name}</p>
             <div class="brand-web_pair">
               <figure class="brand-web_book" aria-label={`${w.name} brand guidelines by Primary`} data-book>
                 {[p.slides.filter((_, i) => i % 2 === 0), p.slides.filter((_, i) => i % 2 === 1)].map((line, r) => (
@@ -72,6 +73,12 @@ const rows = pairs
                   ))}
                 </ul>
               </figure>
+              {/* under the pages: the name, one line, and the live site (Hunter, Nov 17) */}
+              <div class="brand-web_caption">
+                <p class="brand-web_name text-style-h4">{w.name}</p>
+                {p.line && <p class="brand-web_line text-style-main">{p.line}</p>}
+                <a class="brand-web_visit text-style-label" href={w.url} target="_blank" rel="noopener">View the site <span aria-hidden="true">↗</span></a>
+              </div>
               <a class="brand-web_device" {...link} aria-label={`${w.name}, the website`} data-mac>
                 <img class="brand-web_mac" src={MAC.src} alt="" width={MAC.width} height={MAC.height} loading="lazy" decoding="async" />
                 <span class="brand-web_screen" style={`--site-ground:${(MEDIA as Record<string, { ground: string }>)[w.cover]?.ground ?? "#111"}`}>
@@ -99,7 +106,7 @@ const rows = pairs
      sticks to the screen; each row's name takes the light text while the dark is behind it. */
   const ground = document.querySelector<HTMLElement>("[data-ground]");
   const layer = ground?.querySelector<HTMLElement>(".bw-ground_layer");
-  const names = [...document.querySelectorAll<HTMLElement>(".brand-web_name")];
+  const names = [...document.querySelectorAll<HTMLElement>(".brand-web_caption")];
   const rowsEls = [...document.querySelectorAll<HTMLElement>(".brand-web_row")];
   const hex = (h: string) => {
     const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(h.trim());
@@ -193,6 +200,7 @@ const rows = pairs
        1 / cos(a) and more, so the pages further left come nearer and stretch, each in its own slot. */
     const build = () => {
       dev.style.width = `${LOOK.laptop.width}%`;
+      pair.style.setProperty("--dev-w", `${LOOK.laptop.width}%`);
       // the pages run in from the window's own left edge, however wide the window (not the content's)
       book.style.left = `${-pair.getBoundingClientRect().left}px`;
       fit(dev);
@@ -344,6 +352,7 @@ const rows = pairs
     .brand-web_pair {
       position: relative;
       display: flex;
+      flex-wrap: wrap;
       justify-content: flex-end;
       padding-block: clamp(2rem, 5vw, 5rem);
     }
@@ -395,11 +404,47 @@ const rows = pairs
       height: 100%;
       object-fit: fill;
     }
+    /* the name, its line and the link, under the pages on the left; under the laptop on a phone */
+    .brand-web_caption {
+      position: absolute;
+      left: 0;
+      bottom: clamp(2rem, 5vw, 5rem);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-2, 0.5rem);
+      width: calc(100% - var(--dev-w, 68%) - 1rem);
+      max-width: 24rem;
+      @media (width < 48rem) {
+        position: static;
+        order: 2;
+        width: 100%;
+        margin-top: var(--space-4);
+      }
+    }
+    .brand-web_line {
+      margin: 0;
+      color: color-mix(in srgb, currentColor 72%, transparent);
+    }
+    .brand-web_visit {
+      margin-top: var(--space-2, 0.5rem);
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+      text-decoration-thickness: 1px;
+      &:hover {
+        text-decoration-thickness: 2px;
+      }
+    }
     .brand-web_name {
       position: relative;
       z-index: 2;
       width: fit-content;
       margin: 0;
+      transition: color 0.3s ease;
+    }
+    .brand-web_caption {
       transition: color 0.3s ease;
       &.is-on-dark {
         color: var(--light-100);

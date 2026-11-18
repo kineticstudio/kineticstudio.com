@@ -1,0 +1,122 @@
+---
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The headline; a "|" breaks it onto a second line. */
+  heading: string;
+  /** The offer, one line ("$50,000 for a live website in 4 weeks"). */
+  offer: string;
+  /** What it includes, each a short line beside a check. */
+  includes: string[];
+  /** A link under the list. */
+  cta?: { label: string; href: string };
+}
+
+const { render = true, heading, offer, includes, cta } = Astro.props;
+/* The offer (Hunter, Nov 17: "A special relationship with Primary ... '$50,000 for a live website in 4 weeks that
+   includes,' and it has a checkbox of everything it includes", from the Primary proposal's "What you get" and
+   its fixed-price card, kinetic-contracts briefs/migration/primary.mjs). Light, on the page's own ground: the
+   headline and the offer on the left, the list of checks on the right. */
+---
+
+{
+  render && (
+    <section class="offer" aria-labelledby="offer-title">
+      <div class="offer_inner">
+        <div class="offer_head" data-reveal>
+          <h2 id="offer-title" class="offer_title text-style-h2">
+            {heading.split("|").map((line) => <span>{line.trim()}</span>)}
+          </h2>
+          <p class="offer_line text-style-large">{offer}</p>
+          {cta && (
+            <a class="offer_cta text-style-label" href={cta.href} target="_blank" rel="noopener">
+              {cta.label} <span aria-hidden="true">↗</span>
+            </a>
+          )}
+        </div>
+        <ul class="offer_list">
+          {includes.map((item, i) => (
+            <li class="offer_item text-style-main" data-reveal style={`--reveal-delay:${(0.03 * i).toFixed(2)}s`}>
+              <span class="offer_check" aria-hidden="true">
+                <svg viewBox="0 0 16 16" width="12" height="12"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" /></svg>
+              </span>
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .offer {
+      background: var(--background);
+      color: var(--text);
+      padding: var(--section-space-large) var(--site-margin);
+    }
+    .offer_inner {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+      gap: clamp(2rem, 5vw, 5rem);
+      align-items: start;
+      max-width: var(--max-width-main, 90rem);
+      margin: 0 auto;
+      @media (width < 56rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .offer_head {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-5);
+    }
+    .offer_title {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+    }
+    .offer_line {
+      max-width: 22ch;
+      margin: 0;
+    }
+    .offer_cta {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+      text-decoration-thickness: 1px;
+    }
+    /* the checks, two columns, a hairline over each */
+    .offer_list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: var(--space-6);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      @media (width < 36rem) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .offer_item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: var(--space-4) 0;
+      border-top: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+    }
+    .offer_check {
+      display: grid;
+      place-items: center;
+      flex: none;
+      width: 1.35rem;
+      height: 1.35rem;
+      margin-top: 0.1rem;
+      border-radius: 0.25rem;
+      background: #c8ff54; /* Primary's neon */
+      color: #111;
+    }
+  }
+</style>

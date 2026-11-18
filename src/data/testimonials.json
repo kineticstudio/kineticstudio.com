@@ -2,6 +2,20 @@
   "_about": "Client words about Kinetic, collected from Slack and Gmail by the Kinetic Assistant hub (Nov 17 2026). None were written as testimonials. A quote renders on the site only when approved is true, and approval means Hunter has the client's OK on the exact words and the attribution (name, role, company, logo). Builds with PUBLIC_DRAFT_QUOTES=1 (the preview only) also show unapproved ones, marked as drafts; the production build never sets it. The hub tracks asking and approval on the board (clients/<slug>.testimonial). confidential: true means the client is confidential and must never be shown, even in a draft preview, without their explicit OK.",
   "quotes": [
     {
+      "id": "primary-nick-pattison",
+      "quote": "Hunter is our most trusted web partner. We’re integrating our processes so this feels like one coordinated engagement, from kickoff through launch.",
+      "name": "Nick Pattison",
+      "role": "Founder",
+      "company": "Primary",
+      "source": "Nick's email to a Primary client (OpenCode), Slack DM Oct 29 2026",
+      "featured": true,
+      "note": "The big quote on /primary. Nick's own words to a client, not written as a testimonial: needs his OK on the wording and his title before it shows.",
+      "approved": false,
+      "pages": [
+        "primary"
+      ]
+    },
+    {
       "id": "ramble-jessica-lo",
       "quote": "It's been incredible how fast you were able to stitch these all together, and +1 to the sphere effect!! I love how well it represents you get immersed in a world of multiple communities on stage!",
       "name": "Jessica Lo",
@@ -10,7 +24,10 @@
       "source": "Slack #ramble, Sep 2 2026",
       "primaryBrand": true,
       "approved": false,
-      "pages": ["primary", "home"]
+      "pages": [
+        "primary",
+        "home"
+      ]
     },
     {
       "id": "dorm-room-fund-madi-jacox",
@@ -20,7 +37,10 @@
       "company": "Dorm Room Fund",
       "source": "Gmail, Oct 2 2026",
       "approved": false,
-      "pages": ["primary", "home"]
+      "pages": [
+        "primary",
+        "home"
+      ]
     },
     {
       "id": "pave-russell-abdo",
@@ -30,7 +50,10 @@
       "company": "Pave",
       "source": "Slack DM, Jul 15 2026",
       "approved": false,
-      "pages": ["primary", "home"]
+      "pages": [
+        "primary",
+        "home"
+      ]
     },
     {
       "id": "new-era-stephanie-petricca",
@@ -40,7 +63,10 @@
       "company": "New Era",
       "source": "Gmail, Oct 30 2026",
       "approved": false,
-      "pages": ["primary", "home"]
+      "pages": [
+        "primary",
+        "home"
+      ]
     },
     {
       "id": "wispr-kim-stoner",
@@ -50,7 +76,10 @@
       "company": "Wispr Flow",
       "source": "Slack, Sep 15 2026 (about the Studio tool)",
       "approved": false,
-      "pages": ["primary", "home"]
+      "pages": [
+        "primary",
+        "home"
+      ]
     },
     {
       "id": "elio-ron-litvak",
@@ -60,7 +89,10 @@
       "company": "Elio",
       "source": "Slack, Sep 26 2026",
       "approved": false,
-      "pages": ["primary", "home"]
+      "pages": [
+        "primary",
+        "home"
+      ]
     },
     {
       "id": "natural-capital-kira-mccroden",
@@ -70,7 +102,9 @@
       "company": "Natural Capital",
       "source": "Gmail, Nov 13 2026",
       "approved": false,
-      "pages": ["home"]
+      "pages": [
+        "home"
+      ]
     },
     {
       "id": "goodside-jessica-strelioff",
@@ -80,7 +114,9 @@
       "company": "Goodside",
       "source": "Slack DM, Oct 2 2026",
       "approved": false,
-      "pages": ["home"]
+      "pages": [
+        "home"
+      ]
     },
     {
       "id": "pave-teresa-cullen",
@@ -90,7 +126,9 @@
       "company": "Pave",
       "source": "Slack, Sep 24 2026",
       "approved": false,
-      "pages": ["home"]
+      "pages": [
+        "home"
+      ]
     },
     {
       "id": "overland-sophia-umansky",
@@ -100,7 +138,9 @@
       "company": "Overland",
       "source": "Slack, Sep 11 2026",
       "approved": false,
-      "pages": ["home"]
+      "pages": [
+        "home"
+      ]
     },
     {
       "id": "auxia-meyli-doersch",

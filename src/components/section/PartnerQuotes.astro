@@ -6,8 +6,9 @@ interface Props {
   render?: boolean;
   /** Which page's quotes (each entry lists the pages it may appear on). */
   page: string;
-  /** "dark" to sit between dark sections (/primary: under the brand rows, into the timeline). */
-  theme?: "dark";
+  /** "dark" to sit between dark sections; "neon" on Primary's neon (/primary, Hunter, Nov 17: "the neon yellow
+      from Primary Studio's colors as a background"). */
+  theme?: "dark" | "neon";
 }
 
 const { render = true, page, theme } = Astro.props;
@@ -18,23 +19,21 @@ const { render = true, page, theme } = Astro.props;
    the page's edges, no fade; it pauses under the pointer. */
 const drafts = import.meta.env.PUBLIC_DRAFT_QUOTES === "1" || process.env.KS_STUDIO_BUILD === "1"; // previews and the Studio copy show drafts
 type Q = { id: string; quote: string; name: string; role?: string; company: string; approved: boolean; confidential?: boolean; pages: string[] };
-const quotes = (DATA.quotes as Q[]).filter((q) => q.pages.includes(page) && !q.confidential && (q.approved || drafts));
+const quotes = (DATA.quotes as Q[]).filter((q) => q.pages.includes(page) && !q.confidential && !(q as { featured?: boolean }).featured && (q.approved || drafts));
 const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
 ---
 
 {
   render && quotes.length > 0 && (
-    <section class:list={["quotes", theme && `theme-${theme}`]} aria-label="What clients say">
+    <section class:list={["quotes", theme === "dark" && "theme-dark", theme === "neon" && "is-neon"]} aria-label="What clients say">
       <div class="quotes_track" style={`--count:${quotes.length}`}>
         {[0, 1].map((copy) => (
           <ul class="quotes_set" aria-hidden={copy === 1 ? "true" : undefined}>
             {quotes.map((q) => (
               <li class="quotes_item">
-                <blockquote class="quotes_quote text-style-large">{q.quote}</blockquote>
-                <p class="quotes_by text-style-label">
-                  {by(q)}
-                  {!q.approved && <span class="quotes_draft">Draft, not approved</span>}
-                </p>
+                {/* no attribution in the marquee (Hunter, Nov 17); the names are in the data and the approvals */}
+                <blockquote class="quotes_quote" aria-label={`${q.quote}, ${by(q)}`}>{q.quote}</blockquote>
+                {!q.approved && <p class="quotes_by text-style-label"><span class="quotes_draft">Draft, not approved</span></p>}
               </li>
             ))}
           </ul>
@@ -74,10 +73,12 @@ const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
-      width: clamp(17rem, 34vw, 30rem);
+      width: clamp(19rem, 38vw, 36rem);
     }
     .quotes_quote {
       margin: 0;
+      font-size: clamp(1.35rem, 2vw, 1.85rem);
+      line-height: 1.25;
       text-wrap: pretty;
     }
     .quotes_quote::before {
@@ -98,6 +99,19 @@ const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
       border-radius: 99rem;
       background: #c8ff54;
       color: #111;
+    }
+    /* Primary's neon, ink on it */
+    .quotes.is-neon {
+      --background: #c8ff54;
+      --text: #111;
+      border-block: 0;
+      & .quotes_by {
+        color: #111;
+      }
+      & .quotes_draft {
+        background: #111;
+        color: #c8ff54;
+      }
     }
     @keyframes quotes-run {
       from {

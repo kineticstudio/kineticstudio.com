@@ -1,0 +1,94 @@
+---
+import DATA from "@/data/testimonials.json";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Which page's featured quote (src/data/testimonials.json, `featured: true`). */
+  page: string;
+  /** The quoted person's company logo, raw SVG, beside the name. */
+  logo?: string;
+}
+
+const { render = true, page, logo } = Astro.props;
+/* One big quote from the partner's founder (Hunter, Nov 17: "Just like ... Noon Studio, like that reference,
+   there is a quote from Nick [Pattison], the founder of Primary. Let's make a big quote for that"). The same
+   rule as every quote: only approved words render; preview builds (PUBLIC_DRAFT_QUOTES=1) and the Studio copy
+   show it marked as a draft. */
+const drafts = import.meta.env.PUBLIC_DRAFT_QUOTES === "1" || process.env.KS_STUDIO_BUILD === "1";
+type Q = { quote: string; name: string; role?: string; company: string; approved: boolean; featured?: boolean; pages: string[] };
+const q = (DATA.quotes as Q[]).find((x) => x.featured && x.pages.includes(page) && (x.approved || drafts));
+const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid="[^"]*"/g, "").replace(/<svg /, '<svg aria-hidden="true" ');
+---
+
+{
+  render && q && (
+    <section class="fquote theme-dark" aria-label={`${q.name}, ${q.company}`}>
+      <figure class="fquote_inner" data-reveal>
+        <blockquote class="fquote_text">{q.quote}</blockquote>
+        <figcaption class="fquote_by text-style-label">
+          {logo && <span class="fquote_logo" set:html={clean(logo)} />}
+          <span>{[q.name, q.role, logo ? "" : q.company].filter(Boolean).join(", ")}</span>
+          {!q.approved && <span class="fquote_draft">Draft, not approved</span>}
+        </figcaption>
+      </figure>
+    </section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .fquote {
+      background: var(--background);
+      color: var(--text);
+      padding: var(--section-space-large) var(--site-margin);
+    }
+    .fquote_inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-6);
+      max-width: 62rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .fquote_text {
+      margin: 0;
+      font-size: clamp(1.9rem, 4.2vw, 3.6rem);
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
+      &::before {
+        content: "\201C";
+      }
+      &::after {
+        content: "\201D";
+      }
+    }
+    .fquote_by {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0;
+      color: color-mix(in srgb, var(--text) 65%, transparent);
+    }
+    .fquote_logo {
+      display: block;
+      height: 1.25rem;
+      color: var(--text);
+      & svg {
+        display: block;
+        width: auto;
+        height: 100%;
+      }
+    }
+    .fquote_draft {
+      padding: 0.05rem 0.45rem;
+      border-radius: 99rem;
+      background: #c8ff54;
+      color: #111;
+    }
+  }
+</style>
