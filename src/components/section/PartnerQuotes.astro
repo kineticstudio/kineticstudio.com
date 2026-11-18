@@ -98,12 +98,12 @@ const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
     .quotes_draft {
       padding: 0.05rem 0.45rem;
       border-radius: 99rem;
-      background: #c8ff54;
+      background: var(--brand-500);
       color: #111;
     }
     /* Primary's neon, ink on it */
     .quotes.is-neon {
-      --background: #c8ff54;
+      --background: var(--brand-500);
       --text: #111;
       border-block: 0;
       & .quotes_by {
@@ -111,7 +111,7 @@ const by = (q: Q) => [q.name, q.role, q.company].filter(Boolean).join(", ");
       }
       & .quotes_draft {
         background: #111;
-        color: #c8ff54;
+        color: var(--brand-500);
       }
     }
     /* left to right (Hunter, Nov 17) */

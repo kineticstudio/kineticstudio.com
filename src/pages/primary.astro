@@ -134,6 +134,21 @@ const EXCHANGES = [
   { day: 9.7, from: "partner", label: "Final presentation" },
   { day: 10.3, from: "partner", label: "Brand book", stick: true },
 ] as const;
+/* Kinetic's own process once Primary hands over (Hunter, Nov 18: "show off what would happen post-Primary ... how
+   the process works on our end"), each a pill that comes on in Kinetic's block as the line reaches it */
+const STEPS = [
+  { day: 11.3, label: "Homepage in the Studio" },
+  { day: 13.0, label: "Your comments, pinned" },
+  { day: 14.6, label: "Motion and interaction" },
+  { day: 16.2, label: "Homepage signed off" },
+  { day: 18.0, label: "Every page designed" },
+  { day: 20.0, label: "Components and CMS" },
+  { day: 22.0, label: "Built in code" },
+  { day: 24.0, label: "Content in" },
+  { day: 25.8, label: "Tested on every device" },
+  { day: 27.4, label: "SEO and performance" },
+  { day: 28.8, label: "Preview for sign-off" },
+] as const;
 const POINTS = [
   {
     title: "Straight to the designer",
@@ -171,6 +186,7 @@ const POINTS = [
   <PartnerProcess
     partnerLogo={primaryLogo}
     exchanges={[...EXCHANGES]}
+    steps={[...STEPS]}
     heading="Two studios, | one team"
     lead="Six weeks from kickoff with Primary to a live site. Kinetic is in the files before your sprint wraps, so nobody explains your company twice."
     columns={COLUMNS}

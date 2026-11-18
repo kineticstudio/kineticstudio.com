@@ -155,7 +155,7 @@ const rows = pairs
   const rowsEls = [...document.querySelectorAll<HTMLElement>(".brand-web_row")];
   const hex = (h: string) => {
     const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(h.trim());
-    return m ? m.slice(1).map((x) => parseInt(x, 16)) : [200, 255, 84];
+    return m ? m.slice(1).map((x) => parseInt(x, 16)) : [168, 255, 102];
   };
   const css = (v: string) => {
     const probe = document.createElement("i");
@@ -244,6 +244,7 @@ const rows = pairs
        pulled back: translateZ(F) rotateY(-a) translateZ(-F). It lands at x = F tan(a), stretched by
        1 / cos(a) and more, so the pages further left come nearer and stretch, each in its own slot. */
     const build = () => {
+      dev.style.translate = ""; // measured where it rests, not mid-slide
       dev.style.width = `${LOOK.laptop.width}%`;
       pair.style.setProperty("--dev-w", `${LOOK.laptop.width}%`);
       const glass = dev.hasAttribute("data-glass");
@@ -302,18 +303,30 @@ const rows = pairs
       }
     };
 
+    /* scrolling in (Hunter, Nov 18): the pages rush on with the scroll, a few seconds' travel spent as the row
+       comes up the screen, and the site slides in from the right to its place; both settle once the row is up */
+    const RUSH = 7; // seconds of the pages' drift spent by the scroll in
+    const SLIDE = 0.16; // the site starts this much of its width to the right
+    const wide = matchMedia("(width >= 48rem)");
+    const enter = () => {
+      const r = row.getBoundingClientRect();
+      const k = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight * 0.85)));
+      return 1 - Math.pow(1 - k, 3);
+    };
     let on = false, raf = 0, t0 = 0, t = 9;
     const frame = (now: number) => {
       raf = 0;
       if (!on) return;
       if (t0) t += Math.min(0.05, (now - t0) / 1000);
       t0 = now;
-      draw(t);
+      const e = enter();
+      draw(t + e * RUSH);
+      dev.style.translate = wide.matches ? `${((1 - e) * SLIDE * 100).toFixed(2)}% 0` : "";
       raf = requestAnimationFrame(frame);
     };
     const redo = () => {
       build();
-      draw(t);
+      draw(t + enter() * RUSH);
     };
     new ResizeObserver(redo).observe(pair);
     addEventListener("ks:brand-web-look", redo);
@@ -535,7 +548,7 @@ const rows = pairs
     .brand-web_visit2:hover .brand-web_go,
     .brand-web_visit2:focus-visible .brand-web_go {
       transform: scale(1.08);
-      background: #c8ff54;
+      background: var(--brand-500);
       color: #111;
     }
     /* 16 : 11.5 inside the frame (Hunter, Nov 17: "a bit taller"), the recordings made at exactly that shape

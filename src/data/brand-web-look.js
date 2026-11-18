@@ -3,7 +3,7 @@
    them; on the page by itself P opens the panel. A tuning is kept in this browser until Reset; Copy props
    hands back this object to paste over it. */
 export const BRAND_WEB_FILE = "src/data/brand-web-look.js";
-export const BRAND_WEB_KEY = "ks-brand-web-look-6"; // new key Nov 17: older tunings (with the blur and insets) are dropped
+export const BRAND_WEB_KEY = "ks-brand-web-look-7"; // new key Nov 17: older tunings (with the blur and insets) are dropped
 
 export const BRAND_WEB_LOOK = {
   // the guideline pages, on the inside of a barrel whose axis runs through the laptop's screen: the further
@@ -46,9 +46,9 @@ export const BRAND_WEB_LOOK = {
     glow: 0.6, // where the glow is strongest
     light: 0.92, // where it is all light
     glowMix: 0.7, // how much of the client's colour, against the light
-    hero: "#c8ff54", // Primary's neon, over the hero
+    hero: "#a8ff66", // Kinetic's lime (--kb-lime), the page's one green (Hunter, Nov 18: "use my color")
     exe: "#3e6c76", // exe's teal (its site)
     owner: "#25983f", // Owner's green (its brand book)
-    ramble: "#eeff83", // Ramble's lime (its brand book)
+    ramble: "#a8ff66", // Kinetic's lime, not a second yellow-green (Hunter, Nov 18)
   },
 };

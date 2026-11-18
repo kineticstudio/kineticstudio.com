@@ -51,7 +51,21 @@ const ICONS: Record<string, string> = {
         <div class="offer_price" data-reveal>
           <p class="offer_amount">
             {price.split("|").map((line) => (
-              <span>{line.trim().split(/(\[[^\]]*\])/).filter(Boolean).map((bit) => (bit.startsWith("[") ? <span class="offer_mute">{bit.slice(1, -1)}</span> : bit))}</span>
+              <span>
+                {line
+                  .trim()
+                  .split(/(\[[^\]]*\])/)
+                  .filter(Boolean)
+                  .map((bit) =>
+                    bit.startsWith("[") ? (
+                      <span class="offer_mute">{bit.slice(1, -1)}</span>
+                    ) : (
+                      bit.split(/(\$?\d[\d,]*)/).filter(Boolean).map((part) =>
+                        /\d/.test(part) ? <span class="offer_num" data-count={part.replace(/[^\d]/g, "")} data-prefix={part.startsWith("$") ? "$" : ""}>{part}</span> : part,
+                      )
+                    ),
+                  )}
+              </span>
             ))}
           </p>
           {offer && <p class="offer_line text-style-large">{offer}</p>}
@@ -69,14 +83,44 @@ const ICONS: Record<string, string> = {
   )
 }
 
+<script>
+  // the numbers count up as the price comes on screen (Hunter, Nov 18: "increment the numbers for 4 weeks and
+  // $50,000 as you scroll in"); each keeps its final width, so the line never shifts while it counts
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll<HTMLElement>(".offer_amount").forEach((amount) => {
+    const nums = [...amount.querySelectorAll<HTMLElement>("[data-count]")];
+    if (reduced || !nums.length) return;
+    const fmt = (el: HTMLElement, v: number) => (el.textContent = `${el.dataset.prefix ?? ""}${Math.round(v).toLocaleString("en-US")}`);
+    const run = () => {
+      nums.forEach((el) => {
+        el.style.minWidth = `${el.getBoundingClientRect().width}px`;
+        fmt(el, 0);
+      });
+      const t0 = performance.now(), DUR = 1600;
+      const step = (now: number) => {
+        const k = Math.min(1, (now - t0) / DUR), e = 1 - Math.pow(1 - k, 4);
+        nums.forEach((el) => fmt(el, Number(el.dataset.count) * e));
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      run();
+    }, { threshold: 0.4 });
+    io.observe(amount);
+  });
+</script>
+
 <style is:global>
   @layer components {
     .offer {
-      --background: #c8ff54; /* Primary's neon */
+      --background: var(--brand-500); /* Kinetic's lime, one green on the page (Hunter, Nov 18) */
       --text: #111;
       background: var(--background);
       color: var(--text);
-      padding: var(--section-space-large) var(--site-margin) var(--space-8);
+      padding: var(--section-space-large) var(--site-margin) 0; /* the cells run to the bottom (Hunter, Nov 18) */
       overflow-x: clip;
     }
     .offer_inner {
@@ -106,7 +150,7 @@ const ICONS: Record<string, string> = {
       gap: 0.6rem;
       padding: 1rem 1.4rem;
       background: #111;
-      color: #c8ff54;
+      color: var(--brand-500);
       text-decoration: none;
       transition: transform 0.2s ease;
       &:hover {
@@ -135,6 +179,10 @@ const ICONS: Record<string, string> = {
     .offer_mute {
       color: color-mix(in srgb, var(--text) 42%, transparent);
     }
+    .offer_num {
+      display: inline-block;
+      font-variant-numeric: tabular-nums;
+    }
     .offer_line {
       max-width: 30ch;
       margin: var(--space-3) 0 0;
@@ -155,7 +203,7 @@ const ICONS: Record<string, string> = {
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
-      padding: var(--space-5) var(--space-4) var(--space-5) 0;
+      padding: var(--space-6) var(--space-4) var(--space-7, 3rem) 0; /* a touch taller (Hunter, Nov 18) */
       border-bottom: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
       & + & {
         padding-left: var(--space-4);
@@ -165,6 +213,11 @@ const ICONS: Record<string, string> = {
         padding-left: 0;
         border-left: 0;
       }
+      /* the last row runs to the section's foot, no rule under it (Hunter, Nov 18) */
+      &:nth-last-child(-n + 5):nth-child(5n + 1),
+      &:nth-last-child(-n + 5):nth-child(5n + 1) ~ & {
+        border-bottom: 0;
+      }
       @media (width < 64rem) {
         &:nth-child(5n + 1) {
           padding-left: var(--space-4);
@@ -173,6 +226,14 @@ const ICONS: Record<string, string> = {
         &:nth-child(2n + 1) {
           padding-left: 0;
           border-left: 0;
+        }
+        &:nth-last-child(-n + 5):nth-child(5n + 1),
+        &:nth-last-child(-n + 5):nth-child(5n + 1) ~ & {
+          border-bottom: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+        }
+        &:nth-last-child(-n + 2):nth-child(2n + 1),
+        &:nth-last-child(-n + 2):nth-child(2n + 1) ~ & {
+          border-bottom: 0;
         }
       }
     }

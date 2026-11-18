@@ -24,11 +24,13 @@ interface Props {
       (1-based working day). */
   /** `stick`: the pill stays where it lands, so a few milestones stay on the chart (Hunter, Nov 18). */
   exchanges?: { day: number; from: "partner" | "kinetic"; label: string; stick?: boolean }[];
+  /** Kinetic's own steps after the sprint, each a pill that comes on in Kinetic's block as the line reaches its day. */
+  steps?: { day: number; label: string }[];
   /** A few short points under the timeline. */
   points?: { title: string; body: string }[];
 }
 
-const { render = true, heading, lead, columns, lanes, partnerLogo, exchanges = [], points = [] } = Astro.props;
+const { render = true, heading, lead, columns, lanes, partnerLogo, exchanges = [], steps = [], points = [] } = Astro.props;
 /* How the two studios hand off, day by day (Nick, Nov 9: "some clear process and timeline stuff"; Hunter,
    Nov 9: four weeks of web). Nov 17 (Hunter): "As I scroll down ... the primary logo and the Kinetic logo. In
    the middle, we have a timeline, and it's actually built out by days. You see a stronger line to show what
@@ -95,9 +97,10 @@ const clean = (svg: string, label: string) =>
               bottom, not this big [neon] thing"; "all of this can happen in 6 weeks from kickoff with Primary") */}
           {launch * 5 === DAYS && (
             <div class="tl_launch" style={`--y:${yAt(DAYS)}`} data-launch-band>
+              {/* "End of week 6" above the node, Launch under it (Hunter, Nov 18) */}
+              <span class="tl_launch-when text-style-label">End of week {launch}</span>
               <i class="tl_launch-node" aria-hidden="true" />
               <span class="tl_launch-word text-style-h5">Launch</span>
-              <span class="tl_launch-when text-style-label">End of week {launch}</span>
             </div>
           )}
           {phases.map((p) => (
@@ -111,6 +114,12 @@ const clean = (svg: string, label: string) =>
               <b>{x.label}</b>
             </span>
           ))}
+          {steps.map((x) => (
+            <span class="tl_pass tl_step is-kinetic text-style-label" data-step data-day={x.day} aria-hidden="true">
+              <i />
+              <b>{x.label}</b>
+            </span>
+          ))}
           <div class="tl_now" data-now aria-hidden="true">
             <span class="tl_now-label text-style-label" data-now-label>Day 1</span>
           </div>
@@ -118,6 +127,9 @@ const clean = (svg: string, label: string) =>
         <ol class="sr-only">
           {phases.map((p) => (
             <li>{`${p.kind === "partner" ? partner?.name : kinetic?.name}: ${p.title}, ${p.when}. ${p.note}`}</li>
+          ))}
+          {steps.map((x) => (
+            <li>{`Day ${Math.round(x.day)}: ${kinetic?.name}, ${x.label}`}</li>
           ))}
           {exchanges.map((x) => (
             <li>{`Day ${x.day}: ${x.label}, from ${x.from === "partner" ? partner?.name : kinetic?.name} to ${x.from === "partner" ? kinetic?.name : partner?.name}`}</li>
@@ -145,7 +157,7 @@ const clean = (svg: string, label: string) =>
      line goes by. Unlit squares stay faint, so the plan is there from the start. The day line follows the
      scroll: day 0 as the chart's top reaches 70% down the window, the last day as its bottom does, eased. */
   const PITCH = 6, SIZE = 4;
-  const NEON = [200, 255, 84], INK = [238, 241, 234];
+  const NEON = [168, 255, 102], INK = [238, 241, 234];
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   document.querySelectorAll<HTMLElement>("[data-tl]").forEach((tl) => {
@@ -159,9 +171,14 @@ const clean = (svg: string, label: string) =>
     const DAYS = Number(tl.dataset.days), LAUNCH = Number(tl.dataset.launch), SPRINT = Number(tl.dataset.sprint);
     const spine = tl.querySelector<HTMLElement>("[data-spine]")!;
     const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner", stick: el.hasAttribute("data-stick"), sx: 0, ex: 0 }));
+    const steps = [...tl.querySelectorAll<HTMLElement>("[data-step]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, x: 0 }));
+    // Kinetic's hand-backs carry a little burst of squares into Primary's block, which stay there, so the work is
+    // seen going both ways (Hunter, Nov 18)
+    type Burst = { at: number; sx: number; sy: number; ex: number; ey: number };
+    let bursts: Burst[] = [];
     let edges = { partner: 0, kinetic: 0 };
     let spans = { partner: [0, 0], kinetic: [0, 0] };
-    type Cell = { x: number; y: number; day: number; r: number; d2: number; rgb: number[]; soft: boolean; partner: boolean; sx: number; sy: number; fly: boolean; u: number };
+    type Cell = { x: number; y: number; day: number; r: number; d2: number; rgb: number[]; soft: boolean; partner: boolean; sx: number; sy: number; fly: boolean; u: number; spill: boolean };
     let cells: Cell[] = [], W = 0, H = 0, dpr = 1, tall = 130, short = 26, axis = { x: 0, w: 0 };
     let seed = 3;
     const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -194,6 +211,25 @@ const clean = (svg: string, label: string) =>
         // a pill that stays lands where it fits: wholly inside Primary's lane, or from inside Kinetic's outward
         if (p.stick) p.ex = p.partner ? to[0] + (to[1] - to[0]) * 0.12 : Math.max(to[0], Math.min(p.ex, to[1] - p.el.offsetWidth - 4));
       }
+      // Kinetic's own steps sit in its block, just in from the middle
+      for (const st of steps) st.x = spans.kinetic[0] + 6;
+      bursts = [];
+      for (const p of passes) {
+        if (p.partner) continue;
+        for (let k = 0; k < 9; k++) {
+          const at = p.at - 0.05 + k * 0.06;
+          bursts.push({
+            at,
+            sx: spans.kinetic[0] + rand() * (spans.kinetic[1] - spans.kinetic[0]) * 0.7,
+            sy: yOf(at) + rand() * hOf(at) * 0.6,
+            ex: spans.partner[0] + (0.2 + rand() * 0.75) * (spans.partner[1] - spans.partner[0]),
+            ey: yOf(at) + (0.3 + rand() * 0.6) * hOf(at),
+          });
+        }
+      }
+      // after the sprint Kinetic's block spills out to the right, wider each day, as the site grows (Hunter, Nov
+      // 18: "the dots kind of spill out to the right more as we go down, like more dots are added")
+      const spill = (parseFloat(cs.getPropertyValue("--spill-k")) || 0) * (spans.kinetic[1] - spans.kinetic[0]);
       seed = 3;
       cells = [];
       for (const ph of tl.querySelectorAll<HTMLElement>("[data-phase]")) {
@@ -205,12 +241,14 @@ const clean = (svg: string, label: string) =>
         const x0 = partner ? lane.right - B.left - cols * PITCH + (PITCH - SIZE) : lane.left - B.left;
         for (let d = d0; d <= d1; d++) {
           const top = yOf(d - 1), dh = hOf(d - 1), rows = Math.max(1, Math.round(dh / PITCH));
+          const grow = !partner && d > SPRINT ? Math.pow((d - SPRINT) / Math.max(1, DAYS - SPRINT), 0.8) : 0;
           for (let r = 0; r < rows; r++) {
             const y = top + (r * dh) / rows + (dh / rows - SIZE) / 2;
-            for (let c = 0; c < cols; c++) {
+            const more = grow ? Math.max(0, Math.round(((grow * spill) / PITCH) * (0.8 + rand() * 0.35))) : 0;
+            for (let c = 0; c < cols + more; c++) {
               // in the tall days a square lights at its own row's share of the day, so the block fills downward
               const share = dh > 40 ? (r + rand()) / rows : rand();
-              cells.push({ x: x0 + c * PITCH, y, day: d - 1, r: share, d2: rand(), rgb: partner ? NEON : INK, soft: ph.classList.contains("is-soft"), partner, sx: 0, sy: 0, fly: false, u: 0 });
+              cells.push({ x: x0 + c * PITCH, y, day: d - 1, r: share, d2: rand(), rgb: partner ? NEON : INK, soft: ph.classList.contains("is-soft"), partner, sx: 0, sy: 0, fly: false, u: 0, spill: c >= cols });
             }
           }
         }
@@ -271,7 +309,8 @@ const clean = (svg: string, label: string) =>
         // Nov 18: "keep Primary's side a bit wider"), so its edge only frays a little
         const left = 0.18 * ease, right = 0.58 + 0.42 * Math.min(1, (at / SPRINT) * 1.25);
         const rag = (c.d2 - 0.5) * (c.partner ? 0.1 : 0.16);
-        if (c.partner ? c.u < left + rag : c.u > right + rag) continue;
+        // after the sprint Kinetic's block is whole, spilling outward, so the old lane edge leaves no seam
+        if (!c.spill && !(!c.partner && c.day >= SPRINT) && (c.partner ? c.u < left + rag : c.u > right + rag)) continue;
         if (!c.partner && c.day < SPRINT && c.sy && c.fly) {
           // thrown as the day line reaches its row, so the whole flight happens above the line, in the past
           const u = (cur - at) / FLY_SQ;
@@ -315,17 +354,41 @@ const clean = (svg: string, label: string) =>
         p.el.classList.toggle("is-stuck", p.stick && u >= 1);
         p.el.style.transform = `translate(${x.toFixed(1)}px, ${(y - 6).toFixed(1)}px)`;
       }
+      for (const b of bursts) {
+        const u = (cur - b.at) / FLY_SQ;
+        if (u <= 0) continue;
+        if (u < 1) {
+          const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+          const cx = (b.sx + b.ex) / 2, cy = Math.min(b.sy, b.ey) - 30;
+          const x = (1 - e) * (1 - e) * b.sx + 2 * (1 - e) * e * cx + e * e * b.ex;
+          const y = (1 - e) * (1 - e) * b.sy + 2 * (1 - e) * e * cy + e * e * b.ey;
+          ctx.fillStyle = `rgb(${INK})`;
+          ctx.fillRect(x - 1.5, y - 1.5, SIZE + 3, SIZE + 3);
+        } else {
+          ctx.fillStyle = `rgb(${INK})`;
+          ctx.fillRect(b.ex, b.ey, SIZE, SIZE);
+        }
+      }
+      for (const st of steps) {
+        const on = Math.min(1, Math.max(0, (cur - st.at) * 4));
+        st.el.style.opacity = String(on);
+        st.el.style.transform = `translate(${st.x.toFixed(1)}px, ${(yOf(st.at) + 4 + (1 - on) * 8).toFixed(1)}px)`;
+      }
       // the day line, stronger, across everything, and the line down the middle filled to it
       const y = yOf(Math.min(DAYS, cur));
       spine.style.height = `${y.toFixed(1)}px`;
-      now.style.transform = `translateY(${y.toFixed(1)}px)`;
+      // over the last day the line draws in to the middle and becomes the Launch node (Hunter, Nov 18: "the day
+      // horizontal divider can collapse and animate into the launch")
+      const k0 = Math.min(1, Math.max(0, (DAYS - cur) / 1.2)), sx = k0 * k0 * (3 - 2 * k0);
+      now.style.transform = `translateY(${y.toFixed(1)}px) scaleX(${sx.toFixed(3)})`;
+      nowLabel.style.opacity = sx < 0.98 ? "0" : "";
       tl.querySelector("[data-launch-band]")?.classList.toggle("is-on", cur >= DAYS - 0.05);
       const d = Math.min(DAYS, Math.max(1, Math.ceil(cur)));
       nowLabel.textContent = d > LAUNCH ? "After launch" : `Day ${d}`;
       // the current day's own name (at the top of its day) goes too: the moving line carries it
       const dayTop = yOf(d - 1);
       for (const m of marks) m.el.style.visibility = cur < DAYS - 0.05 && cur > 0.05 && (Math.abs(m.y - y) < 26 || Math.abs(m.y - dayTop) < 2) ? "hidden" : "";
-      now.classList.toggle("is-done", cur >= DAYS - 0.05); // the Launch node takes over from the day line
+      now.classList.toggle("is-done", cur >= DAYS - 0.02); // the Launch node takes over from the day line
     };
     const tick = () => {
       raf = 0;
@@ -381,6 +444,8 @@ const clean = (svg: string, label: string) =>
          days were five times taller than the rest) */
       --day-h: 72px;
       --day-tall: var(--day-h);
+      --spill-k: 0.9; /* how far Kinetic's block spreads past its lane by launch, times the lane's width */
+      --spill: calc(var(--lane-w) * var(--spill-k));
       --axis-w: 5.5rem;
       --lane-w: clamp(7rem, 17vw, 15rem);
       --label-w: 9rem;
@@ -393,6 +458,7 @@ const clean = (svg: string, label: string) =>
       margin-bottom: clamp(8rem, 12vw, 11rem);
       @media (width < 48rem) {
         --day-h: 44px;
+        --spill-k: 0; /* no room on a phone */
         --axis-w: 3.25rem;
         --lane-w: 4.5rem;
         --label-w: 6rem;
@@ -534,7 +600,7 @@ const clean = (svg: string, label: string) =>
       text-align: right;
     }
     .tl_phase.is-kinetic {
-      left: calc(50% + var(--axis-w) / 2 + var(--lane-w));
+      left: calc(50% + var(--axis-w) / 2 + var(--lane-w) + var(--spill));
       padding-left: 0.75rem;
     }
     .tl_phase-title {
@@ -575,7 +641,7 @@ const clean = (svg: string, label: string) =>
       }
     }
     .tl_pass.is-partner i {
-      background: #c8ff54;
+      background: var(--brand-500);
     }
     .tl_phase.is-soft .tl_phase-title {
       color: color-mix(in srgb, var(--text) 70%, transparent);
@@ -590,6 +656,7 @@ const clean = (svg: string, label: string) =>
       border-top: 1px solid color-mix(in srgb, var(--text) 85%, transparent);
       will-change: transform;
       pointer-events: none;
+      transform-origin: 50% 0;
       transition: opacity 0.4s ease;
     }
     .tl_now-label {
@@ -642,14 +709,20 @@ const clean = (svg: string, label: string) =>
       transition: color 0.4s ease;
     }
     .tl_launch-when {
-      color: color-mix(in srgb, var(--text) 50%, transparent);
+      position: absolute;
+      bottom: calc(100% + 1.4rem);
+      left: 50%;
+      translate: -50% 0;
+      padding-block: 0.2rem;
+      background: var(--background);
+      color: color-mix(in srgb, var(--text) 60%, transparent);
     }
     .tl_launch.is-on,
     .tl.is-still .tl_launch {
       & .tl_launch-node {
-        background: #c8ff54;
-        border-color: #c8ff54;
-        box-shadow: 0 0 0 0.45rem color-mix(in srgb, #c8ff54 18%, transparent);
+        background: var(--brand-500);
+        border-color: var(--brand-500);
+        box-shadow: 0 0 0 0.45rem color-mix(in srgb, var(--brand-500) 18%, transparent);
         scale: 1.25;
       }
       & .tl_launch-word {
