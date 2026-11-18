@@ -88,7 +88,11 @@ const clean = (svg: string, label: string) =>
             <span class="tl_week tl_day text-style-label" style={`--y:${yAt(d)}`}>Day {d + 1}</span>
           ))}
           {/* launch, the chart's last line (Hunter, Nov 17: "I need Launch to be at the bottom") */}
-          {launch * 5 === DAYS && <span class="tl_week tl_launch text-style-label" style={`--y:${yAt(DAYS)}`}>Launch</span>}
+          {launch * 5 === DAYS && (
+            <div class="tl_launch" style={`--y:${yAt(DAYS)}`} data-launch-band>
+              <span class="tl_launch-word text-style-h3">Launch</span>
+            </div>
+          )}
           {phases.map((p) => (
             <div class:list={["tl_phase", `is-${p.kind}`, p.soft && "is-soft"]} style={`--y:${yAt(p.d0 - 1)}`} data-phase={p.kind} data-d0={p.d0} data-d1={p.d1}>
               <span class="tl_phase-title text-style-label">{p.title}</span>
@@ -97,7 +101,7 @@ const clean = (svg: string, label: string) =>
           {exchanges.map((x) => (
             <span class:list={["tl_pass", `is-${x.from}`, "text-style-label"]} data-pass data-day={x.day} data-from={x.from} aria-hidden="true">
               <i />
-              {x.label}
+              <b>{x.label}</b>
             </span>
           ))}
           <div class="tl_now" data-now aria-hidden="true">
@@ -286,6 +290,7 @@ const clean = (svg: string, label: string) =>
       const y = yOf(Math.min(DAYS, cur));
       spine.style.height = `${y.toFixed(1)}px`;
       now.style.transform = `translateY(${y.toFixed(1)}px)`;
+      tl.querySelector("[data-launch-band]")?.classList.toggle("is-on", cur >= DAYS - 0.05);
       const d = Math.min(DAYS, Math.max(1, Math.ceil(cur)));
       nowLabel.textContent = d > LAUNCH ? "After launch" : d === LAUNCH ? "Launch" : `Day ${d}`;
     };
@@ -402,6 +407,7 @@ const clean = (svg: string, label: string) =>
       display: grid;
       grid-template-columns: subgrid;
       height: var(--body-h);
+      margin-bottom: clamp(5rem, 9vw, 8rem);
     }
     .tl_canvas {
       position: absolute;
@@ -495,7 +501,7 @@ const clean = (svg: string, label: string) =>
       gap: 0.4rem;
       opacity: 0;
       white-space: nowrap;
-      font-size: 0.75rem;
+      font-size: 0.8125rem;
       line-height: 1;
       pointer-events: none;
       will-change: transform, opacity;
@@ -509,9 +515,13 @@ const clean = (svg: string, label: string) =>
         height: 7px;
         background: var(--light-100);
       }
-      & {
+      /* the name in a black block, square corners, so it reads over the squares (Hunter, Nov 17) */
+      & b {
+        padding: 0.35rem 0.55rem 0.3rem;
+        border-radius: 0;
+        background: #000;
         color: var(--light-100);
-        text-shadow: 0 0 6px var(--background), 0 0 2px var(--background);
+        font-weight: inherit;
       }
     }
     .tl_pass.is-partner i {
@@ -550,8 +560,30 @@ const clean = (svg: string, label: string) =>
     .tl_day {
       color: color-mix(in srgb, var(--text) 32%, transparent);
     }
+    /* launch, a moment of its own: a neon band right across the chart's last line, the word large in it; it
+       lands as the day line reaches it */
     .tl_launch {
-      color: #c8ff54;
+      position: absolute;
+      left: calc((100% - 100vw) / 2);
+      width: 100vw;
+      top: var(--y);
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      padding-block: clamp(1rem, 2vw, 1.75rem);
+      background: #c8ff54;
+      color: #111;
+      clip-path: inset(0 50% 0 50%);
+      transition: clip-path 0.9s cubic-bezier(0.7, 0, 0.2, 1);
+      &.is-on {
+        clip-path: inset(0 0 0 0);
+      }
+    }
+    .tl_launch-word {
+      margin: 0;
+    }
+    .tl.is-still .tl_launch {
+      clip-path: none;
     }
     .tl.is-still .tl_now {
       display: none;

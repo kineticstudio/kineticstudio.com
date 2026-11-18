@@ -28,7 +28,7 @@ const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid
         {/* the studio's name first, the quote under it (Hunter, Nov 17), then who said it */}
         {logo ? <p class="fquote_logo" set:html={clean(logo)} aria-label={q.company} /> : <p class="fquote_company text-style-h5">{q.company}</p>}
         <blockquote class="fquote_text">{q.quote}</blockquote>
-        <figcaption class="fquote_by text-style-label">
+        <figcaption class="fquote_by text-style-main">
           {q.avatar && <img class="fquote_avatar" src={q.avatar} alt="" width="96" height="96" loading="lazy" decoding="async" />}
           <span>{[q.name, q.role].filter(Boolean).join(", ")}</span>
         </figcaption>
@@ -60,6 +60,7 @@ const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid
       line-height: 1.12;
       letter-spacing: -0.02em;
       max-width: 22em;
+      color: color-mix(in srgb, var(--text) 58%, transparent); /* medium gray (Hunter, Nov 17) */
       text-wrap: pretty;
       &::before {
         content: "\201C";
@@ -73,14 +74,15 @@ const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid
       flex-wrap: wrap;
       justify-content: flex-start;
       align-items: center;
-      gap: 0.75rem;
+      gap: 1rem;
       margin: 0;
-      color: color-mix(in srgb, var(--text) 65%, transparent);
+      color: var(--text);
+      font-size: clamp(1.1rem, 1.4vw, 1.35rem);
     }
     .fquote_avatar {
       display: block;
-      width: 2.75rem;
-      height: 2.75rem;
+      width: 4rem;
+      height: 4rem;
       border-radius: 50%;
       object-fit: cover;
     }

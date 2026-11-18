@@ -4,16 +4,23 @@ interface Props {
   render?: boolean;
   /** The headline; a "|" breaks it onto a second line. */
   heading: string;
-  /** The offer, one line ("$50,000 for a live website in 4 weeks"). */
+  /** The price, set huge ("$50,000"). */
+  price: string;
+  /** The line under the price ("A live website, four weeks after your sprint"). */
   offer: string;
-  /** What it includes, each a short line beside its icon (the proposal's line icons). */
+  /** What it includes, each a short line under its icon (the proposal's line icons). */
   includes: { icon: string; text: string }[];
-  /** A link under the list. */
+  /** The button. */
   cta?: { label: string; href: string };
 }
 
-const { render = true, heading, offer, includes, cta } = Astro.props;
-// the proposal's line icons (kinetic-contracts briefs/migration-sheet.mjs ICONS)
+const { render = true, heading, price, offer, includes, cta } = Astro.props;
+/* The offer (Hunter, Nov 17: "A special relationship with Primary ... '$50,000 for a live website in 4 weeks that
+   includes,' and it has a checkbox of everything it includes", from the Primary proposal's "What you get" and
+   its fixed-price card, kinetic-contracts briefs/migration/primary.mjs). On Primary's neon, ink on it. Second
+   pass (Hunter: "I think this can be a better design"): the price is the moment, set as big as the page
+   allows, the headline and a real button above it, and what's included as a row of icons across the bottom,
+   split by hairlines, like a spec sheet. */
 const ICONS: Record<string, string> = {
   doc: "M5.5 3h9l4 4v14h-13z M14.5 3v4h4 M8.5 11h7 M8.5 14.5h7 M8.5 18h4",
   sitemap: "M9 3h6v4H9z M3 17h6v4H3z M15 17h6v4h-6z M12 7v5 M6 17v-5h12v5",
@@ -26,33 +33,32 @@ const ICONS: Record<string, string> = {
   speed: "M4 16a8 8 0 1 1 16 0 M12 16l4.5-5 M3 19.5h18",
   calendar: "M4 6h16v14H4z M4 10h16 M8 3v4 M16 3v4 M8 14h2 M12 14h2",
 };
-/* The offer (Hunter, Nov 17: "A special relationship with Primary ... '$50,000 for a live website in 4 weeks that
-   includes,' and it has a checkbox of everything it includes", from the Primary proposal's "What you get" and
-   its fixed-price card, kinetic-contracts briefs/migration/primary.mjs). On Primary's neon, ink on it, an icon
-   for each line (Hunter, Nov 17: "This should be the neon color and should be icons for each"): the headline
-   and the offer on the left, the list on the right. */
 ---
 
 {
   render && (
     <section class="offer" aria-labelledby="offer-title">
       <div class="offer_inner">
-        <div class="offer_head" data-reveal>
-          <h2 id="offer-title" class="offer_title text-style-h2">
+        <div class="offer_top" data-reveal>
+          <h2 id="offer-title" class="offer_title text-style-h3">
             {heading.split("|").map((line) => <span>{line.trim()}</span>)}
           </h2>
-          <p class="offer_line text-style-large">{offer}</p>
           {cta && (
-            <a class="offer_cta text-style-label" href={cta.href} target="_blank" rel="noopener">
-              {cta.label} <span aria-hidden="true">↗</span>
+            <a class="offer_btn text-style-h5" href={cta.href} target="_blank" rel="noopener">
+              {cta.label}
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" /></svg>
             </a>
           )}
         </div>
+        <div class="offer_price" data-reveal>
+          <p class="offer_amount">{price}</p>
+          <p class="offer_line text-style-large">{offer}</p>
+        </div>
         <ul class="offer_list">
           {includes.map((item, i) => (
-            <li class="offer_item text-style-main" data-reveal style={`--reveal-delay:${(0.03 * i).toFixed(2)}s`}>
-              <svg class="offer_icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d={ICONS[item.icon] ?? ICONS.spark} /></svg>
-              {item.text}
+            <li class="offer_item" data-reveal style={`--reveal-delay:${(0.03 * i).toFixed(2)}s`}>
+              <svg class="offer_icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d={ICONS[item.icon] ?? ICONS.spark} /></svg>
+              <span class="offer_text text-style-main">{item.text}</span>
             </li>
           ))}
         </ul>
@@ -68,23 +74,21 @@ const ICONS: Record<string, string> = {
       --text: #111;
       background: var(--background);
       color: var(--text);
-      padding: var(--section-space-large) var(--site-margin);
+      padding: var(--section-space-large) var(--site-margin) var(--space-8);
+      overflow-x: clip;
     }
     .offer_inner {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-      gap: clamp(2rem, 5vw, 5rem);
-      align-items: start;
-      max-width: var(--max-width-main, 90rem);
-      margin: 0 auto;
-      @media (width < 56rem) {
-        grid-template-columns: 1fr;
-      }
-    }
-    .offer_head {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      gap: var(--space-6);
+      max-width: var(--max-width-main, 90rem);
+      margin: 0 auto;
+    }
+    .offer_top {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
       gap: var(--space-5);
     }
     .offer_title {
@@ -92,41 +96,84 @@ const ICONS: Record<string, string> = {
       flex-direction: column;
       margin: 0;
     }
-    .offer_line {
-      max-width: 22ch;
+    /* the button: ink, square, an arrow */
+    .offer_btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 1rem 1.4rem;
+      background: #111;
+      color: #c8ff54;
+      text-decoration: none;
+      transition: transform 0.2s ease;
+      &:hover {
+        transform: translateY(-2px);
+      }
+    }
+    /* the price, as big as the page allows */
+    .offer_price {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      padding-top: var(--space-5);
+      border-top: 1px solid color-mix(in srgb, var(--text) 30%, transparent);
+    }
+    .offer_amount {
       margin: 0;
+      font-family: var(--display-family);
+      font-size: clamp(5rem, 19vw, 17rem);
+      line-height: 0.92;
+      padding-bottom: 0.08em;
+      letter-spacing: -0.02em;
     }
-    .offer_cta {
-      color: inherit;
-      text-decoration: underline;
-      text-underline-offset: 0.2em;
-      text-decoration-thickness: 1px;
+    .offer_line {
+      max-width: 30ch;
+      margin: var(--space-3) 0 0;
     }
-    /* the checks, two columns, a hairline over each */
+    /* what's included: a row of icons across the bottom, split by hairlines */
     .offer_list {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: var(--space-6);
-      margin: 0;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      margin: var(--space-6) 0 0;
       padding: 0;
       list-style: none;
-      @media (width < 36rem) {
-        grid-template-columns: 1fr;
+      border-top: 1px solid color-mix(in srgb, var(--text) 30%, transparent);
+      @media (width < 64rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
     .offer_item {
       display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      padding: var(--space-4) 0;
-      border-top: 1px solid color-mix(in srgb, var(--text) 22%, transparent);
+      flex-direction: column;
+      gap: var(--space-3);
+      padding: var(--space-5) var(--space-4) var(--space-5) 0;
+      border-bottom: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+      & + & {
+        padding-left: var(--space-4);
+        border-left: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+      }
+      &:nth-child(5n + 1) {
+        padding-left: 0;
+        border-left: 0;
+      }
+      @media (width < 64rem) {
+        &:nth-child(5n + 1) {
+          padding-left: var(--space-4);
+          border-left: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+        }
+        &:nth-child(2n + 1) {
+          padding-left: 0;
+          border-left: 0;
+        }
+      }
     }
     .offer_icon {
       display: block;
-      flex: none;
-      width: 1.5rem;
-      height: 1.5rem;
-      margin-top: -0.05rem;
+      width: 1.75rem;
+      height: 1.75rem;
+    }
+    .offer_text {
+      text-wrap: balance;
     }
   }
 </style>

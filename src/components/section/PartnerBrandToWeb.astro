@@ -99,7 +99,6 @@ const rows = pairs
                       {p.film.label}
                     </button>
                   )}
-                  <a class="brand-web_visit text-style-label" href={w.url} target="_blank" rel="noopener">View the site <span aria-hidden="true">↗</span></a>
                 </div>
               </div>
               {/* the site straight on in a frosted glass frame, no laptop (Hunter, Nov 17: "Instead of mockups, let's
@@ -107,6 +106,10 @@ const rows = pairs
               <a class="brand-web_device is-glass" href={w.url} target="_blank" rel="noopener" aria-label={`${w.name}, the live site`} data-mac data-glass>
                 <span class="brand-web_glass">
                   <video class="brand-web_video" data-src={`/media/scroll/${w.cover}.mp4`} poster={`/media/scroll/${w.cover}.jpg`} muted loop playsinline preload="none" aria-hidden="true" />
+                </span>
+                {/* the CTA to the live site: a circle with an arrow, at the frame's top right (Hunter, Nov 17) */}
+                <span class="brand-web_go" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" /></svg>
                 </span>
               </a>
             </div>
@@ -243,7 +246,7 @@ const rows = pairs
       const q = MAC.q;
       // the barrel's axis runs through the screen: the frame's middle, or the laptop's glass
       const sx = D.left - B.left + (glass ? 0.5 : (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4) * D.width;
-      const sy = D.top - B.top + (glass ? 0.5 : (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4) * D.height;
+      const sy = D.top - B.top + (glass ? 0.24 : (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4) * D.height;
       const reach = (b.reach * Math.PI) / 180;
       const F = sx / Math.tan(reach); // the page's left edge is `reach` round the barrel
       const h = b.page * D.height, w = (h * 16) / 9;
@@ -402,7 +405,7 @@ const rows = pairs
     .brand-web_list {
       display: flex;
       flex-direction: column;
-      gap: var(--space-8);
+      gap: 0;
       width: 100%;
       margin: 0;
       padding: 0;
@@ -411,11 +414,34 @@ const rows = pairs
     /* each client its own block: a rule across, its name, then its pages and site (Hunter, Nov 17: "clear
        delineation between each of the options") */
     .brand-web_row {
+      position: relative;
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
       padding-top: var(--space-5);
-      border-top: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+      /* the frame runs down past the row and is cut at the next row's line (Hunter, Nov 17: "Extend the bottom
+         a bit and then crop it off at the line"); only the bottom is cut, the pages still reach the window edge */
+      clip-path: inset(-100vh -100vw 0 -100vw);
+      /* the line across the top of each row, the whole window wide */
+      &::before,
+      &:last-child::after {
+        content: "";
+        position: absolute;
+        left: calc((100% - 100vw) / 2);
+        width: 100vw;
+        height: 1px;
+        background: color-mix(in srgb, var(--text) 18%, transparent);
+        z-index: 3;
+      }
+      &::before {
+        top: 0;
+      }
+      &:first-child::before {
+        display: none;
+      }
+      &:last-child::after {
+        bottom: 0;
+      }
     }
     /* the laptop on the right, big; the pages run in behind it from the page's left edge */
     .brand-web_pair {
@@ -423,7 +449,7 @@ const rows = pairs
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
-      padding-block: clamp(2rem, 5vw, 5rem);
+      padding-top: clamp(2rem, 5vw, 5rem);
     }
     .brand-web_book {
       position: absolute;
@@ -454,6 +480,11 @@ const rows = pairs
     /* the glass frame: a frosted border round the site, the pages blurred as they pass behind it */
     .brand-web_device.is-glass {
       aspect-ratio: 16 / 10;
+      margin-bottom: -9%; /* past the row's bottom, cut at the line */
+      @media (width < 48rem) {
+        width: 88% !important;
+        margin-bottom: 0;
+      }
       padding: clamp(0.6rem, 1.1vw, 1.1rem);
       border-radius: clamp(1rem, 1.8vw, 1.75rem);
       background: color-mix(in srgb, #fff 18%, transparent);
@@ -463,6 +494,26 @@ const rows = pairs
         0 2rem 4rem -1.5rem rgb(0 0 0 / 0.35);
       -webkit-backdrop-filter: blur(18px) saturate(1.4);
       backdrop-filter: blur(18px) saturate(1.4);
+    }
+    .brand-web_go {
+      position: absolute;
+      top: clamp(1.25rem, 2.2vw, 2rem);
+      right: clamp(1.25rem, 2.2vw, 2rem);
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      width: clamp(2.5rem, 4.4vw, 4rem);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--light-100);
+      color: var(--dark-900);
+      box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.18);
+      transition: transform 0.25s ease, background-color 0.25s ease;
+    }
+    .brand-web_device:hover .brand-web_go,
+    .brand-web_device:focus-visible .brand-web_go {
+      transform: scale(1.08);
+      background: #c8ff54;
     }
     .brand-web_glass {
       display: block;
@@ -518,7 +569,7 @@ const rows = pairs
     .brand-web_caption {
       position: absolute;
       left: 0;
-      bottom: clamp(2rem, 5vw, 5rem);
+      bottom: clamp(1.5rem, 3vw, 3rem);
       z-index: 2;
       display: flex;
       flex-direction: column;

@@ -173,8 +173,6 @@ const POINTS = [
   {/* client words, dark, between the rows and the timeline (Hunter, Nov 17: "we are totally missing the
       testimonials"); only approved quotes render (src/data/testimonials.json), drafts in previews */}
   <PartnerQuotes page="primary" theme="neon" />
-  {/* Nick's words, big, into the timeline (Hunter, Nov 17); drafts only until Nick approves them */}
-  <PartnerFeatureQuote page="primary" logo={primaryLogo} />
   <PartnerProcess
     partnerLogo={primaryLogo}
     exchanges={[...EXCHANGES]}
@@ -183,13 +181,16 @@ const POINTS = [
     columns={COLUMNS}
     lanes={LANES}
   />
+  {/* Nick's words, after the timeline (Hunter, Nov 17); drafts only until Nick approves them */}
+  <PartnerFeatureQuote page="primary" logo={primaryLogo} />
   {/* the Studio, from the proposal's tooling page, the brand book first (Hunter, Nov 17) */}
   <PartnerStudio partner="Primary" />
   {/* the offer (Hunter, Nov 17), from the Primary proposal's "What you get" and fixed-price card; replaces the
       timeline's two points ("Straight to the designer", "Yours to run"), which said the same */}
   <PartnerOffer
     heading="A special relationship | with Primary"
-    offer="$50,000 for a live website in four weeks, including:"
+    price="$50,000"
+    offer="A live website, four weeks after your sprint. It includes:"
     includes={[
       { icon: "doc", text: "Up to about 15 pages" },
       { icon: "sitemap", text: "Story, sitemap and wireframes" },

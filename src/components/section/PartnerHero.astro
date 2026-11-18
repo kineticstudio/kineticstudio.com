@@ -39,15 +39,15 @@ const clean = (svg: string, label: string) =>
   render && (
     <Section paddingTop="navoverlap" paddingBottom={compact ? "small" : "medium"} class:list={["partner-hero", compact && "is-compact"]} gap="0">
       <div class="partner-hero_inner">
-        <p class="partner-hero_lockup" data-reveal>
+        <p class="partner-hero_lockup" data-hero-in>
           <span class="partner-hero_partner" set:html={clean(partnerLogo, partnerName)} />
           <span class="partner-hero_x" aria-label="and">×</span>
           <span class="partner-hero_kinetic" set:html={clean(kineticRaw, "Kinetic")} />
         </p>
-        <h1 class:list={["partner-hero_title", compact ? "text-style-h2" : "text-style-h1"]} data-reveal style="--reveal-delay:0.08s">
-          {heading.split("|").map((line) => <span class="partner-hero_line">{line.trim()}</span>)}
+        <h1 class:list={["partner-hero_title", compact ? "text-style-h2" : "text-style-h1"]} data-hero-in>
+          {heading.split("|").map((line, i) => <span class="partner-hero_line" style={`--i:${i}`}><span>{line.trim()}</span></span>)}
         </h1>
-        <p class:list={["partner-hero_lead", compact ? "text-style-main" : "text-style-large"]} data-reveal style="--reveal-delay:0.16s">{lead}</p>
+        <p class:list={["partner-hero_lead", "text-style-large"]} data-hero-in>{lead}</p>
         {pedigree && (
           <div class="partner-hero_pedigree" data-reveal style="--reveal-delay:0.24s">
             <AwardsLaurels compact />
@@ -132,6 +132,46 @@ const clean = (svg: string, label: string) =>
     .section.partner-hero.is-compact {
       padding-top: clamp(6.5rem, 14vh, 9.5rem);
     }
+    /* the way in (Hunter, Nov 17: "better animations up here"): the two marks slide together from either side,
+       each headline line rises out of its own mask, then the line under them; reduced motion: all in place */
+    @media (prefers-reduced-motion: no-preference) {
+      .partner-hero_lockup .partner-hero_partner {
+        animation: ph-from-left 0.9s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+      }
+      .partner-hero_lockup .partner-hero_kinetic {
+        animation: ph-from-right 0.9s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+      }
+      .partner-hero_lockup .partner-hero_x {
+        animation: ph-fade 0.6s 0.35s ease both;
+      }
+      .partner-hero_line {
+        display: block;
+        overflow: clip;
+        padding-bottom: 0.04em;
+        & > span {
+          display: block;
+          animation: ph-rise 1.1s calc(0.25s + var(--i) * 0.12s) cubic-bezier(0.2, 0.7, 0.1, 1) both;
+        }
+      }
+      .partner-hero_lead[data-hero-in] {
+        animation: ph-up 0.9s 0.65s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+      }
+    }
+    @keyframes ph-from-left {
+      from { transform: translateX(-1.5rem); opacity: 0; }
+    }
+    @keyframes ph-from-right {
+      from { transform: translateX(1.5rem); opacity: 0; }
+    }
+    @keyframes ph-fade {
+      from { opacity: 0; transform: scale(0.6) rotate(-45deg); }
+    }
+    @keyframes ph-rise {
+      from { transform: translateY(105%); }
+    }
+    @keyframes ph-up {
+      from { transform: translateY(1rem); opacity: 0; }
+    }
     .partner-hero.is-compact {
       & .partner-hero_inner {
         align-items: flex-start;
@@ -143,7 +183,7 @@ const clean = (svg: string, label: string) =>
         --lock-h: clamp(1.75rem, 2.6vw, 2.5rem);
       }
       & .partner-hero_lead {
-        max-width: 44ch;
+        max-width: 40ch;
         text-wrap: pretty;
       }
     }
