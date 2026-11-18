@@ -112,31 +112,27 @@ const LANES = [
    figured out, and things get tossed back and forth between the two, but they're labeled"; then "You could see
    ideas going back and forth: when it gets 'nope ideas,' then it gets colored, then ... the brand system gets
    set up, etc., back and forth"). `day` is the working day, its fraction how far into that day. */
+/* What passes between the studios in the sprint (Hunter, Nov 18: "Think more critically about what I'd be sending
+   over to Primary. It would really be motion ideas and prototypes ... at the very tail end"). Primary sends its
+   work as it lands; Kinetic listens until the brand is set, then hands back motion and prototypes in the last
+   days, in time for the final presentation. Primary stops hard at the end of week 2. `stick` pills stay on. */
 const EXCHANGES = [
   { day: 1.15, from: "partner", label: "Kickoff", stick: true },
-  { day: 1.5, from: "kinetic", label: "Questions" },
   { day: 1.8, from: "partner", label: "Research" },
-  { day: 2.2, from: "partner", label: "First ideas" },
-  { day: 2.55, from: "kinetic", label: "Reactions" },
+  { day: 2.3, from: "partner", label: "First ideas" },
   { day: 2.85, from: "partner", label: "Moodboards", stick: true },
-  { day: 3.2, from: "partner", label: "Exec presentation" },
-  { day: 3.6, from: "kinetic", label: "Notes from the room" },
-  { day: 3.9, from: "partner", label: "Direction picked" },
-  { day: 4.25, from: "kinetic", label: "Site map", stick: true },
+  { day: 3.3, from: "partner", label: "Exec presentation" },
+  { day: 3.9, from: "partner", label: "Direction picked", stick: true },
   { day: 4.6, from: "partner", label: "Colour" },
-  { day: 5.2, from: "kinetic", label: "Content doc" },
-  { day: 5.6, from: "partner", label: "Type" },
+  { day: 5.4, from: "partner", label: "Type" },
   { day: 6.2, from: "partner", label: "Logo" },
-  { day: 6.6, from: "kinetic", label: "Wireframes", stick: true },
-  { day: 7.2, from: "partner", label: "Brand system", stick: true },
-  { day: 7.6, from: "kinetic", label: "Homepage sketch" },
-  { day: 8.3, from: "partner", label: "Brand book draft" },
-  { day: 8.7, from: "kinetic", label: "Motion ideas", stick: true },
-  { day: 9.3, from: "partner", label: "Final presentation" },
-  { day: 9.7, from: "kinetic", label: "Homepage direction" },
+  { day: 7.0, from: "partner", label: "Brand system", stick: true },
+  { day: 7.8, from: "partner", label: "Brand book draft" },
+  { day: 8.3, from: "kinetic", label: "Motion ideas", stick: true },
+  { day: 8.9, from: "kinetic", label: "Prototypes", stick: true },
+  { day: 9.4, from: "kinetic", label: "Motion for the presentation" },
+  { day: 9.7, from: "partner", label: "Final presentation" },
   { day: 10.3, from: "partner", label: "Brand book", stick: true },
-  { day: 13, from: "kinetic", label: "Homepage for review", stick: true },
-  { day: 17, from: "partner", label: "Brand check" },
 ] as const;
 const POINTS = [
   {
