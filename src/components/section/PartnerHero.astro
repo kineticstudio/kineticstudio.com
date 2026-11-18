@@ -35,6 +35,32 @@ const clean = (svg: string, label: string) =>
     .replace(/<svg /, `<svg role="img" aria-label="${label}" `);
 ---
 
+<script>
+  /* the Kinetic bars in the intro (Hunter, Nov 18: "the bars compress, and then ... settle into their normal spot"),
+     like the press on the nav's logo: once the two marks have met in the middle, the five arcs pull straight,
+     hold a beat, then spring back to their curve; then the lockup glides into place */
+  import { morph } from "@/scripts/mark.js";
+  const t0 = (window as unknown as { __phIntro?: number }).__phIntro;
+  const mark = document.querySelector<SVGPathElement>(".partner-hero.has-intro .partner-hero_kinetic [data-mark]");
+  if (t0 !== undefined && mark) {
+    const m = morph(mark.getAttribute("d")!);
+    const SQUEEZE = 1150, HOLD = 1500, BACK = 1950; // ms from the intro's start
+    const ease = (u: number) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+    const spring = (u: number) => 1 + Math.sin(u * Math.PI * 1.5) * Math.exp(-4.5 * u) * 0.18 - Math.exp(-6 * u) * (1 - u);
+    const frame = (now: number) => {
+      const t = now - t0;
+      let k = 1;
+      if (t >= SQUEEZE && t < HOLD) k = 1 - ease(Math.min(1, (t - SQUEEZE) / 280));
+      else if (t >= HOLD && t < BACK) k = 0;
+      else if (t >= BACK) k = Math.max(0, spring(Math.min(1, (t - BACK) / 650)));
+      mark.setAttribute("d", m.at(Math.min(1.25, k)));
+      if (t < BACK + 700) requestAnimationFrame(frame);
+      else mark.setAttribute("d", m.at(1));
+    };
+    requestAnimationFrame(frame);
+  }
+</script>
+
 {
   render && (
     <Section paddingTop="navoverlap" paddingBottom={compact ? "small" : "medium"} class:list={["partner-hero", compact && "is-compact"]} gap="0">
@@ -42,8 +68,38 @@ const clean = (svg: string, label: string) =>
         <p class="partner-hero_lockup" data-hero-in>
           <span class="partner-hero_partner" set:html={clean(partnerLogo, partnerName)} />
           <span class="partner-hero_x" aria-label="and">×</span>
-          <span class="partner-hero_kinetic" set:html={clean(kineticRaw, "Kinetic")} />
+          <span class="partner-hero_kinetic" set:html={clean(kineticRaw.replace('id="mark"', 'data-mark=""'), "Kinetic")} />
         </p>
+        {/* the intro (Hunter, Nov 18: "Primary and Kinetic logos coming together and then settling into place"): the
+            lockup starts large in the middle of the screen while the two marks slide together, then glides down
+            into its place on the left; the headline, the line and the rows come on as it lands. Run before the
+            first paint, so the lockup is never seen in its place first. Reduced motion, or a page opened part way
+            down: no intro. */}
+        <script is:inline>
+          (function () {
+            var l = document.currentScript.previousElementSibling, h = l && l.closest(".partner-hero");
+            if (!h || scrollY > 40 || matchMedia("(prefers-reduced-motion: reduce)").matches || !l.animate) return;
+            var svgs = l.querySelectorAll("svg"), a = (svgs[0] || l.firstElementChild).getBoundingClientRect(), b = (svgs[svgs.length - 1] || l.lastElementChild).getBoundingClientRect(), r = l.getBoundingClientRect();
+            var w = b.right - a.left, cx = (a.left + b.right) / 2, cy = (Math.min(a.top, b.top) + Math.max(a.bottom, b.bottom)) / 2;
+            var s = Math.min(3.2, (innerWidth * (innerWidth < 768 ? 0.82 : 0.5)) / w);
+            var dx = innerWidth / 2 - cx, dy = innerHeight / 2 - cy;
+            h.classList.add("is-intro", "has-intro");
+            document.documentElement.classList.add("ph-intro");
+            l.style.transformOrigin = cx - r.left + "px " + (cy - r.top) + "px";
+            var big = "translate(" + dx + "px, " + dy + "px) scale(" + s + ")";
+            l.animate(
+              [
+                { transform: big, offset: 0 },
+                { transform: big, offset: 0.66, easing: "cubic-bezier(0.65, 0, 0.15, 1)" },
+                { transform: "none", offset: 1 },
+              ],
+              { duration: 3000, fill: "backwards" },
+            );
+            window.__phIntro = performance.now(); // the hero's script squeezes the Kinetic bars on this clock
+            setTimeout(function () { h.classList.remove("is-intro"); }, 2650);
+            setTimeout(function () { document.documentElement.classList.remove("ph-intro"); }, 2900);
+          })();
+        </script>
         <h1 class:list={["partner-hero_title", compact ? "text-style-h2" : "text-style-h1"]} data-hero-in>
           {heading.split("|").map((line, i) => <span class="partner-hero_line" style={`--i:${i}`}><span>{line.trim()}</span></span>)}
         </h1>
@@ -129,8 +185,13 @@ const clean = (svg: string, label: string) =>
       text-wrap: balance;
     }
     /* less room over it, so the first brand comes up sooner (Hunter, Nov 17) */
+    /* the hero's top space, up a little (Hunter, Nov 18); set as the variable the section's padding reads, since
+       the padding utility sits outside this layer and beats a padding rule here */
+    .partner-hero.is-compact {
+      --nav-overlap-base: clamp(var(--section-space-nav-overlap-min) / 16 * 1rem, ((var(--section-space-nav-overlap-min) - ((var(--section-space-nav-overlap-max) - var(--section-space-nav-overlap-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--section-space-nav-overlap-max) - var(--section-space-nav-overlap-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--section-space-nav-overlap-max) / 16 * 1rem);
+    }
     .section.partner-hero.is-compact {
-      padding-top: clamp(6.5rem, 14vh, 9.5rem);
+      --section-space-nav-overlap: calc(var(--nav-overlap-base) - clamp(1.75rem, 4vh, 3rem));
     }
     /* the way in (Hunter, Nov 17: "better animations up here"): the two marks slide together from either side,
        each headline line rises out of its own mask, then the line under them; reduced motion: all in place */
@@ -156,6 +217,39 @@ const clean = (svg: string, label: string) =>
       .partner-hero_lead[data-hero-in] {
         animation: ph-up 0.9s 0.65s cubic-bezier(0.2, 0.7, 0.1, 1) both;
       }
+      /* during the intro the headline and its line wait, hidden; they play their way in as the lockup lands */
+      .partner-hero.is-intro {
+        & .partner-hero_line > span,
+        & .partner-hero_lead[data-hero-in] {
+          animation: none;
+          opacity: 0;
+        }
+      }
+      /* in the intro the two marks start further apart (has-intro stays on, so nothing replays) */
+      .partner-hero.has-intro {
+        & .partner-hero_lockup .partner-hero_partner {
+          animation: ph-intro-left 1.15s 0.1s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+        }
+        & .partner-hero_lockup .partner-hero_kinetic {
+          animation: ph-intro-right 1.15s 0.1s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+        }
+        & .partner-hero_lockup .partner-hero_x {
+          animation-delay: 0.65s;
+        }
+      }
+      /* and the rows below stay out of the way till it has settled */
+      html.ph-intro .brand-web {
+        opacity: 0;
+      }
+      .brand-web {
+        transition: opacity 0.9s ease;
+      }
+    }
+    @keyframes ph-intro-left {
+      from { transform: translateX(-5rem); opacity: 0; }
+    }
+    @keyframes ph-intro-right {
+      from { transform: translateX(5rem); opacity: 0; }
     }
     @keyframes ph-from-left {
       from { transform: translateX(-1.5rem); opacity: 0; }

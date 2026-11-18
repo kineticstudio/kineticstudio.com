@@ -501,6 +501,13 @@ const rows = pairs
         pointer-events: none;
       }
     }
+    /* the first site sits close under the hero, so exe peeks into the first screen (Hunter, Nov 18) */
+    .brand-web_row:first-child {
+      padding-top: 0;
+      & .brand-web_pair {
+        padding-top: clamp(1rem, 2vw, 2rem);
+      }
+    }
     /* the laptop on the right, big; the pages run in behind it from the page's left edge */
     .brand-web_pair {
       position: relative;

@@ -3,8 +3,9 @@
    them; on the page by itself P opens the panel. A tuning is kept in this browser until Reset; Copy props
    hands back this object to paste over it. */
 export const BRAND_WEB_FILE = "src/data/brand-web-look.js";
-export const BRAND_WEB_KEY = "ks-brand-web-look-8"; // new key Nov 17: older tunings (with the blur and insets) are dropped
+export const BRAND_WEB_KEY = "ks-brand-web-look-9"; // new key Nov 17: older tunings (with the blur and insets) are dropped
 
+// Hunter's tuning from the Params panel, Nov 18 (Copy props), is the default
 export const BRAND_WEB_LOOK = {
   // the guideline pages, on the inside of a barrel whose axis runs through the laptop's screen: the further
   // left a page is, the nearer and more stretched; evenly spaced round it, so they never overlap
@@ -23,12 +24,12 @@ export const BRAND_WEB_LOOK = {
   },
   // the laptop and the site on it
   laptop: {
-    width: 68, // % of the row
+    width: 64, // % of the row
     // the render's screen is the glass itself, bezel already drawn round it (checked Nov 17 with a test grid
     // in Blender), so the site fills it edge to edge; these trim it in if ever wanted
     insetX: 0, // times the glass's width
     insetTop: 0, // times its height
-    insetBottom: 0,
+    insetBottom: 0.03,
     radius: 0.004, // the glass's top corners, times its width (the bottom ones a third of that)
   },
   // the shade down each brand row, over the moving ground, so one project ends before the next (Hunter, Nov 18:
@@ -37,10 +38,10 @@ export const BRAND_WEB_LOOK = {
     angle: 180, // degrees: 180 runs top to bottom
     from: 0, // strength at the first stop, 0 to 1
     to: 0.05, // strength at the last stop
-    start: 0, // first stop, % down the row
+    start: 94, // first stop, % down the row
     end: 100, // last stop, %
     color: "#000000",
-    line: 0.18, // the line between rows, its strength
+    line: 0.2, // the line between rows, its strength
   },
   // light into dark toward the bottom right of the screen, a glow on the edge between, like the Primary
   // proposal's cover, but curved and soft (Hunter, Nov 17: "This gradient needs to be non-linear ... have a
@@ -51,8 +52,8 @@ export const BRAND_WEB_LOOK = {
   gradient: {
     x: 96, // the ellipse's centre, % across the screen
     y: 150, // % down (below the screen, so the edge rises as an arch from the left)
-    width: 140, // its radius across, % of the screen's width
-    height: 125, // its radius down, % of the screen's height
+    width: 139, // its radius across, % of the screen's width
+    height: 111, // its radius down, % of the screen's height
     dark: 0.36, // where the dark starts to lift, along the radius
     glow: 0.6, // where the glow is strongest
     light: 0.92, // where it is all light

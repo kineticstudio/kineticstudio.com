@@ -44,8 +44,11 @@ const { render = true, heading, lead, columns, lanes, partnerLogo, exchanges = [
    on the middle line, a line down the whole thing that fills as you scroll, "Primary + Kinetic" at the top,
    and, through the sprint, "things ... tossed back and forth between the two, but they're labeled":
    `exchanges`, each a square with its name thrown across the middle on its day, slower and taller. */
-const DAYS = columns.length * 5;
-const day = (week: number, end = false) => (end ? week * 5 : (week - 1) * 5 + 1);
+// calendar days, seven to a week (Hunter, Nov 18: "full days, not working days, so it's actually day 14 whenever
+// the brand is complete")
+const DPW = 7;
+const DAYS = columns.length * DPW;
+const day = (week: number, end = false) => (end ? week * DPW : (week - 1) * DPW + 1);
 const partner = lanes.find((l) => l.kind === "partner");
 const kinetic = lanes.find((l) => l.kind === "kinetic");
 const phases = [partner, kinetic].flatMap((lane) =>
@@ -73,7 +76,7 @@ const clean = (svg: string, label: string) =>
         </h2>
         {lead && <p class="process_lead text-style-main">{lead}</p>}
       </div>
-      <div class="tl" style={`--body-h:${yAt(DAYS)}`} data-tl data-days={DAYS} data-sprint={SPRINT} data-launch={launch * 5}>
+      <div class="tl" style={`--body-h:${yAt(DAYS)}`} data-tl data-days={DAYS} data-sprint={SPRINT} data-launch={launch * DPW} data-dpw={DPW}>
         {/* the two studios stay at the top of the screen while the days run under them (Hunter, Nov 17) */}
         <div class="tl_heads">
           <div class="tl_logo is-partner">{partnerLogo ? <span set:html={clean(partnerLogo, partner?.name ?? "Partner")} /> : <span class="text-style-h5">{partner?.name}</span>}</div>
@@ -87,15 +90,15 @@ const clean = (svg: string, label: string) =>
           <div class="tl_lane is-kinetic" data-lane="kinetic" />
           <div class="tl_spine" aria-hidden="true"><span class="tl_spine-fill" data-spine /></div>
           {columns.map((c, i) => (
-            <span class="tl_week text-style-label" style={`--y:${yAt(i * 5)}`}>{c}</span>
+            <span class="tl_week text-style-label" style={`--y:${yAt(i * DPW)}`}>{c}</span>
           ))}
           {/* a clear break for every day of the sprint, its number in the middle (Hunter, Nov 17) */}
-          {Array.from({ length: SPRINT }, (_, d) => d).filter((d) => d % 5 !== 0).map((d) => (
+          {Array.from({ length: SPRINT }, (_, d) => d).filter((d) => d % DPW !== 0).map((d) => (
             <span class="tl_week tl_day text-style-label" style={`--y:${yAt(d)}`}>Day {d + 1}</span>
           ))}
           {/* launch, a node at the bottom of the line, the end of week 6 (Hunter, Nov 18: "launch be a node at the
               bottom, not this big [neon] thing"; "all of this can happen in 6 weeks from kickoff with Primary") */}
-          {launch * 5 === DAYS && (
+          {launch * DPW === DAYS && (
             <div class="tl_launch" style={`--y:${yAt(DAYS)}`} data-launch-band>
               {/* the node on the line, its words beside it, off the line: "End of week 6" over "Launch" (Hunter, Nov
                   18: "this looks messy") */}
@@ -168,7 +171,7 @@ const clean = (svg: string, label: string) =>
     const nowLabel = tl.querySelector<HTMLElement>("[data-now-label]")!;
     // the fixed day and week names, hidden while the moving one sits on them, so a name never shows twice
     const marks = [...tl.querySelectorAll<HTMLElement>(".tl_week")].map((el) => ({ el, y: 0 }));
-    const DAYS = Number(tl.dataset.days), LAUNCH = Number(tl.dataset.launch), SPRINT = Number(tl.dataset.sprint);
+    const DAYS = Number(tl.dataset.days), LAUNCH = Number(tl.dataset.launch), SPRINT = Number(tl.dataset.sprint), DPW = Number(tl.dataset.dpw) || 7;
     const spine = tl.querySelector<HTMLElement>("[data-spine]")!;
     const passes = [...tl.querySelectorAll<HTMLElement>("[data-pass]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, partner: el.dataset.from === "partner", stick: el.hasAttribute("data-stick"), sx: 0, ex: 0, sy: 0, ey: 0, ix: 0, iy: 0 }));
     const steps = [...tl.querySelectorAll<HTMLElement>("[data-step]")].map((el) => ({ el, at: Number(el.dataset.day) - 1, x: 0, y: 0 }));
@@ -310,7 +313,7 @@ const clean = (svg: string, label: string) =>
       for (let d = 0; d <= DAYS; d++) {
         const y = Math.round(yOf(d));
         ctx.fillStyle = "rgba(238,241,234,0.22)";
-        const w = d % 5 === 0 ? axis.w * 0.5 : axis.w * 0.18;
+        const w = d % DPW === 0 ? axis.w * 0.5 : axis.w * 0.18;
         ctx.fillRect(axis.x + (axis.w - w) / 2, y, w, 1);
         if (d > 0 && d < SPRINT && d <= cur) {
           ctx.fillStyle = "rgba(238,241,234,0.1)";
@@ -468,7 +471,7 @@ const clean = (svg: string, label: string) =>
     .tl {
       /* one scale from kickoff to launch (Hunter, Nov 18: "the scale shouldn't change for this section"; the sprint's
          days were five times taller than the rest) */
-      --day-h: 72px;
+      --day-h: 54px; /* 42 calendar days now, so a touch shorter each */
       --day-tall: var(--day-h);
       --spill-k: 0.9; /* how far Kinetic's block spreads past its lane by launch, times the lane's width */
       --spill: calc(var(--lane-w) * var(--spill-k));
@@ -483,7 +486,7 @@ const clean = (svg: string, label: string) =>
       /* the room for the Launch node's words sits below the grid, so the sticky logos let go at the launch line */
       margin-bottom: clamp(8rem, 12vw, 11rem);
       @media (width < 48rem) {
-        --day-h: 44px;
+        --day-h: 32px;
         --spill-k: 0; /* no room on a phone */
         --axis-w: 3.25rem;
         --lane-w: 4.5rem;
