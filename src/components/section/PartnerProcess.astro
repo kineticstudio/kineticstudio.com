@@ -90,10 +90,13 @@ const clean = (svg: string, label: string) =>
           {Array.from({ length: SPRINT }, (_, d) => d).filter((d) => d % 5 !== 0).map((d) => (
             <span class="tl_week tl_day text-style-label" style={`--y:${yAt(d)}`}>Day {d + 1}</span>
           ))}
-          {/* launch, the chart's last line (Hunter, Nov 17: "I need Launch to be at the bottom") */}
+          {/* launch, a node at the bottom of the line, the end of week 6 (Hunter, Nov 18: "launch be a node at the
+              bottom, not this big [neon] thing"; "all of this can happen in 6 weeks from kickoff with Primary") */}
           {launch * 5 === DAYS && (
             <div class="tl_launch" style={`--y:${yAt(DAYS)}`} data-launch-band>
-              <span class="tl_launch-word text-style-h3">Launch</span>
+              <i class="tl_launch-node" aria-hidden="true" />
+              <span class="tl_launch-word text-style-h5">Launch</span>
+              <span class="tl_launch-when text-style-label">End of week {launch}</span>
             </div>
           )}
           {phases.map((p) => (
@@ -308,7 +311,8 @@ const clean = (svg: string, label: string) =>
       now.style.transform = `translateY(${y.toFixed(1)}px)`;
       tl.querySelector("[data-launch-band]")?.classList.toggle("is-on", cur >= DAYS - 0.05);
       const d = Math.min(DAYS, Math.max(1, Math.ceil(cur)));
-      nowLabel.textContent = d > LAUNCH ? "After launch" : d === LAUNCH ? "Launch" : `Day ${d}`;
+      nowLabel.textContent = d > LAUNCH ? "After launch" : `Day ${d}`;
+      now.classList.toggle("is-done", cur >= DAYS - 0.05); // the Launch node takes over from the day line
     };
     const tick = () => {
       raf = 0;
@@ -370,8 +374,8 @@ const clean = (svg: string, label: string) =>
       grid-template-rows: auto auto;
       row-gap: var(--space-5);
       width: 100%;
-      /* the room for Launch sits below the grid, so the sticky logos let go at the launch line, above it */
-      margin-bottom: clamp(5rem, 9vw, 8rem);
+      /* the room for the Launch node's words sits below the grid, so the sticky logos let go at the launch line */
+      margin-bottom: clamp(5rem, 8vw, 6.5rem);
       @media (width < 48rem) {
         --day-tall: 80px;
         --day-h: 16px;
@@ -572,6 +576,7 @@ const clean = (svg: string, label: string) =>
       border-top: 1px solid color-mix(in srgb, var(--text) 85%, transparent);
       will-change: transform;
       pointer-events: none;
+      transition: opacity 0.4s ease;
     }
     .tl_now-label {
       position: absolute;
@@ -592,30 +597,53 @@ const clean = (svg: string, label: string) =>
     .tl_day {
       color: color-mix(in srgb, var(--text) 32%, transparent);
     }
-    /* launch, a moment of its own: a neon band right across the chart's last line, the word large in it; it
-       lands as the day line reaches it */
+    /* launch: a node on the line's last day, faint until the day line reaches it, then neon */
     .tl_launch {
       position: absolute;
-      left: calc((100% - 100vw) / 2);
-      width: 100vw;
-      top: var(--y);
       z-index: 2;
-      display: grid;
-      place-items: center;
-      padding-block: clamp(1rem, 2vw, 1.75rem);
-      background: #c8ff54;
-      color: #111;
-      clip-path: inset(0 50% 0 50%);
-      transition: clip-path 0.9s cubic-bezier(0.7, 0, 0.2, 1);
-      &.is-on {
-        clip-path: inset(0 0 0 0);
-      }
+      top: var(--y);
+      left: 50%;
+      translate: -50% 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .tl_launch-node {
+      display: block;
+      width: 1.1rem;
+      aspect-ratio: 1;
+      margin-top: -0.55rem;
+      margin-bottom: 0.4rem;
+      border-radius: 50%;
+      border: 1px solid color-mix(in srgb, var(--text) 40%, transparent);
+      background: var(--background);
+      transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.6s ease, scale 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
     }
     .tl_launch-word {
       margin: 0;
+      color: color-mix(in srgb, var(--text) 45%, transparent);
+      transition: color 0.4s ease;
     }
+    .tl_launch-when {
+      color: color-mix(in srgb, var(--text) 50%, transparent);
+    }
+    .tl_launch.is-on,
     .tl.is-still .tl_launch {
-      clip-path: none;
+      & .tl_launch-node {
+        background: #c8ff54;
+        border-color: #c8ff54;
+        box-shadow: 0 0 0 0.45rem color-mix(in srgb, #c8ff54 18%, transparent);
+        scale: 1.25;
+      }
+      & .tl_launch-word {
+        color: var(--text);
+      }
+    }
+    .tl_now.is-done {
+      opacity: 0;
     }
     .tl.is-still .tl_now {
       display: none;

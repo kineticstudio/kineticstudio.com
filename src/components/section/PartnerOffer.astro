@@ -7,7 +7,7 @@ interface Props {
   /** The promise and the price, set big; a "|" breaks it ("Live in 4 weeks | for $50,000"). */
   price: string;
   /** The line under the price ("A live website, four weeks after your sprint"). */
-  offer: string;
+  offer?: string;
   /** What it includes, each a short line under its icon (the proposal's line icons). */
   includes: { icon: string; text: string }[];
   /** The button. */
@@ -40,9 +40,7 @@ const ICONS: Record<string, string> = {
     <section class="offer" aria-labelledby="offer-title">
       <div class="offer_inner">
         <div class="offer_top" data-reveal>
-          <h2 id="offer-title" class="offer_title text-style-h3">
-            {heading.split("|").map((line) => <span>{line.trim()}</span>)}
-          </h2>
+          <h2 id="offer-title" class="offer_title text-style-large">{heading.replace("|", " ").replace(/\s+/g, " ").trim()}</h2>
           {cta && (
             <a class="offer_btn text-style-h5" href={cta.href} target="_blank" rel="noopener">
               {cta.label}
@@ -52,7 +50,7 @@ const ICONS: Record<string, string> = {
         </div>
         <div class="offer_price" data-reveal>
           <p class="offer_amount">{price.split("|").map((line) => <span>{line.trim()}</span>)}</p>
-          <p class="offer_line text-style-large">{offer}</p>
+          {offer && <p class="offer_line text-style-large">{offer}</p>}
         </div>
         <ul class="offer_list">
           {includes.map((item, i) => (
@@ -91,10 +89,11 @@ const ICONS: Record<string, string> = {
       align-items: flex-end;
       gap: var(--space-5);
     }
+    /* the eyebrow, in the sans, a size up from body (Hunter, Nov 18) */
     .offer_title {
-      display: flex;
-      flex-direction: column;
       margin: 0;
+      font-size: clamp(1.35rem, 2vw, 1.9rem);
+      line-height: 1.2;
     }
     /* the button: ink, square, an arrow */
     .offer_btn {

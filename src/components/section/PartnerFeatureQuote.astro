@@ -49,7 +49,7 @@ const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid
 
 {
   render && q && (
-    <section class="fquote theme-dark" aria-label={`${q.name}, ${q.company}`}>
+    <section class="fquote theme-light" aria-label={`${q.name}, ${q.company}`}>
       <figure class="fquote_inner" data-reveal>
         {/* the quote, its words lighting up white as it scrolls by (Hunter, Nov 17), then who said it: the
             company named in the line, no logo ("it just looks like a typeface") */}
@@ -67,10 +67,12 @@ const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid
 
 <style is:global>
   @layer components {
+    /* on white, tighter at the top (Hunter, Nov 18: "make this section white ... too much top padding") */
     .fquote {
+      --background: #fff;
       background: var(--background);
       color: var(--text);
-      padding: var(--section-space-large) var(--site-margin);
+      padding: var(--section-space-medium) var(--site-margin) var(--section-space-large);
     }
     /* left-aligned (Hunter, Nov 17) */
     .fquote_inner {
@@ -88,7 +90,7 @@ const clean = (svg: string) => svg.replace(/<!--[\s\S]*?-->/g, "").replace(/\sid
       line-height: 1.12;
       letter-spacing: -0.02em;
       max-width: 22em;
-      color: var(--text); /* white (Hunter, Nov 17) */
+      color: var(--text); /* full ink, lit word by word (Hunter, Nov 17) */
       text-wrap: pretty;
       &.is-scrubbed .fquote_w {
         opacity: calc(0.22 + 0.78 * var(--lit, 0));

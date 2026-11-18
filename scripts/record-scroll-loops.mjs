@@ -30,7 +30,7 @@
    again from them without recording. Needs ffmpeg and, for the copies, the dev server. */
 
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,11 +49,13 @@ const ENCODE = args.includes("--encode"); // again from the kept takes, no recor
 const only = args.filter((a) => !a.startsWith("--"));
 const TMP = process.env.SCROLL_TMP ?? join(tmpdir(), TALL ? "scroll-loops-tall" : "scroll-loops");
 
-const W = 1600, H = TALL ? 1150 : 1000, FPS = 30;
+// --tall also scrolls at the pace the /primary rows play it (about half the homepage's) and at 60 fps, so it
+// plays at its own speed, smooth (Hunter, Nov 18: slowed to 0.55x, the 30 fps loops felt "a bit jumpy")
+const W = 1600, H = TALL ? 1150 : 1000, FPS = TALL ? 60 : 30;
 // about 4 MB a loop; a page heavy with film and texture may take up to 6 MB rather than smear
-const MAX_BYTES = 4.2e6, HEAVY_BYTES = 6.0e6, TARGET_BYTES = 5.8e6;
+const MAX_BYTES = TALL ? 6e6 : 4.2e6, HEAVY_BYTES = TALL ? 6e6 : 6.0e6, TARGET_BYTES = TALL ? 5.6e6 : 5.8e6;
 // the pace: px a second at full speed, the clip's scroll time kept in 12..22 s
-const SPEED = 520, MIN_S = 12, MAX_S = 22;
+const SPEED = TALL ? 290 : 520, MIN_S = 12, MAX_S = TALL ? 40 : 22;
 const RAMP = 1.1; // s to reach full speed, and to stop
 const HOLD_TOP = 1.2, HOLD_END = 1.4, FADE = 0.8; // s
 
@@ -344,7 +346,40 @@ async function record(browser, slug) {
 /* The loop from its take: the bottom crossfades back to the first frame, so it closes on
    itself. CRF 24 when that fits MAX_BYTES, else CRF 27 when that fits HEAVY_BYTES, else two
    passes at the bitrate that fills TARGET_BYTES (bits spent where the page moves). */
-function encode(slug, { total }) {
+/* --tall: down the page and back up again, at the same pace, so it never jumps to the top (Hunter, Nov 18:
+   "instead of restarting, we go backwards"). ffmpeg's reverse holds a whole clip in memory, so the take is cut
+   into 2 s pieces, each turned round, and joined last to first; then one encode of the two, harder squeezed
+   (CRF 28, then a bitrate cap), since they play in a frame on the page. */
+function boomerang(slug, { total }) {
+  const dir = join(TMP, slug), take = join(dir, "take.mp4"), loop = join(OUT, `${slug}.mp4`);
+  const parts = join(dir, "parts");
+  rmSync(parts, { recursive: true, force: true });
+  mkdirSync(parts, { recursive: true });
+  const SEG = 2;
+  ffmpeg(["-i", take, "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "10", "-force_key_frames", `expr:gte(t,n_forced*${SEG})`, "-f", "segment", "-segment_time", String(SEG), "-reset_timestamps", "1", join(parts, "f%04d.mp4")]);
+  const fwd = readdirSync(parts).filter((f) => f.startsWith("f")).sort();
+  for (const f of fwd) ffmpeg(["-i", join(parts, f), "-vf", "reverse", "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "10", join(parts, `r${f.slice(1)}`)]);
+  const list = join(parts, "list.txt");
+  writeFileSync(list, [take, ...fwd.slice().reverse().map((f) => join(parts, `r${f.slice(1)}`))].map((f) => `file '${f}'`).join("\n") + "\n");
+  const tags = ["-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv"];
+  const base = ["-f", "concat", "-safe", "0", "-i", list, "-vf", `fps=${FPS},format=yuv420p`, "-an", "-c:v", "libx264", "-preset", "veryslow", "-profile:v", "high", "-pix_fmt", "yuv420p", ...tags, "-g", String(FPS * 4)];
+  ffmpeg([...base, "-crf", "28", "-movflags", "+faststart", loop]);
+  let how = "crf 28";
+  if (statSync(loop).size > HEAVY_BYTES) {
+    const kbps = Math.floor((TARGET_BYTES * 8) / (2 * total) / 1000);
+    const log = join(dir, "x264");
+    ffmpeg([...base, "-b:v", `${kbps}k`, "-pass", "1", "-passlogfile", log, "-f", "mp4", "/dev/null"]);
+    ffmpeg([...base, "-b:v", `${kbps}k`, "-maxrate", `${Math.round(kbps * 2)}k`, "-bufsize", `${kbps * 4}k`, "-pass", "2", "-passlogfile", log, "-movflags", "+faststart", loop]);
+    how = `2-pass ${kbps} kb/s`;
+  }
+  rmSync(parts, { recursive: true, force: true });
+  ffmpeg(["-i", loop, "-frames:v", "1", "-q:v", "3", join(OUT, `${slug}.jpg`)]);
+  return { mb: statSync(loop).size / 1e6, how };
+}
+
+function encode(slug, meta) {
+  if (TALL) return boomerang(slug, meta);
+  const { total } = meta;
   const take = join(TMP, slug, "take.mp4");
   const loop = join(OUT, `${slug}.mp4`);
   const graph = [
