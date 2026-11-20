@@ -27,7 +27,6 @@ const schema = {
     gap: [L.barrel.gap, 0, 0.5, 0.01],
     rowGap: [L.barrel.rowGap, 0, 0.6, 0.01],
     lapTop: [L.barrel.lapTop, 6, 90, 1],
-    lapBottom: [L.barrel.lapBottom, 6, 90, 1],
   },
   lens: {
     blur: [L.lens.blur, 0, 24, 0.5],
